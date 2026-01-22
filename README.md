@@ -3,7 +3,7 @@ Class: SEG 4910
 
 Team members: Ashley Goman, Anna Brimacombe-Tanner, Patrick Luu, Aya Debbagh
 
-Client: Dr. Miguel Gazon
+Client: Dr. Miguel Garzon
 
 Mission: This project aims to build a cloud-hosted platform that allows companies, researchers, and students to model an enterprise network, deploy it automatically in the cloud, and run realistic cyber-attack scenarios based on known threat actors. The goal is to give users a safe environment to study attacker behavior, analyze logs, observe IOCs, and understand how different security appliances respond during a full attack chain.
 
