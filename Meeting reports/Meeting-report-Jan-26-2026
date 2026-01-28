@@ -1,0 +1,11 @@
+Meeting notes – Jan 26 2026
+-	Prof Garzon proposed an approach focusing on local deployment first, as cloud deployment is pretty costly. 
+-	We would have a drag and drop interface and run a script, behind the screen, to create virtual machines simulating the scenarios.
+-	As resources for our attacks, we can consult the Center for Threat Informed Defence adversary emulation library on Github (https://github.com/center-for-threat-informed-defense/adversary_emulation_library) and focus on the APT29 attacks.
+-	For our base-level local environment, we will start with a domain controller and one or two machines as this represents the strict minimum needed to simulate our attacks.
+-	A C2 framework will be used in order to control the machines remotely and software like Splunk, Wazuh, or Elatsic will serve as SIEM helping us monitor traffic, configure agents as well as detect intrusions.
+-	 In order to formulate our requirements, we will pore over the MITRE reports so as to understand what attacks are prevalent and how they are executed.
+-	Frameworks like Caldera or Atomic Red Team will help us deploy the simulations by mapping our schemas to actual virtual machines.
+-	The purpose of our application will be to understand why our network does or does not detect intrusions, which detection rules are or should have been fired in case of suspicious traffic. As a defender, we would thus need to be able to go through the logs to detect weird behaviors and detection rules gaps. 
+-	Additionally, we could use an agent orchestration framework like Ghosts to mimic realistic users and obfuscate our logs
+-	We will also need to consider eviction frameworks to provide solutions to clean networks in the aftermath of attacks
