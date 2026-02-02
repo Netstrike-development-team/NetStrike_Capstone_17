@@ -45,14 +45,14 @@ This project is a cloud/local cyber range platform allowing users to model an en
 
 All commits should follow a structured format:
 **Types and when to use them:**
-feat: New feature `feat(vagrant): add DC VM skeleton`
-fix: Bug fix `fix(ansible): correct Wazuh agent path`
-chore: Repo / tooling `chore: create initial repo structure`
-docs: Documentation `docs(architecture): add Ghosts integration`
-style: Formatting / lint `style: format Python files`
-refactor: Code restructure `refactor(backend): reorganize services folder`
-test: Add/update tests `test: add pytest for Vagrant service`
-perf: Performance improvement `perf(ansible): optimize DC provisioning`
+- feat: New feature `feat(vagrant): add DC VM skeleton`
+- fix: Bug fix `fix(ansible): correct Wazuh agent path`
+- chore: Repo / tooling `chore: create initial repo structure`
+- docs: Documentation `docs(architecture): add Ghosts integration`
+- style: Formatting / lint `style: format Python files`
+- refactor: Code restructure `refactor(backend): reorganize services folder`
+- test: Add/update tests `test: add pytest for Vagrant service`
+- perf: Performance improvement `perf(ansible): optimize DC provisioning`
 
 ## 6. Reasoning for Choices
 - Python: Best for orchestration, integrates with all security frameworks, fast dev
