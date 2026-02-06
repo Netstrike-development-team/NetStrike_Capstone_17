@@ -37,7 +37,7 @@ This project is a cloud/local cyber range platform allowing users to model an en
   - Standups: 10–15 min check-ins
 
 ## 4. CI/CD (Phase 1)
-- Backend: lint + pytest
+- Backend: lint + pytest + coverage
 - Frontend (later): TypeScript lint + build
 - Optional security scan with bandit
 
