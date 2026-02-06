@@ -30,6 +30,8 @@ Vagrant Commands:
   vagrant destroy -f //Lets you destroy everything and start fresh after an attack. 
   vagrant up //Rebuild them exactly as before
 
+  
+
 What Ansible does? 
 
   Set up what’s inside the computers.
