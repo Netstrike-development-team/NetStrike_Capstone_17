@@ -1,0 +1,71 @@
+# NetStrike Capstone - Multi-Machine Environment
+# This Vagrant configuration sets up a multi-OS environment for security testing
+
+Vagrant.configure("2") do |config|
+  # Global configuration
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+  
+  # Ubuntu/Linux target machine
+  config.vm.define "linux-target" do |linux|
+    linux.vm.box = "hashicorp/precise64"
+    linux.vm.box_version = "1.1.0"
+    linux.vm.hostname = "linux-target"
+    
+    # Network configuration
+    linux.vm.network "private_network", ip: "192.168.56.10"
+    
+    # Provider-specific settings
+    linux.vm.provider "virtualbox" do |vb|
+      vb.name = "NetStrike-Linux-Target"
+      vb.memory = "1024"
+      vb.cpus = 1
+      vb.gui = false
+    end
+  end
+
+  # Windows Server 2022 target machine
+  config.vm.define "windows-server" do |winserver|
+    winserver.vm.box = "gusztavvargadr/windows-server-2022-standard"
+    winserver.vm.box_version = "2601.0.0"
+    winserver.vm.hostname = "windows-server"
+    
+    # Network configuration
+    winserver.vm.network "private_network", ip: "192.168.56.20"
+    
+    # Provider-specific settings
+    winserver.vm.provider "virtualbox" do |vb|
+      vb.name = "NetStrike-Windows-Server"
+      vb.memory = "2048"
+      vb.cpus = 2
+      vb.gui = true
+    end
+    
+    # Windows-specific configuration
+    winserver.vm.communicator = "winrm"
+    winserver.winrm.username = "vagrant"
+    winserver.winrm.password = "vagrant"
+  end
+
+  # Windows 10 target machine
+  config.vm.define "windows-client" do |winclient|
+    winclient.vm.box = "gusztavvargadr/windows-10"
+    winclient.vm.box_version = "2511.0.0"
+    winclient.vm.hostname = "windows-client"
+    
+    # Network configuration
+    winclient.vm.network "private_network", ip: "192.168.56.30"
+    
+    # Provider-specific settings
+    winclient.vm.provider "virtualbox" do |vb|
+      vb.name = "NetStrike-Windows-Client"
+      vb.memory = "2048"
+      vb.cpus = 2
+      vb.gui = true
+    end
+    
+    # Windows-specific configuration
+    winclient.vm.communicator = "winrm"
+    winclient.winrm.username = "vagrant"
+    winclient.winrm.password = "vagrant"
+  end
+end
