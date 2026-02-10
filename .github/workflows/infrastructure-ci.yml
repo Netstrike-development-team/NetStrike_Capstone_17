@@ -1,0 +1,36 @@
+name: Infrastructure Lint
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+ # ansible-lint:
+  # name: Ansible Lint
+    # runs-on: ubuntu-latest
+    # steps:
+      # - name: Checkout code
+        # uses: actions/checkout@v6
+
+      # - name: Run ansible-lint
+        # uses: ansible/ansible-lint@main
+        # with:
+          # args: ""
+          # setup_python: "true"
+          # python_version: "3.10"
+          # working_directory: ""
+          # requirements_file: ""
+
+  yaml-lint:
+    name: YAML Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Validate YAML files
+        run: yamllint $(git ls-files '*.yaml' '*.yml')
