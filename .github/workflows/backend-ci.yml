@@ -1,12 +1,21 @@
 name: Backend Lint and Test
 
+# Runs pipeline when there're backend
+# or when workflows are updated
 on:
   push:
     branches:
       - '*'
+    paths:
+      - 'backend/**'
+      - '.github/workflows/**'
+
   pull_request:
     branches:
       - '*'
+    paths:
+      - 'backend/**'
+      - '.github/workflows/**'
 
 jobs:
   pylint:
@@ -58,7 +67,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.10' 
+          python-version: '3.10'
 
       - name: Install dependencies
         run: |
@@ -68,21 +77,14 @@ jobs:
       - name: Run tests
         run: |
           coverage run -m pytest backend/tests/
-          
+
       - name: Generate coverage report
         run: |
-          coverage report -m > coverage_report.txt
+          coverage report -m
           coverage html
-
-      - name: Upload txt coverage report
-        uses: actions/upload-artifact@v6
-        with:
-          name: coverage-txt
-          path: coverage_report.txt
 
       - name: Upload HTML coverage report
         uses: actions/upload-artifact@v6
         with:
           name: coverage-html
           path: htmlcov/
-
