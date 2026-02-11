@@ -1,8 +1,9 @@
+---
 name: Backend Lint and Test
 
 # Runs pipeline when there're backend
 # or when workflows are updated
-on:
+on:  # yamllint disable-line rule:truthy
   push:
     branches:
       - '*'
