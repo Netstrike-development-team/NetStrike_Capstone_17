@@ -6,7 +6,8 @@ name: Backend Lint and Test
 on:  # yamllint disable-line rule:truthy
   push:
     branches:
-      - '*'
+      - main
+      - dev
     paths:
       - 'backend/**'
       - '.github/workflows/**'

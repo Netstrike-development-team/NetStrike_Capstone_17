@@ -4,7 +4,8 @@ name: Infrastructure Lint
 on:  # yamllint disable-line rule:truthy
   push:
     branches:
-      - '*'
+      - main
+      - dev
   pull_request:
     branches:
       - '*'
