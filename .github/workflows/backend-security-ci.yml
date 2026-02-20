@@ -1,14 +1,24 @@
+---
 name: Backend Security Analysis
 
-on:
+# Runs pipeline when there're backend
+# or when workflows are updated
+on:  # yamllint disable-line rule:truthy
   push:
     branches:
       - main
       - dev
+    paths:
+      - 'backend/**'
+      - '.github/workflows/**'
+
   pull_request:
     branches:
       - main
       - dev
+    paths:
+      - 'backend/**'
+      - '.github/workflows/**'
 
 jobs:
   bandit:
@@ -20,7 +30,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
+          python-version: '3.10'
 
       - name: Install dependencies
         run: |
