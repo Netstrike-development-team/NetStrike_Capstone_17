@@ -1,1 +1,1 @@
-from app.schemas.network import *
+"""Network service"""

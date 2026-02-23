@@ -1,1 +1,1 @@
-from app.schemas.attack import *
+"""Attack service"""
