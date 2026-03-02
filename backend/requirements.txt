@@ -2,4 +2,5 @@ pylint
 pytest
 coverage
 bandit
+fastapi
 flake8
