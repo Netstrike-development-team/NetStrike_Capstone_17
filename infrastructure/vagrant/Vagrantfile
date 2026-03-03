@@ -1,71 +1,157 @@
-# NetStrike Capstone - Multi-Machine Environment
-# This Vagrant configuration sets up a multi-OS environment for security testing
+# NetStrike Capstone - Multi-Machine Cyber Range
+#
+# Network layout (all on 192.168.56.0/24 host-only):
+#   192.168.56.10  attacker     Ubuntu 22.04  — Caldera C2 server + attacker tools
+#   192.168.56.20  dc           Windows Server 2022 — Domain Controller (AD DS)
+#   192.168.56.30  workstation  Windows 10    — Domain-joined workstation (target)
+#   192.168.56.40  wazuh        Ubuntu 22.04  — Wazuh SIEM + Elastic dashboards
+#
+# Caldera listens on :8888 (API) and :8443 (HTTPS) on the attacker VM.
+# Wazuh manager listens on :55000 (API) on the wazuh VM.
+# The FastAPI backend talks to both over the host-only network.
 
 Vagrant.configure("2") do |config|
-  # Global configuration
   config.vm.synced_folder ".", "/vagrant", disabled: true
-  
-  # Ubuntu/Linux target machine
-  config.vm.define "linux-target" do |linux|
-    linux.vm.box = "hashicorp/precise64"
-    linux.vm.box_version = "1.1.0"
-    linux.vm.hostname = "linux-target"
-    
-    # Network configuration
-    linux.vm.network "private_network", ip: "192.168.56.10"
-    
-    # Provider-specific settings
-    linux.vm.provider "virtualbox" do |vb|
-      vb.name = "NetStrike-Linux-Target"
-      vb.memory = "1024"
-      vb.cpus = 1
-      vb.gui = false
+
+  # ---------------------------------------------------------------------------
+  # attacker - Ubuntu 22.04 running Caldera C2
+  # ---------------------------------------------------------------------------
+  config.vm.define "attacker" do |attacker|
+    attacker.vm.box     = "ubuntu/jammy64"
+    attacker.vm.hostname = "attacker"
+    attacker.vm.network "private_network", ip: "192.168.56.10"
+
+    attacker.vm.provider "virtualbox" do |vb|
+      vb.name   = "NetStrike-Attacker"
+      vb.memory = "2048"
+      vb.cpus   = 2
+      vb.gui    = false
+    end
+
+    # Provision: install Caldera dependencies and clone repo
+    # Caldera is NOT started automatically - the backend triggers it via API
+    attacker.vm.provision "shell", inline: <<-SHELL
+      apt-get update -qq
+      apt-get install -y python3 python3-pip python3-venv git curl wget
+
+      # Clone Caldera if not already present
+      if [ ! -d /opt/caldera ]; then
+        git clone https://github.com/mitre/caldera.git --recursive /opt/caldera
+      fi
+
+      # Install Python deps inside a venv so nothing pollutes system Python
+      python3 -m venv /opt/caldera/venv
+      /opt/caldera/venv/bin/pip install -q --upgrade pip
+      /opt/caldera/venv/bin/pip install -q -r /opt/caldera/requirements.txt
+
+      # Create a systemd service so Caldera auto-starts on boot
+      cat > /etc/systemd/system/caldera.service <<'EOF'
+[Unit]
+Description=MITRE Caldera C2 Server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/caldera
+ExecStart=/opt/caldera/venv/bin/python server.py --insecure
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+      systemctl daemon-reload
+      systemctl enable caldera
+      systemctl start caldera
+    SHELL
+  end
+
+  # ---------------------------------------------------------------------------
+  # dc - Windows Server 2022 (Domain Controller)
+  # Ansible will promote this to AD DS after provisioning.
+  # ---------------------------------------------------------------------------
+  config.vm.define "dc" do |dc|
+    dc.vm.box          = "gusztavvargadr/windows-server-2022-standard"
+    dc.vm.box_version  = "2601.0.0"
+    dc.vm.hostname     = "dc"
+    dc.vm.network "private_network", ip: "192.168.56.20"
+    dc.vm.communicator = "winrm"
+    dc.winrm.username  = "vagrant"
+    dc.winrm.password  = "vagrant"
+
+    dc.vm.provider "virtualbox" do |vb|
+      vb.name   = "NetStrike-DC"
+      vb.memory = "4096"
+      vb.cpus   = 2
+      vb.gui    = false
     end
   end
 
-  # Windows Server 2022 target machine
-  config.vm.define "windows-server" do |winserver|
-    winserver.vm.box = "gusztavvargadr/windows-server-2022-standard"
-    winserver.vm.box_version = "2601.0.0"
-    winserver.vm.hostname = "windows-server"
-    
-    # Network configuration
-    winserver.vm.network "private_network", ip: "192.168.56.20"
-    
-    # Provider-specific settings
-    winserver.vm.provider "virtualbox" do |vb|
-      vb.name = "NetStrike-Windows-Server"
+  # ---------------------------------------------------------------------------
+  # workstation - Windows 10 (domain-joined target)
+  # ---------------------------------------------------------------------------
+  config.vm.define "workstation" do |ws|
+    ws.vm.box          = "gusztavvargadr/windows-10"
+    ws.vm.box_version  = "2511.0.0"
+    ws.vm.hostname     = "workstation"
+    ws.vm.network "private_network", ip: "192.168.56.30"
+    ws.vm.communicator = "winrm"
+    ws.winrm.username  = "vagrant"
+    ws.winrm.password  = "vagrant"
+
+    ws.vm.provider "virtualbox" do |vb|
+      vb.name   = "NetStrike-Workstation"
       vb.memory = "2048"
-      vb.cpus = 2
-      vb.gui = true
+      vb.cpus   = 2
+      vb.gui    = false
     end
-    
-    # Windows-specific configuration
-    winserver.vm.communicator = "winrm"
-    winserver.winrm.username = "vagrant"
-    winserver.winrm.password = "vagrant"
   end
 
-  # Windows 10 target machine
-  config.vm.define "windows-client" do |winclient|
-    winclient.vm.box = "gusztavvargadr/windows-10"
-    winclient.vm.box_version = "2511.0.0"
-    winclient.vm.hostname = "windows-client"
-    
-    # Network configuration
-    winclient.vm.network "private_network", ip: "192.168.56.30"
-    
-    # Provider-specific settings
-    winclient.vm.provider "virtualbox" do |vb|
-      vb.name = "NetStrike-Windows-Client"
-      vb.memory = "2048"
-      vb.cpus = 2
-      vb.gui = true
+  # ---------------------------------------------------------------------------
+  # wazuh - Ubuntu 22.04 SIEM
+  # Runs Wazuh manager + Elasticsearch + Kibana
+  # Needs 4 GB RAM minimum for the Elastic stack.
+  # ---------------------------------------------------------------------------
+  config.vm.define "wazuh" do |wazuh|
+    wazuh.vm.box     = "ubuntu/jammy64"
+    wazuh.vm.hostname = "wazuh"
+    wazuh.vm.network "private_network", ip: "192.168.56.40"
+
+    wazuh.vm.provider "virtualbox" do |vb|
+      vb.name   = "NetStrike-Wazuh"
+      vb.memory = "4096"
+      vb.cpus   = 2
+      vb.gui    = false
     end
-    
-    # Windows-specific configuration
-    winclient.vm.communicator = "winrm"
-    winclient.winrm.username = "vagrant"
-    winclient.winrm.password = "vagrant"
+
+    # Provision: install Wazuh all-in-one (manager + indexer + dashboard)
+    wazuh.vm.provision "shell", inline: <<-SHELL
+      apt-get update -qq
+      apt-get install -y curl gnupg
+
+      # Wazuh 4.x all-in-one quick-start installer
+      curl -sO https://packages.wazuh.com/4.7/wazuh-install.sh
+      curl -sO https://packages.wazuh.com/4.7/config.yml
+
+      # Minimal single-node config
+      cat > /tmp/wazuh-config.yml <<'EOF'
+nodes:
+  indexer:
+    - name: node-1
+      ip: "192.168.56.40"
+  server:
+    - name: wazuh-1
+      ip: "192.168.56.40"
+  dashboard:
+    - name: dashboard
+      ip: "192.168.56.40"
+EOF
+      bash wazuh-install.sh --generate-config-files --conf /tmp/wazuh-config.yml || true
+      bash wazuh-install.sh --wazuh-indexer node-1 || true
+      bash wazuh-install.sh --start-cluster || true
+      bash wazuh-install.sh --wazuh-server wazuh-1 || true
+      bash wazuh-install.sh --wazuh-dashboard dashboard || true
+    SHELL
   end
 end
