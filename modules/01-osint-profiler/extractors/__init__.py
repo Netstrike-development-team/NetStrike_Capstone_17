@@ -305,6 +305,8 @@ def detect_sso_provider(records: list[dict]) -> Optional[dict]:
             start = max(0, match.start() - 60)
             end = min(len(text), match.end() + 60)
             snippet = text[start:end].strip()
+            # .lower() normalises the case-insensitively-matched token so it
+            # aligns with the lowercase keys in _KEYWORD_TO_PROVIDER.
             provider = _KEYWORD_TO_PROVIDER.get(match.group(0).lower(), "Unknown")
             return {
                 "provider": provider,
