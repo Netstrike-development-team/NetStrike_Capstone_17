@@ -1,0 +1,194 @@
+# Meeting Minutes: Cyber Range Team Discussion
+**Format:** Email correspondence + internal team discussion
+**Period:** Pre-capstone alignment through scenario confirmation
+**Parties:** Capstone Team (Netstrike), Cyber Range Team, Prof. Garzon
+**Context:** Initial outreach to the Cyber Range team to align on project contribution,
+followed by the team's formal proposal of Operation Silent Spider and the Cyber Range
+team's response confirming direction and next steps.
+**Relevent documents:** operation-silent-spider.pdf in docs
+
+---
+
+## Exchange 1: Cyber Range Team Initial Response
+
+**From:** Cyber Range Team
+**To:** Aya (on behalf of Netstrike)
+**Subject:** Project direction and suggested idea
+
+### Summary
+
+The Cyber Range team responded to the team's initial outreach with two items: suggested
+reading to ground the team's understanding of cyber ranges as a concept, and a proposed
+project idea for the team to consider.
+
+### Suggested Reading
+
+Two papers were recommended before proceeding with any design decisions:
+
+- *A Systematic Review of Cyber Range Taxonomies: Trends, Gaps, and a Proposed
+  Taxonomy*: MDPI Future Internet, 2025.
+  https://www.mdpi.com/1999-5903/17/6/259
+- *A Step-by-Step Definition of a Reference Architecture for Cyber Ranges*:
+  ScienceDirect, 2024.
+  https://www.sciencedirect.com/science/article/pii/S2214212624002199
+
+### Cyber Range Team's Current Project (CRANE)
+
+The Cyber Range team clarified the scope of their own development work:
+
+- Current cyber range implementations suffer from limited interoperability and
+  portability due to reliance on specific virtualization infrastructures.
+- Their project (referred to as CRANE going forward) aims to build an open-source
+  cyber range using **Packer, Terraform, and Ansible** (Infrastructure as Code).
+- The goal is to enable scenario deployment on any virtualization infrastructure
+  (Proxmox, OpenNebula, Incus) using the same asset and scenario definitions.
+
+### Proposed Idea for Netstrike
+
+The Cyber Range team proposed that the capstone team build an **NPM library for
+visual scenario construction**, based on Vue.js and Vue Flow. Requirements outlined:
+
+- Allow users to build scenarios visually (drag-and-drop interface)
+- Provide interfaces for defining assets, nodes, and networks
+- Validate whether a network design is structurally valid
+- Translate the visual representation into formats supported by existing cyber range
+  implementations
+
+The team noted this idea would be reusable by any Vue.js project as an npm library.
+
+### Caveat from Cyber Range Team
+
+The Cyber Range team explicitly noted that the visual builder idea **may not allow deep
+exploration of the cybersecurity field**, and encouraged the team to consider
+cybersecurity-focused alternatives: for example, developing a scenario or a
+cybersecurity tool usable within the cyber range. They asked the team not to rush a
+decision and to discuss with teammates and supervisor first.
+
+---
+
+## Exchange 2: Netstrike Proposal: Operation Silent Spider
+
+**From:** Netstrike (Aya, on behalf of team)
+**To:** Cyber Range Team
+**Subject:** Capstone Scenario Design Document: Scattered Spider Simulation
+
+### Summary
+
+Following internal team discussion and alignment with Prof. Garzon, the team sent a
+formal proposal to the Cyber Range team, declining the visual builder idea in favour of
+a cybersecurity-focused attack simulation scenario. The team attached the Operation
+Silent Spider scenario design document.
+
+### Proposal Summary
+
+The team proposed designing and implementing a realistic APT-style attack simulation
+based on **Scattered Spider (UNC3944)**, covering a full 7-phase kill chain:
+
+1. OSINT Reconnaissance
+2. Phishing Infrastructure
+3. Helpdesk Vishing / Identity Takeover
+4. MFA Fatigue / Push Bombing
+5. Lateral Movement
+6. Cloud Pivot and Data Exfiltration
+7. Ransomware Deployment
+
+The scenario design document (Operation Silent Spider) was attached, including MITRE
+ATT&CK mappings, proposed software repository structure, and CITEF environment
+requirements.
+
+### Questions Raised to Cyber Range Team
+
+Four questions were posed for the team's feedback:
+
+1. **Overall direction**: does the scenario align with what the Cyber Range team
+   wants on the new platform? Any adjustments to scope or attack chain?
+2. **Detection layer**: does the Cyber Range team have existing SOC or detection
+   tooling, or should the capstone team build the detection dashboard and log
+   analysis layer as part of their contribution?
+3. **Scenario environment model**: is a pre-built fictitious company environment
+   (SimCorp) the standard model for exercises, or are scenarios typically tailored
+   per user/group?
+4. **Participant roles**: does the Cyber Range team staff the blue team, or are
+   those student participants? How should the exercise be structured to fit their
+   facilitation model?
+
+---
+
+## Exchange 3: Cyber Range Team Confirms Direction
+
+**From:** Cyber Range Team
+**To:** Aya (on behalf of Netstrike)
+**Subject:** Re: Capstone Scenario Design Document
+
+### Summary
+
+The Cyber Range team confirmed that the team's proposed direction was correctly
+understood and aligned with what they need. They provided a concrete breakdown of
+next steps.
+
+### Confirmed Understanding of Project Scope
+
+The Cyber Range team summarized the project as follows:
+
+- **APT Simulation Focus:** design and implement realistic, APT-style attack scenarios
+- **Methodical Testing in CITEF:** use the existing CITEF environment as a sandbox to
+  identify current limitations and refine scenario definitions for reusability
+- **Long-term Integration:** ensure scenarios are portable and interoperable so they
+  can be integrated into CRANE once it is ready
+
+### Confirmed Next Steps (from Cyber Range Team)
+
+| Step | Description |
+|------|-------------|
+| 1 | **Build the story**: define background, realistic attack chain, scenario narrative through case studies |
+| 2 | **Create the assets (VMs)**: if existing CITEF VMs do not match, create new ones in VirtualBox and export as `.ovf` for import into the environment |
+| 3 | **Design the network/infrastructure**: once the story is agreed upon, the Cyber Range team will provide CITEF access |
+| 4 | **Configure machines and create automations**: write Ansible playbooks (not required immediately) |
+
+### Key Information Received
+
+- CITEF access will be provided **after** the story/scenario design is agreed upon.
+- VM assets can be created locally in VirtualBox and exported as `.ovf` for import.
+- Ansible playbooks are the expected automation format, but are not the immediate
+  priority.
+- Starting point is case studies and scenario narrative: implementation comes after.
+
+---
+
+## Decisions and Outcomes
+
+| Decision | Outcome |
+|----------|---------|
+| Visual builder idea (npm library) | Declined: team chose cybersecurity-focused direction |
+| APT selection | Scattered Spider (UNC3944) confirmed |
+| Project contribution | Attack simulation scenarios + tooling, not platform infrastructure |
+| Long-term target | Portability to CRANE (Cyber Range team's new platform) |
+| CITEF access | To be granted after scenario design is confirmed |
+| VM format | VirtualBox + `.ovf` export for CITEF import |
+| Automation format | Ansible playbooks |
+
+---
+
+## Open Questions (Pending Response)
+
+The following questions from Exchange 2 have not yet been explicitly answered by the
+Cyber Range team and should be followed up in the next meeting:
+
+- Does the Cyber Range team have existing detection/SOC tooling, or should the team
+  build the detection dashboard independently?
+- Is a pre-built fictitious company (SimCorp) the standard exercise model, or is
+  per-user customization expected?
+- Who staffs the blue team during exercises?
+
+---
+
+## Action Items
+
+| Item | Owner | Status |
+|------|-------|--------|
+| Read the two recommended cyber range papers | Team | Pending |
+| Complete scenario design document (Operation Silent Spider) | Team | Done: sent to Cyber Range team |
+| Agree on scenario story with Cyber Range team | Team + Cyber Range | In progress |
+| Create VirtualBox VMs and export as .ovf | Team | Not started: pending CITEF access |
+| Schedule next meeting with Cyber Range team | Team | Pending |
+| Follow up on unanswered questions from Exchange 2 | Aya | Pending |

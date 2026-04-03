@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "title": "NetStrike Scenario Event",
+  "type": "object",
+  "required": ["event_id", "timestamp", "phase", "technique_id", "tactic", "description", "source_module"],
+  "properties": {
+    "event_id": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "phase": { "type": "integer", "minimum": 1, "maximum": 7 },
+    "technique_id": { "type": "string", "example": "T1598.004" },
+    "tactic": { "type": "string", "example": "initial-access" },
+    "description": { "type": "string" },
+    "source_module": { "type": "string" },
+    "flag_triggered": { "type": ["string", "null"] },
+    "raw_data": { "type": "object" }
+  }
+}
