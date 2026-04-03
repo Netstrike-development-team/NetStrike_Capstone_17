@@ -188,8 +188,9 @@ def run(
     Returns list of profile dicts (sorted highest attack value first).
     """
     out_dir = Path(output_dir)
-    out_dir.mkdir(exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=True)
     events_file = Path(events_path)
+    events_file.parent.mkdir(parents=True, exist_ok=True)
 
     events: list[dict] = []
 
