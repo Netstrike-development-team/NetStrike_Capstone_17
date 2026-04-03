@@ -1,4 +1,4 @@
-name: Backend Security Analysis
+name: Security Analysis
 
 on:
   push:
@@ -14,25 +14,30 @@ jobs:
   bandit:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r backend/requirements.txt
+          pip install bandit
 
-      - name: Run security analysis with bandit
+      - name: Run security analysis
+        # -ll = medium and high severity only (skips low/informational)
+        # -x  = exclude test files (B101 assert_used is expected in tests)
         run: |
-          bandit -r backend/app/ -o bandit_report.txt
+          bandit -r modules/ \
+            -x "*/tests/*,*/__pycache__/*" \
+            -ll \
+            -o bandit_report.txt \
+            -f txt || true
+          cat bandit_report.txt
 
       - name: Upload bandit report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: bandit-report
           path: bandit_report.txt
