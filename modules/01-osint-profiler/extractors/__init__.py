@@ -220,14 +220,15 @@ def extract_phone_numbers(website_record: dict) -> list[dict]:
     source_path = data.get("source_path", "")
     context_map: dict[str, str] = {}
     try:
-        html = open(source_path).read()
+        with open(source_path, encoding="utf-8") as f:
+            html = f.read()
         # Build a context snippet for each phone
         for raw in raw_phones:
             idx = html.find(raw)
             if idx >= 0:
                 snippet = html[max(0, idx - 80): idx + len(raw) + 80]
                 context_map[raw] = snippet
-    except Exception:
+    except OSError:
         pass
 
     results = []
