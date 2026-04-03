@@ -337,16 +337,14 @@ class TestSSODetection:
         assert result is None
 
     def test_no_fuzzy_match_on_similar_words(self):
-        """Avoid false positives: 'okta' in a URL fragment not matching"""
+        """Avoid false positives: substring occurrences of 'okta' should not match."""
         fake_record = [_make_raw_record("job_postings", {
             "body": "Contact oktatisktaktikal@example.com for more info."
         })]
-        # 'Okta' is a substring of 'oktatisktaktikal': our regex should still
-        # match since we use exact keyword match, but this verifies behaviour
+        # 'Okta' only appears here as part of a larger token, so detection
+        # should not report a provider match.
         result = detect_sso_provider(fake_record)
-        # We accept it matches here: the important thing is it doesn't crash
-        # and returns a structured result or None
-        assert result is None or result["provider"] == "Okta"
+        assert result is None
 
     def test_source_id_in_result(self):
         job_records = JobPostingConnector().scrape()

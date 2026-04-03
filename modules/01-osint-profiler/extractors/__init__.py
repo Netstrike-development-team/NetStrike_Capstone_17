@@ -256,8 +256,28 @@ _SSO_KEYWORDS = [
     "Okta", "SSO", "Single Sign-On", "Single Sign On",
     "Okta administrator", "SAML", "identity provider",
 ]
+
+# Maps lowercase keyword to a canonical provider name.
+# Generic SSO/SAML keywords that don't identify a specific vendor are
+# labelled "Unknown" so the returned `provider` field always reflects the
+# actual evidence rather than assuming Okta.
+_KEYWORD_TO_PROVIDER: dict[str, str] = {
+    "okta": "Okta",
+    "okta administrator": "Okta",
+    "sso": "Unknown",
+    "single sign-on": "Unknown",
+    "single sign on": "Unknown",
+    "saml": "Unknown",
+    "identity provider": "Unknown",
+}
+
+# Sort longest first so "Okta administrator" is tried before "Okta".
+# Use word-boundary lookarounds to prevent matching inside larger tokens
+# (e.g., "oktatisktaktikal" must not match "Okta").
 _SSO_RE = re.compile(
-    "|".join(re.escape(kw) for kw in _SSO_KEYWORDS),
+    r"(?<!\w)(?:"
+    + "|".join(re.escape(kw) for kw in sorted(_SSO_KEYWORDS, key=len, reverse=True))
+    + r")(?!\w)",
     re.IGNORECASE,
 )
 
@@ -268,7 +288,9 @@ def detect_sso_provider(records: list[dict]) -> Optional[dict]:
     Avoids fuzzy matching to reduce false positives: exact keyword match only.
 
     Returns a dict with: provider, evidence_snippet, confidence, source_id
-    or None if not found.
+    or None if not found.  The ``provider`` value is derived from the matched
+    keyword so that generic SSO language (e.g. "SAML") does not incorrectly
+    attribute the result to a specific vendor.
     """
     for record in records:
         data = record["data"]
@@ -283,8 +305,9 @@ def detect_sso_provider(records: list[dict]) -> Optional[dict]:
             start = max(0, match.start() - 60)
             end = min(len(text), match.end() + 60)
             snippet = text[start:end].strip()
+            provider = _KEYWORD_TO_PROVIDER.get(match.group(0).lower(), "Unknown")
             return {
-                "provider": "Okta",
+                "provider": provider,
                 "evidence_snippet": snippet,
                 "confidence": EXPLICIT,
                 "source_id": record["source_id"],
