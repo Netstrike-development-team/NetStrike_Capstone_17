@@ -1,0 +1,87 @@
+# Meeting Minutes: Prof. Garzon Check-In
+**Date:** March 16, 2026
+**Attendees:** Capstone Team (Netstrike), Prof. Miguel Garzon
+**Context:** Follow-up meeting after the team's initial meeting with the Cyber Range team,
+during which the team learned the Cyber Range is building their own version of CITEF.
+This meeting was to update Prof. Garzon on the scope change and get his direction.
+
+---
+
+## Background
+
+Following our meeting with the Cyber Range team, we learned that they are developing
+their own CITEF platform and will be handling the hosting and deployment infrastructure.
+This meeting was held to update Prof. Garzon on this development and clarify the
+revised direction for our capstone contribution.
+
+---
+
+## Key Discussion Points
+
+### CITEF Capabilities and Limitations
+- Prof. Garzon has prior experience with CITEF and noted that it does not come with a
+  predefined set of attacks or preconfigured attack scenarios.
+- Attack automation in CITEF is generic and not scenario-specific out of the box.
+- Raised question: can CITEF simulate attacks in a cloud environment such as AWS?
+  This remains an open question to explore with the Cyber Range team.
+
+### Capstone Part 1 Grading Criteria
+Prof. Garzon confirmed the three pillars we will be evaluated on for Part 1:
+1. **Prototype**: a working, demonstrable implementation
+2. **Proof of Concept**: evidence the approach is technically viable
+3. **Communication**: clarity in presenting our work and direction
+
+### Revised Project Scope
+Given the Cyber Range team's involvement in platform infrastructure, Prof. Garzon
+advised us to narrow our focus to **attack simulation scenario design and implementation**.
+Specifically:
+
+- Select **one APT** and design a single, complete scenario around it.
+- Implement the scenario using CITEF.
+- Document our expectations going in and systematically identify CITEF's limitations
+  through the implementation process.
+- Explore how the scenario could serve both **training and research purposes** within
+  the Cyber Range context.
+
+### APT Selection Guidance
+- Prof. Garzon suggested picking a threat actor that is well-documented but not
+  overly technically complex to simulate.
+- Groups mentioned as candidates: **Scattered Spider**, **ShinyHunters** (known for
+  Salesforce attacks), APT28, APT29.
+- Recommendation: focus on one single scenario for one APT rather than trying to
+  cover multiple groups.
+- When communicating our direction to Prof. Lethbridge, frame it as: we are studying
+  and researching attacks perpetrated by real-world groups (e.g., Scattered Spider,
+  ShinyHunters) and building attack simulation scenarios based on their TTPs.
+
+---
+
+## Action Items
+
+| Item | Owner | Notes |
+|------|-------|-------|
+| Select final APT for the scenario | Team | Scattered Spider identified as leading candidate |
+| Draft scenario design document | Team | Present to Prof. Garzon at next check-in |
+| Send weekly email status updates to Prof. Garzon | Team | Every week going forward |
+| Schedule follow-up meeting with Prof. Garzon | Team | To present tangible progress |
+| Communicate scope change to Prof. Lethbridge | Team | Frame as refinement, not a pivot |
+| Investigate CITEF cloud simulation capability | Team | Can it simulate AWS-based attacks? |
+
+---
+
+## Decisions Made
+
+- Project scope is confirmed as: **design and implement one complete APT-style attack
+  simulation scenario in CITEF**, not a full platform build.
+- The Cyber Range team handles infrastructure and platform development; the capstone
+  team contributes the scenario content and simulation tooling.
+- Scattered Spider is the leading APT candidate based on its well-documented TTPs,
+  lack of zero-day requirements, and relevance to current threat landscape.
+
+---
+
+## Next Steps
+
+- Finalize APT selection and begin scenario design document.
+- Have something tangible to show at the next meeting with Prof. Garzon.
+- Begin weekly email updates to Prof. Garzon immediately.
