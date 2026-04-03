@@ -1,0 +1,18 @@
+---
+- name: Update package cache
+  apt:
+    update_cache: true
+  become: true
+
+- name: Install Python and curl
+  apt:
+    name:
+      - python3
+      - curl
+    state: present
+  become: true
+
+- name: Apply basic updates
+  apt:
+    upgrade: true
+  become: true
