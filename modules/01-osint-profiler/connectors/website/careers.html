@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Careers | SimCorp Financial Services</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: #2c3e50; background: #f5f7fa; }
+    header { background: #0b2545; }
+    .header-top { display: flex; align-items: center; justify-content: space-between; padding: 16px 56px; border-bottom: 1px solid #13315c; }
+    .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .logo-mark { width: 38px; height: 38px; background: #1d6fa4; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 18px; }
+    .logo-text { color: white; font-size: 20px; font-weight: 600; }
+    .logo-text span { color: #5bb8f5; }
+    .header-contact { color: #8faec8; font-size: 13px; text-align: right; }
+    .header-contact strong { color: white; display: block; font-size: 15px; }
+    nav { background: #13315c; }
+    nav ul { display: flex; list-style: none; padding: 0 56px; }
+    nav ul li a { display: block; padding: 14px 22px; color: #cdd9e8; text-decoration: none; font-size: 13.5px; font-weight: 500; }
+    nav ul li a:hover { color: white; background: rgba(255,255,255,0.08); }
+    nav ul li a.active { color: white; border-bottom: 3px solid #5bb8f5; }
+    .page-hero { background: linear-gradient(135deg, #0b2545 0%, #13315c 100%); color: white; padding: 64px 56px 48px; }
+    .breadcrumb { font-size: 12px; color: #8faec8; margin-bottom: 16px; }
+    .breadcrumb a { color: #8faec8; text-decoration: none; }
+    .breadcrumb span { color: #5bb8f5; }
+    .page-hero h1 { font-size: 38px; font-weight: 300; margin-bottom: 12px; }
+    .page-hero h1 strong { font-weight: 700; }
+    .page-hero p { font-size: 16px; opacity: 0.8; max-width: 600px; line-height: 1.6; }
+    .container { max-width: 1140px; margin: 0 auto; padding: 0 56px; }
+    .section { padding: 64px 0; }
+    .section-eyebrow { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: #1d6fa4; font-weight: 700; margin-bottom: 8px; }
+    .section h2 { font-size: 30px; color: #0b2545; font-weight: 700; margin-bottom: 10px; }
+    .section .lead { font-size: 16px; color: #5a6a7e; line-height: 1.65; margin-bottom: 40px; }
+    .divider { border: none; border-top: 1px solid #dee2e6; margin: 0; }
+    /* ── Culture stats ── */
+    .culture-bar { background: #1d4280; color: white; display: grid; grid-template-columns: repeat(5, 1fr); }
+    .culture-stat { padding: 24px 20px; border-right: 1px solid rgba(255,255,255,0.1); text-align: center; }
+    .culture-stat:last-child { border-right: none; }
+    .culture-value { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+    .culture-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #8faec8; }
+    /* ── Benefits ── */
+    .benefits-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .benefit-card { background: white; border-radius: 6px; padding: 24px; box-shadow: 0 2px 8px rgba(11,37,69,0.07); display: flex; gap: 16px; align-items: flex-start; }
+    .benefit-icon { width: 44px; height: 44px; background: #e8f4fd; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .benefit-card h4 { font-size: 14px; font-weight: 700; color: #0b2545; margin-bottom: 4px; }
+    .benefit-card p { font-size: 13px; color: #5a6a7e; line-height: 1.5; margin: 0; }
+    /* ── Job listings ── */
+    .jobs-layout { display: grid; grid-template-columns: 1fr 280px; gap: 32px; align-items: start; }
+    .job-card { background: white; border-radius: 6px; padding: 24px 28px; box-shadow: 0 2px 10px rgba(11,37,69,0.07); margin-bottom: 16px; border-left: 4px solid #1d6fa4; }
+    .job-card.it { border-left-color: #1d6fa4; }
+    .job-card.finance { border-left-color: #27ae60; }
+    .job-card.ops { border-left-color: #f57c00; }
+    .job-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .job-title { font-size: 18px; font-weight: 700; color: #0b2545; }
+    .job-badge { background: #e8f4fd; color: #1d6fa4; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.8px; white-space: nowrap; }
+    .job-badge.finance { background: #e8f5e9; color: #2e7d32; }
+    .job-badge.ops { background: #fff3e0; color: #e65100; }
+    .job-meta { display: flex; gap: 20px; font-size: 12.5px; color: #9aa5b4; margin-bottom: 12px; }
+    .job-meta span::before { margin-right: 5px; }
+    .job-desc { font-size: 13.5px; color: #4a5568; line-height: 1.6; margin-bottom: 14px; }
+    .job-reqs { font-size: 13px; color: #5a6a7e; }
+    .job-reqs ul { padding-left: 18px; margin-top: 6px; }
+    .job-reqs li { margin-bottom: 4px; line-height: 1.5; }
+    .job-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 14px; border-top: 1px solid #f0f0f0; }
+    .job-posted { font-size: 12px; color: #9aa5b4; }
+    .btn-apply { background: #1d4280; color: white; padding: 9px 22px; border-radius: 4px; font-size: 13px; font-weight: 600; text-decoration: none; }
+    .btn-apply:hover { background: #163360; }
+    /* ── Sidebar ── */
+    .sidebar-card { background: white; border-radius: 6px; padding: 22px; box-shadow: 0 2px 8px rgba(11,37,69,0.07); margin-bottom: 20px; }
+    .sidebar-card h3 { font-size: 15px; font-weight: 700; color: #0b2545; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
+    .sidebar-card p { font-size: 13px; color: #5a6a7e; line-height: 1.55; margin-bottom: 10px; }
+    .sidebar-card a { color: #1d6fa4; text-decoration: none; }
+    .sidebar-card .detail-row { font-size: 13px; padding: 6px 0; border-bottom: 1px solid #f8f9fa; color: #4a5568; }
+    .sidebar-card .detail-row:last-child { border-bottom: none; }
+    .sidebar-card .detail-row strong { color: #0b2545; }
+    footer { background: #0b2545; color: #8faec8; padding: 60px 56px 32px; }
+    .footer-grid { display: grid; grid-template-columns: 2.5fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 48px; }
+    footer h4 { color: white; font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 18px; font-weight: 700; }
+    footer ul { list-style: none; }
+    footer ul li { margin-bottom: 9px; font-size: 13px; }
+    footer ul li a { color: #8faec8; text-decoration: none; }
+    .footer-desc { font-size: 13.5px; line-height: 1.7; margin-bottom: 16px; }
+    .footer-address { font-size: 13px; line-height: 1.8; font-style: normal; }
+    .footer-address strong { color: white; display: block; margin-bottom: 4px; }
+    .footer-bottom { border-top: 1px solid #13315c; padding-top: 24px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+    .footer-bottom a { color: #8faec8; text-decoration: none; margin-left: 20px; }
+    .cert-badges { display: flex; gap: 12px; margin-top: 16px; }
+    .cert-badge { border: 1px solid #1d4280; border-radius: 4px; padding: 5px 10px; font-size: 11px; color: #8faec8; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-top">
+      <a href="index.html" class="logo">
+        <div class="logo-mark">SC</div>
+        <div class="logo-text">SimCorp <span>Financial</span></div>
+      </a>
+      <div class="header-contact">
+        <strong>recruiting@simcorp.com</strong>
+        Talent Acquisition &mdash; Mon–Fri
+      </div>
+    </div>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="services.html">Services</a></li>
+        <li><a href="leadership.html">Leadership</a></li>
+        <li><a href="careers.html" class="active">Careers</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="it-support.html">IT Support</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="page-hero">
+    <div class="breadcrumb"><a href="index.html">Home</a> &rsaquo; <span>Careers</span></div>
+    <h1>Grow With <strong>SimCorp</strong></h1>
+    <p>Join a team of 340 professionals shaping the future of institutional finance in Canada.
+       We offer competitive compensation, meaningful work, and a culture where excellence is celebrated.</p>
+  </div>
+
+  <div class="culture-bar">
+    <div class="culture-stat"><div class="culture-value">340</div><div class="culture-label">Employees</div></div>
+    <div class="culture-stat"><div class="culture-value">36%</div><div class="culture-label">Women in Leadership</div></div>
+    <div class="culture-stat"><div class="culture-value">4.2/5</div><div class="culture-label">Glassdoor Rating</div></div>
+    <div class="culture-stat"><div class="culture-value">91%</div><div class="culture-label">Retention Rate</div></div>
+    <div class="culture-stat"><div class="culture-value">12</div><div class="culture-label">Open Positions</div></div>
+  </div>
+
+  <div class="container">
+
+    <!-- Benefits -->
+    <section class="section">
+      <div class="section-eyebrow">Why SimCorp</div>
+      <h2>What We Offer</h2>
+      <p class="lead">Competitive compensation, strong benefits, and a culture of continuous learning.</p>
+      <div class="benefits-grid">
+        <div class="benefit-card">
+          <div class="benefit-icon">&#128176;</div>
+          <div>
+            <h4>Competitive Compensation</h4>
+            <p>Market-rate salaries benchmarked annually, performance bonuses up to 20%, and an ESOP for eligible senior staff.</p>
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">&#129680;</div>
+          <div>
+            <h4>Health &amp; Dental</h4>
+            <p>Comprehensive group benefits from Sun Life — 100% premium coverage for employees and 80% for dependants. No waiting period.</p>
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">&#127979;</div>
+          <div>
+            <h4>Learning &amp; Development</h4>
+            <p>$3,500 annual education budget. CFA, CPA, CHRP, and technology certification sponsorship available for all levels.</p>
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">&#127968;</div>
+          <div>
+            <h4>Hybrid &amp; Flexible Work</h4>
+            <p>3 days in-office, 2 remote for most roles. Summer Friday half-days and 20 days vacation from day one.</p>
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">&#128640;</div>
+          <div>
+            <h4>Career Mobility</h4>
+            <p>Internal transfer programme, rotational opportunities across Ottawa, Toronto, and Vancouver offices. 72% of senior hires are internal promotions.</p>
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">&#127881;</div>
+          <div>
+            <h4>Culture &amp; Community</h4>
+            <p>Monthly firm-wide socials, CCDI-certified diversity programmes, and the SimCorp Foundation charity-match initiative.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- Open Positions -->
+    <section class="section" id="openings">
+      <div class="section-eyebrow">Open Positions</div>
+      <h2>Current Openings</h2>
+      <p class="lead">All positions require successful completion of a background check. Send CVs to
+         <a href="mailto:recruiting@simcorp.com" style="color:#1d6fa4;">recruiting@simcorp.com</a>
+         or use the Apply button on the relevant posting.</p>
+
+      <div class="jobs-layout">
+        <div>
+
+          <!-- IT Job 1 -->
+          <div class="job-card it">
+            <div class="job-header">
+              <div class="job-title">Senior IT Systems Administrator</div>
+              <span class="job-badge">IT &amp; Security</span>
+            </div>
+            <div class="job-meta">
+              <span>&#128205; Ottawa, ON (Hybrid)</span>
+              <span>&#128197; Posted Feb 14, 2024</span>
+              <span>&#128188; Full-Time, Permanent</span>
+            </div>
+            <p class="job-desc">We are looking for an experienced Systems Administrator to join Rebecca Nwosu's IT team.
+               You will manage our Azure Active Directory and Okta identity platform, administer
+               Group Policy, and support the firm's 340-seat endpoint fleet across three offices.</p>
+            <div class="job-reqs">
+              <strong>Key Requirements:</strong>
+              <ul>
+                <li>5+ years enterprise IT administration (Azure AD, Windows Server)</li>
+                <li>Hands-on experience with <strong>Okta</strong> SSO and MFA configuration (Okta Certified Administrator preferred)</li>
+                <li>Proficiency with PowerShell scripting and group policy management</li>
+                <li>Familiarity with CrowdStrike Falcon or comparable EDR platform</li>
+                <li>Experience supporting a Cisco AnyConnect VPN environment</li>
+                <li>Valid Secret or Top-Secret clearance an asset</li>
+              </ul>
+            </div>
+            <div class="job-footer">
+              <span class="job-posted">Hiring Manager: Rebecca Nwosu &mdash; rebecca.nwosu@simcorp.com</span>
+              <a href="mailto:recruiting@simcorp.com?subject=Application: Senior IT Systems Administrator" class="btn-apply">Apply Now</a>
+            </div>
+          </div>
+
+          <!-- IT Job 2 -->
+          <div class="job-card it">
+            <div class="job-header">
+              <div class="job-title">Helpdesk Analyst (Level 2)</div>
+              <span class="job-badge">IT &amp; Security</span>
+            </div>
+            <div class="job-meta">
+              <span>&#128205; Ottawa, ON (On-Site)</span>
+              <span>&#128197; Posted Mar 1, 2024</span>
+              <span>&#128188; Full-Time, Permanent</span>
+            </div>
+            <p class="job-desc">Join our IT Helpdesk team handling Level 2 escalations for 340 staff across
+               Ottawa, Toronto, and Vancouver. You will own Okta account provisioning, MFA troubleshooting,
+               and endpoint support for Windows 11 and macOS.</p>
+            <div class="job-reqs">
+              <strong>Key Requirements:</strong>
+              <ul>
+                <li>2+ years helpdesk or desktop support in a corporate environment</li>
+                <li>Experience with <strong>Okta Verify</strong>, push MFA, and SSO troubleshooting</li>
+                <li>Microsoft 365 administration (Exchange Online, Teams, SharePoint)</li>
+                <li>Ticket management experience (ServiceNow or equivalent)</li>
+                <li>Excellent verbal communication; calm under pressure</li>
+              </ul>
+            </div>
+            <div class="job-footer">
+              <span class="job-posted">Hiring Manager: Rebecca Nwosu &mdash; helpdesk@simcorp.com</span>
+              <a href="mailto:recruiting@simcorp.com?subject=Application: Helpdesk Analyst L2" class="btn-apply">Apply Now</a>
+            </div>
+          </div>
+
+          <!-- Finance Job -->
+          <div class="job-card finance">
+            <div class="job-header">
+              <div class="job-title">Senior Finance Analyst</div>
+              <span class="job-badge finance">Finance</span>
+            </div>
+            <div class="job-meta">
+              <span>&#128205; Ottawa, ON (Hybrid)</span>
+              <span>&#128197; Posted Feb 28, 2024</span>
+              <span>&#128188; Full-Time, Permanent</span>
+            </div>
+            <p class="job-desc">Reporting to VP of Finance Sarah Mitchell, you will own monthly close processes,
+               variance analysis, and board-level financial reporting. This role partners closely with
+               the CFO and external auditors during year-end review.</p>
+            <div class="job-reqs">
+              <strong>Key Requirements:</strong>
+              <ul>
+                <li>CPA designation (or near completion)</li>
+                <li>4+ years in financial reporting or FP&amp;A in financial services</li>
+                <li>Proficiency in Excel (advanced), and Tableau reporting</li>
+                <li>Experience with IFRS financial statement preparation</li>
+                <li>Familiarity with Bloomberg data an asset</li>
+              </ul>
+            </div>
+            <div class="job-footer">
+              <span class="job-posted">Hiring Manager: Sarah Mitchell &mdash; finance@simcorp.com</span>
+              <a href="mailto:recruiting@simcorp.com?subject=Application: Senior Finance Analyst" class="btn-apply">Apply Now</a>
+            </div>
+          </div>
+
+          <!-- DevOps Job -->
+          <div class="job-card ops">
+            <div class="job-header">
+              <div class="job-title">DevOps Engineer (Cloud Infrastructure)</div>
+              <span class="job-badge ops">IT &amp; Engineering</span>
+            </div>
+            <div class="job-meta">
+              <span>&#128205; Ottawa, ON (Hybrid)</span>
+              <span>&#128197; Posted Mar 5, 2024</span>
+              <span>&#128188; Full-Time, Permanent</span>
+            </div>
+            <p class="job-desc">Supporting our CTO Rachel Torres, you will manage SimCorp's AWS cloud
+               infrastructure (S3, EC2, IAM) and maintain CI/CD pipelines for internal tooling.
+               You will also assist with <strong>Okta</strong> SAML integration for new cloud applications.</p>
+            <div class="job-reqs">
+              <strong>Key Requirements:</strong>
+              <ul>
+                <li>3+ years DevOps or cloud infrastructure (AWS required)</li>
+                <li>Experience with Terraform, Ansible, or CloudFormation</li>
+                <li>Familiarity with Okta SAML/OIDC application integration</li>
+                <li>Python or Bash scripting for automation</li>
+                <li>Knowledge of AWS IAM policy and S3 bucket governance</li>
+                <li>Experience with Docker and Kubernetes a strong asset</li>
+              </ul>
+            </div>
+            <div class="job-footer">
+              <span class="job-posted">Hiring Manager: Rachel Torres &mdash; rachel.torres@simcorp.com</span>
+              <a href="mailto:recruiting@simcorp.com?subject=Application: DevOps Engineer" class="btn-apply">Apply Now</a>
+            </div>
+          </div>
+
+        </div><!-- /jobs list -->
+
+        <!-- Sidebar -->
+        <div>
+          <div class="sidebar-card">
+            <h3>&#9993; Apply</h3>
+            <p>Send your CV and cover letter to our Talent Acquisition team:</p>
+            <p><strong><a href="mailto:recruiting@simcorp.com">recruiting@simcorp.com</a></strong></p>
+            <p>Subject line: <em>Application: [Role Title]</em></p>
+            <p>We review all applications within 5 business days and contact shortlisted candidates by email or phone.</p>
+          </div>
+          <div class="sidebar-card">
+            <h3>&#128336; Hiring Process</h3>
+            <div class="detail-row"><strong>1.</strong> CV &amp; cover letter review</div>
+            <div class="detail-row"><strong>2.</strong> 30-min phone screen (HR)</div>
+            <div class="detail-row"><strong>3.</strong> Technical / skills assessment</div>
+            <div class="detail-row"><strong>4.</strong> Panel interview (in-person)</div>
+            <div class="detail-row"><strong>5.</strong> Reference &amp; background check</div>
+            <div class="detail-row"><strong>6.</strong> Offer &amp; Okta onboarding</div>
+          </div>
+          <div class="sidebar-card">
+            <h3>&#128222; Recruiting Contact</h3>
+            <div class="detail-row"><strong>Email:</strong> <a href="mailto:recruiting@simcorp.com">recruiting@simcorp.com</a></div>
+            <div class="detail-row"><strong>HR Dept:</strong> <a href="mailto:hr@simcorp.com">hr@simcorp.com</a></div>
+            <div class="detail-row"><strong>Phone:</strong> +1-613-555-0110</div>
+            <div class="detail-row"><strong>Contact:</strong> Natasha Cole, HR Director</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /container -->
+
+  <footer>
+    <div class="footer-grid">
+      <div>
+        <h4>SimCorp Financial Services</h4>
+        <p class="footer-desc">A mid-market investment management and financial advisory firm
+           serving corporate clients across Canada since 1987.</p>
+        <address class="footer-address">
+          <strong>Head Office</strong>
+          150 Elgin Street, Suite 800<br>
+          Ottawa, Ontario &nbsp;K2P 1L4<br>
+          +1-613-555-0001 &nbsp;&bull;&nbsp; info@simcorp.com
+        </address>
+        <div class="cert-badges">
+          <span class="cert-badge">ISO 27001</span>
+          <span class="cert-badge">CIRO Member</span>
+          <span class="cert-badge">OSFI Regulated</span>
+        </div>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li><a href="about.html">About SimCorp</a></li>
+          <li><a href="leadership.html">Leadership Team</a></li>
+          <li><a href="careers.html">Careers</a></li>
+          <li><a href="about.html#offices">Our Offices</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Services</h4>
+        <ul>
+          <li><a href="services.html">Investment Management</a></li>
+          <li><a href="services.html">Financial Advisory</a></li>
+          <li><a href="services.html">Asset Servicing</a></li>
+          <li><a href="services.html">Digital Banking</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Support</h4>
+        <ul>
+          <li><a href="contact.html">Contact Us</a></li>
+          <li><a href="it-support.html">IT Support</a></li>
+          <li><a href="it-support.html">Employee Portal</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2024 SimCorp Financial Services Inc. &mdash; SIMULATED ENVIRONMENT</span>
+      <div><a href="#">Privacy Policy</a><a href="#">Terms of Use</a></div>
+    </div>
+  </footer>
+
+</body>
+</html>
