@@ -1,5 +1,1 @@
-pyVmomi
-requests
-pycryptodome
-python-dotenv
 PyYAML
