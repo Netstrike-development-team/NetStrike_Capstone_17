@@ -1,0 +1,709 @@
+[
+  {
+    "timestamp": "2026-04-03T19:12:50.612590Z",
+    "user_id": "jsmith@simcorp.com",
+    "attempt_number": 1,
+    "approved": false,
+    "threshold": 4
+  },
+  {
+    "timestamp": "2026-04-03T19:12:52.623430Z",
+    "user_id": "jsmith@simcorp.com",
+    "attempt_number": 2,
+    "approved": false,
+    "threshold": 4
+  },
+  {
+    "timestamp": "2026-04-03T19:12:54.635027Z",
+    "user_id": "jsmith@simcorp.com",
+    "attempt_number": 3,
+    "approved": false,
+    "threshold": 4
+  },
+  {
+    "timestamp": "2026-04-03T19:12:56.644317Z",
+    "user_id": "jsmith@simcorp.com",
+    "attempt_number": 4,
+    "approved": true,
+    "threshold": 4
+  },
+  {
+    "timestamp": "2026-04-03T20:01:35.881970Z",
+    "user_id": "jsmith@simcorp.com",
+    "attempt_number": 0,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-03T20:07:25.386921Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 0,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-03T20:09:13.968205Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 0,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-03T20:09:21.142226Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 0,
+    "approved": true,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-03T20:12:29.449921Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 1,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "automatic"
+  },
+  {
+    "timestamp": "2026-04-03T20:12:31.461459Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 2,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "automatic"
+  },
+  {
+    "timestamp": "2026-04-03T20:12:33.473589Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 3,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "automatic"
+  },
+  {
+    "timestamp": "2026-04-03T20:12:35.483952Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": true,
+    "threshold": 4,
+    "approval_type": "automatic"
+  },
+  {
+    "timestamp": "2026-04-03T20:13:01.508163Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-03T20:13:03.283724Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-03T20:13:03.970056Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-03T20:13:04.575583Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": true,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-03T20:17:33.967547Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 1,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "automatic"
+  },
+  {
+    "timestamp": "2026-04-03T20:17:43.975304Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 2,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "automatic"
+  },
+  {
+    "timestamp": "2026-04-03T20:17:52.615259Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 2,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-03T20:17:53.982803Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 3,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-03T20:17:58.724449Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 3,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-03T20:17:59.478281Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 3,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-03T20:18:01.169967Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 3,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-03T20:18:02.494514Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 3,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-03T20:18:03.990154Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-03T20:18:11.932442Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-03T20:18:13.202704Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": true,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-03T20:18:13.997664Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 5,
+    "approved": true,
+    "threshold": 10,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T00:56:53.848198Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 1,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "automatic"
+  },
+  {
+    "timestamp": "2026-04-04T00:57:03.859544Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 2,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "automatic"
+  },
+  {
+    "timestamp": "2026-04-04T00:57:07.262608Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 2,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-04T00:57:13.871501Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 3,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T00:57:23.879676Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T00:57:33.892541Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 5,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T00:57:43.904464Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 6,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T00:57:53.913637Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 7,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T00:58:03.924844Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 8,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T00:58:13.931836Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 9,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T00:58:23.942107Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 10,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T01:03:44.493550Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 1,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "automatic"
+  },
+  {
+    "timestamp": "2026-04-04T01:03:52.831218Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 1,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-04T01:03:54.504761Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 2,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T01:04:01.946477Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 2,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-04T01:04:04.516704Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 3,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T01:04:14.528595Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T01:04:18.654298Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-04T01:04:24.541615Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 5,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T01:04:34.552614Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 6,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T01:04:44.564504Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 7,
+    "approved": false,
+    "threshold": 10,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T01:05:37.241009Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 1,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "automatic"
+  },
+  {
+    "timestamp": "2026-04-04T01:05:47.252696Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 2,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "automatic"
+  },
+  {
+    "timestamp": "2026-04-04T01:05:57.264760Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 3,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "automatic"
+  },
+  {
+    "timestamp": "2026-04-04T01:06:07.276845Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": true,
+    "threshold": 4,
+    "approval_type": "automatic"
+  },
+  {
+    "timestamp": "2026-04-04T01:06:23.224263Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-04T01:10:45.009521Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 1,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "automatic"
+  },
+  {
+    "timestamp": "2026-04-04T01:11:00.020809Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 2,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "automatic"
+  },
+  {
+    "timestamp": "2026-04-04T01:11:13.181729Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 2,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-04T01:11:15.031219Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 3,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T01:11:30.043015Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T01:11:45.054209Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 5,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T01:12:00.065025Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 6,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T01:12:15.076079Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 7,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T01:12:15.116324Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 7,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-04T01:12:30.087326Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 8,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T01:12:45.097284Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 9,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T01:13:00.108017Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 10,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T01:13:04.658390Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 10,
+    "approved": true,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-04T01:16:58.796743Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 1,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "automatic"
+  },
+  {
+    "timestamp": "2026-04-04T01:17:10.713027Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 1,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-04T01:17:13.807724Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 2,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T01:17:18.973588Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 2,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-04T01:17:28.820199Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 3,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T01:17:32.377090Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 3,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-04T01:17:43.832558Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": true,
+    "threshold": 4,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T01:17:52.670856Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": true,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-04T01:23:23.743969Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 1,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "automatic"
+  },
+  {
+    "timestamp": "2026-04-04T01:23:38.754240Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 2,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "automatic"
+  },
+  {
+    "timestamp": "2026-04-04T01:23:39.052953Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 2,
+    "approved": false,
+    "approval_type": "human_manual"
+  },
+  {
+    "timestamp": "2026-04-04T01:23:53.766667Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 3,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T01:24:08.778963Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": true,
+    "threshold": 4,
+    "approval_type": "human"
+  },
+  {
+    "timestamp": "2026-04-04T02:03:20.442848Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 1,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "timeout"
+  },
+  {
+    "timestamp": "2026-04-04T02:03:35.453720Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 2,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "timeout"
+  },
+  {
+    "timestamp": "2026-04-04T02:03:50.468845Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 3,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "timeout"
+  },
+  {
+    "timestamp": "2026-04-04T02:04:05.444145Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 3,
+    "approved": false,
+    "approval_type": "manual"
+  },
+  {
+    "timestamp": "2026-04-04T02:04:05.480448Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": true,
+    "threshold": 4,
+    "approval_type": "timeout"
+  },
+  {
+    "timestamp": "2026-04-04T02:04:07.538755Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": false,
+    "approval_type": "manual"
+  },
+  {
+    "timestamp": "2026-04-04T02:04:29.472564Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": true,
+    "approval_type": "manual"
+  },
+  {
+    "timestamp": "2026-04-04T03:15:56.920851Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 1,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "timeout"
+  },
+  {
+    "timestamp": "2026-04-04T03:16:08.167429Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 1,
+    "approved": false,
+    "approval_type": "manual"
+  },
+  {
+    "timestamp": "2026-04-04T03:16:11.932068Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 2,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "timeout"
+  },
+  {
+    "timestamp": "2026-04-04T03:16:14.476070Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 2,
+    "approved": false,
+    "approval_type": "manual"
+  },
+  {
+    "timestamp": "2026-04-04T03:16:26.943738Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 3,
+    "approved": false,
+    "threshold": 4,
+    "approval_type": "timeout"
+  },
+  {
+    "timestamp": "2026-04-04T03:16:41.954377Z",
+    "user_id": "AyaAshleyPatrick@simcorp.com",
+    "attempt_number": 4,
+    "approved": true,
+    "threshold": 4,
+    "approval_type": "timeout"
+  }
+]
