@@ -31,6 +31,9 @@ logs/
 *.temp
 .cache/
 
+# Module runtime output
+modules/*/output/
+
 # Python
 __pycache__/
 *.pyc

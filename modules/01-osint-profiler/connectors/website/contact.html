@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Us | SimCorp Financial Services</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: #2c3e50; background: #f5f7fa; }
+    header { background: #0b2545; }
+    .header-top { display: flex; align-items: center; justify-content: space-between; padding: 16px 56px; border-bottom: 1px solid #13315c; }
+    .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .logo-mark { width: 38px; height: 38px; background: #1d6fa4; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 18px; }
+    .logo-text { color: white; font-size: 20px; font-weight: 600; }
+    .logo-text span { color: #5bb8f5; }
+    .header-contact { color: #8faec8; font-size: 13px; text-align: right; }
+    .header-contact strong { color: white; display: block; font-size: 15px; }
+    nav { background: #13315c; }
+    nav ul { display: flex; list-style: none; padding: 0 56px; }
+    nav ul li a { display: block; padding: 14px 22px; color: #cdd9e8; text-decoration: none; font-size: 13.5px; font-weight: 500; }
+    nav ul li a:hover { color: white; background: rgba(255,255,255,0.08); }
+    nav ul li a.active { color: white; border-bottom: 3px solid #5bb8f5; }
+    .page-hero { background: linear-gradient(135deg, #0b2545 0%, #13315c 100%); color: white; padding: 64px 56px 48px; }
+    .breadcrumb { font-size: 12px; color: #8faec8; margin-bottom: 16px; }
+    .breadcrumb a { color: #8faec8; text-decoration: none; }
+    .breadcrumb span { color: #5bb8f5; }
+    .page-hero h1 { font-size: 38px; font-weight: 300; margin-bottom: 12px; }
+    .page-hero h1 strong { font-weight: 700; }
+    .page-hero p { font-size: 16px; opacity: 0.8; max-width: 580px; line-height: 1.6; }
+    .container { max-width: 1140px; margin: 0 auto; padding: 0 56px; }
+    .section { padding: 64px 0; }
+    .section-eyebrow { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: #1d6fa4; font-weight: 700; margin-bottom: 8px; }
+    .section h2 { font-size: 30px; color: #0b2545; font-weight: 700; margin-bottom: 10px; }
+    .section .lead { font-size: 16px; color: #5a6a7e; line-height: 1.65; margin-bottom: 40px; }
+    .divider { border: none; border-top: 1px solid #dee2e6; margin: 0; }
+    /* ── Quick contacts bar ── */
+    .quick-bar { background: #1d4280; color: white; display: grid; grid-template-columns: repeat(4, 1fr); }
+    .quick-item { padding: 24px 28px; border-right: 1px solid rgba(255,255,255,0.1); }
+    .quick-item:last-child { border-right: none; }
+    .quick-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #8faec8; margin-bottom: 6px; }
+    .quick-value { font-size: 18px; font-weight: 700; color: white; margin-bottom: 2px; }
+    .quick-sub { font-size: 12px; color: #8faec8; }
+    /* ── Department directory ── */
+    .dept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .dept-card { background: white; border-radius: 6px; padding: 28px; box-shadow: 0 2px 10px rgba(11,37,69,0.07); border-left: 4px solid #1d6fa4; }
+    .dept-card.alt { border-left-color: #e53935; }
+    .dept-card.green { border-left-color: #27ae60; }
+    .dept-card.purple { border-left-color: #7b1fa2; }
+    .dept-card.orange { border-left-color: #f57c00; }
+    .dept-card.teal { border-left-color: #00796b; }
+    .dept-name { font-size: 16px; font-weight: 700; color: #0b2545; margin-bottom: 4px; }
+    .dept-head { font-size: 12px; color: #9aa5b4; margin-bottom: 16px; font-style: italic; }
+    .dept-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 13.5px; color: #4a5568; }
+    .dept-row:last-child { margin-bottom: 0; }
+    .dept-icon { color: #1d6fa4; width: 18px; }
+    .dept-row a { color: #1d6fa4; text-decoration: none; }
+    .dept-row a:hover { text-decoration: underline; }
+    .dept-hours { font-size: 12px; color: #9aa5b4; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f0f0f0; }
+    /* ── Office addresses ── */
+    .office-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .office-card { background: white; border-radius: 6px; padding: 28px; box-shadow: 0 2px 10px rgba(11,37,69,0.07); }
+    .office-city { font-size: 18px; font-weight: 700; color: #0b2545; margin-bottom: 4px; }
+    .office-type { font-size: 11px; color: #1d6fa4; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+    .office-detail-row { font-size: 13.5px; color: #4a5568; line-height: 1.8; }
+    .office-detail-row strong { color: #2c3e50; display: inline-block; min-width: 70px; }
+    .map-placeholder { height: 180px; background: linear-gradient(135deg, #e8f0fe, #e3f2fd); border-radius: 4px; margin-top: 16px; display: flex; align-items: center; justify-content: center; color: #1d6fa4; font-size: 13px; font-weight: 600; }
+    /* ── Contact Form ── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+    .form-card { background: white; border-radius: 6px; padding: 36px; box-shadow: 0 2px 12px rgba(11,37,69,0.09); }
+    .form-card h3 { font-size: 22px; color: #0b2545; margin-bottom: 6px; }
+    .form-card .form-sub { font-size: 14px; color: #5a6a7e; margin-bottom: 24px; line-height: 1.5; }
+    .form-group { margin-bottom: 18px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #4a5568; margin-bottom: 6px; }
+    input, select, textarea { width: 100%; padding: 10px 14px; border: 1px solid #dee2e6; border-radius: 4px; font-size: 14px; color: #2c3e50; font-family: inherit; }
+    textarea { height: 110px; resize: vertical; }
+    .form-note { font-size: 12px; color: #9aa5b4; margin-top: 12px; }
+    .btn-submit { background: #1d4280; color: white; border: none; padding: 13px 32px; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 8px; }
+    .faq-list { list-style: none; }
+    .faq-item { background: white; border-radius: 6px; padding: 20px 24px; box-shadow: 0 2px 8px rgba(11,37,69,0.06); margin-bottom: 12px; }
+    .faq-q { font-size: 15px; font-weight: 600; color: #0b2545; margin-bottom: 8px; }
+    .faq-a { font-size: 13.5px; color: #5a6a7e; line-height: 1.6; }
+    .faq-a a { color: #1d6fa4; }
+    footer { background: #0b2545; color: #8faec8; padding: 60px 56px 32px; }
+    .footer-grid { display: grid; grid-template-columns: 2.5fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 48px; }
+    footer h4 { color: white; font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 18px; font-weight: 700; }
+    footer ul { list-style: none; }
+    footer ul li { margin-bottom: 9px; font-size: 13px; }
+    footer ul li a { color: #8faec8; text-decoration: none; }
+    .footer-desc { font-size: 13.5px; line-height: 1.7; margin-bottom: 16px; }
+    .footer-address { font-size: 13px; line-height: 1.8; font-style: normal; }
+    .footer-address strong { color: white; display: block; margin-bottom: 4px; }
+    .footer-bottom { border-top: 1px solid #13315c; padding-top: 24px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+    .footer-bottom a { color: #8faec8; text-decoration: none; margin-left: 20px; }
+    .cert-badges { display: flex; gap: 12px; margin-top: 16px; }
+    .cert-badge { border: 1px solid #1d4280; border-radius: 4px; padding: 5px 10px; font-size: 11px; color: #8faec8; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-top">
+      <a href="index.html" class="logo">
+        <div class="logo-mark">SC</div>
+        <div class="logo-text">SimCorp <span>Financial</span></div>
+      </a>
+      <div class="header-contact">
+        <strong>+1-613-555-0001</strong>
+        Main Switchboard &mdash; Mon–Fri 8:00–18:00 EST
+      </div>
+    </div>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="services.html">Services</a></li>
+        <li><a href="leadership.html">Leadership</a></li>
+        <li><a href="careers.html">Careers</a></li>
+        <li><a href="contact.html" class="active">Contact</a></li>
+        <li><a href="it-support.html">IT Support</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="page-hero">
+    <div class="breadcrumb"><a href="index.html">Home</a> &rsaquo; <span>Contact</span></div>
+    <h1><strong>Contact</strong> SimCorp</h1>
+    <p>Reach the right team directly. Whether you're a client, job applicant, media contact,
+       or employee needing IT support, we have a dedicated line and inbox for you.</p>
+  </div>
+
+  <!-- Quick contact bar -->
+  <div class="quick-bar">
+    <div class="quick-item">
+      <div class="quick-label">Main Switchboard</div>
+      <div class="quick-value">+1-613-555-0001</div>
+      <div class="quick-sub">Mon–Fri 08:00–18:00 EST</div>
+    </div>
+    <div class="quick-item">
+      <div class="quick-label">IT Helpdesk</div>
+      <div class="quick-value">+1-613-555-0100</div>
+      <div class="quick-sub">Mon–Fri 07:00–20:00 EST</div>
+    </div>
+    <div class="quick-item">
+      <div class="quick-label">General Enquiries</div>
+      <div class="quick-value">info@simcorp.com</div>
+      <div class="quick-sub">Response within 1 business day</div>
+    </div>
+    <div class="quick-item">
+      <div class="quick-label">After-Hours IT</div>
+      <div class="quick-value">+1-613-555-0101</div>
+      <div class="quick-sub">Evenings, weekends &amp; holidays</div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- Department Directory -->
+    <section class="section" id="departments">
+      <div class="section-eyebrow">Directory</div>
+      <h2>Department Contacts</h2>
+      <p class="lead">Direct lines and inboxes for each department. For IT access issues, always use the Helpdesk line.</p>
+      <div class="dept-grid">
+
+        <div class="dept-card">
+          <div class="dept-name">IT Helpdesk</div>
+          <div class="dept-head">Managed by: Rebecca Nwosu, Director of IT</div>
+          <div class="dept-row"><span class="dept-icon">&#9742;</span> <strong>Primary:</strong>&nbsp; +1-613-555-0100</div>
+          <div class="dept-row"><span class="dept-icon">&#9742;</span> <strong>After Hours:</strong>&nbsp; +1-613-555-0101</div>
+          <div class="dept-row"><span class="dept-icon">&#9993;</span> <a href="mailto:helpdesk@simcorp.com">helpdesk@simcorp.com</a></div>
+          <div class="dept-row"><span class="dept-icon">&#128279;</span> Employee portal: <a href="it-support.html">simcorp.okta.com</a></div>
+          <div class="dept-hours">&#128337; Mon–Fri 07:00–20:00 &bull; After-hours line always active &bull; Avg. response: 12 min</div>
+        </div>
+
+        <div class="dept-card alt">
+          <div class="dept-name">Human Resources</div>
+          <div class="dept-head">Managed by: Natasha Cole, HR Director</div>
+          <div class="dept-row"><span class="dept-icon">&#9742;</span> +1-613-555-0110</div>
+          <div class="dept-row"><span class="dept-icon">&#9993;</span> <a href="mailto:hr@simcorp.com">hr@simcorp.com</a></div>
+          <div class="dept-row"><span class="dept-icon">&#9993;</span> Recruiting: <a href="mailto:recruiting@simcorp.com">recruiting@simcorp.com</a></div>
+          <div class="dept-hours">&#128337; Mon–Fri 08:30–17:00 &bull; Benefits enquiries: ext. 118</div>
+        </div>
+
+        <div class="dept-card green">
+          <div class="dept-name">Finance &amp; Accounts</div>
+          <div class="dept-head">Managed by: James Okafor, CFO</div>
+          <div class="dept-row"><span class="dept-icon">&#9742;</span> +1-613-555-0115</div>
+          <div class="dept-row"><span class="dept-icon">&#9993;</span> <a href="mailto:finance@simcorp.com">finance@simcorp.com</a></div>
+          <div class="dept-row"><span class="dept-icon">&#9993;</span> AP/AR: <a href="mailto:accounts@simcorp.com">accounts@simcorp.com</a></div>
+          <div class="dept-hours">&#128337; Mon–Fri 08:00–17:00 &bull; Invoice queries: ext. 125</div>
+        </div>
+
+        <div class="dept-card purple">
+          <div class="dept-name">Legal &amp; Compliance</div>
+          <div class="dept-head">Managed by: Aisha Mensah, General Counsel</div>
+          <div class="dept-row"><span class="dept-icon">&#9742;</span> +1-613-555-0001 ext. 201</div>
+          <div class="dept-row"><span class="dept-icon">&#9993;</span> <a href="mailto:legal@simcorp.com">legal@simcorp.com</a></div>
+          <div class="dept-row"><span class="dept-icon">&#9993;</span> Compliance: <a href="mailto:compliance@simcorp.com">compliance@simcorp.com</a></div>
+          <div class="dept-hours">&#128337; By appointment &bull; Regulatory matters: same-day acknowledgement</div>
+        </div>
+
+        <div class="dept-card orange">
+          <div class="dept-name">Security Operations</div>
+          <div class="dept-head">Managed by: Rachel Torres, CTO</div>
+          <div class="dept-row"><span class="dept-icon">&#9742;</span> +1-613-555-0120</div>
+          <div class="dept-row"><span class="dept-icon">&#9993;</span> <a href="mailto:security@simcorp.com">security@simcorp.com</a></div>
+          <div class="dept-row"><span class="dept-icon">&#9993;</span> Incident reporting: <a href="mailto:incident@simcorp.com">incident@simcorp.com</a></div>
+          <div class="dept-hours">&#128337; 24/7 SOC monitoring &bull; Critical incidents: call directly</div>
+        </div>
+
+        <div class="dept-card teal">
+          <div class="dept-name">Executive Office</div>
+          <div class="dept-head">CEO: Claire Fontaine</div>
+          <div class="dept-row"><span class="dept-icon">&#9742;</span> +1-613-555-0199</div>
+          <div class="dept-row"><span class="dept-icon">&#9993;</span> <a href="mailto:executive@simcorp.com">executive@simcorp.com</a></div>
+          <div class="dept-row"><span class="dept-icon">&#9993;</span> Media: <a href="mailto:media@simcorp.com">media@simcorp.com</a></div>
+          <div class="dept-hours">&#128337; By appointment &bull; Media enquiries: 24-hour response SLA</div>
+        </div>
+
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- Office Locations -->
+    <section class="section" id="offices">
+      <div class="section-eyebrow">Offices</div>
+      <h2>Visit Us</h2>
+      <p class="lead">Three offices across Canada. All visitor appointments should be booked in advance via the relevant department contact.</p>
+      <div class="office-grid">
+        <div class="office-card">
+          <div class="office-city">Ottawa</div>
+          <div class="office-type">&#9679; Head Office</div>
+          <div class="office-detail-row">
+            <strong>Address:</strong> 150 Elgin Street, Suite 800<br>
+            Ottawa, Ontario &nbsp; K2P 1L4<br><br>
+            <strong>Main:</strong> +1-613-555-0001<br>
+            <strong>Helpdesk:</strong> +1-613-555-0100<br>
+            <strong>Fax:</strong> +1-613-555-0009<br>
+            <strong>Email:</strong> <a href="mailto:ottawa@simcorp.com" style="color:#1d6fa4;">ottawa@simcorp.com</a><br><br>
+            <strong>Hours:</strong> Mon–Fri 08:00–18:00 EST
+          </div>
+          <div class="map-placeholder">&#128205; Ottawa, ON &mdash; Map Placeholder</div>
+        </div>
+        <div class="office-card">
+          <div class="office-city">Toronto</div>
+          <div class="office-type" style="color:#3949ab;">&#9679; Regional Office</div>
+          <div class="office-detail-row">
+            <strong>Address:</strong> 100 King Street West, Suite 5600<br>
+            Toronto, Ontario &nbsp; M5X 1C9<br><br>
+            <strong>Main:</strong> +1-416-555-0200<br>
+            <strong>Support:</strong> +1-416-555-0210<br>
+            <strong>Fax:</strong> +1-416-555-0209<br>
+            <strong>Email:</strong> <a href="mailto:toronto@simcorp.com" style="color:#1d6fa4;">toronto@simcorp.com</a><br><br>
+            <strong>Hours:</strong> Mon–Fri 07:30–19:00 EST
+          </div>
+          <div class="map-placeholder">&#128205; Toronto, ON &mdash; Map Placeholder</div>
+        </div>
+        <div class="office-card">
+          <div class="office-city">Vancouver</div>
+          <div class="office-type" style="color:#2e7d32;">&#9679; Regional Office</div>
+          <div class="office-detail-row">
+            <strong>Address:</strong> 745 Thurlow Street, Suite 2200<br>
+            Vancouver, BC &nbsp; V6E 0C5<br><br>
+            <strong>Main:</strong> +1-604-555-0300<br>
+            <strong>Support:</strong> +1-604-555-0310<br>
+            <strong>Fax:</strong> +1-604-555-0309<br>
+            <strong>Email:</strong> <a href="mailto:vancouver@simcorp.com" style="color:#1d6fa4;">vancouver@simcorp.com</a><br><br>
+            <strong>Hours:</strong> Mon–Fri 08:00–17:00 PT
+          </div>
+          <div class="map-placeholder">&#128205; Vancouver, BC &mdash; Map Placeholder</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- Contact Form + FAQ -->
+    <section class="section" id="form">
+      <div class="form-grid">
+        <div class="form-card">
+          <h3>Send Us a Message</h3>
+          <p class="form-sub">For general enquiries, client onboarding questions, or media requests.
+             For IT issues, please call <strong>+1-613-555-0100</strong> directly.</p>
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" placeholder="Your full name">
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" placeholder="your.email@organisation.com">
+          </div>
+          <div class="form-group">
+            <label>Organisation</label>
+            <input type="text" placeholder="Company or institution name">
+          </div>
+          <div class="form-group">
+            <label>Department</label>
+            <select>
+              <option>General Enquiry</option>
+              <option>Client Services</option>
+              <option>New Business</option>
+              <option>Media / Press</option>
+              <option>Compliance / Regulatory</option>
+              <option>Careers</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Message</label>
+            <textarea placeholder="How can we help you?"></textarea>
+          </div>
+          <button class="btn-submit">Submit Enquiry</button>
+          <p class="form-note">&#128274; Your message is encrypted in transit. We never share contact data with third parties. See our <a href="#" style="color:#1d6fa4;">Privacy Policy</a>.</p>
+        </div>
+        <div>
+          <div class="section-eyebrow" id="faq">Frequently Asked</div>
+          <h2 style="margin-bottom: 24px;">Quick Answers</h2>
+          <ul class="faq-list">
+            <li class="faq-item">
+              <div class="faq-q">I can't log into my employee account. Who do I call?</div>
+              <div class="faq-a">Contact the IT Helpdesk at <strong>+1-613-555-0100</strong> or email
+                <a href="mailto:helpdesk@simcorp.com">helpdesk@simcorp.com</a>. For after-hours emergencies
+                use <strong>+1-613-555-0101</strong>. You can also reset your password via the
+                self-service portal at <a href="it-support.html">simcorp.okta.com</a>.</div>
+            </li>
+            <li class="faq-item">
+              <div class="faq-q">How do I apply for a position at SimCorp?</div>
+              <div class="faq-a">Visit our <a href="careers.html">Careers page</a> to see open roles, or
+                send your CV directly to <a href="mailto:recruiting@simcorp.com">recruiting@simcorp.com</a>
+                with the role title in the subject line.</div>
+            </li>
+            <li class="faq-item">
+              <div class="faq-q">I'm a journalist — who handles media enquiries?</div>
+              <div class="faq-a">Please email <a href="mailto:media@simcorp.com">media@simcorp.com</a>
+                or contact the Executive Office at <strong>+1-613-555-0199</strong>. We aim to respond
+                to all media enquiries within 24 hours on business days.</div>
+            </li>
+            <li class="faq-item">
+              <div class="faq-q">How do I report a suspicious email or security concern?</div>
+              <div class="faq-a">Forward suspicious emails to <a href="mailto:security@simcorp.com">security@simcorp.com</a>
+                or call the Security Operations line at <strong>+1-613-555-0120</strong>.
+                Do not click any links in suspicious messages.</div>
+            </li>
+            <li class="faq-item">
+              <div class="faq-q">I need to file a complaint about SimCorp services.</div>
+              <div class="faq-a">Please write to <a href="mailto:compliance@simcorp.com">compliance@simcorp.com</a>
+                with details of your concern. All complaints are acknowledged within 2 business days and
+                escalated to our Client Ombudsman if unresolved within 5 days.</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /container -->
+
+  <footer>
+    <div class="footer-grid">
+      <div>
+        <h4>SimCorp Financial Services</h4>
+        <p class="footer-desc">A mid-market investment management and financial advisory firm
+           serving corporate clients across Canada since 1987.</p>
+        <address class="footer-address">
+          <strong>Head Office</strong>
+          150 Elgin Street, Suite 800<br>
+          Ottawa, Ontario &nbsp;K2P 1L4<br>
+          +1-613-555-0001 &nbsp;&bull;&nbsp; info@simcorp.com
+        </address>
+        <div class="cert-badges">
+          <span class="cert-badge">ISO 27001</span>
+          <span class="cert-badge">CIRO Member</span>
+          <span class="cert-badge">OSFI Regulated</span>
+        </div>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li><a href="about.html">About SimCorp</a></li>
+          <li><a href="leadership.html">Leadership Team</a></li>
+          <li><a href="careers.html">Careers</a></li>
+          <li><a href="about.html#offices">Our Offices</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Services</h4>
+        <ul>
+          <li><a href="services.html">Investment Management</a></li>
+          <li><a href="services.html">Financial Advisory</a></li>
+          <li><a href="services.html">Asset Servicing</a></li>
+          <li><a href="services.html">Digital Banking</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Support</h4>
+        <ul>
+          <li><a href="contact.html">Contact Us</a></li>
+          <li><a href="it-support.html">IT Support</a></li>
+          <li><a href="it-support.html">Employee Portal</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2024 SimCorp Financial Services Inc. &mdash; SIMULATED ENVIRONMENT</span>
+      <div><a href="#">Privacy Policy</a><a href="#">Terms of Use</a></div>
+    </div>
+  </footer>
+
+</body>
+</html>

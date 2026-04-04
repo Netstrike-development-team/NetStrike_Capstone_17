@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "title": "NetStrike Target Profile",
+  "description": "Output of the OSINT Profiler. Input to the Vishing Script Generator.",
+  "type": "object",
+  "required": ["id", "employee_id", "name", "title", "okta_username", "attack_value"],
+  "properties": {
+    "id":              { "type": "string", "description": "UUID" },
+    "employee_id":     { "type": "string", "example": "emp_005" },
+    "name":            { "type": "string" },
+    "first":           { "type": "string" },
+    "last":            { "type": "string" },
+    "title":           { "type": "string" },
+    "role_group":      { "type": "string", "enum": ["Helpdesk", "IT_Admin", "Executive", "Staff"] },
+    "department":      { "type": "string" },
+    "manager":         { "type": ["string", "null"] },
+    "email_candidates":{ "type": ["array", "null"] },
+    "phone_numbers":   { "type": "array" },
+    "okta_username":   { "type": "string" },
+    "sso_provider":    { "type": "string" },
+    "attack_value":    { "type": "integer", "minimum": 1, "maximum": 10 },
+    "source_id":       { "type": "string" },
+    "provenance_log":  { "type": "array" },
+    "created_at":      { "type": "string", "format": "date-time" }
+  }
+}
