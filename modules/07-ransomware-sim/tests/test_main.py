@@ -2,49 +2,50 @@
 """
 Test suite for Module 07 - Ransomware Simulation
 
-Tests the main.py entry point and event schema conformance.
+Tests the simplified main.py entry point and event schema conformance.
 """
 
 import sys
 import unittest
 from pathlib import Path
 from datetime import datetime
+import tempfile
+import shutil
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from main import run
+from main import run, run_standalone
 
 
 class TestRansomwareSimulationRun(unittest.TestCase):
-    """Test the main run() function"""
+    """Test the main run() function for orchestrator mode"""
     
     def setUp(self):
         """Set up test configuration"""
         self.test_config = {
-            "vcenter_config": {
+            "vcenter": {
                 "host": "vcenter.test.local",
                 "username": "test_admin",
                 "password": "test_password",
                 "port": 443
             },
             "target_vms": ["TEST-VM-01", "TEST-VM-02"],
-            "ransom_parameters": {
-                "amount_usd": 100000,
+            "ransom": {
+                "amount": "$100,000",
                 "currency": "Bitcoin",
                 "attacker_email": "test@example.com",
-                "payment_deadline_days": 7
+                "deadline_days": 7
             },
-            "target_file_extensions": [".docx", ".xlsx", ".pdf"],
-            "simulation_mode": True,
-            "backup_targets": ["C:\\Backup"]
+            "file_extensions": [".docx", ".xlsx", ".pdf"],
+            "simulation_mode": True
         }
     
-    def test_run_returns_list_of_events(self):
-        """Test that run() returns a list of events"""
+    def test_run_returns_5_events(self):
+        """Test that run() returns 5 events (one per phase)"""
         events = run(self.test_config)
         self.assertIsInstance(events, list)
-        self.assertGreater(len(events), 0)
+        self.assertEqual(len(events), 5, "Should emit exactly 5 events (5 phases)")
     
     def test_events_match_schema(self):
         """Test that all returned events match the NetStrike event schema"""
@@ -73,16 +74,15 @@ class TestRansomwareSimulationRun(unittest.TestCase):
             self.assertIsInstance(event["raw_data"], dict)
             
             # Validate constraints
-            self.assertGreaterEqual(event["phase"], 0)
-            self.assertLessEqual(event["phase"], 7)
+            self.assertEqual(event["phase"], 7)  # All events are phase 7
             
-            # Validate timestamp format
+            # Validate timestamp format (ISO 8601)
             try:
                 datetime.fromisoformat(event["timestamp"].replace("Z", "+00:00"))
             except ValueError:
                 self.fail(f"Invalid timestamp format: {event['timestamp']}")
     
-    def test_events_have_source_module(self):
+    def test_events_have_correct_source_module(self):
         """Test that all events have correct source module"""
         events = run(self.test_config)
         
@@ -92,23 +92,31 @@ class TestRansomwareSimulationRun(unittest.TestCase):
     def test_events_have_mitre_techniques(self):
         """Test that events reference MITRE ATT&CK techniques"""
         events = run(self.test_config)
+        expected_techniques = ["T1469", "T1526", "T1490", "T1486", "T1486"]
         
-        for event in events:
-            # Should be in format T####.### or similar
-            technique_id = event["technique_id"]
-            self.assertTrue(
-                technique_id.startswith("T") or technique_id == "UNKNOWN",
-                f"Invalid technique format: {technique_id}"
-            )
+        for i, event in enumerate(events):
+            self.assertEqual(event["technique_id"], expected_techniques[i],
+                f"Event {i} should use technique {expected_techniques[i]}")
     
-    def test_simulation_mode_enabled(self):
-        """Test that simulation mode prevents real execution"""
-        config = self.test_config.copy()
-        config["simulation_mode"] = True
+    def test_event_sequence(self):
+        """Test that events follow the correct sequence"""
+        events = run(self.test_config)
         
-        events = run(config)
-        # Should complete without errors
-        self.assertGreater(len(events), 0)
+        expected_tactics = ["initial-access", "reconnaissance", "defense-evasion", "impact", "impact"]
+        
+        for i, event in enumerate(events):
+            self.assertEqual(event["tactic"], expected_tactics[i],
+                f"Event {i} should have tactic {expected_tactics[i]}")
+    
+    def test_flag_7_in_final_event(self):
+        """Test that Flag 7 is triggered in the final event"""
+        events = run(self.test_config)
+        final_event = events[-1]
+        
+        self.assertIsNotNone(final_event.get("flag_triggered"),
+            "Final event should trigger a flag")
+        self.assertIn("Flag 7", final_event["flag_triggered"],
+            "Final event should trigger Flag 7")
     
     def test_config_with_custom_vms(self):
         """Test configuration with custom target VMs"""
@@ -116,12 +124,86 @@ class TestRansomwareSimulationRun(unittest.TestCase):
         config["target_vms"] = ["CUSTOM-VM-01", "CUSTOM-VM-02", "CUSTOM-VM-03"]
         
         events = run(config)
-        self.assertGreater(len(events), 0)
+        self.assertEqual(len(events), 5)
         
-        # At least one event should mention targeting VMs
-        descriptions = [e.get("description", "").lower() for e in events]
-        found_vm_reference = any("vm" in desc for desc in descriptions)
-        self.assertTrue(found_vm_reference)
+        # Check that VMs are referenced in raw_data
+        second_event = events[1]  # VM enumeration event
+        self.assertIn("vm_count", second_event["raw_data"])
+        self.assertEqual(second_event["raw_data"]["vm_count"], 3)
+    
+    def test_ransom_params_in_final_event(self):
+        """Test that ransom parameters are in final event"""
+        config = self.test_config.copy()
+        config["ransom"]["amount"] = "$750,000"
+        config["ransom"]["attacker_email"] = "custom@example.com"
+        
+        events = run(config)
+        final_event = events[-1]
+        
+        self.assertEqual(final_event["raw_data"]["ransom_amount"], "$750,000")
+        self.assertEqual(final_event["raw_data"]["attacker_contact"], "custom@example.com")
+
+
+class TestRansomwareStandalone(unittest.TestCase):
+    """Test the standalone mode for local file encryption"""
+    
+    def setUp(self):
+        """Create temporary test directory"""
+        self.test_dir = tempfile.mkdtemp()
+    
+    def tearDown(self):
+        """Clean up temporary directory"""
+        if Path(self.test_dir).exists():
+            shutil.rmtree(self.test_dir)
+    
+    def test_standalone_returns_5_events(self):
+        """Test that run_standalone() returns 5 events"""
+        events = run_standalone(self.test_dir)
+        self.assertEqual(len(events), 5)
+    
+    def test_standalone_creates_fake_files(self):
+        """Test that standalone mode creates fake files"""
+        events = run_standalone(self.test_dir)
+        
+        test_path = Path(self.test_dir)
+        files = list(test_path.glob("important_file_*"))
+        self.assertGreater(len(files), 0, "Should create fake files")
+    
+    def test_standalone_creates_encryption_markers(self):
+        """Test that standalone mode creates .RANSOMHUB markers"""
+        events = run_standalone(self.test_dir)
+        
+        test_path = Path(self.test_dir)
+        markers = list(test_path.glob("*.RANSOMHUB"))
+        self.assertGreater(len(markers), 0, "Should create .RANSOMHUB markers")
+    
+    def test_standalone_creates_ransom_note(self):
+        """Test that standalone mode creates ransom note"""
+        events = run_standalone(self.test_dir)
+        
+        ransom_note = Path(self.test_dir) / "README_RANSOMHUB.txt"
+        self.assertTrue(ransom_note.exists(), "Should create ransom note file")
+        
+        content = ransom_note.read_text()
+        self.assertIn("RANSOMHUB", content)
+        self.assertIn("contact@ransomhub.local", content)
+    
+    def test_standalone_events_match_schema(self):
+        """Test that standalone events match the schema"""
+        events = run_standalone(self.test_dir)
+        
+        required_fields = [
+            "event_id", "timestamp", "phase", "technique_id",
+            "tactic", "description", "source_module", "flag_triggered",
+            "raw_data"
+        ]
+        
+        for event in events:
+            for field in required_fields:
+                self.assertIn(field, event)
+            
+            self.assertIsInstance(event["event_id"], str)
+            self.assertIsInstance(event["timestamp"], str)
 
 
 class TestEventSchema(unittest.TestCase):
