@@ -18,6 +18,14 @@ from pathlib import Path
 from typing import Dict, List, Any
 import argparse
 import yaml
+import shutil
+
+from encryption import (
+    hex_key_to_bytes,
+    encrypt_file_aes,
+    decrypt_file_aes,
+    decrypt_files_aes
+)
 
 # Configure logging
 logging.basicConfig(
@@ -132,12 +140,13 @@ def run(config: dict) -> List[Dict[str, Any]]:
 # STANDALONE MODE: Local file encryption for testing/demonstration
 # ============================================================================
 
-def run_standalone(test_dir: str = None) -> List[Dict[str, Any]]:
+def run_standalone(test_dir: str = None, encryption_config: dict = None) -> List[Dict[str, Any]]:
     """
     Standalone mode: Create and encrypt fake files locally for testing.
     
     Args:
         test_dir: Directory to create fake files. If None, uses ./ransomware_test_files/
+        encryption_config: Dict with keys 'enabled', 'mode', 'static_key', 'copy_destination'
     
     Returns:
         list[dict]: 5 events from the simulated attack
@@ -146,6 +155,7 @@ def run_standalone(test_dir: str = None) -> List[Dict[str, Any]]:
         test_dir = "./ransomware_test_files"
     
     test_dir = Path(test_dir)
+    encryption_config = encryption_config or {}
     
     # Create test directory
     test_dir.mkdir(parents=True, exist_ok=True)
@@ -182,7 +192,7 @@ def run_standalone(test_dir: str = None) -> List[Dict[str, Any]]:
     ))
     
     # Phase 4: Encrypt files (create .RANSOMHUB markers)
-    encrypted_files = encrypt_files_locally(test_dir, fake_files)
+    encrypted_files = encrypt_files_locally(test_dir, fake_files, encryption_config)
     events.append(emit_event(
         phase=7,
         technique_id="T1486",
@@ -190,7 +200,8 @@ def run_standalone(test_dir: str = None) -> List[Dict[str, Any]]:
         description=f"Encrypted {encrypted_files} files locally",
         raw_data={
             "files_encrypted": encrypted_files,
-            "location": str(test_dir.absolute())
+            "location": str(test_dir.absolute()),
+            "encryption_mode": encryption_config.get("mode", "marker")
         }
     ))
     
@@ -233,10 +244,65 @@ def create_fake_files(target_dir: Path, count: int = 5) -> List[str]:
     return fake_files
 
 
-def encrypt_files_locally(target_dir: Path, fake_files: List[str]) -> int:
-    """Create encryption markers for fake files."""
+def encrypt_files_locally(target_dir: Path, fake_files: List[str], encryption_config: dict = None) -> int:
+    """
+    Encrypt files locally. Supports two modes:
+    - 'marker': Creates .RANSOMHUB marker files (non-destructive, original remains)
+    - 'safe': Copies files to destination, encrypts copies with AES-256 (easily reversible)
+    
+    Args:
+        target_dir: Directory containing files to encrypt
+        fake_files: List of filenames to encrypt
+        encryption_config: Dict with 'mode', 'static_key', 'copy_destination'
+    
+    Returns:
+        Number of files encrypted
+    """
+    encryption_config = encryption_config or {}
     encrypted_count = 0
     
+    # Check if safe encryption mode is enabled
+    if encryption_config.get("mode") == "safe":
+        try:
+            key_hex = encryption_config.get("static_key", "0123456789ABCDEF0123456789ABCDEF")
+            key_bytes = hex_key_to_bytes(key_hex)
+            copy_dest = Path(encryption_config.get("copy_destination", "./encrypted_copies"))
+            
+            # Create destination directory
+            copy_dest.mkdir(parents=True, exist_ok=True)
+            logger.info(f"[SAFE ENCRYPTION] Copying files to: {copy_dest.absolute()}")
+            
+            # Copy and encrypt each file
+            for filename in fake_files:
+                filepath = target_dir / filename
+                copy_path = copy_dest / filename
+                
+                try:
+                    # Copy file
+                    shutil.copy2(filepath, copy_path)
+                    logger.info(f"[SAFE ENCRYPTION] Copied {filename} to {copy_path.name}")
+                    
+                    # Encrypt the copy
+                    if encrypt_file_aes(copy_path, key_bytes):
+                        logger.info(f"[SAFE ENCRYPTION] Encrypted copy of {filename}")
+                        encrypted_count += 1
+                    else:
+                        logger.error(f"[SAFE ENCRYPTION] Failed to encrypt {filename}")
+                except Exception as e:
+                    logger.error(f"[SAFE ENCRYPTION] Error processing {filename}: {e}")
+            
+            logger.info(f"[SAFE ENCRYPTION] Complete. Original files remain in {target_dir}")
+            logger.info(f"[SAFE ENCRYPTION] To reverse: decrypt_files_aes('{copy_dest}', '{key_hex}')")
+        
+        except ValueError as e:
+            logger.error(f"[SAFE ENCRYPTION] Configuration error: {e}")
+            logger.info("Falling back to marker mode")
+            # Fall through to marker mode
+        
+        if encrypted_count > 0:
+            return encrypted_count
+    
+    # Default marker mode: create .RANSOMHUB markers (non-destructive)
     for filename in fake_files:
         filepath = target_dir / filename
         marker_path = filepath.with_suffix(filepath.suffix + ".RANSOMHUB")
@@ -251,7 +317,7 @@ def encrypt_files_locally(target_dir: Path, fake_files: List[str]) -> int:
                 f.write("\n\n[ENCRYPTED BY RANSOMHUB - ORIGINAL DATA REMAINS FOR DEMO]")
         
         encrypted_count += 1
-        logger.info(f"[STANDALONE] Marked file as encrypted: {filename}")
+        logger.info(f"[MARKER MODE] Marked file as encrypted: {filename}")
     
     return encrypted_count
 
@@ -450,16 +516,53 @@ if __name__ == "__main__":
         default="config.yaml",
         help="Path to YAML config file for orchestrator mode (default: config.yaml)"
     )
+    parser.add_argument(
+        "--decrypt",
+        type=str,
+        metavar="DIRECTORY",
+        help="Decrypt files in safe mode. Requires --key. Usage: --decrypt ./encrypted_copies --key YOUR_KEY"
+    )
+    parser.add_argument(
+        "--key",
+        type=str,
+        metavar="KEY_HEX",
+        help="32-char hex encryption key for decryption (e.g., 0123456789ABCDEF0123456789ABCDEF)"
+    )
     
     args = parser.parse_args()
     
     try:
-        if args.standalone:
+        if args.decrypt:
+            # Decryption mode
+            logger.info("=" * 70)
+            logger.info("RANSOMWARE SIMULATION - DECRYPTION MODE")
+            logger.info("=" * 70)
+            
+            if not args.key:
+                logger.error("--key required for decryption")
+                sys.exit(1)
+            
+            decrypted = decrypt_files_aes(args.decrypt, args.key)
+            logger.info(f"Successfully decrypted {decrypted} files")
+        
+        elif args.standalone:
             # Standalone mode: encrypt fake files locally
             logger.info("=" * 70)
             logger.info("RANSOMWARE SIMULATION - STANDALONE MODE")
             logger.info("=" * 70)
-            events = run_standalone(args.test_dir)
+            
+            # Load encryption config if using default config
+            encryption_config = {}
+            if os.path.exists(args.config):
+                try:
+                    with open(args.config, 'r') as f:
+                        config_data = yaml.safe_load(f)
+                        encryption_config = config_data.get("encryption", {})
+                        logger.info(f"Loaded encryption config from {args.config}")
+                except Exception as e:
+                    logger.warning(f"Could not load encryption config: {e}")
+            
+            events = run_standalone(args.test_dir, encryption_config)
             
             # Print results
             logger.info("\n" + "=" * 70)
