@@ -1,0 +1,54 @@
+# Module 07 - Ransomware Simulation Configuration
+# Simplified configuration for RansomHub-style ransomware simulation against ESXi infrastructure
+
+# ============================================================================
+# VCENTER CONFIGURATION
+# ============================================================================
+vcenter:
+  host: vcenter.citef.local
+  username: domain_admin
+  password: REDACTED_FOR_SECURITY
+  port: 443
+
+# ============================================================================
+# TARGET VIRTUAL MACHINES
+# ============================================================================
+target_vms:
+  - CITEF-VM-01
+  - CITEF-VM-02
+  - DB-Server
+
+# ============================================================================
+# RANSOM PARAMETERS
+# ============================================================================
+ransom:
+  amount: "$500,000"
+  currency: "Bitcoin"
+  attacker_email: contact@ransomhub.local
+  deadline_days: 7
+
+# ============================================================================
+# FILE EXTENSIONS TO TARGET
+# ============================================================================
+file_extensions:
+  - .vmdk
+  - .docx
+  - .xlsx
+  - .pdf
+  - .db
+
+# ============================================================================
+# ENCRYPTION MODE (Always enabled - choose between 'marker' or 'safe')
+# ============================================================================
+encryption:
+  mode: "marker"  # "marker" (default) = create .RANSOMHUB files, "safe" = copy + AES-256 encrypt
+  # These options are only used if mode: "safe"
+  static_key: "0123456789ABCDEF0123456789ABCDEF"  # 32 hex chars for 256-bit AES key
+  copy_destination: "./encrypted_copies"  # Where to copy files before encryption
+  
+# ============================================================================
+# SIMULATION MODE (Educational use)
+# ============================================================================
+simulation_mode: true
+logging:
+  level: INFO
