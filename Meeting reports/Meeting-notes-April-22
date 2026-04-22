@@ -1,0 +1,12 @@
+22-04-26 Meeting notes 
+
+- Went over clarification about the cloud component (it is a python mock up class)
+- Moved on to clarifying the role of the blue team : what possible actions can be led from their side, as monitoring logs and activating alerts wouldn't be too interactive 
+- 2 types of simulation as usually run by the cyberrange : red team (they run commands to attack the system) or blue team (they mitigate, monitor and defend against the automated attacks)
+- We concluded that we could produce a scenario where the participants can manually run the currently automated tasks
+- The participants could also be placed a context where the attack already occured and they have to do some forensic work to unveil what happened (we could combine our logs with 
+- We could also automate the steps our attacks but schedule them separately (using Ansible)
+- In the future, allowing the simulation to be run from the red team or the blue team side would be great
+- For the blue team scenario, part of it might have to do with reconnaissance and forensics, where the participants can assess the situation, after that the attack could continue and the blue team can either fail or success remedying the attack
+- The software component doesn't only have to be related to the security aspect of our capstone, we could also have other apis (in addition to the ones we already have) and ui 
+- We could incorporate a SIEM into our architecture, as the cyberrange can install Splunk on the VMs
