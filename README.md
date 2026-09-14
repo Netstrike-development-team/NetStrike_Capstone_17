@@ -96,6 +96,11 @@ See [`docs/operation-silent-spider.pdf`](docs/operation-silent-spider.pdf)
 for the full scenario design including MITRE ATT&CK mappings, exercise
 timeline, and CITEF environment requirements.
 
+The scoped, blue-team exercise definition for the 12-week MVP is in
+[`docs/exercise-design/`](docs/exercise-design/README.md). It defines the
+audience, learning objectives, roles, complete storyline and MSEL, telemetry
+requirements, safety/reset controls, and exercise-guide outlines.
+
 ---
 
 ## MITRE ATT&CK Coverage
