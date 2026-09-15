@@ -33,6 +33,7 @@ The exercise begins after an identity compromise has occurred. Participants inve
 | [03-telemetry-evidence-matrix.md](03-telemetry-evidence-matrix.md) | Required log sources, expected evidence, learner conclusions, and validation |
 | [04-safety-and-reset.md](04-safety-and-reset.md) | Safety controls, emergency stop, reset sequence, and readiness checks |
 | [05-guide-outlines.md](05-guide-outlines.md) | Participant, facilitator, evaluator, and solution-guide structures |
+| [06-citef-requirements-and-approval.md](06-citef-requirements-and-approval.md) | Meeting-ready CITEF questionnaire, zero-cost fallbacks, decision log, and approval record |
 
 ## Twelve-week delivery plan
 
@@ -79,3 +80,7 @@ Before implementation begins, the team and Cyber Range should approve:
 - the participant administration permissions;
 - the reset mechanism and snapshot ownership; and
 - the exercise duration and expected participant skill level.
+
+Use [06-citef-requirements-and-approval.md](06-citef-requirements-and-approval.md)
+to collect these decisions, record exceptions, re-estimate the backlog, and
+capture named approval.
