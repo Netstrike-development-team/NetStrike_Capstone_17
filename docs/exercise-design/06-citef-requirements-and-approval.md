@@ -4,6 +4,8 @@
 
 **Tracking issue:** [#76](https://github.com/Netstrike-development-team/NetStrike_Capstone_17/issues/76)
 
+**Working pull request:** [#87](https://github.com/Netstrike-development-team/NetStrike_Capstone_17/pull/87)
+
 **Target decision date:** September 28, 2026
 
 **Status:** Proposed decisions are ready for team and CITEF review. External confirmations and named sign-off are pending.
