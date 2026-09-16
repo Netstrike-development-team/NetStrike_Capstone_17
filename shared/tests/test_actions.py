@@ -9,6 +9,7 @@ from shared.actions import (
     ActionContractError,
     ActionDefinition,
     ActionEffect,
+    ActionExecutionError,
     ActionRegistry,
     ActionValidationError,
     ActionValidator,
@@ -225,3 +226,53 @@ def test_schema_rejects_unknown_fields_and_major_versions():
 def test_secret_parameters_are_redacted():
     action_request = request(parameters={"confirm": True, "access_token": "secret"})
     assert action_request["parameters"]["access_token"] == "[REDACTED]"
+
+
+def test_expected_handler_failure_preserves_safe_code_and_message():
+    registry = ActionRegistry()
+
+    def fail_readiness(_parameters, _target, _control):
+        raise ActionExecutionError("baseline_mismatch", "Synthetic baseline differs")
+
+    registry.register(
+        ActionDefinition(
+            action_id="exercise.readiness.validate",
+            phase="setup",
+            allowed_roles=frozenset({"technical_operator"}),
+            allowed_targets=frozenset({"exercise_run:run-test-001"}),
+            allowed_run_states=frozenset({"stopped"}),
+            max_timeout_seconds=10,
+            expected_effects=("validate baseline",),
+            rollback_method="not required for validation",
+            handler=fail_readiness,
+            rollback_handler=lambda _token, _control: (),
+        )
+    )
+    adapter = SafeActionAdapter(
+        context=EventContext(
+            exercise_id="silent-spider",
+            run_id="run-test-001",
+            source_kind="test",
+            source_component="readiness-test",
+            producer_version="1.0.0",
+        ),
+        registry=registry,
+        run_state=lambda _exercise, _run: "stopped",
+        event_sink=lambda _event: None,
+        clock=lambda: NOW,
+    )
+    action_request = make_action_request(
+        exercise_id="silent-spider",
+        run_id="run-test-001",
+        actor=entity("operator", "operator-01", role="technical_operator"),
+        action_id="exercise.readiness.validate",
+        target=entity("exercise_run", "run-test-001"),
+        idempotency_key="readiness-test",
+        dry_run=False,
+        timeout_seconds=10,
+        clock=lambda: NOW,
+    )
+    result = adapter.execute(action_request)
+    assert result["status"] == "failed"
+    assert result["error_code"] == "baseline_mismatch"
+    assert result["message"] == "Synthetic baseline differs"

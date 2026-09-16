@@ -10,6 +10,7 @@ from shared.actions import (
     ActionContractError,
     ActionDefinition,
     ActionEffect,
+    ActionExecutionError,
     ActionRegistry,
     ExecutionControl,
 )
@@ -127,6 +128,31 @@ class SyntheticIdentityState:
         self.mfa[identity_id]["decision"] = "approved" if approved else "denied"
         return token
 
+    def reset_to_baseline(self, control: ExecutionControl) -> str:
+        """Restore the deterministic fixture and retain a rollback snapshot."""
+
+        control.checkpoint()
+        self._rollback_sequence += 1
+        token = f"identity-rb-{self._rollback_sequence}"
+        self._rollbacks[token] = ("__state__", "", self.snapshot())
+        baseline = self.baseline()
+        self.identities = baseline.identities
+        self.sessions = baseline.sessions
+        self.factors = baseline.factors
+        self.mfa = baseline.mfa
+        return token
+
+    def readiness_mismatches(self) -> tuple[str, ...]:
+        """Return baseline sections that differ from the deterministic fixture."""
+
+        baseline = self.baseline().snapshot()
+        current = self.snapshot()
+        return tuple(
+            section
+            for section, expected in baseline.items()
+            if current[section] != expected
+        )
+
     def rollback(self, token: str, control: ExecutionControl) -> tuple[str, ...]:
         """Restore the exact prior object represented by a one-use token."""
 
@@ -135,6 +161,12 @@ class SyntheticIdentityState:
             collection, item_id, previous = self._rollbacks.pop(token)
         except KeyError as exc:
             raise ActionContractError("unknown or already-used rollback token") from exc
+        if collection == "__state__":
+            self.identities = previous["identities"]
+            self.sessions = previous["sessions"]
+            self.factors = previous["factors"]
+            self.mfa = previous["mfa"]
+            return ("restored pre-reset identity state",)
         getattr(self, collection)[item_id] = previous
         return (f"restored {collection}:{item_id}",)
 
@@ -149,11 +181,15 @@ def _decision_parameters(parameters: Mapping[str, Any]) -> None:
         raise ValueError("approved must be the only parameter and must be boolean")
 
 
+# The registry intentionally keeps all identity action definitions together so
+# reviewers can audit the complete role/target/run-state surface in one place.
+# pylint: disable=too-many-locals
 def register_identity_actions(
     registry: ActionRegistry,
     state: SyntheticIdentityState,
     *,
     approval_threshold: int = 4,
+    run_id: str = "run-identity-001",
 ) -> None:
     """Register checkpoint-one identity containment actions."""
 
@@ -182,6 +218,20 @@ def register_identity_actions(
         token = state.record_decision(target["id"], params["approved"], control)
         decision = state.mfa[target["id"]]["decision"]
         return ActionEffect((f"recorded simulated-user decision {decision}",), token)
+
+    def reset_identity(_params, _target, control):
+        token = state.reset_to_baseline(control)
+        return ActionEffect(("restored deterministic identity baseline",), token)
+
+    def validate_readiness(_params, _target, control):
+        control.checkpoint()
+        mismatches = state.readiness_mismatches()
+        if mismatches:
+            raise ActionExecutionError(
+                "baseline_mismatch",
+                "Identity baseline differs in: " + ", ".join(mismatches),
+            )
+        return ActionEffect(("validated deterministic identity baseline",))
 
     definitions = (
         (
@@ -254,5 +304,35 @@ def register_identity_actions(
             handler=record_decision,
             rollback_handler=state.rollback,
             parameter_validator=_decision_parameters,
+        )
+    )
+    registry.register(
+        ActionDefinition(
+            action_id="exercise.identity.reset",
+            phase="post_exercise",
+            allowed_roles=frozenset({"technical_operator", "facilitator"}),
+            allowed_targets=frozenset({f"exercise_run:{run_id}"}),
+            allowed_run_states=frozenset({"stopped", "resetting"}),
+            max_timeout_seconds=30,
+            expected_effects=("restore deterministic identity baseline",),
+            rollback_method="restore captured pre-reset identity state",
+            handler=reset_identity,
+            rollback_handler=state.rollback,
+            parameter_validator=_no_parameters,
+        )
+    )
+    registry.register(
+        ActionDefinition(
+            action_id="exercise.identity.readiness.validate",
+            phase="setup",
+            allowed_roles=frozenset({"technical_operator", "facilitator"}),
+            allowed_targets=frozenset({f"exercise_run:{run_id}"}),
+            allowed_run_states=frozenset({"setup", "stopped", "resetting", "ready"}),
+            max_timeout_seconds=15,
+            expected_effects=("validate deterministic identity baseline",),
+            rollback_method="not required for read-only validation",
+            handler=validate_readiness,
+            rollback_handler=lambda _token, _control: (),
+            parameter_validator=_no_parameters,
         )
     )
