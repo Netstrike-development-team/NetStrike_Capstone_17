@@ -58,6 +58,7 @@ and orchestrated by our custom Python scenario runner.
 | Local infrastructure | Vagrant + Ansible |
 | Dashboard | React + TypeScript + FastAPI |
 | Event schema | Versioned NetStrike JSON Schema |
+| State-changing actions | Versioned fail-closed safe-action adapter |
 
 ---
 

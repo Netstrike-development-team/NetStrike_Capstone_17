@@ -88,6 +88,11 @@ and CITEF-neutral Splunk mappings are documented in
 [`docs/event-contract-v1.md`](event-contract-v1.md). `schemas/event.json`
 remains the stable compatibility entry point.
 
+All state-changing operations additionally pass through the
+[`Safe Action Adapter Contract v1`](safe-action-contract-v1.md), which enforces
+role, run-state, allowlist, timeout, idempotency, dry-run, fail-safe, audit, and
+rollback policy before invoking a module handler.
+
 Every producer emits validated, run-correlated events in this shape:
 
 ```json

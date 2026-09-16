@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Netstrike-development-team/NetStrike_Capstone_17/blob/dev/schemas/action.v1.json",
+  "title": "NetStrike Safe Action Contract v1",
+  "oneOf": [{"$ref": "#/$defs/request"}, {"$ref": "#/$defs/result"}],
+  "$defs": {
+    "identifier": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "entity": {
+      "type": "object", "additionalProperties": false, "required": ["type", "id"],
+      "properties": {
+        "type": {"type": "string", "pattern": "^[a-z][a-z0-9_-]*$"},
+        "id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "display_name": {"type": "string", "minLength": 1, "maxLength": 256},
+        "role": {"type": "string", "minLength": 1, "maxLength": 128}
+      }
+    },
+    "rollback": {
+      "type": "object", "additionalProperties": false,
+      "required": ["supported", "required", "attempted", "succeeded"],
+      "properties": {
+        "supported": {"type": "boolean"}, "required": {"type": "boolean"},
+        "attempted": {"type": "boolean"}, "succeeded": {"type": "boolean"},
+        "method": {"type": "string", "minLength": 1}, "token": {"type": "string", "minLength": 1}
+      }
+    },
+    "request": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "record_type", "request_id", "idempotency_key", "timestamp", "exercise_id", "run_id", "actor", "action_id", "target", "parameters", "dry_run", "timeout_seconds"],
+      "properties": {
+        "schema_version": {"type": "string", "pattern": "^1\\.[0-9]+\\.[0-9]+$"},
+        "record_type": {"const": "request"}, "request_id": {"type": "string", "format": "uuid"},
+        "idempotency_key": {"$ref": "#/$defs/identifier"},
+        "timestamp": {"type": "string", "format": "date-time", "pattern": "Z$"},
+        "exercise_id": {"$ref": "#/$defs/identifier"}, "run_id": {"$ref": "#/$defs/identifier"},
+        "actor": {"allOf": [{"$ref": "#/$defs/entity"}, {"required": ["role"]}]},
+        "action_id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$"},
+        "target": {"$ref": "#/$defs/entity"}, "parameters": {"type": "object"},
+        "dry_run": {"type": "boolean"}, "timeout_seconds": {"type": "integer", "minimum": 1, "maximum": 300}
+      }
+    },
+    "result": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "record_type", "request_id", "idempotency_key", "exercise_id", "run_id", "action_id", "target", "status", "successful", "started_at", "finished_at", "cached", "effects", "rollback", "error_code", "message"],
+      "properties": {
+        "schema_version": {"type": "string", "pattern": "^1\\.[0-9]+\\.[0-9]+$"}, "record_type": {"const": "result"},
+        "request_id": {"type": "string", "format": "uuid"}, "idempotency_key": {"$ref": "#/$defs/identifier"},
+        "exercise_id": {"$ref": "#/$defs/identifier"}, "run_id": {"$ref": "#/$defs/identifier"},
+        "action_id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$"}, "target": {"$ref": "#/$defs/entity"},
+        "status": {"enum": ["executed", "dry_run", "denied", "failed", "timed_out", "cancelled"]},
+        "successful": {"type": "boolean"}, "started_at": {"type": "string", "format": "date-time", "pattern": "Z$"},
+        "finished_at": {"type": "string", "format": "date-time", "pattern": "Z$"}, "cached": {"type": "boolean"},
+        "effects": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}, "rollback": {"$ref": "#/$defs/rollback"},
+        "error_code": {"type": ["string", "null"]}, "message": {"type": "string", "minLength": 1, "maxLength": 1024}
+      }
+    }
+  }
+}
