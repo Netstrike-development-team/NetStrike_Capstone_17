@@ -8,13 +8,10 @@ MITRE ATT&CK :
 
 
 import os
-import sys
 import csv
 import logging
-import subprocess
 from pathlib import Path
 from datetime import datetime, timedelta
-import getpass
 
 # ---------------------------------------------------------------------------
 # Output folder structure
@@ -53,20 +50,15 @@ logger.addHandler(file_handler)
 logger.info("Logger initialized.")
 
 # ---------------------------------------------------------------------------
-# Ensure ldap3 is installed
+# Load the declared LDAP dependency
 # ---------------------------------------------------------------------------
 
 try:
     from ldap3 import Server, Connection, ALL, SUBTREE
-except ImportError:
-    logger.warning("ldap3 not found, installing...")
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "ldap3"])
-        from ldap3 import Server, Connection, ALL, SUBTREE
-        logger.info("ldap3 installed successfully.")
-    except Exception as e:
-        logger.error(f"Failed to install ldap3: {e}")
-        sys.exit(1)
+except ImportError as exc:
+    raise RuntimeError(
+        "ldap3 is required; install modules/05-lateral-movement/requirements.txt"
+    ) from exc
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -80,8 +72,9 @@ AD_USER = f"{DOMAIN}\\{USERNAME}"
 AD_SERVER = "ldap://simcorp.com"
 BASE_DN = "DC=simcorp,DC=com"
 
-# The password is discovered in the previous steps, osint-profiler
-AD_PASSWORD = getpass.getpass(f"Enter password for {AD_USER}: ") 
+# This legacy evidence generator never prompts or installs dependencies at import.
+# A lab-only credential must be injected explicitly when a facilitator runs it.
+AD_PASSWORD = os.environ.get("NETSTRIKE_AD_PASSWORD")
 
 CURRENT_STAGE = "STANDARD_USER"
 
@@ -129,15 +122,17 @@ def safe_search(conn, base, filter, attrs):
 # ---------------------------------------------------------------------------
 
 def connect():
+    if not AD_PASSWORD:
+        raise RuntimeError("NETSTRIKE_AD_PASSWORD must be set for the legacy LDAP audit")
     logger.info(f"Connecting to {AD_SERVER} as {AD_USER}...")
     try:
         server = Server(AD_SERVER, get_info=ALL)
         conn = Connection(server, user=AD_USER, password=AD_PASSWORD, auto_bind=True)
         logger.info("Connection successful.")
         return conn
-    except Exception as e:
-        logger.error(f"Failed to connect to AD: {e}")
-        sys.exit(1)
+    except Exception as exc:
+        logger.error("Failed to connect to AD: %s", exc)
+        raise RuntimeError("legacy LDAP connection failed") from exc
 
 # ---------------------------------------------------------------------------
 # User audit
@@ -299,7 +294,7 @@ def run():
 
     logger.info("AD audit complete.")
 
-    # 3. Escalating privileges 
+    # 3. Escalating privileges
     simulate_escalation("PRIVILEGED_USER", "Simulated escalation using pre-staged credentials")
 
 

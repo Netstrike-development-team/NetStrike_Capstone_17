@@ -1,0 +1,2 @@
+ldap3>=2.9,<3
+jsonschema[format]>=4.23,<5
