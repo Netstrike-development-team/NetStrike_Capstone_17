@@ -2,29 +2,47 @@
 #  MFA fatigue attacker script.
 #  Run this AFTER mock_okta_api.py is running.
 
-import requests
+import os
 import time
 from datetime import datetime
 
+import requests
+
 # Pull in our settings
-from config import (
-    TARGET_URL,
-    TARGET_USER,
-    BURST_SIZE,
-    INTERVAL_SECONDS,
-    LOG_FILE
-)
+from config import TARGET_URL, TARGET_USER, BURST_SIZE, INTERVAL_SECONDS, LOG_FILE
+
 
 def send_push(attempt_number: int) -> dict:
     """
     Send one push notification request to the mock Okta API.
     Returns the API's response as a dict.
     """
-    payload = {"user_id": TARGET_USER}
+    token = os.getenv("NETSTRIKE_ACTION_API_TOKEN")
+    if not token:
+        raise RuntimeError("NETSTRIKE_ACTION_API_TOKEN is required")
+    payload = {
+        "action_id": "identity.mfa.challenge.record",
+        "target": {"type": "identity", "id": "sarah"},
+        "idempotency_key": f"mfa-challenge-{attempt_number}",
+        "parameters": {},
+        "dry_run": False,
+        "timeout_seconds": 5,
+    }
 
     try:
-        response = requests.post(TARGET_URL, json=payload, timeout=5)
-        return response.json()
+        response = requests.post(
+            TARGET_URL,
+            json=payload,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        response.raise_for_status()
+        result = response.json()
+        outcome = result.get("effects", [""])[0]
+        return {
+            "approved": outcome.endswith("approved"),
+            "attempt_number": attempt_number,
+        }
 
     except requests.exceptions.ConnectionError:
         print("\n[!] ERROR: Could not connect to the mock Okta API.")

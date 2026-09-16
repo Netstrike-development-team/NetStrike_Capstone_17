@@ -25,6 +25,7 @@ class SyntheticIdentityState:
     identities: dict[str, dict[str, Any]] = field(default_factory=dict)
     sessions: dict[str, dict[str, Any]] = field(default_factory=dict)
     factors: dict[str, dict[str, Any]] = field(default_factory=dict)
+    mfa: dict[str, dict[str, Any]] = field(default_factory=dict)
     _rollbacks: dict[str, tuple[str, str, dict[str, Any]]] = field(default_factory=dict)
     _rollback_sequence: int = 0
 
@@ -52,6 +53,7 @@ class SyntheticIdentityState:
                     "kind": "simulated_push",
                 }
             },
+            mfa={"sarah": {"push_count": 0, "decision": "pending"}},
         )
 
     def snapshot(self) -> dict[str, Any]:
@@ -61,6 +63,7 @@ class SyntheticIdentityState:
             "identities": deepcopy(self.identities),
             "sessions": deepcopy(self.sessions),
             "factors": deepcopy(self.factors),
+            "mfa": deepcopy(self.mfa),
         }
 
     def _save_rollback(self, collection: str, item_id: str) -> str:
@@ -102,6 +105,28 @@ class SyntheticIdentityState:
         identity["credential_version"] += 1
         return token
 
+    def record_push(
+        self, identity_id: str, threshold: int, control: ExecutionControl
+    ) -> str:
+        """Record one synthetic challenge and its deterministic outcome."""
+
+        control.checkpoint()
+        token = self._save_rollback("mfa", identity_id)
+        state = self.mfa[identity_id]
+        state["push_count"] += 1
+        state["decision"] = "approved" if state["push_count"] >= threshold else "denied"
+        return token
+
+    def record_decision(
+        self, identity_id: str, approved: bool, control: ExecutionControl
+    ) -> str:
+        """Record the simulated user's explicit challenge decision."""
+
+        control.checkpoint()
+        token = self._save_rollback("mfa", identity_id)
+        self.mfa[identity_id]["decision"] = "approved" if approved else "denied"
+        return token
+
     def rollback(self, token: str, control: ExecutionControl) -> tuple[str, ...]:
         """Restore the exact prior object represented by a one-use token."""
 
@@ -119,8 +144,16 @@ def _no_parameters(parameters: Mapping[str, Any]) -> None:
         raise ValueError("this action accepts no parameters")
 
 
+def _decision_parameters(parameters: Mapping[str, Any]) -> None:
+    if set(parameters) != {"approved"} or not isinstance(parameters["approved"], bool):
+        raise ValueError("approved must be the only parameter and must be boolean")
+
+
 def register_identity_actions(
-    registry: ActionRegistry, state: SyntheticIdentityState
+    registry: ActionRegistry,
+    state: SyntheticIdentityState,
+    *,
+    approval_threshold: int = 4,
 ) -> None:
     """Register checkpoint-one identity containment actions."""
 
@@ -139,6 +172,16 @@ def register_identity_actions(
     def reset_credential(_params, target, control):
         token = state.reset_credential(target["id"], control)
         return ActionEffect((f"rotated synthetic credential {target['id']}",), token)
+
+    def record_push(_params, target, control):
+        token = state.record_push(target["id"], approval_threshold, control)
+        decision = state.mfa[target["id"]]["decision"]
+        return ActionEffect((f"recorded MFA challenge outcome {decision}",), token)
+
+    def record_decision(params, target, control):
+        token = state.record_decision(target["id"], params["approved"], control)
+        decision = state.mfa[target["id"]]["decision"]
+        return ActionEffect((f"recorded simulated-user decision {decision}",), token)
 
     definitions = (
         (
@@ -182,3 +225,34 @@ def register_identity_actions(
                 parameter_validator=_no_parameters,
             )
         )
+
+    registry.register(
+        ActionDefinition(
+            action_id="identity.mfa.challenge.record",
+            phase="identity",
+            allowed_roles=frozenset({"scenario_engine", "facilitator"}),
+            allowed_targets=frozenset({"identity:sarah"}),
+            allowed_run_states=RUNNING,
+            max_timeout_seconds=15,
+            expected_effects=("record synthetic MFA challenge",),
+            rollback_method="restore prior MFA challenge state",
+            handler=record_push,
+            rollback_handler=state.rollback,
+            parameter_validator=_no_parameters,
+        )
+    )
+    registry.register(
+        ActionDefinition(
+            action_id="identity.mfa.decision.record",
+            phase="identity",
+            allowed_roles=frozenset({"simulated_user", "facilitator"}),
+            allowed_targets=frozenset({"identity:sarah"}),
+            allowed_run_states=RUNNING,
+            max_timeout_seconds=15,
+            expected_effects=("record simulated-user MFA decision",),
+            rollback_method="restore prior MFA decision",
+            handler=record_decision,
+            rollback_handler=state.rollback,
+            parameter_validator=_decision_parameters,
+        )
+    )

@@ -1,31 +1,29 @@
-from flask import Flask, request, jsonify
-import json
 import os
-from datetime import datetime
+from flask import Flask, jsonify, request
 
-from config import API_PORT, APPROVAL_THRESHOLD, LOG_FILE
+from config import API_PORT, APPROVAL_THRESHOLD
+from identity_controller import (
+    AuthenticationError,
+    IdentityController,
+    load_token_principals,
+)
+from shared.actions import ActionContractError
+from shared.events import EventLedger
 
 app = Flask(__name__)
+event_ledger = EventLedger(
+    os.getenv("NETSTRIKE_EVENT_LEDGER", "output/identity_events.jsonl")
+)
+controller = IdentityController(
+    exercise_id=os.getenv("NETSTRIKE_EXERCISE_ID", "silent-spider"),
+    run_id=os.getenv("NETSTRIKE_RUN_ID", "local-development"),
+    tokens=load_token_principals(),
+    event_sink=event_ledger.append,
+    approval_threshold=APPROVAL_THRESHOLD,
+)
 
-push_counts = {}
-human_decision = {}  # stores whether human approved or denied
 
-
-#Log helper#
-def save_log_entry(entry: dict):
-    os.makedirs("logs", exist_ok=True)
-    existing = []
-    if os.path.exists(LOG_FILE):
-        with open(LOG_FILE, "r") as f:
-            try:
-                existing = json.load(f)
-            except json.JSONDecodeError:
-                existing = []
-    existing.append(entry)
-    with open(LOG_FILE, "w") as f:
-        json.dump(existing, f, indent=2)
-
-#Login#
+# Login#
 @app.route("/", methods=["GET"])
 def login():
     return """
@@ -145,7 +143,9 @@ def login():
     </body>
     </html>
     """
-#Victim#
+
+
+# Victim#
 @app.route("/victim", methods=["GET"])
 def victim_ui():
     return """
@@ -354,72 +354,59 @@ def victim_ui():
     """
 
 
-#Push count endpoint (for the UI live counter)#
+# Push count endpoint (for the UI live counter)#
 @app.route("/api/push-count", methods=["GET"])
 def push_count():
     user_id = request.args.get("user_id", "unknown")
-    return jsonify({"count": push_counts.get(user_id, 0)})
+    if user_id not in {"sarah", "AyaAshleyPatrick@simcorp.com"}:
+        return jsonify({"error": "Unknown synthetic identity"}), 404
+    return jsonify({"count": controller.state.mfa["sarah"]["push_count"]})
 
-# Main push endpoint
+
+@app.route("/api/action", methods=["POST"])
+def submit_action():
+    """Authenticate and submit one server-correlated safe action."""
+
+    try:
+        principal = controller.authenticate(request.headers.get("Authorization"))
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            raise ValueError("JSON object required")
+        result = controller.submit(principal, payload)
+    except AuthenticationError as exc:
+        return jsonify({"error": str(exc)}), 401
+    except (ValueError, TypeError, ActionContractError) as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    if result["status"] == "denied":
+        status = 409 if result["error_code"] == "idempotency_conflict" else 403
+        return jsonify(result), status
+    return jsonify(result), 200
+
+
+# Removed state-changing compatibility routes. Delivery clients must use the
+# authenticated /api/action boundary so actor identity cannot be forged.
 @app.route("/api/push", methods=["POST"])
 def handle_push():
-    data = request.get_json()
-    if not data or "user_id" not in data:
-        return jsonify({"error": "Missing user_id"}), 400
-
-    user_id = data["user_id"]
-    push_counts[user_id] = push_counts.get(user_id, 0) + 1
-    attempt_number = push_counts[user_id]
-
-    approved = attempt_number >= APPROVAL_THRESHOLD
-
-    log_entry = {
-        "timestamp":      datetime.utcnow().isoformat() + "Z",
-        "user_id":        user_id,
-        "attempt_number": attempt_number,
-        "approved":       approved,
-        "threshold":      APPROVAL_THRESHOLD,
-        "approval_type":  "timeout"
-    }
-    save_log_entry(log_entry)
-
-    status_label = "✅ APPROVED" if approved else "❌ denied"
-    print(f"  [push #{attempt_number:02d}] {user_id} → {status_label}")
-
-    return jsonify({"approved": approved, "attempt_number": attempt_number})
+    return jsonify({"error": "Use authenticated /api/action"}), 410
 
 
 # Human approve/deny endpoint
 @app.route("/api/human-approve", methods=["POST"])
 def human_approve():
-    data = request.get_json()
-    user_id = data.get("user_id", "unknown")
-    approved = data.get("approved", False)
+    return jsonify({"error": "Use authenticated /api/action"}), 410
 
-    log_entry = {
-        "timestamp":      datetime.utcnow().isoformat() + "Z",
-        "user_id":        user_id,
-        "attempt_number": push_counts.get(user_id, 0),
-        "approved":       approved,
-        "approval_type":  "manual"
-    }
-    save_log_entry(log_entry)
 
-    action = "APPROVED ✅" if approved else "DENIED ❌"
-    print(f"\n  [HUMAN DECISION] {user_id} manually {action}\n")
-
-    return jsonify({"approved": approved, "type": "manual"})
-
-#Reset endpoint#
+# Reset endpoint#
 @app.route("/api/reset", methods=["POST"])
 def reset():
-    push_counts.clear()
-    human_decision.clear()
-    print("\n  [reset] All counters cleared.\n")
-    return jsonify({"status": "reset successful"})
+    return (
+        jsonify({"error": "Reset is disabled pending the approved reset workflow"}),
+        410,
+    )
 
 
-#Start server#
+# Start server#
 if __name__ == "__main__":
     print(f"\n[*] Mock Okta API running on http://localhost:{API_PORT}")
     print(f"[*] Victim UI available at http://localhost:{API_PORT}/victim")
