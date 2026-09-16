@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "event_id": "41111111-1111-4111-8111-111111111111",
+  "timestamp": "2026-09-16T14:00:00.000Z",
+  "exercise_id": "silent-spider",
+  "sequence": 1,
+  "event_type": "test.event",
+  "phase": "control",
+  "source": { "kind": "test", "component": "contract-test" },
+  "actor": { "type": "system", "id": "test" },
+  "action": "event.validate",
+  "target": null,
+  "outcome": { "status": "success" },
+  "severity": "info",
+  "visibility": "internal",
+  "safety": {
+    "simulation_only": true,
+    "dry_run": true,
+    "within_allowlist": true,
+    "destructive": false
+  },
+  "provenance": { "producer": "contract-test", "producer_version": "1.0.0" },
+  "message": "This fixture is missing run_id",
+  "data": {}
+}

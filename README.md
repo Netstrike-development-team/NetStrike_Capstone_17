@@ -57,7 +57,7 @@ and orchestrated by our custom Python scenario runner.
 | Detection / SIEM | Wazuh + Elastic |
 | Local infrastructure | Vagrant + Ansible |
 | Dashboard | React + TypeScript + FastAPI |
-| Event schema | STIX 2.1-aligned JSON |
+| Event schema | Versioned NetStrike JSON Schema |
 
 ---
 

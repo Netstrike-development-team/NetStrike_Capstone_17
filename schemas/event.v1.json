@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Netstrike-development-team/NetStrike_Capstone_17/blob/dev/schemas/event.v1.json",
+  "title": "NetStrike Exercise Event v1",
+  "description": "CITEF-neutral event contract for simulation, learner-action, control, evaluation, reset, and after-action evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "timestamp",
+    "exercise_id",
+    "run_id",
+    "sequence",
+    "event_type",
+    "phase",
+    "source",
+    "actor",
+    "action",
+    "target",
+    "outcome",
+    "severity",
+    "visibility",
+    "safety",
+    "provenance",
+    "message",
+    "data"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic contract version. Consumers of this schema accept compatible v1 events."
+    },
+    "event_id": { "type": "string", "format": "uuid" },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$",
+      "description": "UTC event time formatted as RFC 3339 and ending in Z."
+    },
+    "exercise_id": { "$ref": "#/$defs/correlationId" },
+    "run_id": { "$ref": "#/$defs/correlationId" },
+    "sequence": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Strictly increasing sequence number within one exercise_id/run_id pair."
+    },
+    "event_type": { "$ref": "#/$defs/eventName" },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "setup",
+        "reconnaissance",
+        "identity",
+        "endpoint_ad",
+        "cloud",
+        "impact_recovery",
+        "control",
+        "post_exercise"
+      ]
+    },
+    "source": { "$ref": "#/$defs/source" },
+    "actor": { "$ref": "#/$defs/entity" },
+    "action": { "$ref": "#/$defs/eventName" },
+    "target": {
+      "oneOf": [
+        { "$ref": "#/$defs/entity" },
+        { "type": "null" }
+      ]
+    },
+    "outcome": { "$ref": "#/$defs/outcome" },
+    "severity": {
+      "type": "string",
+      "enum": ["info", "low", "medium", "high", "critical"]
+    },
+    "visibility": {
+      "type": "string",
+      "enum": ["participant", "facilitator", "evaluator", "internal"]
+    },
+    "safety": { "$ref": "#/$defs/safety" },
+    "provenance": { "$ref": "#/$defs/provenance" },
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048
+    },
+    "attack": {
+      "oneOf": [
+        { "$ref": "#/$defs/attack" },
+        { "type": "null" }
+      ]
+    },
+    "objective_ids": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^LO[1-9][0-9]*$" },
+      "uniqueItems": true,
+      "default": []
+    },
+    "checkpoint_id": {
+      "oneOf": [
+        { "type": "string", "pattern": "^DP[1-9][0-9]*$" },
+        { "type": "null" }
+      ]
+    },
+    "correlation_ids": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/correlationId" },
+      "uniqueItems": true,
+      "default": []
+    },
+    "raw_data_ref": {
+      "oneOf": [
+        { "type": "string", "format": "uri-reference" },
+        { "type": "null" }
+      ]
+    },
+    "data": {
+      "type": "object",
+      "description": "Redacted event-specific data. Reusable secrets and personal data are prohibited."
+    },
+    "extensions": {
+      "type": "object",
+      "description": "Namespaced backward-compatible additions for v1 minor versions.",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_-]*\\.[a-z][a-z0-9_.-]*$"
+      },
+      "default": {}
+    }
+  },
+  "$defs": {
+    "correlationId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "eventName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$"
+    },
+    "entity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "display_name": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "role": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "component"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "module",
+            "controller",
+            "action_adapter",
+            "participant",
+            "facilitator",
+            "platform",
+            "test"
+          ]
+        },
+        "component": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-z0-9][a-z0-9._-]*$"
+        },
+        "host": { "type": "string", "minLength": 1, "maxLength": 255 }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "success",
+            "failure",
+            "denied",
+            "blocked",
+            "pending",
+            "skipped",
+            "cancelled",
+            "error",
+            "unknown"
+          ]
+        },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 1024 }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["simulation_only", "dry_run", "within_allowlist", "destructive"],
+      "properties": {
+        "simulation_only": { "const": true },
+        "dry_run": { "type": "boolean" },
+        "within_allowlist": { "type": "boolean" },
+        "destructive": { "const": false },
+        "controls": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "uniqueItems": true,
+          "default": []
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["producer", "producer_version"],
+      "properties": {
+        "producer": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "producer_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$"
+        },
+        "source_event_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "ingested_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "integrity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["algorithm", "digest"],
+          "properties": {
+            "algorithm": { "const": "sha256" },
+            "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          }
+        }
+      }
+    },
+    "attack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["technique_id", "tactic"],
+      "properties": {
+        "technique_id": {
+          "type": "string",
+          "pattern": "^T[0-9]{4}(?:\\.[0-9]{3})?$"
+        },
+        "tactic": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-z][a-z0-9-]*$"
+        }
+      }
+    }
+  }
+}
