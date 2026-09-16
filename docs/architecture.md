@@ -58,7 +58,7 @@ The architecture is designed around two principles:
 | Infrastructure | Vagrant + Ansible | Provisions and configures all VMs reproducibly |
 | Dashboard frontend | React + TypeScript | Real-time attack timeline, MITRE heatmap, scoring |
 | Dashboard backend | FastAPI | Serves log analyzer output as REST API |
-| Event schema | STIX 2.1-aligned JSON | Shared contract between all modules and detection layer |
+| Event schema | Versioned NetStrike JSON Schema | Shared contract between modules, control, Splunk, evaluation, reset, and AAR |
 | Local cloud mock | LocalStack | Simulates AWS S3 for cloud exfil module (no real AWS) |
 
 ---
@@ -81,21 +81,41 @@ Every module's `main.py` exposes a `run(config: dict) -> list[Event]` function.
 The orchestrator calls this function, collects the returned events, and writes them
 to `scenario_events.jsonl` in the shared event schema.
 
-### Shared Event Schema (`schemas/event.json`)
+### Shared Event Schema (`schemas/event.v1.json`)
 
-Every module emits events in this format:
+The authoritative contract, migration rules, producer/consumer requirements,
+and CITEF-neutral Splunk mappings are documented in
+[`docs/event-contract-v1.md`](event-contract-v1.md). `schemas/event.json`
+remains the stable compatibility entry point.
+
+Every producer emits validated, run-correlated events in this shape:
 
 ```json
 {
-  "event_id": "uuid",
-  "timestamp": "2026-04-03T12:00:00Z",
-  "phase": 1,
-  "technique_id": "T1593.001",
-  "tactic": "reconnaissance",
-  "description": "OSINT profile built for Sarah Mitchell (VP Finance)",
-  "source_module": "01-osint-profiler",
-  "flag_triggered": "FLAG_1_RECON_COMPLETE",
-  "raw_data": {}
+  "schema_version": "1.0.0",
+  "event_id": "11111111-1111-4111-8111-111111111111",
+  "timestamp": "2026-09-16T14:00:00.000Z",
+  "exercise_id": "silent-spider",
+  "run_id": "run-20260916-001",
+  "sequence": 1,
+  "event_type": "recon.source.harvested",
+  "phase": "reconnaissance",
+  "source": {"kind": "module", "component": "01-osint-profiler"},
+  "actor": {"type": "system", "id": "01-osint-profiler"},
+  "action": "source.harvest",
+  "target": {"type": "dataset", "id": "simcorp-employees"},
+  "outcome": {"status": "success"},
+  "severity": "info",
+  "visibility": "facilitator",
+  "safety": {
+    "simulation_only": true,
+    "dry_run": false,
+    "within_allowlist": true,
+    "destructive": false
+  },
+  "provenance": {"producer": "01-osint-profiler", "producer_version": "1.0.0"},
+  "message": "Harvested five synthetic SimCorp employee records",
+  "data": {"record_count": 5, "synthetic": true}
 }
 ```
 

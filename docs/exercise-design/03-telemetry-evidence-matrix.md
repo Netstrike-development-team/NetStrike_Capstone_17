@@ -8,24 +8,33 @@ The participant guide must not include the answer or the expected evidence value
 
 ## Common event requirements
 
-Every NetStrike-generated event should contain:
+The authoritative machine-readable definition is the
+[NetStrike Exercise Event Contract v1](../event-contract-v1.md). Every
+NetStrike-generated event must validate against `schemas/event.v1.json` and
+contain:
 
+- `schema_version`: compatible semantic contract version;
 - `event_id`: globally unique event identifier;
+- `exercise_id`: exercise-definition identifier;
 - `run_id`: exercise-session identifier;
-- `timestamp`: UTC ISO-8601 timestamp;
+- `sequence`: strictly increasing ordering within the run;
+- `timestamp`: RFC 3339 UTC timestamp ending in `Z`;
 - `event_type`: stable machine-readable event name;
-- `source`: logical service or host;
+- `source`: producer kind, component, and optional logical host;
 - `actor`: account, process, or controller that performed the action;
 - `target`: affected identity, host, service, bucket, or file set;
 - `action`: attempted operation;
-- `outcome`: `success`, `failure`, `blocked`, or `simulated`;
-- `src_ip` and `dest_ip` where applicable;
-- `phase` and `msel_id`;
-- correct MITRE ATT&CK technique/tactic where applicable;
-- `scenario_visibility`: `participant`, `facilitator`, or `internal`; and
-- `raw_data`: source-specific details without real secrets.
+- `outcome`: structured status and optional reason;
+- `phase`, plus `checkpoint_id` and `objective_ids` when applicable;
+- `attack`: MITRE ATT&CK technique/tactic when applicable;
+- `visibility`: participant, facilitator, evaluator, or internal;
+- `safety`: simulation, dry-run, allowlist, and non-destructive markers;
+- `provenance`: producer/version and optional integrity metadata; and
+- `data`: source-specific, recursively redacted details.
 
-The existing `schemas/event.json` must be versioned and expanded rather than silently changed. Scenario-control events and defender actions should be supported; the schema must no longer assume that every event is an attack phase numbered 1–7.
+`schemas/event.json` is a stable reference to the current versioned schema.
+Scenario-control events and defender actions use the same contract; numeric
+attack-module phases are not permitted in v1.
 
 ## Required evidence
 

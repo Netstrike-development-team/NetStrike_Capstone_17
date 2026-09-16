@@ -36,6 +36,9 @@ modules/*/output/
 
 # Python
 __pycache__/
+.coverage
+.pytest_cache/
+htmlcov/
 *.pyc
 *.pyo
 *.pyd

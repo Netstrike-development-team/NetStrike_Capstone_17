@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0.0",
+  "event_id": "33333333-3333-4333-8333-333333333333",
+  "timestamp": "2026-09-16T15:25:00.000Z",
+  "exercise_id": "silent-spider",
+  "run_id": "run-20260916-001",
+  "sequence": 3,
+  "event_type": "control.checkpoint.evaluated",
+  "phase": "control",
+  "source": {
+    "kind": "controller",
+    "component": "scenario-engine",
+    "host": "CTRL01"
+  },
+  "actor": {
+    "type": "system",
+    "id": "scenario-engine"
+  },
+  "action": "checkpoint.evaluate",
+  "target": {
+    "type": "checkpoint",
+    "id": "DP2"
+  },
+  "outcome": {
+    "status": "success",
+    "reason": "All four identity and endpoint containment checks passed"
+  },
+  "severity": "info",
+  "visibility": "evaluator",
+  "safety": {
+    "simulation_only": true,
+    "dry_run": false,
+    "within_allowlist": true,
+    "destructive": false,
+    "controls": ["state-verifier"]
+  },
+  "provenance": {
+    "producer": "scenario-engine",
+    "producer_version": "1.0.0"
+  },
+  "message": "DP2 selected the contained identity variant",
+  "objective_ids": ["LO3"],
+  "checkpoint_id": "DP2",
+  "correlation_ids": ["22222222-2222-4222-8222-222222222222"],
+  "raw_data_ref": "evidence://run-20260916-001/checkpoints/DP2.json",
+  "data": {
+    "branch": "contained",
+    "checks_passed": 4,
+    "checks_required": 4
+  },
+  "extensions": {
+    "netstrike.evaluator_version": "1.0.0"
+  }
+}
