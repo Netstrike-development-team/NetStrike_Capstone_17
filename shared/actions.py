@@ -33,6 +33,14 @@ class ActionCancelled(ActionContractError):
     """Raised by a cooperative handler after a fail-safe stop."""
 
 
+class ActionExecutionError(ActionContractError):
+    """Safe, expected handler failure suitable for an action result."""
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code
+
+
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -461,6 +469,15 @@ class SafeActionAdapter:
                 successful=False,
                 started_at=started_at,
                 error_code=status,
+                message=str(exc),
+            )
+        except ActionExecutionError as exc:
+            result = self._result(
+                request,
+                status="failed",
+                successful=False,
+                started_at=started_at,
+                error_code=exc.code,
                 message=str(exc),
             )
         # A handler is an extension boundary. Unknown faults are converted to a

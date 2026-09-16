@@ -401,7 +401,7 @@ def human_approve():
 @app.route("/api/reset", methods=["POST"])
 def reset():
     return (
-        jsonify({"error": "Reset is disabled pending the approved reset workflow"}),
+        jsonify({"error": "Use authenticated exercise.identity.reset action"}),
         410,
     )
 

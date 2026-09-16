@@ -23,6 +23,7 @@ NOW = datetime(2026, 9, 16, 21, 0, tzinfo=timezone.utc)
 ENGINE_TOKEN = "engine-token-0001"
 LEARNER_TOKEN = "learner-token-001"
 SIMULATED_USER_TOKEN = "sim-user-token-01"
+OPERATOR_TOKEN = "operator-token-01"
 
 
 @pytest.fixture
@@ -35,6 +36,7 @@ def controller_system():
             ENGINE_TOKEN: Principal("scenario-engine", "scenario_engine"),
             LEARNER_TOKEN: Principal("learner-01", "identity_responder"),
             SIMULATED_USER_TOKEN: Principal("sarah-roleplayer", "simulated_user"),
+            OPERATOR_TOKEN: Principal("operator-01", "technical_operator"),
         },
         event_sink=events.append,
         approval_threshold=2,
@@ -137,3 +139,78 @@ def test_http_boundary_and_removed_legacy_routes(controller_system, monkeypatch)
     assert client.post("/api/push", json={}).status_code == 410
     assert client.post("/api/human-approve", json={}).status_code == 410
     assert client.post("/api/reset", json={}).status_code == 410
+
+
+def reset_controller(run_state="stopped"):
+    events = []
+    controller = IdentityController(
+        exercise_id="silent-spider",
+        run_id="run-reset-001",
+        tokens={OPERATOR_TOKEN: Principal("operator-01", "technical_operator")},
+        event_sink=events.append,
+        run_state=lambda _exercise, _run: run_state,
+        clock=lambda: NOW,
+    )
+    return controller, events
+
+
+def reset_payload(action_id, key):
+    return payload(
+        action_id,
+        target={"type": "exercise_run", "id": "run-reset-001"},
+        idempotency_key=key,
+    )
+
+
+def test_readiness_reports_mismatch_then_passes_after_reset():
+    controller, events = reset_controller()
+    operator = controller.authenticate(f"Bearer {OPERATOR_TOKEN}")
+    controller.state.sessions["sess-red-01"]["active"] = False
+    controller.state.mfa["sarah"]["push_count"] = 7
+
+    failed = controller.submit(
+        operator,
+        reset_payload("exercise.identity.readiness.validate", "readiness-before"),
+    )
+    assert failed["status"] == "failed"
+    assert failed["error_code"] == "baseline_mismatch"
+    assert "sessions" in failed["message"]
+    assert "mfa" in failed["message"]
+
+    reset_result = controller.submit(
+        operator, reset_payload("exercise.identity.reset", "reset-identity")
+    )
+    assert reset_result["successful"] is True
+    assert controller.state.readiness_mismatches() == ()
+
+    ready = controller.submit(
+        operator,
+        reset_payload("exercise.identity.readiness.validate", "readiness-after"),
+    )
+    assert ready["successful"] is True
+    assert any(event["action"] == "exercise.identity.reset" for event in events)
+
+
+def test_reset_rollback_restores_pre_reset_state():
+    controller, _events = reset_controller()
+    operator = controller.authenticate(f"Bearer {OPERATOR_TOKEN}")
+    controller.state.identities["sarah"]["enabled"] = False
+    result = controller.submit(
+        operator, reset_payload("exercise.identity.reset", "reset-with-rollback")
+    )
+    assert controller.state.identities["sarah"]["enabled"] is True
+
+    controller.adapter.rollback(
+        result["request_id"],
+        {"type": "operator", "id": "operator-01", "role": "technical_operator"},
+    )
+    assert controller.state.identities["sarah"]["enabled"] is False
+
+
+def test_reset_is_denied_while_run_is_active():
+    controller, _events = reset_controller(run_state="running")
+    operator = controller.authenticate(f"Bearer {OPERATOR_TOKEN}")
+    result = controller.submit(
+        operator, reset_payload("exercise.identity.reset", "unsafe-live-reset")
+    )
+    assert result["error_code"] == "invalid_run_state"

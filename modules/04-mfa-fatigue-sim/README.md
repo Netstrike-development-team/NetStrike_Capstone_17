@@ -35,6 +35,19 @@ export NETSTRIKE_RUN_ID='run-001'
 The simulator reads `NETSTRIKE_ACTION_API_TOKEN` and submits
 `identity.mfa.challenge.record` through this authenticated boundary.
 
+## Reset and readiness
+
+Exercise staff use the same authenticated endpoint for:
+
+- `exercise.identity.reset`, permitted only while the run is `stopped` or
+  `resetting`; and
+- `exercise.identity.readiness.validate`, permitted during setup/reset/ready
+  states.
+
+Reset captures a rollback snapshot and restores identities, sessions, MFA
+factors, challenge counts, and decisions to the deterministic fixture.
+Readiness fails with `baseline_mismatch` and names each differing state section.
+
 Run the integration tests from the repository root:
 
 ```bash

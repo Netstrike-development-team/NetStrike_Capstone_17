@@ -66,7 +66,10 @@ class IdentityController:
         self.state = SyntheticIdentityState.baseline()
         registry = ActionRegistry()
         register_identity_actions(
-            registry, self.state, approval_threshold=approval_threshold
+            registry,
+            self.state,
+            approval_threshold=approval_threshold,
+            run_id=run_id,
         )
         self.adapter = SafeActionAdapter(
             context=EventContext(
