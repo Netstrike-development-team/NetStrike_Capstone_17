@@ -9,8 +9,8 @@ API_PORT = 5050
 # This simulates a fatigued employee finally tapping "Approve".
 APPROVAL_THRESHOLD = 4
 
-# Full URL of the mock API endpoint
-TARGET_URL = "http://localhost:5050/api/push"
+# Authenticated safe-action endpoint
+TARGET_URL = "http://localhost:5050/api/action"
 
 # Who the attacker is targeting (fake employee ID)
 TARGET_USER = "AyaAshleyPatrick@simcorp.com"
