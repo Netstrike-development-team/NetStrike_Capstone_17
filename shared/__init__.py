@@ -1,5 +1,17 @@
 """Shared contracts used across NetStrike services and modules."""
 
+from .actions import (
+    ACTION_SCHEMA_VERSION,
+    ActionContractError,
+    ActionDefinition,
+    ActionEffect,
+    ActionRegistry,
+    ActionValidationError,
+    ActionValidator,
+    ExecutionControl,
+    SafeActionAdapter,
+    make_action_request,
+)
 from .events import (
     CURRENT_SCHEMA_VERSION,
     EventBuilder,
@@ -17,6 +29,13 @@ from .events import (
 )
 
 __all__ = [
+    "ACTION_SCHEMA_VERSION",
+    "ActionContractError",
+    "ActionDefinition",
+    "ActionEffect",
+    "ActionRegistry",
+    "ActionValidationError",
+    "ActionValidator",
     "CURRENT_SCHEMA_VERSION",
     "EventBuilder",
     "EventCompatibilityError",
@@ -26,8 +45,11 @@ __all__ = [
     "EventLedgerError",
     "EventValidationError",
     "EventValidator",
+    "ExecutionControl",
+    "SafeActionAdapter",
     "correlation_key",
     "entity",
+    "make_action_request",
     "redact_sensitive",
     "safety_marker",
 ]
