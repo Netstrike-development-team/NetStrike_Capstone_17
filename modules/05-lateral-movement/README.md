@@ -1,108 +1,81 @@
-# Module 5 : Lateral Movement
-
-## Overview
-This module performs **Active Directory enumeration** and generates audit data for use in our **threat‑simulation environment**.  
-It supports the *Discovery*, *Privilege Escalation* and *Lateral Movement* phases of a simulated attack, producing realistic data and expected behaviors.
-
-The module collects:
-
-- Domain users  
-- Security groups  
-- Computer objects  
-- Account metadata (UAC flags, timestamps, group memberships)  
-
-All results are exported to structured CSV files and logged for detection scoring.
-
----
+# Module 5: Endpoint and Active Directory response
 
 ## Purpose
-This module is used during **Phase 5: Discovery & Lateral Movement** of the simulation.  
-It provides attacker‑like enumeration activity while remaining fully safe and non‑intrusive.
 
-### MITRE ATT&CK Techniques (Defensive Mapping)
+This module supplies the endpoint and directory state used by the Silent Spider
+blue-team exercise. It has two deliberately separate surfaces:
 
-| Technique ID | Name |
-|--------------|------|
-| **T1069** | Permission Groups Discovery |
-| **T1087** | Account Discovery |
-| **T1021** | Remote Services *(simulated)* |
-| **T1550** | Use of Stolen Credentials *(simulated)* |
+- `endpoint_actions.py` is the authoritative, deterministic exercise-control
+  surface. It changes only run-scoped Python state and is safe to call from the
+  scenario engine.
+- `ad_enum_simulated_escalation.py` is a legacy LDAP audit/evidence generator.
+  It is not an authorized mutation path and is not used by the action adapter.
 
-Privilege escalation and lateral movement are **simulated** using pre‑staged credentials.
+No action in the reference adapter changes a real workstation, directory,
+account, group, or process. A CITEF-specific implementation can replace the
+state handlers later while retaining the same action policy and audit contract.
 
----
+## Exercise state
 
-## Features
+The clean fixture contains the exact allowlisted scenario objects:
 
-### ✔ Active Directory Enumeration
-Retrieves:
+| Object | Clean state | Exercise use |
+| --- | --- | --- |
+| `FIN-WS01` | reachable, controller-visible, not isolated | compromised workstation |
+| `FIN-WS01-discovery-bundle` | not yet preserved, fixed SHA-256 | forensic evidence |
+| `svc-print-sync` | absent and disabled | adverse-branch AD persistence |
+| `impact-task-01` | stopped on `FIN-WS01` | simulated impact process |
 
-- User accounts  
-- Group objects  
-- Computer objects  
-- Account hygiene indicators  
-- Group memberships  
+`EndpointAdState.adverse_fixture()` deterministically creates the branch in
+which `svc-print-sync` exists in `SimCorp-Server-Operators` and
+`impact-task-01` is active.
 
-### ✔ Architecture
-05-lateral-movement/project-root/
-├── ad_enum_simulated_escalation.py
-├── README.md
-├── output/
-│   ├── logs/
-│   │   └── ad_audit.log              # Runtime log file (auto-generated)
-│   └── audits/
-│       ├── ad_users_audit.csv        # Exported user enumeration
-│       ├── ad_groups_audit.csv       # Exported group enumeration
-│       └── ad_computers_audit.csv    # Exported computer enumeration
-│
-└── tests/
-    └── test_ad_enum.py               # Unit tests for helper functions, CSV export, logging, etc.
+## Registered safe actions
 
-### ✔ Logging
-Logs include:
+Participant/facilitator response actions are allowed only while the exercise is
+`running` and only against the exact targets below:
 
-- Connection attempts  
-- Enumeration steps  
-- Export operations  
-- Simulated escalation events  
+| Action | Exact target | Result |
+| --- | --- | --- |
+| `endpoint.host.isolate` | `host:FIN-WS01` | disables the simulated remote path while retaining controller visibility |
+| `evidence.artifact.preserve` | `evidence_artifact:FIN-WS01-discovery-bundle` | marks the discovery bundle preserved |
+| `ad.account.disable` | `directory_account:svc-print-sync` | disables the adverse-branch account |
+| `ad.persistence.remove` | `directory_account:svc-print-sync` | removes the synthetic account and group membership |
+| `endpoint.process.stop` | `process:impact-task-01` | stops the simulated impact process |
 
-### ✔ Simulated Privilege Escalation
-The module logs staged transitions such as:
+Exercise-control actions are restricted to a `technical_operator` or
+`facilitator`:
 
-Stage escalation: STANDARD_USER -> PRIVILEGED_USER Privilege escalation is simulated using pre-staged credential: simcorp\svc-admin-tier1
+- `exercise.endpoint.reset` restores the clean fixture only in `stopped` or
+  `resetting` state.
+- `exercise.endpoint.readiness.validate` fails with `baseline_mismatch` when
+  any endpoint/AD section differs from the clean fixture.
 
+Every mutation produces a one-use rollback snapshot. The shared safe-action
+adapter also enforces roles, target allowlists, run state, timeout, dry-run,
+idempotency, correlation, fail-safe cancellation, event emission, and result
+schema validation.
 
----
+## Legacy LDAP evidence generator
 
-## Simulated Escalation
-To support the threat‑simulation storyline, the module includes staged transitions:
+`ad_enum_simulated_escalation.py` can perform read-only lab LDAP enumeration
+and export user, group, and computer audit CSVs. Its staged privilege changes
+are log messages only. It must not be treated as an endpoint/AD controller.
 
-1. **Standard User → Privileged User**  
-2. **Privileged User → Domain Admin**  
-3. **Domain Admin → Infrastructure / Cloud Admin**  
+If a facilitator explicitly runs the legacy tool in an approved lab, install
+the declared requirements and provide a lab-only credential through
+`NETSTRIKE_AD_PASSWORD`. The module never installs packages or requests a
+password at import time.
 
-Each transition is logged using **pre‑staged, non‑functional credentials**.
+## Development
 
-No real escalation, credential theft, or offensive techniques are performed.
+From the repository root:
 
----
+```bash
+python -m pip install -r modules/05-lateral-movement/requirements.txt
+python -m pytest modules/05-lateral-movement/tests shared/tests -q
+```
 
-## Prerequisites
-
-- Python 3.8+  
-- Network access to a domain controller  
-- A valid domain user credential (read‑only LDAP queries)  
-- `ldap3` Python package (auto‑installed if missing)
-
----
-
-## Configuration
-
-Update the following values to match your lab environment:
-
-```python
-AD_SERVER = "ldap://<domain-controller>"
-BASE_DN = "DC=simcorp,DC=com"
-
-The script automatically detects the current user:
-AD_USER = f"{DOMAIN}\\{USERNAME}"
+The endpoint action tests cover containment, evidence preservation, safe
+handler failure, target denial, idempotency, rollback, reset, readiness, and
+event-contract validation.
