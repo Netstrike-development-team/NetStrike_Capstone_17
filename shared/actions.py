@@ -325,7 +325,8 @@ class SafeActionAdapter:
 
     # Explicit request fields make enforcement reviewable; a generic options
     # object here would make it easy to accidentally bypass a control.
-    # pylint: disable=too-many-branches,too-many-statements,too-many-return-statements
+    # pylint: disable=too-many-branches,too-many-statements
+    # pylint: disable=too-many-return-statements,too-many-locals
     def execute(self, request: Mapping[str, Any]) -> dict[str, Any]:
         """Execute one valid request, returning a validated immutable result copy."""
 
@@ -456,6 +457,7 @@ class SafeActionAdapter:
             "Action execution started",
             phase=definition.phase,
         )
+        effect_metadata: dict[str, Any] = {}
         try:
             effect = definition.handler(
                 request["parameters"], request["target"], control
@@ -492,6 +494,7 @@ class SafeActionAdapter:
                 message=f"Handler failed: {type(exc).__name__}",
             )
         else:
+            effect_metadata = dict(effect.metadata)
             rollback = {
                 "supported": True,
                 "required": False,
@@ -521,13 +524,19 @@ class SafeActionAdapter:
                 self._running.pop(request["request_id"], None)
 
         self._store(key, fingerprint, result)
+        completion_data = {
+            "status": result["status"],
+            "effects": result["effects"],
+        }
+        if effect_metadata:
+            completion_data["metadata"] = effect_metadata
         self._emit(
             request,
             "action.execution.completed",
             "success" if result["successful"] else "failure",
             result["message"],
             phase=definition.phase,
-            data={"status": result["status"], "effects": result["effects"]},
+            data=completion_data,
         )
         return deepcopy(result)
 

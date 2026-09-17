@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """
-Module 07: Ransomware Simulation
-Replicates Scattered Spider/RansomHub ransomware deployment across ESXi vCenter infrastructure.
+Module 07 legacy marker-event demonstration.
 
 Can be used in two modes:
-1. Orchestrator mode: run(config) -> list[dict] for NetStrike framework
-2. Standalone mode: python main.py --standalone to encrypt fake files locally for testing
+1. Event-demo mode: run(config) -> list[dict]
+2. Standalone mode: python main.py --standalone to mark generated fake files
+
+The authoritative exercise path is impact_actions.py. This legacy entry point
+does not encrypt data or connect to vCenter.
 """
 
 import os
@@ -18,14 +20,6 @@ from pathlib import Path
 from typing import Dict, List, Any
 import argparse
 import yaml
-import shutil
-
-from encryption import (
-    hex_key_to_bytes,
-    encrypt_file_aes,
-    decrypt_file_aes,
-    decrypt_files_aes
-)
 
 # Configure logging
 logging.basicConfig(
@@ -90,7 +84,7 @@ def run(config: dict) -> List[Dict[str, Any]]:
         raw_data={"vms_affected": len(vms)}
     ))
     
-    # Phase 4: Encrypt .vmdk files (create markers)
+    # Phase 4: Log marker creation for synthetic VM-disk identifiers.
     encrypted_files = 0
     for vm in vms:
         for vmdk_file in find_vmdk_files(vm):
@@ -101,9 +95,9 @@ def run(config: dict) -> List[Dict[str, Any]]:
         phase=7,
         technique_id="T1486",
         tactic="impact",
-        description=f"Encrypted {encrypted_files} virtual machine images",
+        description=f"Simulated marker impact for {encrypted_files} VM image identifiers",
         raw_data={
-            "files_encrypted": encrypted_files,
+            "marker_files_created": encrypted_files,
             "vms": [vm["name"] for vm in vms]
         }
     ))
@@ -122,8 +116,8 @@ def run(config: dict) -> List[Dict[str, Any]]:
         phase=7,
         technique_id="T1486",
         tactic="impact",
-        description="Ransomware payload deployed - Full attack chain executed successfully",
-        flag_triggered="Flag 7 - Ransomware Deployed: Attacker has encrypted VM images and deployed ransom notes across ESXi infrastructure",
+        description="Marker-only impact chain simulated",
+        flag_triggered="Flag 7 - Marker Impact Simulated: no VM image was modified",
         raw_data={
             "ransom_notes_deployed": ransom_count,
             "vms_targeted": [vm["name"] for vm in vms],
@@ -142,11 +136,11 @@ def run(config: dict) -> List[Dict[str, Any]]:
 
 def run_standalone(test_dir: str = None, encryption_config: dict = None) -> List[Dict[str, Any]]:
     """
-    Standalone mode: Create and encrypt fake files locally for testing.
+        Standalone mode: Create generated files and harmless companions.
     
     Args:
         test_dir: Directory to create fake files. If None, uses ./ransomware_test_files/
-        encryption_config: Dict with keys 'enabled', 'mode', 'static_key', 'copy_destination'
+        encryption_config: Optional dict whose mode must be marker
     
     Returns:
         list[dict]: 5 events from the simulated attack
@@ -156,7 +150,13 @@ def run_standalone(test_dir: str = None, encryption_config: dict = None) -> List
     
     test_dir = Path(test_dir)
     encryption_config = encryption_config or {}
-    
+    if encryption_config.get("mode", "marker") != "marker":
+        raise ValueError("marker is the only supported impact mode")
+    if test_dir.is_symlink() or (test_dir.exists() and not test_dir.is_dir()):
+        raise ValueError("standalone target must be a real directory")
+    if test_dir.exists() and any(test_dir.iterdir()):
+        raise ValueError("standalone target must be empty to prevent overwrites")
+
     # Create test directory
     test_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"[STANDALONE] Created test directory: {test_dir.absolute()}")
@@ -191,17 +191,17 @@ def run_standalone(test_dir: str = None, encryption_config: dict = None) -> List
         raw_data={"backups_disabled": True}
     ))
     
-    # Phase 4: Encrypt files (create .RANSOMHUB markers)
+    # Phase 4: Create harmless .RANSOMHUB companion markers.
     encrypted_files = encrypt_files_locally(test_dir, fake_files, encryption_config)
     events.append(emit_event(
         phase=7,
         technique_id="T1486",
         tactic="impact",
-        description=f"Encrypted {encrypted_files} files locally",
+        description=f"Created {encrypted_files} harmless marker companions",
         raw_data={
-            "files_encrypted": encrypted_files,
+            "marker_files_created": encrypted_files,
             "location": str(test_dir.absolute()),
-            "encryption_mode": encryption_config.get("mode", "marker")
+            "impact_mode": "marker"
         }
     ))
     
@@ -211,11 +211,11 @@ def run_standalone(test_dir: str = None, encryption_config: dict = None) -> List
         phase=7,
         technique_id="T1486",
         tactic="impact",
-        description="Ransomware payload deployed - Ransom note written to target directory",
-        flag_triggered="Flag 7 - Ransomware Deployed: Attacker has encrypted files and deployed ransom notes",
+        description="Marker impact simulated - exercise note written to target directory",
+        flag_triggered="Flag 7 - Marker Impact Simulated: no encryption performed",
         raw_data={
             "ransom_note_location": str(ransom_note_path.absolute()),
-            "files_encrypted": encrypted_files,
+            "marker_files_created": encrypted_files,
             "target_directory": str(test_dir.absolute())
         }
     ))
@@ -234,7 +234,9 @@ def create_fake_files(target_dir: Path, count: int = 5) -> List[str]:
     for i, ext in enumerate(extensions[:count]):
         filename = f"important_file_{i+1}{ext}"
         filepath = target_dir / filename
-        
+        if filepath.exists() or filepath.is_symlink():
+            raise ValueError("refusing to overwrite a standalone fixture file")
+
         # Create fake content
         content = f"Sensitive data file {i+1}\nThis would be encrypted by ransomware.\n" * 100
         filepath.write_text(content)
@@ -244,81 +246,38 @@ def create_fake_files(target_dir: Path, count: int = 5) -> List[str]:
     return fake_files
 
 
-def encrypt_files_locally(target_dir: Path, fake_files: List[str], encryption_config: dict = None) -> int:
+def encrypt_files_locally(
+    target_dir: Path, fake_files: List[str], encryption_config: dict = None
+) -> int:
     """
-    Encrypt files locally. Supports two modes:
-    - 'marker': Creates .RANSOMHUB marker files (non-destructive, original remains)
-    - 'safe': Copies files to destination, encrypts copies with AES-256 (easily reversible)
+    Create marker companions without changing originals.
     
     Args:
         target_dir: Directory containing files to encrypt
         fake_files: List of filenames to encrypt
-        encryption_config: Dict with 'mode', 'static_key', 'copy_destination'
+        encryption_config: Optional dict whose mode must be marker
     
     Returns:
-        Number of files encrypted
+        Number of marker companions created
     """
     encryption_config = encryption_config or {}
+    if encryption_config.get("mode", "marker") != "marker":
+        raise ValueError("marker is the only supported impact mode")
     encrypted_count = 0
-    
-    # Check if safe encryption mode is enabled
-    if encryption_config.get("mode") == "safe":
-        try:
-            key_hex = encryption_config.get("static_key", "0123456789ABCDEF0123456789ABCDEF")
-            key_bytes = hex_key_to_bytes(key_hex)
-            copy_dest = Path(encryption_config.get("copy_destination", "./encrypted_copies"))
-            
-            # Create destination directory
-            copy_dest.mkdir(parents=True, exist_ok=True)
-            logger.info(f"[SAFE ENCRYPTION] Copying files to: {copy_dest.absolute()}")
-            
-            # Copy and encrypt each file
-            for filename in fake_files:
-                filepath = target_dir / filename
-                copy_path = copy_dest / filename
-                
-                try:
-                    # Copy file
-                    shutil.copy2(filepath, copy_path)
-                    logger.info(f"[SAFE ENCRYPTION] Copied {filename} to {copy_path.name}")
-                    
-                    # Encrypt the copy
-                    if encrypt_file_aes(copy_path, key_bytes):
-                        logger.info(f"[SAFE ENCRYPTION] Encrypted copy of {filename}")
-                        encrypted_count += 1
-                    else:
-                        logger.error(f"[SAFE ENCRYPTION] Failed to encrypt {filename}")
-                except Exception as e:
-                    logger.error(f"[SAFE ENCRYPTION] Error processing {filename}: {e}")
-            
-            logger.info(f"[SAFE ENCRYPTION] Complete. Original files remain in {target_dir}")
-            logger.info(f"[SAFE ENCRYPTION] To reverse: decrypt_files_aes('{copy_dest}', '{key_hex}')")
-        
-        except ValueError as e:
-            logger.error(f"[SAFE ENCRYPTION] Configuration error: {e}")
-            logger.info("Falling back to marker mode")
-            # Fall through to marker mode
-        
-        if encrypted_count > 0:
-            return encrypted_count
-    
-    # Default marker mode: create .RANSOMHUB markers (non-destructive)
+
     for filename in fake_files:
         filepath = target_dir / filename
         marker_path = filepath.with_suffix(filepath.suffix + ".RANSOMHUB")
-        
-        # Create marker file
-        marker_content = f"This file has been encrypted by RANSOMHUB\nOriginal: {filename}\n"
-        marker_path.write_text(marker_content)
-        
-        # Optionally "encrypt" the original by appending marker
-        if filepath.exists():
-            with open(filepath, "a") as f:
-                f.write("\n\n[ENCRYPTED BY RANSOMHUB - ORIGINAL DATA REMAINS FOR DEMO]")
-        
+        if marker_path.exists() or marker_path.is_symlink():
+            raise ValueError("refusing to overwrite a standalone marker")
+        marker_content = (
+            "NETSTRIKE EXERCISE MARKER - NO ENCRYPTION PERFORMED\n"
+            f"Original: {filename}\n"
+        )
+        marker_path.write_text(marker_content, encoding="utf-8")
         encrypted_count += 1
-        logger.info(f"[MARKER MODE] Marked file as encrypted: {filename}")
-    
+        logger.info(f"[MARKER MODE] Created companion marker for: {filename}")
+
     return encrypted_count
 
 
@@ -388,6 +347,8 @@ Time is running out. Act now.
 """
     
     ransom_note_file = target_dir / "README_RANSOMHUB.txt"
+    if ransom_note_file.exists() or ransom_note_file.is_symlink():
+        raise ValueError("refusing to overwrite a standalone exercise note")
     ransom_note_file.write_text(ransom_note_content, encoding='utf-8')
     logger.info(f"[STANDALONE] Deployed ransom note to {ransom_note_file.name}")
     
@@ -502,7 +463,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--standalone",
         action="store_true",
-        help="Run in standalone mode (create and encrypt fake files locally)"
+        help="Run the legacy marker-only demonstration on generated files"
     )
     parser.add_argument(
         "--test-dir",
@@ -516,37 +477,12 @@ if __name__ == "__main__":
         default="config.yaml",
         help="Path to YAML config file for orchestrator mode (default: config.yaml)"
     )
-    parser.add_argument(
-        "--decrypt",
-        type=str,
-        metavar="DIRECTORY",
-        help="Decrypt files in safe mode. Requires --key. Usage: --decrypt ./encrypted_copies --key YOUR_KEY"
-    )
-    parser.add_argument(
-        "--key",
-        type=str,
-        metavar="KEY_HEX",
-        help="32-char hex encryption key for decryption (e.g., 0123456789ABCDEF0123456789ABCDEF)"
-    )
-    
+
     args = parser.parse_args()
-    
+
     try:
-        if args.decrypt:
-            # Decryption mode
-            logger.info("=" * 70)
-            logger.info("RANSOMWARE SIMULATION - DECRYPTION MODE")
-            logger.info("=" * 70)
-            
-            if not args.key:
-                logger.error("--key required for decryption")
-                sys.exit(1)
-            
-            decrypted = decrypt_files_aes(args.decrypt, args.key)
-            logger.info(f"Successfully decrypted {decrypted} files")
-        
-        elif args.standalone:
-            # Standalone mode: encrypt fake files locally
+        if args.standalone:
+            # Standalone mode: create markers beside generated fake files.
             logger.info("=" * 70)
             logger.info("RANSOMWARE SIMULATION - STANDALONE MODE")
             logger.info("=" * 70)

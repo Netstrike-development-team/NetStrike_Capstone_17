@@ -50,7 +50,10 @@ The adapter emits event-contract-v1 records for:
 Events inherit the exercise/run context, include the request UUID as a
 correlation ID, and carry the shared non-destructive safety marker. Result
 records state whether effects occurred and retain rollback support/method/token
-metadata without retaining secrets.
+metadata without retaining secrets. Successful handler metadata is redacted and
+included in the completion event's `data.metadata`, allowing manifests and
+other non-secret evidence to remain auditable without expanding the result
+schema.
 
 ## Roles and lifecycle
 
