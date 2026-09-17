@@ -1,100 +1,75 @@
-# Module 06-cloud-exfil
+# Module 6: Mock-cloud containment
 
-MITRE Tactics: Collection (TA0009) • Exfiltration (TA0010)  •  T1530, T1537, T1567, T1048
+## Purpose
 
-The attacker uses harvested cloud credentials to access the AWS environment and exfiltrate simulated customer PII data from S3 storage, replicating the Scattered Spider data theft model.
+This module supplies the state and containment controls for the Silent Spider
+mock-cloud phase. It does not connect to AWS or any other external service.
 
-### What the Attacker Does
+- `cloud_actions.py` is the authoritative, deterministic exercise-control
+  surface. It changes only run-scoped Python state through the shared safe
+  action adapter.
+- `cloud_exfil.py` is a legacy standalone demonstration that creates local
+  synthetic output. It is not an exercise-state authority or an authorized
+  controller mutation path.
 
-- Authenticates to AWS using IAM credentials found in emails or configuration files on compromised workstations
-- Creates a new IAM backdoor user for persistence
-- Enumerates S3 buckets and identifies the customer database bucket
-- Exfiltrates data via AWS CLI commands, routing through TOR/VPN proxies to simulate operational security
-- Prepares an extortion demand referencing the stolen data
+The reference state can later be replaced by a CITEF-hosted mock service while
+retaining the same action policy, identifiers, results, and audit events.
 
-### Simulation Implementation
-- A simulated AWS-equivalent environment within CITEF is pre-populated with synthetic customer PII records
-- The Cloud Exfiltration Module executes the S3 enumeration and download sequence using AWS CLI against the simulated environment
-- Exfiltrated data volume and timing are logged for detection evaluation
+## Approved exercise objects
 
----
+| Object | Identifier | Baseline |
+| --- | --- | --- |
+| Service principal | `svc-cloud-backup` | enabled and synthetic |
+| Opaque key ID | `svc-cloud-backup-key-01` | active; no reusable key material is stored |
+| Bucket | `simcorp-customer-exports` | 25 synthetic records and the approved policy hash |
 
-## Component Breakdown
+`MockCloudState.adverse_fixture()` represents the full-exposure branch: the
+bucket has the expanded exercise policy, bulk access is permitted, and exactly
+25 synthetic record IDs are marked accessed. This is exposure evidence, not
+real customer data.
 
-### **Cloud Exfiltration Module**
-The orchestrator of the simulation.  
-Responsible for:
+## Registered safe actions
 
-- IAM authentication  
-- Backdoor user creation  
-- Bucket enumeration  
-- Object download  
-- Exfiltration simulation  
-- Extortion note generation  
-- Logging  
+The following actions require the `cloud_responder` or `facilitator` role, a
+`running` exercise, and the exact target shown:
 
-### **Mock IAM Service**
-Simulates AWS IAM:
+| Action | Exact target | Effect |
+| --- | --- | --- |
+| `cloud.key.revoke` | `cloud_key:svc-cloud-backup-key-01` | revokes the pre-staged mock key |
+| `cloud.principal.disable` | `cloud_principal:svc-cloud-backup` | disables the principal and atomically revokes its owned keys |
+| `cloud.policy.restore` | `cloud_bucket:simcorp-customer-exports` | restores the approved policy hash and denies bulk access |
 
-- User store 
-- Access key validation  
-- Role assignment  
-- Backdoor user creation  
+Exercise-control actions are limited to a `technical_operator` or
+`facilitator`:
 
-### **Mock S3 Storage**
-Simulates AWS S3:
+- `exercise.cloud.reset` restores the approved fixture only when the run is
+  `stopped` or `resetting`.
+- `exercise.cloud.readiness.validate` reports `baseline_mismatch` unless all
+  principals, keys, buckets, policies, and exposure evidence match baseline.
 
-- Bucket listing  
-- Object listing  
-- Synthetic PII object retrieval  
+Every mutation produces a one-use rollback snapshot. The shared adapter also
+enforces correlation, role, exact target, run state, parameters, timeout,
+dry-run, idempotency, cancellation, result validation, and audit events.
 
-### **Logging Subsystem**
-Captures:
+## Exposure and containment verification
 
-- Authentication attempts  
-- IAM user creation  
-- Bucket enumeration  
-- Object downloads  
-- Exfiltration timing and volume  
-- Extortion note generation  
+`MockCloudState.access_decision()` is a read-only verifier for future scenario
+engine integration. It distinguishes `principal_disabled`, `key_revoked`,
+`key_principal_mismatch`, and `policy_denied`, allowing the contained branch to
+produce a defensible blocked-access event without making a network request.
 
-### **Output Artifacts**
-- `extortion_note.txt`  
-- Exfiltrated synthetic PII files  
-- Log files (e.g., `cloud_pivot_and_exfil_sim.log`) 
----
+The adapter never stores a secret or token. Key IDs are opaque exercise
+identifiers only, and all record identifiers are explicitly synthetic.
 
-## Purpose of This Module
+## Development
 
-This module helps teams:
+From the repository root:
 
-- Understand attacker behavior in cloud environments  
-- Validate cloud monitoring and alerting  
-- Improve detection logic for identity misuse and data theft  
-- Strengthen incident‑response readiness  
-- Practice handling extortion‑style scenarios safely  
+```bash
+python -m pip install -r modules/06-cloud-exfil/requirements.txt
+python -m pytest modules/06-cloud-exfil/tests shared/tests -q
+```
 
----
-
-## Architecture 
-
-modules/
-  06-cloud-exfil/
-    cloud_exfil.py
-    tests/
-      __init__.py        
-      test_cloud_exfil.py
-
---- 
-
-## Testing
-
-Unit tests are included under the `tests/` directory. These tests validate:
-
-- IAM authentication  
-- Backdoor user creation  
-- Bucket and object enumeration  
-- Synthetic object download  
-- End‑to‑end simulation execution  
-
----
+Tests cover key and principal containment, approved-policy restoration,
+exposure fixtures, access decisions, role/target denial, dry-run, idempotency,
+rollback, reset, readiness, and event validation.
