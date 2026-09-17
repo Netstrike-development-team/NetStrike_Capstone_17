@@ -30,7 +30,7 @@ next-generation platform.
 | `04-mfa-fatigue-sim` | MFA Bypass | Push bombing simulator against simulated Okta |
 | `05-lateral-movement` | Lateral Movement | AD enumeration + privilege escalation engine |
 | `06-cloud-exfil` | Data Exfiltration | S3 enumeration + bulk data download via AWS CLI |
-| `07-ransomware-sim` | Impact | Benign AES file encryptor mimicking RansomHub |
+| `07-ransomware-sim` | Impact/recovery | Marker-only disposable-fixture impact and restoration |
 
 All phases are executed via **MITRE CALDERA** (adversary emulation framework)
 and orchestrated by our custom Python scenario runner.
@@ -78,7 +78,7 @@ NetStrike_Capstone_17/
 │   ├── 04-mfa-fatigue-sim/     # MFA Bypass: push bombing simulator
 │   ├── 05-lateral-movement/    # Lateral Movement: AD enumeration engine
 │   ├── 06-cloud-exfil/         # Exfiltration: S3 data theft module
-│   └── 07-ransomware-sim/      # Impact: benign AES encryption payload
+│   └── 07-ransomware-sim/      # Impact: marker-only fixture staging/recovery
 ├── orchestrator/               # Scenario runner, Caldera client, flag tracker
 ├── detection/                  # Log analyzer, MITRE detection rules, scoring
 ├── dashboard/                  # React frontend + FastAPI backend

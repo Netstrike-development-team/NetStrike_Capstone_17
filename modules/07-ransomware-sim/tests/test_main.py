@@ -176,6 +176,25 @@ class TestRansomwareStandalone(unittest.TestCase):
         test_path = Path(self.test_dir)
         markers = list(test_path.glob("*.RANSOMHUB"))
         self.assertGreater(len(markers), 0, "Should create .RANSOMHUB markers")
+
+        originals = [path for path in test_path.glob("important_file_*") if path.suffix != ".RANSOMHUB"]
+        for original in originals:
+            self.assertNotIn("ENCRYPTED BY", original.read_text(encoding="utf-8"))
+
+    def test_standalone_rejects_non_marker_mode(self):
+        """Test that executable encryption modes are not accepted"""
+        with self.assertRaisesRegex(ValueError, "only supported impact mode"):
+            run_standalone(self.test_dir, {"mode": "safe"})
+
+    def test_standalone_refuses_nonempty_target(self):
+        """Test that the legacy demo cannot overwrite an existing fixture"""
+        existing = Path(self.test_dir) / "keep.txt"
+        existing.write_text("do not overwrite", encoding="utf-8")
+
+        with self.assertRaisesRegex(ValueError, "must be empty"):
+            run_standalone(self.test_dir)
+
+        self.assertEqual(existing.read_text(encoding="utf-8"), "do not overwrite")
     
     def test_standalone_creates_ransom_note(self):
         """Test that standalone mode creates ransom note"""
@@ -184,7 +203,7 @@ class TestRansomwareStandalone(unittest.TestCase):
         ransom_note = Path(self.test_dir) / "README_RANSOMHUB.txt"
         self.assertTrue(ransom_note.exists(), "Should create ransom note file")
         
-        content = ransom_note.read_text()
+        content = ransom_note.read_text(encoding="utf-8")
         self.assertIn("RANSOMHUB", content)
         self.assertIn("contact@ransomhub.local", content)
     
