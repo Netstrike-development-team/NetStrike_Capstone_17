@@ -77,9 +77,13 @@ Each exercise instance must have a versioned baseline manifest containing:
 - allowed action targets and directories; and
 - required Splunk data sources.
 
-## Reset procedure
+## Snapshot restoration and readiness procedure
 
-The target reset time is 20 minutes or less.
+The Cyber Range will restore the scenario VMs from clean snapshots between
+runs. There is no custom 20-minute reset target. The student team owns the
+topology, snapshot preparation, and validation workflow, with Zian and Julien
+available to help. Ansible remains responsible for configuration and automated
+readiness checks, not for reconstructing every VM after each delivery.
 
 ### 1. Close and archive the run
 
@@ -96,7 +100,12 @@ The target reset time is 20 minutes or less.
 
 ### 3. Restore infrastructure
 
-Use the Cyber Range-approved snapshot restore when available. Ansible then applies configuration validation and any required idempotent baseline corrections. If snapshots are unavailable, the complete state reset must explicitly:
+Restore every scenario VM from its approved clean snapshot. Ansible then
+validates configuration and may apply documented idempotent corrections. If a
+snapshot fails or is unavailable, stop the next delivery and escalate to the
+technical contacts rather than attempting an unapproved partial reset.
+
+Snapshot contents must already include or restore:
 
 - reset SimCorp identity passwords, factors, and sessions;
 - remove `svc-print-sync` and restore group memberships;
@@ -136,6 +145,6 @@ Before release:
 - intentionally fail each external dependency and verify that the exercise pauses safely;
 - test both outcomes at every decision point;
 - confirm all expected telemetry using the evidence matrix;
-- execute a full reset after each branch combination selected for testing;
+- restore the clean snapshots and pass readiness after each branch combination selected for testing;
 - conduct at least three end-to-end runs, including one with someone who did not author the software; and
 - conduct at least one full run on CITEF.

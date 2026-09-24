@@ -1,258 +1,106 @@
-# NetStrike — Architecture
+# NetStrike Blue-Team MVP Architecture
 
-## 1. Overview
+## Purpose
 
-NetStrike is a modular attack simulation suite modelling **Scattered Spider (UNC3944)**, a
-financially motivated threat actor group. The project executes a full 7-phase kill chain inside
-the CITEF cyber range environment, from OSINT reconnaissance through to ransomware
-deployment, with a real-time detection dashboard and MITRE ATT&CK-tagged event logging.
+NetStrike delivers Operation Silent Spider as one safe, facilitated blue-team
+exercise. The system schedules a fixed scenario, records what happens, exposes
+approved investigation and response actions, sends evidence to Splunk, and
+supports evaluation and after-action review.
 
-The architecture is designed around two principles:
+## Logical architecture
 
-- **Modularity** — each attack phase is an independent, runnable module with its own
-  config, tests, and event output. Modules can be developed and tested locally without
-  the full CITEF environment.
-- **Portability** — all environment-specific parameters (hostnames, credentials, IPs) live
-  in YAML config files. Swapping `local.yaml` for `citef.yaml` retargets the entire suite
-  with no code changes.
-
----
-
-## 2. System Diagram
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    ORCHESTRATOR                          │
-│  run.py  ─►  CalderaClient  ─►  CALDERA (C2 framework)  │
-│           ─►  FlagTracker                               │
-│           ─►  EventLogger  ─►  scenario_events.jsonl    │
-└────────────────────────┬────────────────────────────────┘
-                         │ triggers
-         ┌───────────────┼───────────────┐
-         ▼               ▼               ▼
-   ATTACK MODULES    GHOSTS (victims)  CITEF ENVIRONMENT
-   01 osint          SimCorp employees  Windows AD domain
-   02 phishing       browsing, emailing VMware ESXi
-   03 vishing        approving pushes   Okta SSO (simulated)
-   04 mfa-fatigue                       AWS / LocalStack
-   05 lateral-move                      Wazuh SIEM
-   06 cloud-exfil
-   07 ransomware-sim
-         │
-         ▼
-   DETECTION LAYER
-   LogAnalyzer  ─►  MITRE-tagged alerts
-   Dashboard    ─►  React UI (real-time)
+```text
+Participant/facilitator browser
+              |
+              v
+      CTRL01 controller + portal
+      - run and MSEL state
+      - event ledger
+      - checkpoints/scoring
+      - safe-action adapters
+        |        |         |
+        v        v         v
+      IDP/     FIN-WS01/   CLOUD01/FILE01
+    Helpdesk      DC01     Python mock + fixtures
+        \          |          /
+         \---------+---------/
+                   |
+                   v
+                SPLUNK01
 ```
 
----
+Logical services may share VMs. The minimum useful topology keeps the domain
+controller, participant workstation, Splunk, and controller outside one
+another's failure boundaries. The team will map these assets to Cyber Range
+amd64 VMs and may consolidate project-owned Linux services.
 
-## 3. Technology Stack
+## Main components
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| Attack orchestration | Python 3.11 + FastAPI | Sequences modules, calls Caldera API, tracks flags |
-| Adversary emulation | MITRE CALDERA | Executes ATT&CK techniques on range agents |
-| Victim simulation | NIST GHOSTS | Simulates benign employee behaviour (browsing, email) |
-| SIEM / detection | Wazuh + Elastic | Collects host telemetry, triggers alerts, surfaces IOCs |
-| Infrastructure | Vagrant + Ansible | Provisions and configures all VMs reproducibly |
-| Dashboard frontend | React + TypeScript | Real-time attack timeline, MITRE heatmap, scoring |
-| Dashboard backend | FastAPI | Serves log analyzer output as REST API |
-| Event schema | Versioned NetStrike JSON Schema | Shared contract between modules, control, Splunk, evaluation, reset, and AAR |
-| Local cloud mock | LocalStack | Simulates AWS S3 for cloud exfil module (no real AWS) |
+### Controller and portal
 
----
+Python 3.11 and FastAPI provide the API, server-rendered participant and
+facilitator pages, and authenticated action endpoints. SQLite is sufficient
+for the single-team MVP event ledger. The controller owns run state, MSEL
+timing, checkpoint evaluation, hints, fallbacks, emergency stop, and exports.
 
-## 4. Module Architecture
+### Safe actions
 
-Each module under `modules/` follows the same structure:
+Every state-changing operation uses the versioned safe-action adapter. It
+checks the caller role, exercise state, target allowlist, timeout,
+idempotency, and rollback information before a handler runs. The MVP supports
+safe identity, endpoint/AD, mock-cloud, and marker-impact/recovery actions.
 
-```
-modules/XX-module-name/
-├── README.md          # What it does, how to run, example output
-├── main.py            # Entry point — callable by orchestrator
-├── config.yaml        # Module-specific defaults
-├── requirements.txt   # Module-level dependencies
-└── tests/
-    └── test_main.py
-```
+### Telemetry and Splunk
 
-Every module's `main.py` exposes a `run(config: dict) -> list[Event]` function.
-The orchestrator calls this function, collects the returned events, and writes them
-to `scenario_events.jsonl` in the shared event schema.
+Windows VMs emit native audit, PowerShell, and Sysmon events through the
+Splunk Universal Forwarder. Project-owned services send normalized NetStrike
+events through a confirmed Splunk input, preferably HEC. Splunk is the only
+SIEM in the MVP.
 
-### Shared Event Schema (`schemas/event.v1.json`)
+No commercial EDR is required. Sysmon provides endpoint activity telemetry;
+NetStrike's allowlisted action adapters provide the exercise containment
+controls. Staff and learner material must not describe this as a production
+EDR deployment.
 
-The authoritative contract, migration rules, producer/consumer requirements,
-and CITEF-neutral Splunk mappings are documented in
-[`docs/event-contract-v1.md`](event-contract-v1.md). `schemas/event.json`
-remains the stable compatibility entry point.
+### Infrastructure
 
-All state-changing operations additionally pass through the
-[`Safe Action Adapter Contract v1`](safe-action-contract-v1.md), which enforces
-role, run-state, allowlist, timeout, idempotency, dry-run, fail-safe, audit, and
-rollback policy before invoking a module handler.
+The team designs the topology in the Cyber Range platform. Ansible configures
+DNS, NTP, Windows/AD policy, services, telemetry, fixtures, and health checks
+using SSH or WinRM. The range has no Internet access, so all required packages,
+collections, installers, and configuration are transferred as a reviewed,
+versioned offline bundle.
 
-Every producer emits validated, run-correlated events in this shape:
+Clean Cyber Range snapshots are the primary restoration mechanism. Ansible is
+used for initial provisioning and readiness validation, not as a replacement
+for snapshots or as a timed full reset mechanism.
 
-```json
-{
-  "schema_version": "1.0.0",
-  "event_id": "11111111-1111-4111-8111-111111111111",
-  "timestamp": "2026-09-16T14:00:00.000Z",
-  "exercise_id": "silent-spider",
-  "run_id": "run-20260916-001",
-  "sequence": 1,
-  "event_type": "recon.source.harvested",
-  "phase": "reconnaissance",
-  "source": {"kind": "module", "component": "01-osint-profiler"},
-  "actor": {"type": "system", "id": "01-osint-profiler"},
-  "action": "source.harvest",
-  "target": {"type": "dataset", "id": "simcorp-employees"},
-  "outcome": {"status": "success"},
-  "severity": "info",
-  "visibility": "facilitator",
-  "safety": {
-    "simulation_only": true,
-    "dry_run": false,
-    "within_allowlist": true,
-    "destructive": false
-  },
-  "provenance": {"producer": "01-osint-profiler", "producer_version": "1.0.0"},
-  "message": "Harvested five synthetic SimCorp employee records",
-  "data": {"record_count": 5, "synthetic": true}
-}
-```
+## Delivery VM baseline
 
----
+| Logical asset | Proposed platform | Responsibility |
+|---|---|---|
+| `CTRL01` | Linux | Controller, portal, ledger, mock IdP/helpdesk/cloud services |
+| `DC01` | Windows Server | SimCorp Active Directory and directory audit evidence |
+| `FIN-WS01` | Windows 11 | Participant investigation and endpoint scenario state |
+| `SPLUNK01` | Supported Linux or Cyber Range image | Splunk Enterprise and exercise content |
+| `FILE01` | On `CTRL01` or a small Linux VM | Disposable impact fixtures and known-good copy |
 
-## 5. Orchestrator
+The final VM count, images, resources, network, and access model are captured
+as environment configuration rather than hard-coded in application logic.
 
-`orchestrator/run.py` is the top-level scenario runner. It:
+## Explicitly out of scope for the MVP
 
-1. Loads the environment config (`--config citef-config/local.yaml` or `citef.yaml`)
-2. Instantiates `CalderaClient` and verifies connectivity
-3. Calls each module's `run()` function in sequence
-4. Writes all returned events to `scenario_events.jsonl`
-5. Tracks flag state in `flags.json`
-6. Exposes a REST API (`POST /start`, `GET /status`, `POST /stop`) for integration
-   with the Cyber Range team's exercise management system
+- A commercial EDR or Microsoft Defender for Endpoint dependency
+- Wazuh/Elastic as a second SIEM
+- CALDERA or an open-ended autonomous attacker
+- GHOSTS background-traffic simulation
+- LocalStack or public-cloud accounts
+- Learner-operated red teaming
+- Real encryption, disk modification, or Internet-connected targeting
 
----
+## Source of truth
 
-## 6. CALDERA Integration
-
-CALDERA serves as the execution engine for phases that require agent-side technique
-execution (phases 5, 6, 7). Our `orchestrator/caldera_client.py` wraps the CALDERA
-REST API and handles:
-
-- Creating operations with the Scattered Spider adversary profile
-- Polling operation status until completion
-- Retrieving ability results and translating them into our event schema
-
-The Scattered Spider adversary profile (`citef-config/caldera/scattered_spider.yaml`)
-chains the relevant ATT&CK abilities in kill chain order.
-
-Phases 1-4 (OSINT, phishing, vishing, MFA fatigue) run as standalone Python modules
-because CALDERA has no concept of social engineering or pre-access reconnaissance.
-
----
-
-## 7. Detection Layer
-
-```
-scenario_events.jsonl
-        │
-        ▼
-detection/log_analyzer.py
-  ├── Applies 20 detection rules (one per MITRE technique)
-  ├── Each rule: pattern match on event fields → Alert object
-  └── Scoring engine computes:
-        - Detection Rate per phase
-        - False Positive Rate
-        - Time-to-Detect (TTD)
-        - MITRE Coverage Score
-        - Portability Score
-        │
-        ▼
-detection/alerts.jsonl  ──►  Dashboard FastAPI backend  ──►  React UI
-```
-
----
-
-## 8. Infrastructure (Vagrant + Ansible)
-
-Vagrant provisions the SimCorp environment:
-
-| VM | OS | Role |
-|----|-----|------|
-| `dc01` | Windows Server 2019 | Active Directory Domain Controller |
-| `ws01`, `ws02`, `ws03` | Windows 10 | Employee workstations |
-| `attacker` | Kali Linux | Red team attack machine |
-| `siem` | Ubuntu 22.04 | Wazuh + Elastic SIEM |
-
-Ansible configures each VM after provisioning:
-- Promotes `dc01` to domain controller, creates SimCorp domain
-- Creates 20 domain users matching the OSINT profiler employee database
-- Joins workstations to the domain
-- Installs Wazuh agents, Sysmon, and GHOSTS agents on workstations
-- Configures intentionally weak settings to support attack chain
-- Pre-populates LocalStack S3 with synthetic PII dataset
-
----
-
-## 9. Development Workflow
-
-### Branching
-
-```
-main       ← production-ready, protected
-  └── dev  ← integration branch
-        └── feature/<module-name>  ← individual work
-```
-
-### PR Rules
-
-- Open PR from `feature/*` → `dev`
-- Minimum 1 reviewer approval required
-- CI must pass (lint + pytest + coverage)
-- Merge `dev` → `main` at end of each sprint milestone
-
-### Commit Convention
-
-```
-feat(module):    new feature         feat(osint): add email pattern extractor
-fix(module):     bug fix             fix(mfa-sim): correct push interval timing
-chore:           tooling/repo        chore: add pre-commit hooks
-docs(module):    documentation       docs(architecture): update system diagram
-test(module):    tests               test(phishing): add credential capture tests
-refactor:        restructure         refactor(orchestrator): extract flag tracker
-```
-
-### CI/CD (GitHub Actions)
-
-- **Python:** `flake8` lint + `pytest` + coverage report
-- **Frontend:** TypeScript lint + `npm run build`
-- **Security:** `bandit` static analysis on all Python modules
-- Runs on every push to `dev` and every PR
-
----
-
-## 10. Local Development (No CITEF Needed)
-
-All modules can be developed and tested locally:
-
-| Module | Local substitute |
-|--------|-----------------|
-| Active Directory (phases 5) | VirtualBox VM with Windows Server eval |
-| AWS S3 (phase 6) | LocalStack (`pip install localstack`) |
-| Okta SSO (phase 4) | Mock Flask API in `modules/04-mfa-fatigue-sim/mock_okta.py` |
-| CALDERA (phases 5-7) | CALDERA runs locally via Docker |
-| Full environment | `vagrant up` in `citef-config/` |
-
-One-command local setup:
-
-```bash
-pip install -r requirements.txt
-python orchestrator/run.py --config citef-config/local.yaml
-```
+- Event format: [event-contract-v1.md](event-contract-v1.md)
+- Action safety: [safe-action-contract-v1.md](safe-action-contract-v1.md)
+- Exercise behavior: [exercise-design/02-storyline-and-msel.md](exercise-design/02-storyline-and-msel.md)
+- Telemetry: [exercise-design/03-telemetry-evidence-matrix.md](exercise-design/03-telemetry-evidence-matrix.md)
+- Tools/offline plan: [exercise-design/07-tools-and-offline-deployment.md](exercise-design/07-tools-and-offline-deployment.md)
