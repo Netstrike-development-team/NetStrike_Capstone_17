@@ -1,7 +1,8 @@
 # Offline Tool Bundle Inventory
 
-**Status:** Draft inventory; no Cyber Range approvals or offline installation
-test have been recorded.
+**Status:** Draft inventory reflecting Cyber Range information received
+September 27, 2026. Exact software versions, final topology, and offline
+installation test results remain outstanding.
 
 This document tracks the software and configuration required to deploy the
 project without Internet access. It is not evidence that an artifact has been
@@ -13,19 +14,26 @@ resolved version.
 
 | Item | Current status | Evidence required to close |
 |---|---|---|
-| Cyber Range Splunk product, edition, exact version, and meaning of the stated 10 GB limit | Pending CITEF | Written CITEF confirmation of version and whether 10 GB is license, storage, ingestion, or another limit |
-| Splunk Universal Forwarder compatibility and approved ingestion method | Pending CITEF | Supported forwarder version for the confirmed Splunk version, plus approval for HEC, forwarder, syslog, or monitored-file ingestion |
-| Sysmon binary and configuration | Pending CITEF | CITEF approval of the exact binary/version and configuration; checksum and license/owner recorded before transfer |
+| Splunk product, license, and 10 GB data limit | Cyber Range confirmed Splunk Enterprise under an educational license with a 10 GB data limit | Record exact Splunk version and verify how the license counts data; monitor usage and define retention/cleanup within the limit |
+| Splunk Universal Forwarder compatibility and ingestion method | Team-owned selection and configuration | Select an ingestion method compatible with the actual Splunk version; verify supported forwarder compatibility or validate the chosen alternative |
+| Sysmon binary and configuration | Team-owned Windows/AD and telemetry configuration; evaluation licenses available | Select exact binary/version and config, verify license/provenance and hashes, then test on the chosen Windows image |
+| VM topology, provisioning, snapshots, and restoration | Team owns provisioning, snapshots, and restoration; can use CITEF or design topology in platform | Select topology and image versions; document repeatable Ansible provisioning and snapshot/restore procedures |
+| Scenario VM architecture and images | amd64 VMs supported; Windows 11, Windows Server, and multiple Linux distribution images available; compute not expected to constrain this MVP | Select exact OS images and record versions, architecture, sizing, and destination roles |
+| DNS and NTP | Team can configure these through Ansible | Select internal DNS domain and time source; implement and validate configuration |
+| Offline artifact delivery | Scenario VMs have no Internet; team can push files to them; no restrictions reported on approach | Stage dependencies/installers/configuration and document the chosen secure transfer, checksum verification, and installation workflow |
 | Project runtime package lock and wheelhouse | Not produced | Resolve all runtime dependencies to exact versions, acquire wheels and metadata, record hashes/licenses, and install from the wheelhouse with network disabled |
-| Ansible collections and other system installers | Not inventoried in repository | Confirm deployment host and required collections/system packages, then record exact artifacts, hashes, licenses, and offline installation commands |
+| Ansible collections and other system installers | Not inventoried in repository | Select deployment host and required collections/system packages, then record exact artifacts, hashes, licenses, and offline installation commands |
 | Portal network independence | Not verified | Audit the delivered portal source/build for CDN, remote API, cloud, and online package dependencies; test the built portal with Internet access disabled |
-| Clean offline installation | Not tested | Complete and record the procedure in [Offline installation test record](#offline-installation-test-record) on a clean test VM with Internet access disabled |
-| Artifact transfer and licensed software | Pending CITEF | Confirm approved transfer mechanism and obtain written approval before transferring any licensed installer |
+| Clean offline installation | Not tested | Complete and record the procedure in [Offline installation test record](#offline-installation-test-record) on clean amd64 test VMs matching selected target images, with Internet access disabled |
+| Artifact licensing and transfer | Team owns software selection and transfer approach; licensed/evaluation artifacts must remain license-compliant | Record license/owner and transfer eligibility for each artifact; keep proprietary installers, secrets, and credentials out of Git |
 
-The stated 10 GB limit is not interpreted here because its measurement and the
-Splunk deployment details have not been confirmed. The project must not select
-a Splunk or Universal Forwarder version, or transfer Sysmon or another licensed
-binary, until CITEF has approved the exact choice.
+The Cyber Range confirmed the educational Splunk Enterprise license and its
+10 GB data limit, but the exact Splunk version and license accounting details
+are not yet recorded. Budget telemetry volume conservatively until the team
+verifies how the license measures data. The Cyber Range places no restrictions
+on the team's approach to Windows/AD configuration, automation, secrets, or
+software transfer; the team remains responsible for compatibility, licensing,
+checksums, and offline verification.
 
 ## Repository software inputs
 
@@ -65,12 +73,12 @@ legacy documentation is part of the approved Splunk-based MVP.
 
 | Name | Version | Source / owner | License | SHA-256 | Destination VM | Offline installation method |
 |---|---|---|---|---|---|---|
-| Ansible collections | Not declared | Ansible Galaxy or approved internal mirror; exact collection owners pending selection | Verify per collection | Pending | Approved Ansible control host; pending CITEF | Pin in `requirements.yml`, acquire collection archives, install from local paths |
-| Ansible and system packages | Not declared | Approved OS repositories or internally transferred packages; pending CITEF | Verify per artifact | Pending | Approved Ansible control host and target VMs | Stage approved OS packages/repository metadata; install without external repositories |
-| Splunk Enterprise/other CITEF Splunk product | Exact product/version pending CITEF | Cyber Range-provided; owner/admin pending | CITEF to confirm license and transfer approval | Pending; record only if approved for transfer | CITEF-managed Splunk VM | CITEF-approved installation/upgrade procedure; do not include in Git |
-| Splunk Universal Forwarder | Exact version pending compatibility approval | Splunk/CITEF; transfer owner pending | CITEF to confirm license and transfer approval | Pending; record only if approved for transfer | Approved Windows/Linux telemetry source VMs | CITEF-approved local installer and silent-install configuration |
-| Sysmon binary | Exact version pending CITEF approval | Microsoft Sysinternals; acquisition/transfer owner pending | Verify applicable license and CITEF transfer approval | Pending; do not transfer before approval | Approved Windows endpoint VMs | CITEF-approved local installer, with the approved configuration |
-| Sysmon configuration | Not selected/approved | Project configuration; approval owner CITEF | Project-authored; confirm provenance of any included rules | Pending after approval | Approved Windows endpoint VMs | Versioned config file installed locally alongside approved Sysmon |
+| Ansible collections | Not declared | Ansible Galaxy or selected source; exact collection owners pending selection | Verify per collection | Pending | Team-managed Ansible control host; exact VM pending | Pin in `requirements.yml`, acquire collection archives, push to control host, install from local paths |
+| Ansible and system packages | Not declared | Selected OS distribution and package sources | Verify per artifact | Pending | Team-managed control host and target VMs | Stage approved packages/repository metadata and push to VMs; install without external repositories |
+| Splunk Enterprise | Educational-license version not recorded | Cyber Range has an educational license | 10 GB data limit confirmed; detailed terms/version to record | Pending | Splunk VM; placement and provisioning owner pending | Confirm whether it is pre-provisioned or the team must stage an installer; respect license and data limit |
+| Splunk Universal Forwarder | Exact version pending compatibility check | Splunk distribution, selected by project team | Verify applicable license/terms | Pending | Approved Windows/Linux telemetry source VMs | If selected, stage compatible local installer and configuration; push to VM and validate without Internet |
+| Sysmon binary | Exact version pending team selection | Microsoft Sysinternals | Verify applicable license/terms and evaluation use | Pending | Approved Windows endpoint VMs | Stage selected installer, push to VM, and install locally under the applicable terms |
+| Sysmon configuration | Not selected | Project configuration; team-owned | Project-authored; confirm provenance of any included rules | Pending after selection | Approved Windows endpoint VMs | Versioned config file pushed and installed locally alongside Sysmon |
 | Event/action schemas and exercise configuration | Repository revision; no release artifact yet | Project repository / project team | Repository license and included-content provenance to be confirmed | Generate at release | Project runtime VM(s); proposed `CTRL01`, confirm topology | Copy with versioned application bundle; no package-manager/network fetch required |
 
 The project-owned configuration candidates currently in the repository include
@@ -90,8 +98,8 @@ verified. Before accepting the portal:
   static assets locally; do not load scripts, fonts, styles, or other resources
   from a CDN at runtime.
 - Inventory every outbound request and integration. Use project-owned local
-  services or CITEF-approved endpoints only; document any exception and obtain
-  approval.
+  services or documented Cyber Range endpoints; document and justify any
+  external dependency.
 - Build from the staged local package cache, then serve and exercise the
   production build on a clean VM while Internet egress is denied. Verify
   browser developer tools and host/network logs show no attempted external
@@ -102,12 +110,10 @@ verified. Before accepting the portal:
 ## Bundle and handling rules
 
 - Keep proprietary installers, licensed binaries, credentials, and secrets out
-  of Git. Transfer licensed artifacts only after CITEF approves the exact
-  artifact and transfer method.
+  of Git. Verify that use and transfer comply with each artifact's license.
 - Keep the versioned inventory, lock files, checksums, and installation
-  instructions in the project. Distribute approved binaries through the
-  CITEF-approved artifact-transfer mechanism, with a manifest that matches
-  this inventory.
+  instructions in the project. Push staged files to scenario VMs using the
+  team's documented transfer mechanism and a manifest matching this inventory.
 - Record SHA-256 for every acquired wheel, collection archive, installer,
   configuration, and release bundle. Verify hashes after transfer and before
   installation.
@@ -131,7 +137,7 @@ secrets and link them from the approved project evidence location.
 | Bundle release/version and SHA-256 | Pending |
 | Python version/architecture and locked requirements checksum | Pending |
 | Ansible version and collection manifest checksum | Pending |
-| Splunk version / Universal Forwarder version / Sysmon version (if applicable) | Pending CITEF approval |
+| Splunk version / Universal Forwarder version / Sysmon version (if applicable) | Pending team selection and compatibility verification |
 | Installation commands and local artifact source | Pending |
 | Package/config checksum verification | Pending |
 | Portal external-request audit | Pending |
@@ -140,13 +146,13 @@ secrets and link them from the approved project evidence location.
 
 ### Test procedure
 
-1. Provision a clean test VM matching the approved target OS and role. Disable
+1. Provision a clean amd64 test VM matching the selected target OS and role. Disable
    Internet egress at the network boundary and verify that an external
    connection cannot be established.
-2. Transfer only the approved, versioned bundle using the approved mechanism.
+2. Push the versioned bundle using the documented transfer mechanism.
    Verify the bundle and each artifact checksum before installation.
 3. Install runtime packages from the local wheelhouse and Ansible collections
-   from local archives; install approved system packages and licensed binaries
+   from local archives; install selected system packages and licensed binaries
    only from their staged local sources.
 4. Deploy project configuration and the portal, then run the project health
    checks and exercise a representative telemetry path to the approved Splunk
@@ -157,5 +163,6 @@ secrets and link them from the approved project evidence location.
 6. Complete the test record and repeat from a clean VM after bundle changes.
 
 Do not mark the bundle as offline-ready until all required target roles pass,
-the Splunk and Sysmon choices are confirmed by CITEF, and all failures have
-been resolved or explicitly accepted by the Cyber Range.
+the selected Splunk and Sysmon versions are compatible with the environment
+and license terms, the Splunk 10 GB data limit has an operational budget, and
+all failures have been resolved or explicitly accepted by the project team.
