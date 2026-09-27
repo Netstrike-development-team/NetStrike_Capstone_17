@@ -152,6 +152,12 @@ The project will not build a competing SIEM. It will provide normalized event
 producers, Splunk field mappings, health queries, learner views, solution-guide
 searches, and export validation.
 
+Track the exact approved Splunk product/version, Universal Forwarder
+compatibility, ingestion method, and any licensed artifact transfer in the
+[offline tool bundle inventory](07-offline-tool-bundle-inventory.md). Do not
+stage or transfer Splunk or Sysmon installers until CITEF approves the exact
+artifact and transfer method.
+
 ### Windows, Active Directory, and endpoint telemetry
 
 | Question | CITEF answer | Evidence/owner |

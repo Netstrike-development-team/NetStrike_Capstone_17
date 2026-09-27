@@ -34,6 +34,7 @@ The exercise begins after an identity compromise has occurred. Participants inve
 | [04-safety-and-reset.md](04-safety-and-reset.md) | Safety controls, emergency stop, reset sequence, and readiness checks |
 | [05-guide-outlines.md](05-guide-outlines.md) | Participant, facilitator, evaluator, and solution-guide structures |
 | [06-citef-requirements-and-approval.md](06-citef-requirements-and-approval.md) | Meeting-ready CITEF questionnaire, zero-cost fallbacks, decision log, and approval record |
+| [../offline-tool-bundle-inventory.md](07-offline-tool-bundle-inventory.md) | Artifact inventory, CITEF approval gates, offline installation procedure, and test record |
 
 ## Twelve-week delivery plan
 
