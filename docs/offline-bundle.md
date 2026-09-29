@@ -26,7 +26,7 @@ tar -xzf netstrike-offline-bundle-CTRL01-RUN_ID.tar.gz -C offline-bundle
 cd offline-bundle/netstrike-offline-bundle
 sha256sum -c SHA256SUMS
 tar -xzf runtime/python-runtime.tar.gz
-runtime/python/bin/python3.11 -m pip install \
+python/bin/python3.11 -m pip install \
   --no-index \
   --find-links=destinations/CTRL01/wheelhouse \
   --require-hashes \
