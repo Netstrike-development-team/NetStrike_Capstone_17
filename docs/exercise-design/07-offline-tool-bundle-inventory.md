@@ -3,7 +3,9 @@
 **Status:** Draft inventory reflecting Cyber Range and team decisions recorded
 September 24–27, 2026. Proposed stack is identified; exact artifact versions,
 checksums, bundle build, and offline installation test results remain
-outstanding.
+outstanding for the target deployment environment. The dependency installation
+workflow has successfully run on a personal machine while disconnected from
+the Internet; target-VM validation remains pending.
 
 This document tracks the proposed software and configuration for an offline
 deployment. It is not evidence that an artifact has been acquired, licensed,
@@ -153,27 +155,29 @@ controls, not production EDR.
 
 ## Offline installation test record
 
-**Status:** Not run. No clean-VM result is claimed.
+**Status:** The workflow and dependency installation succeeded on a personal
+machine with Internet access disconnected. The clean target-VM test has not
+been run, so no target-VM or deployment-readiness result is claimed.
 
 Complete this record for each target OS/VM role. Preserve logs that contain no
 secrets and link them from the approved project evidence location.
 
 | Field | Result |
 |---|---|
-| Test date / operator | Pending |
-| Clean VM image, OS/version, and role | Pending |
-| Internet disabled and verified by | Pending |
+| Test date / operator | Personal-machine run; date and operator details not recorded |
+| Clean VM image, OS/version, and role | Not applicable to the personal-machine run; clean target VM pending |
+| Internet disabled and verified by | Personal machine was disconnected from the Internet during the run; verification method not recorded |
 | Bundle release/version and SHA-256 | Pending |
-| Python 3.11 version/architecture and locked requirements checksum | Pending |
+| Python version/architecture and locked requirements checksum | Pending; versions and checksum used in the personal-machine run not recorded |
 | `ansible-core` version and `ansible.windows` collection manifest checksum | Pending |
 | Splunk version / Universal Forwarder version / Sysmon version (if applicable) | Pending team selection and compatibility verification |
 | Windows Security and PowerShell audit policy revision | Pending |
-| Installation commands and local artifact source | Pending |
+| Installation commands and local artifact source | Dependency installation completed successfully while offline on a personal machine; exact commands and artifact source not recorded |
 | Package/config checksum verification | Pending |
 | Portal external-request audit | Pending |
 | Snapshot restore and Ansible readiness-check result | Pending |
 | Splunk event sources, ingestion validation, and 10 GB usage measurement | Pending |
-| Result, failures, and remediation | Pending |
+| Result, failures, and remediation | Personal-machine workflow and dependency installation succeeded offline; target-VM result pending |
 | Evidence/log location | Pending |
 
 ### Test procedure
