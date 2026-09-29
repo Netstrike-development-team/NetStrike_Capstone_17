@@ -1,0 +1,75 @@
+name: Build offline bundle
+
+on:
+  workflow_dispatch:
+
+env:
+  DESTINATION: CTRL01
+  PYTHON_VERSION: "3.11.16"
+  PYTHON_BUILD: "20260924"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and verify bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out the committed source revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install bundle builder test dependencies
+        run: python -m pip install pytest
+
+      - name: Test offline bundle builder
+        run: python -m pytest scripts/tests/test_offline_bundle.py -q
+
+      - name: Download portable CPython runtime
+        id: runtime
+        run: |
+          asset="cpython-${PYTHON_VERSION}+${PYTHON_BUILD}-x86_64-unknown-linux-gnu-install_only.tar.gz"
+          release="$(curl -fsSL "https://api.github.com/repos/astral-sh/python-build-standalone/releases/tags/${PYTHON_BUILD}")"
+          url="$(jq -er --arg asset "$asset" '[.assets[] | select(.name == $asset) | .browser_download_url] | if length == 1 then .[0] else error("runtime asset not found uniquely") end' <<< "$release")"
+          curl -fL --retry 3 "$url" -o "$RUNNER_TEMP/python-runtime.tar.gz"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Build offline bundle
+        env:
+          OFFLINE_BUNDLE_DESTINATION: ${{ env.DESTINATION }}
+          OFFLINE_BUNDLE_PYTHON_VERSION: ${{ env.PYTHON_VERSION }}
+          OFFLINE_BUNDLE_PYTHON_URL: ${{ steps.runtime.outputs.url }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          requirements=(
+            --requirements shared/requirements.txt
+            --requirements modules/04-mfa-fatigue-sim/requirements.txt
+            --requirements modules/05-lateral-movement/requirements.txt
+            --requirements modules/06-cloud-exfil/requirements.txt
+            --requirements modules/07-ransomware-sim/requirements.txt
+          )
+
+          output="offline-bundles/netstrike-${DESTINATION}-${RUN_ID}.tar.gz"
+          python scripts/offline_bundle.py build \
+            "${requirements[@]}" \
+            --python-runtime-archive "$RUNNER_TEMP/python-runtime.tar.gz" \
+            --output "$output"
+
+      - name: Verify checksums and offline installation
+        env:
+          RUN_ID: ${{ github.run_id }}
+        run: python scripts/offline_bundle.py verify "offline-bundles/netstrike-${DESTINATION}-${RUN_ID}.tar.gz"
+
+      - name: Upload offline bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: netstrike-offline-bundle-${{ env.DESTINATION }}-${{ github.run_id }}
+          path: offline-bundles/netstrike-${{ env.DESTINATION }}-${{ github.run_id }}.tar.gz
+          if-no-files-found: error
+          retention-days: 14
