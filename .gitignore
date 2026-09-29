@@ -34,6 +34,9 @@ logs/
 # Module runtime output
 modules/*/output/
 
+# Generated offline dependency bundles (may contain licensed artifacts)
+offline-bundles/
+
 # Python
 __pycache__/
 .coverage
