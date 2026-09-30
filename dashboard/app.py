@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Response, status
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response, status
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
@@ -23,6 +24,7 @@ from .auth import (
     PortalPrincipal,
     TokenAuthenticator,
 )
+from .identity_audit import IdentityAuditError
 from .service import PortalService
 from .store import PortalStore
 
@@ -36,6 +38,8 @@ PARTICIPANT_ROLES = frozenset(
     }
 )
 FACILITATOR_ROLES = frozenset({"facilitator", "technical_operator"})
+IDENTITY_CAPTURE_ROLES = frozenset({"identity_capture_service"})
+MAX_IDENTITY_CAPTURE_BYTES = 16 * 1024
 
 
 class StrictInput(BaseModel):
@@ -83,7 +87,7 @@ class ResetInput(StrictInput):
 
 
 # Route closures intentionally share injected service/authentication state.
-# pylint: disable=too-many-locals
+# pylint: disable=too-many-locals,too-many-statements
 def create_app(
     service: PortalService, authenticator: TokenAuthenticator
 ) -> FastAPI:
@@ -150,11 +154,18 @@ def create_app(
 
     participant = authorize(PARTICIPANT_ROLES)
     facilitator = authorize(FACILITATOR_ROLES)
+    identity_capture_service = authorize(IDENTITY_CAPTURE_ROLES)
 
     def execute(operation):
         try:
             return operation()
-        except (ControllerError, ActionContractError, ActionValidationError, ValueError) as exc:
+        except (
+            ControllerError,
+            ActionContractError,
+            ActionValidationError,
+            IdentityAuditError,
+            ValueError,
+        ) as exc:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT, detail=str(exc)
             ) from exc
@@ -213,11 +224,62 @@ def create_app(
             )
         )
 
+    @app.post("/api/services/identity/interactions")
+    async def capture_identity_interaction(
+        request: Request,
+        principal: PortalPrincipal = Depends(identity_capture_service),
+    ) -> dict[str, Any]:
+        """Accept a bounded payload without reflecting credential-like input."""
+
+        content_length = request.headers.get("content-length")
+        if content_length:
+            try:
+                declared_length = int(content_length)
+            except ValueError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="invalid content length",
+                ) from exc
+            if declared_length > MAX_IDENTITY_CAPTURE_BYTES:
+                raise HTTPException(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    detail="identity interaction payload is too large",
+                )
+        body = await request.body()
+        if len(body) > MAX_IDENTITY_CAPTURE_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="identity interaction payload is too large",
+            )
+        try:
+            payload = json.loads(body)
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="request body must be valid JSON",
+            ) from exc
+        if not isinstance(payload, dict):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="request body must be a JSON object",
+            )
+        return execute(
+            lambda: service.capture_identity_interaction(
+                principal.actor_id, payload
+            )
+        )
+
     @app.get("/api/facilitator/state")
     def facilitator_state(
         _principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
         return service.facilitator_state()
+
+    @app.get("/api/facilitator/identity-audit")
+    def identity_audit(
+        _principal: PortalPrincipal = Depends(facilitator),
+    ) -> list[dict[str, Any]]:
+        return service.identity_timeline()
 
     @app.post("/api/facilitator/prepare")
     def prepare(
@@ -310,11 +372,7 @@ def create_app(
         _principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
         return execute(
-            lambda: (
-                service.run.reset(new_run_id=request.new_run_id),
-                service.scheduler.reset(),
-                service.facilitator_state(),
-            )[2]
+            lambda: service.reset_run(new_run_id=request.new_run_id)
         )
 
     def current_events() -> list[dict[str, Any]]:
@@ -354,6 +412,15 @@ def create_default_app() -> FastAPI:
         os.getenv("NETSTRIKE_PORTAL_DATABASE", "output/netstrike-portal.sqlite3")
     )
     run_id = os.getenv("NETSTRIKE_RUN_ID")
+    audit_key = os.getenv("NETSTRIKE_IDENTITY_AUDIT_KEY")
+    if not audit_key or len(audit_key.encode("utf-8")) < 32:
+        raise ValueError(
+            "NETSTRIKE_IDENTITY_AUDIT_KEY must contain at least 32 bytes"
+        )
     store = PortalStore(database_path)
-    service = PortalService(store, run_id=run_id)
+    service = PortalService(
+        store,
+        run_id=run_id,
+        identity_audit_key=audit_key.encode("utf-8"),
+    )
     return create_app(service, TokenAuthenticator.from_environment())
