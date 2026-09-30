@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any, Mapping
 
 
 @dataclass(frozen=True)
@@ -78,6 +79,60 @@ def evaluate_identity_triage(
         "Correct identity, classification, artifact count, and source diversity"
         if passed
         else "Missing checkpoint requirements: " + ", ".join(failed_checks)
+    )
+    return CheckpointEvaluation(
+        passed=passed,
+        reason=reason,
+        evidence_ids=evidence_ids,
+        checks=checks,
+    )
+
+
+def evaluate_identity_endpoint_containment(
+    identity_state: Mapping[str, Any],
+    endpoint_state: Mapping[str, Any],
+) -> CheckpointEvaluation:
+    """Evaluate DP2 from authoritative mock state rather than facilitator opinion."""
+
+    try:
+        session = identity_state["sessions"]["sess-red-01"]
+        factor = identity_state["factors"]["factor-red-01"]
+        identity = identity_state["identities"]["sarah"]
+        host = endpoint_state["hosts"]["FIN-WS01"]
+        artifact = endpoint_state["artifacts"]["FIN-WS01-discovery-bundle"]
+    except (KeyError, TypeError) as exc:
+        missing = str(exc).strip("'")
+        return CheckpointEvaluation(
+            passed=False,
+            reason=f"Verifier state is missing required field: {missing}",
+            evidence_ids=(),
+            checks={"verifier_state_complete": False},
+        )
+
+    checks = {
+        "malicious_session_revoked": session.get("active") is False,
+        "unauthorized_factor_removed": factor.get("active") is False,
+        "credential_rotated": identity.get("credential_version", 0) > 1,
+        "endpoint_remote_path_isolated": (
+            host.get("isolated") is True
+            and host.get("remote_path_enabled") is False
+            and host.get("controller_visible") is True
+        ),
+        "endpoint_evidence_preserved": artifact.get("preserved") is True,
+    }
+    passed = all(checks.values())
+    failed_checks = [name for name, succeeded in checks.items() if not succeeded]
+    evidence_ids = (
+        "state:session:sess-red-01",
+        "state:mfa_factor:factor-red-01",
+        "state:identity:sarah",
+        "state:host:FIN-WS01",
+        "state:evidence:FIN-WS01-discovery-bundle",
+    )
+    reason = (
+        "Session, factor, credential, endpoint isolation, and evidence checks passed"
+        if passed
+        else "Missing containment requirements: " + ", ".join(failed_checks)
     )
     return CheckpointEvaluation(
         passed=passed,

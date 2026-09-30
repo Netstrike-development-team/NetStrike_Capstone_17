@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import threading
 import uuid
 from copy import deepcopy
 from dataclasses import dataclass
@@ -50,6 +51,38 @@ class EventValidationError(EventContractError):
 
 class EventLedgerError(EventContractError):
     """Raised when a JSONL ledger violates runtime invariants."""
+
+
+class EventSequencer:
+    """Allocate run-wide event sequence numbers across independent producers."""
+
+    def __init__(self, start_sequence: int = 0) -> None:
+        if start_sequence < 0:
+            raise EventContractError("start_sequence cannot be negative")
+        self._sequence = start_sequence
+        self._lock = threading.Lock()
+
+    @property
+    def sequence(self) -> int:
+        """Return the most recently reserved sequence number."""
+
+        with self._lock:
+            return self._sequence
+
+    def next(self) -> int:
+        """Reserve and return the next number for one exercise-run event."""
+
+        with self._lock:
+            self._sequence += 1
+            return self._sequence
+
+    def reset(self, start_sequence: int = 0) -> None:
+        """Reset only after the prior run has been stopped or completed."""
+
+        if start_sequence < 0:
+            raise EventContractError("start_sequence cannot be negative")
+        with self._lock:
+            self._sequence = start_sequence
 
 
 def _utc_now() -> datetime:
@@ -208,8 +241,10 @@ class EventContext:
 
 
 class EventBuilder:
-    """Create validated events while assigning a monotonic local sequence."""
+    """Create validated events with a local or shared monotonic sequence."""
 
+    # Builders accept explicit collaborators so producers remain deterministic.
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         context: EventContext,
@@ -218,6 +253,7 @@ class EventBuilder:
         clock: Callable[[], datetime] = _utc_now,
         event_id_factory: Callable[[], Any] = uuid.uuid4,
         validator: EventValidator | None = None,
+        sequence_factory: Callable[[], int] | None = None,
     ) -> None:
         if start_sequence < 0:
             raise EventContractError("start_sequence cannot be negative")
@@ -226,6 +262,7 @@ class EventBuilder:
         self._clock = clock
         self._event_id_factory = event_id_factory
         self._validator = validator or EventValidator()
+        self._sequence_factory = sequence_factory
 
     @property
     def sequence(self) -> int:
@@ -273,7 +310,15 @@ class EventBuilder:
                 "attack_technique_id and attack_tactic must be supplied together"
             )
 
-        next_sequence = self._sequence + 1
+        next_sequence = (
+            self._sequence_factory()
+            if self._sequence_factory is not None
+            else self._sequence + 1
+        )
+        if not isinstance(next_sequence, int) or next_sequence <= self._sequence:
+            raise EventContractError(
+                "sequence_factory must return strictly increasing positive integers"
+            )
         source: dict[str, Any] = {
             "kind": self.context.source_kind,
             "component": self.context.source_component,

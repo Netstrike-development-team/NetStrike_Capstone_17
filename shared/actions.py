@@ -182,6 +182,7 @@ class SafeActionAdapter:
         clock: Callable[[], datetime] = _utc_now,
         monotonic: Callable[[], float] = time.monotonic,
         validator: ActionValidator | None = None,
+        sequence_factory: Callable[[], int] | None = None,
     ) -> None:
         self.context = context
         self.registry = registry
@@ -190,7 +191,11 @@ class SafeActionAdapter:
         self.clock = clock
         self.monotonic = monotonic
         self.validator = validator or ActionValidator()
-        self.events = EventBuilder(context, clock=clock)
+        self.events = EventBuilder(
+            context,
+            clock=clock,
+            sequence_factory=sequence_factory,
+        )
         self._results: dict[tuple[str, str], dict[str, Any]] = {}
         self._fingerprints: dict[tuple[str, str], str] = {}
         self._executions: dict[

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Mapping
 
@@ -58,9 +59,15 @@ AutomationHandler = Callable[[ScenarioItem, str], AutomationResult]
 EventSink = Callable[[Mapping[str, Any]], Any]
 
 
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
 class ScenarioController:  # pylint: disable=too-many-instance-attributes
     """Run reviewed MSEL items without sleeps, shell commands, or dynamic code."""
 
+    # Runtime dependencies are explicit for deterministic tests and integration.
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         definition: ScenarioDefinition,
@@ -69,12 +76,16 @@ class ScenarioController:  # pylint: disable=too-many-instance-attributes
         handlers: Mapping[str, AutomationHandler] | None = None,
         run_id: str | None = None,
         producer_version: str = "1.0.0",
+        sequence_factory: Callable[[], int] | None = None,
+        clock: Callable[[], datetime] = _utc_now,
     ) -> None:
         self.definition = definition
         self.run_id = run_id or str(uuid.uuid4())
         self.event_sink = event_sink
         self.handlers = dict(handlers or {})
         self.producer_version = producer_version
+        self.sequence_factory = sequence_factory
+        self.clock = clock
         self.state = RunState.READY
         self.elapsed_seconds = 0
         self.items = {
@@ -88,7 +99,9 @@ class ScenarioController:  # pylint: disable=too-many-instance-attributes
                 source_kind="controller",
                 source_component="scenario-controller",
                 producer_version=producer_version,
-            )
+            ),
+            clock=clock,
+            sequence_factory=sequence_factory,
         )
 
     def _definition(self, item_id: str) -> ScenarioItem:
@@ -97,6 +110,8 @@ class ScenarioController:  # pylint: disable=too-many-instance-attributes
                 return item
         raise ControllerError(f"unknown MSEL item: {item_id}")
 
+    # Event construction intentionally exposes the auditable contract fields.
+    # pylint: disable=too-many-arguments
     def _emit(
         self,
         event_type: str,
@@ -418,7 +433,9 @@ class ScenarioController:  # pylint: disable=too-many-instance-attributes
                 source_kind="controller",
                 source_component="scenario-controller",
                 producer_version=self.producer_version,
-            )
+            ),
+            clock=self.clock,
+            sequence_factory=self.sequence_factory,
         )
         self._emit(
             "scenario.run.reset",

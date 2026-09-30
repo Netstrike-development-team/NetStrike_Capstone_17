@@ -11,6 +11,7 @@ from .checkpoints import (
     CheckpointEvaluation,
     EvidenceReference,
     IdentityTriageSubmission,
+    evaluate_identity_endpoint_containment,
     evaluate_identity_triage,
 )
 from .scenario import (
@@ -20,6 +21,8 @@ from .scenario import (
     ScenarioTrigger,
     load_scenario,
 )
+from .identity_slice import IdentitySliceRun
+from .scheduler import ScenarioScheduler
 
 __all__ = [
     "AutomationResult",
@@ -27,13 +30,16 @@ __all__ = [
     "ControllerError",
     "EvidenceReference",
     "IdentityTriageSubmission",
+    "IdentitySliceRun",
     "ItemStatus",
     "RunState",
     "ScenarioController",
     "ScenarioDefinition",
     "ScenarioDefinitionError",
     "ScenarioItem",
+    "ScenarioScheduler",
     "ScenarioTrigger",
     "load_scenario",
+    "evaluate_identity_endpoint_containment",
     "evaluate_identity_triage",
 ]

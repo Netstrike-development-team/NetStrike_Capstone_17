@@ -5,6 +5,7 @@ from __future__ import annotations
 from orchestrator.checkpoints import (
     EvidenceReference,
     IdentityTriageSubmission,
+    evaluate_identity_endpoint_containment,
     evaluate_identity_triage,
 )
 
@@ -58,3 +59,55 @@ def test_duplicate_evidence_does_not_inflate_artifact_count() -> None:
 
     assert result.checks["artifact_count_met"] is False
     assert result.checks["source_diversity_met"] is False
+
+
+def _containment_state():
+    return (
+        {
+            "sessions": {"sess-red-01": {"active": False}},
+            "factors": {"factor-red-01": {"active": False}},
+            "identities": {"sarah": {"credential_version": 2}},
+        },
+        {
+            "hosts": {
+                "FIN-WS01": {
+                    "isolated": True,
+                    "remote_path_enabled": False,
+                    "controller_visible": True,
+                }
+            },
+            "artifacts": {
+                "FIN-WS01-discovery-bundle": {"preserved": True}
+            },
+        },
+    )
+
+
+def test_dp2_passes_only_when_all_authoritative_state_checks_pass() -> None:
+    identity, endpoint = _containment_state()
+
+    result = evaluate_identity_endpoint_containment(identity, endpoint)
+
+    assert result.passed is True
+    assert all(result.checks.values())
+    assert len(result.evidence_ids) == 5
+
+
+def test_dp2_reports_each_incomplete_containment_action() -> None:
+    identity, endpoint = _containment_state()
+    identity["sessions"]["sess-red-01"]["active"] = True
+    endpoint["artifacts"]["FIN-WS01-discovery-bundle"]["preserved"] = False
+
+    result = evaluate_identity_endpoint_containment(identity, endpoint)
+
+    assert result.passed is False
+    assert result.checks["malicious_session_revoked"] is False
+    assert result.checks["endpoint_evidence_preserved"] is False
+
+
+def test_dp2_missing_verifier_state_is_not_treated_as_participant_failure() -> None:
+    result = evaluate_identity_endpoint_containment({}, {})
+
+    assert result.passed is False
+    assert result.checks == {"verifier_state_complete": False}
+    assert "missing required field" in result.reason

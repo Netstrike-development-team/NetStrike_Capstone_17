@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Operation Silent Spider · Facilitator Console</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script type="module" src="/static/facilitator.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><div class="brand-mark" aria-hidden="true">NS</div><div><strong>Operation Silent Spider</strong><small>Facilitator control room</small></div></div>
+      <div class="connection"><label><span class="muted">Staff access token</span><input id="token-input" type="password" autocomplete="off" placeholder="Paste token"></label><button id="connect">Connect</button></div>
+    </header>
+
+    <section class="hero">
+      <div><p class="eyebrow">Exercise control · Staff only</p><h1>Control the pace. Preserve the evidence.</h1><p class="hero-copy">Every transition is recorded. Use emergency stop for safety or platform faults, not to correct participant decisions.</p></div>
+      <aside class="status-card"><span id="run-state" class="pill">disconnected</span><div class="status-grid"><div class="metric"><span>Exercise clock</span><strong id="elapsed">00:00:00</strong></div><div class="metric"><span>Total events</span><strong id="event-count">0</strong></div><div class="metric metric-wide"><span>Run ID</span><strong id="run-id">—</strong></div></div></aside>
+    </section>
+    <div id="notice" class="notice" role="status" aria-live="polite"></div>
+
+    <section class="panel">
+      <div class="panel-header"><div><h2>Run controls</h2><p>Reviewed lifecycle operations only.</p></div><button id="refresh" class="secondary small">Refresh</button></div>
+      <div class="controls"><button data-command="prepare">Prepare</button><button data-command="start">Start</button><button data-command="pause" class="warn">Pause</button><button data-command="resume" class="secondary">Resume</button><button id="resolve-dp2" class="secondary">Resolve DP2</button><button id="download-jsonl" class="secondary">Download JSONL</button><button id="download-csv" class="secondary">Download CSV</button></div>
+      <div class="form-grid controls-top">
+        <div><label>Advance to elapsed seconds<input id="advance-seconds" type="number" min="0" max="10800" value="300"></label><button id="advance" class="small button-top">Advance clock</button></div>
+        <div><label>Emergency-stop reason<input id="stop-reason" placeholder="Required safety or platform reason"></label><button id="stop" class="danger small button-top">Emergency stop</button></div>
+        <div class="form-wide"><label>New run ID after stop<input id="new-run-id" placeholder="Optional; generated when blank"></label><button id="reset" class="secondary small button-top">Reset application state</button></div>
+      </div>
+    </section>
+
+    <section class="layout space-top">
+      <div class="stack">
+        <article class="panel"><div class="panel-header"><div><h2>MSEL execution</h2><p>Ready items can be delivered or skipped explicitly.</p></div></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Item</th><th>Trigger</th><th>Status</th><th>Control</th></tr></thead><tbody id="msel-body"></tbody></table></div></article>
+        <article class="panel"><div class="panel-header"><div><h2>Recent event ledger</h2><p>Controller, module, participant-action, and checkpoint evidence.</p></div></div><div id="event-log" class="event-log"><div class="empty">Connect to load events.</div></div></article>
+      </div>
+      <aside class="stack">
+        <article class="panel"><div class="panel-header"><div><h2>DP2 verifier preview</h2><p>Authoritative state; does not resolve the branch until commanded.</p></div></div><div id="checks" class="checklist"></div></article>
+        <article class="panel"><div class="panel-header"><div><h2>Participant submissions</h2><p>Structured checkpoint responses retained for evaluation.</p></div></div><div id="submissions" class="timeline"><div class="empty">No submissions.</div></div></article>
+      </aside>
+    </section>
+    <p class="footer-note">Staff-only control surface · Do not display on the participant workstation</p>
+  </main>
+</body>
+</html>

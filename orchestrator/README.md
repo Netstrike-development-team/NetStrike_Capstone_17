@@ -22,6 +22,10 @@ Splunk Enterprise installation, the dedicated index, role/access configuration, 
 
 The CSV is for portability and facilitator review. JSONL remains the canonical source because it preserves nested safety, provenance, and event-specific evidence fields.
 
+`IdentitySliceRun` joins the MSEL controller to the real identity and endpoint/AD safe-action adapters. A shared run sequencer prevents controller, module, and action-adapter events from colliding in one ledger. DP2 is evaluated from authoritative mock state: revoked session, removed factor, rotated credential, isolated remote path, and preserved endpoint evidence. The contained or adverse branch is then selected automatically.
+
+`ScenarioScheduler` advances the deterministic controller from a monotonic real-time clock. Paused time is excluded, and an explicit facilitator time jump safely re-anchors the clock. The portal drives it once per second while the application is running.
+
 ## Minimal use
 
 ```python
