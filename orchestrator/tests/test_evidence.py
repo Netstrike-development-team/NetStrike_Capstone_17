@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 from orchestrator.controller import ScenarioController
-from orchestrator.evidence import export_csv, export_jsonl
+from orchestrator.evidence import export_csv, export_jsonl, render_csv, render_jsonl
 from orchestrator.scenario import load_scenario
 
 
@@ -42,3 +42,6 @@ def test_jsonl_is_canonical_and_csv_is_flattened_view(tmp_path) -> None:
     assert rows[0]["run_id"] == "run-export-test"
     assert rows[0]["source_component"] == "scenario-controller"
     assert "safety" not in rows[0]
+
+    assert render_jsonl(events) == jsonl_path.read_text(encoding="utf-8")
+    assert render_csv(events) == csv_path.read_text(encoding="utf-8")

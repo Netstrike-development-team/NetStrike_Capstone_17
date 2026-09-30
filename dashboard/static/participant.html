@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Operation Silent Spider · Participant Console</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script type="module" src="/static/participant.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">NS</div>
+        <div><strong>Operation Silent Spider</strong><small>Participant response console</small></div>
+      </div>
+      <div class="connection">
+        <label><span class="muted">Exercise access token</span><input id="token-input" type="password" autocomplete="off" placeholder="Paste token"></label>
+        <button id="connect">Connect</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div>
+        <p class="eyebrow">SimCorp security operations</p>
+        <h1>Investigate. Contain. Explain.</h1>
+        <p class="hero-copy">Use the evidence available in the range, record defensible conclusions, and apply only the approved response actions below.</p>
+      </div>
+      <aside class="status-card" aria-label="Exercise status">
+        <span id="run-state" class="pill">disconnected</span>
+        <div class="status-grid">
+          <div class="metric"><span>Exercise clock</span><strong id="elapsed">00:00:00</strong></div>
+          <div class="metric"><span>Injects received</span><strong id="inject-count">0</strong></div>
+          <div class="metric metric-wide"><span>Run ID</span><strong id="run-id">—</strong></div>
+        </div>
+      </aside>
+    </section>
+
+    <div id="notice" class="notice" role="status" aria-live="polite"></div>
+
+    <section class="layout">
+      <div class="stack">
+        <article class="panel">
+          <div class="panel-header"><div><h2>Situation updates</h2><p>New information delivered by exercise control.</p></div><button id="refresh" class="secondary small">Refresh</button></div>
+          <div id="injects" class="timeline"><div class="empty">Connect to receive exercise injects.</div></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header"><div><h2>Approved containment actions</h2><p>Every action is role-checked, allowlisted, reversible, and recorded.</p></div></div>
+          <div id="actions" class="actions">
+            <div class="action-card"><div><strong>Revoke a session</strong><small>Enter the session ID supported by your evidence.</small></div><input aria-label="Session ID" placeholder="Session ID"><button data-action="identity.session.revoke" data-type="session">Revoke session</button></div>
+            <div class="action-card"><div><strong>Remove an MFA factor</strong><small>Enter the factor ID supported by your evidence.</small></div><input aria-label="MFA factor ID" placeholder="Factor ID"><button data-action="identity.factor.remove" data-type="mfa_factor">Remove factor</button></div>
+            <div class="action-card"><div><strong>Rotate a credential</strong><small>Enter the affected synthetic identity ID.</small></div><input aria-label="Identity ID" placeholder="Identity ID"><button data-action="identity.credential.reset" data-type="identity">Rotate credential</button></div>
+            <div class="action-card"><div><strong>Preserve endpoint evidence</strong><small>Enter the designated evidence artifact ID.</small></div><input aria-label="Evidence artifact ID" placeholder="Artifact ID"><button data-action="evidence.artifact.preserve" data-type="evidence_artifact">Preserve evidence</button></div>
+            <div class="action-card"><div><strong>Isolate a remote path</strong><small>Enter the affected exercise host ID.</small></div><input aria-label="Host ID" placeholder="Host ID"><button data-action="endpoint.host.isolate" data-type="host">Isolate host</button></div>
+          </div>
+        </article>
+      </div>
+
+      <aside class="panel">
+        <div class="panel-header"><div><h2>Initial assessment</h2><p>Submit the affected identity, classification, and supporting artifacts.</p></div></div>
+        <form id="dp1-form" class="form-grid">
+          <label class="form-wide">Affected identity<input name="identity" required placeholder="Name or account"></label>
+          <label class="form-wide">Classification<select name="classification" required><option value="">Select classification</option><option>Likely account compromise</option><option>Identity compromise</option><option>Service outage</option><option>Benign activity</option></select></label>
+          <div class="form-wide">
+            <span class="muted">Evidence references — at least three across two sources</span>
+            <div class="evidence-row"><input name="reference" required placeholder="Event, ticket, or artifact ID"><input name="source" required placeholder="Source"></div>
+            <div class="evidence-row"><input name="reference" required placeholder="Event, ticket, or artifact ID"><input name="source" required placeholder="Source"></div>
+            <div class="evidence-row"><input name="reference" required placeholder="Event, ticket, or artifact ID"><input name="source" required placeholder="Source"></div>
+          </div>
+          <button class="form-wide" type="submit">Submit assessment</button>
+        </form>
+      </aside>
+    </section>
+    <p class="footer-note">Exercise-only system · Synthetic identities and data · Stop immediately if instructed by exercise control</p>
+  </main>
+</body>
+</html>

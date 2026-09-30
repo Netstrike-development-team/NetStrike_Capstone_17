@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import io
 import json
 from pathlib import Path
 from typing import Any, Iterable, Mapping
@@ -49,10 +50,7 @@ def export_jsonl(events: Iterable[Mapping[str, Any]], path: Path | str) -> Path:
 
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
-    with output.open("w", encoding="utf-8") as export_file:
-        for event in _validated(events):
-            json.dump(event, export_file, sort_keys=True, separators=(",", ":"))
-            export_file.write("\n")
+    output.write_text(render_jsonl(events), encoding="utf-8")
     return output
 
 
@@ -61,34 +59,51 @@ def export_csv(events: Iterable[Mapping[str, Any]], path: Path | str) -> Path:
 
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
-    with output.open("w", encoding="utf-8", newline="") as export_file:
-        writer = csv.DictWriter(export_file, fieldnames=CSV_FIELDS)
-        writer.writeheader()
-        for event in _validated(events):
-            actor = event["actor"]
-            target = event.get("target") or {}
-            writer.writerow(
-                {
-                    "timestamp": event["timestamp"],
-                    "exercise_id": event["exercise_id"],
-                    "run_id": event["run_id"],
-                    "sequence": event["sequence"],
-                    "event_id": event["event_id"],
-                    "event_type": event["event_type"],
-                    "phase": event["phase"],
-                    "source_kind": event["source"]["kind"],
-                    "source_component": event["source"]["component"],
-                    "actor_type": actor["type"],
-                    "actor_id": actor["id"],
-                    "action": event["action"],
-                    "target_type": target.get("type", ""),
-                    "target_id": target.get("id", ""),
-                    "outcome_status": event["outcome"]["status"],
-                    "severity": event["severity"],
-                    "visibility": event["visibility"],
-                    "checkpoint_id": event.get("checkpoint_id") or "",
-                    "objective_ids": ";".join(event.get("objective_ids", [])),
-                    "message": event["message"],
-                }
-            )
+    output.write_text(render_csv(events), encoding="utf-8", newline="")
     return output
+
+
+def render_jsonl(events: Iterable[Mapping[str, Any]]) -> str:
+    """Return validated canonical events as a downloadable JSONL string."""
+
+    lines = [
+        json.dumps(event, sort_keys=True, separators=(",", ":"))
+        for event in _validated(events)
+    ]
+    return "".join(f"{line}\n" for line in lines)
+
+
+def render_csv(events: Iterable[Mapping[str, Any]]) -> str:
+    """Return a flattened CSV convenience view for download and review."""
+
+    output = io.StringIO(newline="")
+    writer = csv.DictWriter(output, fieldnames=CSV_FIELDS, lineterminator="\n")
+    writer.writeheader()
+    for event in _validated(events):
+        actor = event["actor"]
+        target = event.get("target") or {}
+        writer.writerow(
+            {
+                "timestamp": event["timestamp"],
+                "exercise_id": event["exercise_id"],
+                "run_id": event["run_id"],
+                "sequence": event["sequence"],
+                "event_id": event["event_id"],
+                "event_type": event["event_type"],
+                "phase": event["phase"],
+                "source_kind": event["source"]["kind"],
+                "source_component": event["source"]["component"],
+                "actor_type": actor["type"],
+                "actor_id": actor["id"],
+                "action": event["action"],
+                "target_type": target.get("type", ""),
+                "target_id": target.get("id", ""),
+                "outcome_status": event["outcome"]["status"],
+                "severity": event["severity"],
+                "visibility": event["visibility"],
+                "checkpoint_id": event.get("checkpoint_id") or "",
+                "objective_ids": ";".join(event.get("objective_ids", [])),
+                "message": event["message"],
+            }
+        )
+    return output.getvalue()
