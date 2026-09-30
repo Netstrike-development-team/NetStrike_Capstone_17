@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SimCorp Access · Exercise SSO</title>
+  <link rel="stylesheet" href="/static/sso.css">
+  <script type="module" src="/static/sso.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#sso-main">Skip to sign-in</a>
+  <header class="sso-header">
+    <div class="sso-brand" aria-label="SimCorp Access">
+      <span class="sso-mark" aria-hidden="true">S</span>
+      <span id="service-name">SimCorp Access</span>
+    </div>
+    <span class="exercise-badge">Exercise system</span>
+  </header>
+
+  <main id="sso-main" class="sso-main">
+    <div id="live-status" class="sr-only" role="status" aria-live="polite"></div>
+
+    <section id="view-sign_in" class="sso-card" aria-labelledby="sign-in-title">
+      <p class="eyebrow">Employee workspace</p>
+      <h1 id="sign-in-title">Sign in to your workspace</h1>
+      <p id="introduction" class="lede">Use only the synthetic exercise identity supplied by exercise control.</p>
+      <form id="sign-in-form" novalidate>
+        <label for="username">Exercise identity</label>
+        <input id="username" name="username" type="email" inputmode="email" autocomplete="off" required maxlength="256" aria-describedby="identity-help">
+        <small id="identity-help">Only accounts in the reserved exercise domain are accepted.</small>
+
+        <label for="credential">Exercise access phrase</label>
+        <input id="credential" name="credential" type="password" autocomplete="off" required maxlength="1024" aria-describedby="credential-help">
+        <small id="credential-help">The submitted value is transformed before evidence is stored.</small>
+
+        <button type="submit">Continue</button>
+      </form>
+    </section>
+
+    <section id="view-failure" class="sso-card state-card" aria-labelledby="failure-title" hidden>
+      <span class="state-icon state-error" aria-hidden="true">!</span>
+      <p class="eyebrow">Sign-in not completed</p>
+      <h1 id="failure-title">Check the exercise details</h1>
+      <p id="failure-message" class="lede"></p>
+      <button class="secondary" data-return-sign-in>Try again</button>
+    </section>
+
+    <section id="view-locked" class="sso-card state-card" aria-labelledby="locked-title" hidden>
+      <span class="state-icon state-locked" aria-hidden="true">×</span>
+      <p class="eyebrow">Account unavailable</p>
+      <h1 id="locked-title">Access is locked</h1>
+      <p id="locked-message" class="lede"></p>
+      <p class="support-note">Follow the exercise communication process. Do not use a real account or external recovery service.</p>
+    </section>
+
+    <section id="view-mfa" class="sso-card state-card" aria-labelledby="mfa-title" hidden>
+      <span class="state-icon state-review" aria-hidden="true">?</span>
+      <p class="eyebrow">Verification required</p>
+      <h1 id="mfa-title">Review sign-in request</h1>
+      <p id="mfa-message" class="lede"></p>
+      <div class="identity-summary"><span>Exercise identity</span><strong id="mfa-identity">Synthetic user</strong></div>
+      <div class="countdown"><span>Request expires in</span><strong><span id="mfa-seconds">—</span>s</strong></div>
+      <div class="button-row">
+        <button id="deny-mfa" class="secondary" type="button">Deny</button>
+        <button id="approve-mfa" type="button">Approve</button>
+      </div>
+    </section>
+
+    <section id="view-success" class="sso-card state-card" aria-labelledby="success-title" hidden>
+      <span class="state-icon state-success" aria-hidden="true">✓</span>
+      <p class="eyebrow">Verification complete</p>
+      <h1 id="success-title">Signed in</h1>
+      <p id="success-message" class="lede"></p>
+      <button id="review-sessions" type="button">Review active sessions</button>
+    </section>
+
+    <section id="view-suspicious_session" class="sso-card" aria-labelledby="sessions-title" hidden>
+      <p class="eyebrow">Account activity</p>
+      <h1 id="sessions-title">Active exercise sessions</h1>
+      <p id="sessions-message" class="lede"></p>
+      <div id="session-list" class="session-list"></div>
+      <aside class="callout">If a session is unexpected, record its identifier and follow the exercise incident-reporting process.</aside>
+    </section>
+  </main>
+
+  <footer>
+    <strong>Contained simulation</strong>
+    <span>No connection to a real identity provider, tenant, device, or user.</span>
+  </footer>
+</body>
+</html>

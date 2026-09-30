@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
@@ -188,6 +189,7 @@ class ScenarioDefinition:
     exercise_id: str
     name: str
     items: tuple[ScenarioItem, ...]
+    participant_experience: Mapping[str, Any]
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "ScenarioDefinition":
@@ -199,6 +201,12 @@ class ScenarioDefinition:
             raise ScenarioDefinitionError("only scenario schema major version 1 is supported")
         if not _IDENTIFIER.fullmatch(scenario_id) or not _IDENTIFIER.fullmatch(exercise_id):
             raise ScenarioDefinitionError("scenario_id and exercise_id are invalid")
+
+        participant_experience = value.get("participant_experience", {})
+        if not isinstance(participant_experience, Mapping):
+            raise ScenarioDefinitionError(
+                "participant_experience must be an object"
+            )
 
         raw_items = value.get("items")
         if not isinstance(raw_items, list) or not raw_items:
@@ -228,6 +236,7 @@ class ScenarioDefinition:
             exercise_id=exercise_id,
             name=name,
             items=items,
+            participant_experience=deepcopy(dict(participant_experience)),
         )
 
 

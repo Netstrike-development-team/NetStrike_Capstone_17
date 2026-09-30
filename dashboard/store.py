@@ -272,7 +272,7 @@ class PortalStore:
                 JOIN events ON events.event_id = identity_audit.event_id
                 WHERE identity_audit.exercise_id = ?
                   AND identity_audit.run_id = ?
-                ORDER BY occurred_at, audit_id
+                ORDER BY occurred_at, events.sequence
                 """,
                 (exercise_id, run_id),
             ).fetchall()

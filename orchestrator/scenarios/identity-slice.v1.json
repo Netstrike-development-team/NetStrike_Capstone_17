@@ -3,6 +3,37 @@
   "scenario_id": "silent-spider-identity-slice-v1",
   "exercise_id": "operation-silent-spider",
   "name": "Operation Silent Spider — Identity Vertical Slice",
+  "participant_experience": {
+    "sso": {
+      "service_name": "SimCorp Access",
+      "heading": "Sign in to your workspace",
+      "introduction": "Use only the synthetic exercise identity and access phrase supplied by exercise control.",
+      "identity": {
+        "id": "sarah",
+        "username": "sarah@simcorp.test",
+        "display_name": "Sarah Mitchell"
+      },
+      "initial_failures_before_mfa": 1,
+      "lockout_threshold": 3,
+      "mfa_timeout_seconds": 30,
+      "messages": {
+        "failure": "The simulated sign-in could not be completed. Check the exercise identity and try again.",
+        "locked": "This exercise account is locked or disabled. Contact the simulated service desk.",
+        "mfa": "Review the exercise sign-in request and choose whether to approve it.",
+        "success": "The synthetic sign-in was approved.",
+        "suspicious": "Review the active exercise sessions and report anything unexpected.",
+        "rejected": "This sign-in is outside the permitted exercise identity boundary."
+      },
+      "suspicious_sessions": [
+        {
+          "id": "sess-red-01",
+          "label": "Finance workstation browser",
+          "location": "External exercise network",
+          "last_seen": "19 minutes before exercise start"
+        }
+      ]
+    }
+  },
   "items": [
     {
       "id": "PRE-01",
