@@ -16,6 +16,7 @@ from shared.events import (
     EventContractError,
     EventLedger,
     EventLedgerError,
+    EventSequencer,
     EventValidationError,
     EventValidator,
     correlation_key,
@@ -32,7 +33,9 @@ def load_fixture(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def make_builder(*, start_sequence: int = 0, clock=lambda: NOW) -> EventBuilder:
+def make_builder(
+    *, start_sequence: int = 0, clock=lambda: NOW, sequence_factory=None
+) -> EventBuilder:
     event_ids = iter(
         [
             "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
@@ -52,6 +55,7 @@ def make_builder(*, start_sequence: int = 0, clock=lambda: NOW) -> EventBuilder:
         start_sequence=start_sequence,
         clock=clock,
         event_id_factory=lambda: next(event_ids),
+        sequence_factory=sequence_factory,
     )
 
 
@@ -134,6 +138,26 @@ def test_builder_only_advances_sequence_after_successful_validation():
 
     assert builder.sequence == 0
     assert build_event(builder)["sequence"] == 1
+
+
+def test_shared_sequencer_orders_independent_producers():
+    sequencer = EventSequencer()
+    first_builder = make_builder(sequence_factory=sequencer.next)
+    second_builder = make_builder(sequence_factory=sequencer.next)
+
+    first = build_event(first_builder)
+    second = build_event(second_builder)
+    third = build_event(first_builder)
+
+    assert [first["sequence"], second["sequence"], third["sequence"]] == [1, 2, 3]
+    assert sequencer.sequence == 3
+
+
+def test_shared_sequencer_can_reset_for_a_new_stopped_run():
+    sequencer = EventSequencer(start_sequence=4)
+    assert sequencer.next() == 5
+    sequencer.reset()
+    assert sequencer.next() == 1
 
 
 def test_recursive_redaction_happens_before_publish():

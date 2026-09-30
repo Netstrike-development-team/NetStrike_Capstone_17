@@ -16,7 +16,7 @@ from shared.actions import (
     SafeActionAdapter,
     make_action_request,
 )
-from shared.events import EventContext, EventValidator, entity
+from shared.events import EventContext, EventSequencer, EventValidator, entity
 
 NOW = datetime(2026, 9, 16, 20, 0, tzinfo=timezone.utc)
 
@@ -114,6 +114,7 @@ def test_request_and_result_validate(action_system):
         "action.execution.started",
         "action.execution.completed",
     ]
+    assert events[-1]["data"]["metadata"] == {"synthetic": True}
     for event in events:
         EventValidator().validate(event)
 
@@ -276,3 +277,54 @@ def test_expected_handler_failure_preserves_safe_code_and_message():
     assert result["status"] == "failed"
     assert result["error_code"] == "baseline_mismatch"
     assert result["message"] == "Synthetic baseline differs"
+
+
+def test_action_adapter_uses_shared_run_sequence():
+    sequencer = EventSequencer(start_sequence=6)
+    registry = ActionRegistry()
+    registry.register(
+        ActionDefinition(
+            action_id="exercise.readiness.validate",
+            phase="setup",
+            allowed_roles=frozenset({"technical_operator"}),
+            allowed_targets=frozenset({"exercise_run:run-test-001"}),
+            allowed_run_states=frozenset({"ready"}),
+            max_timeout_seconds=10,
+            expected_effects=("validate baseline",),
+            rollback_method="none",
+            handler=lambda _parameters, _target, _control: ActionEffect(
+                ("validated",)
+            ),
+            rollback_handler=lambda _token, _control: (),
+        )
+    )
+    events = []
+    adapter = SafeActionAdapter(
+        context=EventContext(
+            exercise_id="silent-spider",
+            run_id="run-test-001",
+            source_kind="test",
+            source_component="sequence-test",
+            producer_version="1.0.0",
+        ),
+        registry=registry,
+        run_state=lambda _exercise, _run: "ready",
+        event_sink=events.append,
+        clock=lambda: NOW,
+        sequence_factory=sequencer.next,
+    )
+    action_request = make_action_request(
+        exercise_id="silent-spider",
+        run_id="run-test-001",
+        actor=entity("operator", "operator-01", role="technical_operator"),
+        action_id="exercise.readiness.validate",
+        target=entity("exercise_run", "run-test-001"),
+        idempotency_key="sequence-test",
+        dry_run=True,
+        timeout_seconds=10,
+        clock=lambda: NOW,
+    )
+
+    adapter.execute(action_request)
+
+    assert [event["sequence"] for event in events] == [7, 8, 9]

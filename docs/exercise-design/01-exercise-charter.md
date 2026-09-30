@@ -9,7 +9,7 @@
 | Format | Facilitated, operations-based blue-team exercise |
 | Threat | Fictitious actor behavior modelled on publicly reported Scattered Spider/UNC3944 tradecraft |
 | Primary purpose | Practise investigation, containment, recovery, and incident communication |
-| MVP duration | 3 hours 40 minutes: 20-minute briefing, 2 hours 50 minutes of play, 30-minute hotwash |
+| MVP duration | 2 hours 50 minutes total: 15-minute briefing, 2 hours 10 minutes of play, 25-minute hotwash |
 | Delivery model | One team in one isolated CITEF instance |
 | Cost assumption | No paid service or public-cloud consumption required |
 

@@ -1,6 +1,6 @@
 # Operation Silent Spider — Blue-Team Exercise Design Package
 
-**Status:** Draft for team and Cyber Range approval
+**Status:** Scope accepted by the Cyber Range on September 24, 2026, with the duration and reset changes recorded below
 
 **Target:** Zero-cost, blue-team-only MVP completed in 12 weeks
 
@@ -17,8 +17,9 @@ The three-month project is feasible only with the following scope boundary:
 - Use Splunk supplied by the Cyber Range; do not build a competing SIEM.
 - Keep cloud activity inside a clearly identified Python mock service.
 - Use deterministic, checkpoint-based branches rather than an open-ended adaptive attacker.
-- Use Ansible for provisioning, seeding, health checks, and reset.
-- Make MITRE CALDERA integration optional until the complete identity vertical slice works.
+- Use Ansible for provisioning, seeding, configuration, and readiness checks;
+  restore clean VM snapshots between deliveries.
+- Defer MITRE CALDERA; use only registered MSEL actions in the blue-team MVP.
 - Use marker files and simulated service impact; never encrypt real VM disks or exercise infrastructure.
 - Defer manual red-team play, GHOSTS, multi-tenant support, public-cloud deployment, and a custom detection dashboard.
 
@@ -34,7 +35,7 @@ The exercise begins after an identity compromise has occurred. Participants inve
 | [04-safety-and-reset.md](04-safety-and-reset.md) | Safety controls, emergency stop, reset sequence, and readiness checks |
 | [05-guide-outlines.md](05-guide-outlines.md) | Participant, facilitator, evaluator, and solution-guide structures |
 | [06-citef-requirements-and-approval.md](06-citef-requirements-and-approval.md) | Meeting-ready CITEF questionnaire, zero-cost fallbacks, decision log, and approval record |
-| [../offline-tool-bundle-inventory.md](07-offline-tool-bundle-inventory.md) | Artifact inventory, CITEF approval gates, offline installation procedure, and test record |
+| [07-tools-and-offline-deployment.md](07-tools-and-offline-deployment.md) | Proposed tool stack, licensing responsibilities, EDR decision, and air-gapped installation plan |
 
 ## Twelve-week delivery plan
 
@@ -62,7 +63,7 @@ The project is exercise-ready when:
 5. Expected telemetry reaches Splunk and is discoverable using the solution-guide searches.
 6. No stage requires real credentials, real personal data, Internet access, paid cloud resources, or destructive encryption.
 7. A failed module produces a visible controller error and can be skipped or retried safely.
-8. The complete environment can be restored to a validated baseline in 20 minutes or less.
+8. The complete environment can be restored from clean snapshots and passes the automated readiness check before participants enter.
 9. The exercise has passed at least three complete dry runs, including one on CITEF.
 10. Participant, facilitator, evaluator, solution, safety, deployment, and reset documentation is complete.
 
@@ -72,15 +73,16 @@ This package follows the objective-led, operations-based exercise approach in th
 
 ## Approval gates
 
-Before implementation begins, the team and Cyber Range should approve:
+The Cyber Range has accepted the audience, objectives, safety rules, blue-team
+scope, VM flexibility, Splunk availability, and snapshot restoration approach.
+The remaining confirmations are:
 
-- the MVP boundary above;
-- the five learning objectives;
-- the logical assets and the mapping to available CITEF VMs;
-- the Splunk version, indexes, forwarders, and add-ons the Cyber Range will supply;
-- the participant administration permissions;
-- the reset mechanism and snapshot ownership; and
-- the exercise duration and expected participant skill level.
+- the final logical-asset-to-VM mapping;
+- the exact Splunk version, interpretation of the 10 GB limit, inputs, indexes,
+  forwarders, roles, and permitted add-ons;
+- the reviewed offline software bundle and required evaluation-license terms;
+  and
+- deployment, rehearsal, and delivery dates coordinated with Latifa.
 
 Use [06-citef-requirements-and-approval.md](06-citef-requirements-and-approval.md)
 to collect these decisions, record exceptions, re-estimate the backlog, and

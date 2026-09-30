@@ -1,137 +1,95 @@
-# NetStrike: Project Roadmap
+# NetStrike 12-Week Roadmap and Ownership
 
-**Capstone:** SEG 4910 | University of Ottawa  
-**Team:** Ashley Goman, Anna Brimacombe-Tanner, Patrick Luu, Aya Debbagh  
+**Project:** Operation Silent Spider blue-team exercise
+
+**Delivery window:** September 14–December 6, 2026
+
 **Partner:** University of Ottawa Cyber Range
 
----
+## Team ownership
 
-## Project Goal
+| Person | Primary role | Owns |
+|---|---|---|
+| Aya Debbagh | Development lead | Architecture, controller, portal, integrations, safe actions, technical review |
+| Ashley Goman | Client and project coordinator | Cyber Range communication, decisions, schedule, project board, risks, meeting follow-up |
+| Patrick Luu | Splunk, environment, and testing lead | Splunk content, CITEF topology/configuration, offline deployment, readiness, rehearsals, defect evidence |
+| Anna Brimacombe-Tanner | Exercise content and participant-experience lead | Injects, participant materials, facilitator/evaluator/solution content, usability and timing feedback |
 
-Build a modular, portable attack simulation suite that models the **Scattered Spider
-(UNC3944)** kill chain inside the CITEF cyber range, with a detection and evaluation
-framework. Deliver reusable scenario artifacts that the Cyber Range team can integrate
-into their next-generation platform.
-
----
+Each owner is responsible for keeping their issues current and producing a
+reviewable deliverable. Aya integrates technical changes, but documentation,
+client coordination, telemetry validation, and exercise testing are not
+treated as development-lead tasks.
 
 ## Milestones
 
-### Milestone 1: Foundation (Week 1-2)
-**Goal:** Repo structured, schemas defined, first module working, team unblocked to
-build in parallel.
+### M1 — Design approval and contracts (September 14–27)
 
-- [x] Restructure repo to match scenario design document
-- [x] Archive legacy code to `_legacy/`
-- [x] Write new README reflecting current project
-- [ ] Define and commit `schemas/event.json`
-- [ ] Define and commit `schemas/target_profile.json`
-- [ ] Build `modules/01-osint-profiler/`: employee DB + profiler + tests
-- [ ] Commit `orchestrator/run.py` stub that sequences all 7 phases
-- [ ] Update architecture.md and roadmap.md
-- [ ] Triage and close legacy GitHub Issues
+- Incorporate the Cyber Range response.
+- Confirm the 2h50 total duration and snapshot restoration model.
+- Publish the proposed tool/licensing/offline-install plan.
+- Publish the dated roadmap and named team ownership.
+- Merge the shared event and safe-action contracts.
 
----
+**Exit:** the approved scope is reflected consistently in docs and issues;
+remaining Cyber Range questions have a named owner.
 
-### Milestone 2: Core Social Engineering Modules (Week 2-3)
-**Goal:** Phases 1-4 fully implemented and testable locally with no infrastructure.
+### M2 — Identity vertical slice (September 28–October 11)
 
-- [ ] `modules/02-phishing-infra/`: Flask fake Okta page + credential capture backend
-- [ ] `modules/03-vishing-scripts/`: Jinja2 script generator from OSINT profile
-- [ ] `modules/04-mfa-fatigue-sim/`: mock Okta push API + flooding simulator
-- [ ] Unit tests for modules 01-04 (`pytest` + coverage > 70%)
-- [ ] CI passing on `dev` branch for all modules
+- Build the minimum controller run lifecycle and MSEL runner.
+- Deliver the opening identity/helpdesk evidence.
+- Ingest and find identity evidence in Splunk.
+- Allow and verify safe participant containment.
+- Export the run evidence and validate the restored snapshot.
 
----
+**Exit:** one representative learner can complete the first scenario slice
+from participant-facing information only.
 
-### Milestone 3: Infrastructure Modules (Week 3-4)
-**Goal:** Phases 5-7 implemented against local mocks (VirtualBox AD + LocalStack).
+### M3 — Complete scenario (October 12–November 8)
 
-- [ ] `modules/05-lateral-movement/`: AD enumeration + Pass-the-Hash simulation
-- [ ] `modules/06-cloud-exfil/`: LocalStack S3 enumeration + bulk download
-- [ ] `modules/07-ransomware-sim/`: benign AES encryptor + RansomHub note format
-- [ ] `citef-config/localstack/seed_s3.py`: synthetic PII dataset generator
-- [ ] Unit tests for modules 05-07
+- Add endpoint/AD investigation and response.
+- Add mock-cloud investigation and containment.
+- Integrate the completed safe marker-impact and recovery adapter.
+- Implement all four checkpoint branches and fallback evidence.
 
----
+**Exit:** every planned branch can run safely and creates the expected
+evidence.
 
-### Milestone 4: Orchestrator + CALDERA Integration (Week 4-5)
-**Goal:** Full scenario runs end-to-end with one command.
+### M4 — Exercise operations (November 9–22)
 
-- [ ] `orchestrator/run.py`: complete scenario runner (not stub)
-- [ ] `orchestrator/caldera_client.py`: finalized Caldera API integration
-- [ ] `citef-config/caldera/scattered_spider.yaml`: Scattered Spider adversary profile
-- [ ] `orchestrator/flag_tracker.py`: tracks all 7 flags with timestamps
-- [ ] `orchestrator/event_logger.py`: writes `scenario_events.jsonl`
-- [ ] Orchestrator REST API (`POST /start`, `GET /status`, `POST /stop`)
-- [ ] Integration test: full scenario run produces expected flags + events
+- Complete the participant and staff interfaces.
+- Complete checkpoint scoring and after-action export.
+- Finish participant, facilitator, evaluator, and solution guides.
+- Run an internal usability rehearsal and correct timing/content problems.
 
----
+**Exit:** someone outside the implementation can facilitate and evaluate the
+exercise from the guides.
 
-### Milestone 5: Detection Layer (Week 5-6)
-**Goal:** Log analyzer scores a complete scenario run, dashboard shows results.
+### M5 — Cyber Range release (November 23–December 6)
 
-- [ ] `detection/log_analyzer.py`: 20 detection rules (one per ATT&CK technique)
-- [ ] `detection/scoring.py`: computes 5 evaluation metrics
-- [ ] `detection/alerts.jsonl` schema defined
-- [ ] `dashboard/` backend: FastAPI serving alerts + events as REST API
-- [ ] `dashboard/` frontend: React UI with:
-  - [ ] Real-time event feed
-  - [ ] MITRE ATT&CK heatmap (detected vs. missed)
-  - [ ] Per-phase detection scores
-  - [ ] Attack timeline view
-- [ ] Dashboard loads from pre-recorded scenario logs (demo mode)
+- Transfer and verify the offline installation bundle.
+- Deploy on the approved Cyber Range topology.
+- Capture clean snapshots and validate restore/readiness.
+- Run at least two consecutive full rehearsals on clean restores.
+- Fix release-blocking defects and package version 1.0.
 
----
+**Exit:** Cyber Range stakeholders accept the exercise or record explicit
+exceptions. Exact deployment, rehearsal, and delivery dates are coordinated
+with Latifa.
 
-### Milestone 6 Full Environment + GHOSTS (Week 6-7)
-**Goal:** Complete Vagrant environment runs scenario end-to-end, GHOSTS provides
-realistic baseline traffic.
+## Working rhythm
 
-- [ ] `citef-config/Vagrantfile`: all 6 VMs defined
-- [ ] `citef-config/ansible/dc.yml`: domain controller setup
-- [ ] `citef-config/ansible/users.yml`: 20 domain users from OSINT DB
-- [ ] `citef-config/ansible/workstation.yml`: agents + weak configs
-- [ ] `citef-config/ansible/siem.yml`: Wazuh + Elastic
-- [ ] `ghosts/timelines/`: activity profiles for 3 SimCorp employees
-- [ ] End-to-end test: `vagrant up` → `python orchestrator/run.py` → dashboard
+- Two short team check-ins each week.
+- One integration/rehearsal block each week from M2 onward.
+- Ashley sends a weekly client status when there is a decision, risk, or
+  dependency to report.
+- Each person keeps no more than one major item in progress at a time.
+- Every pull request has one teammate review and passing CI.
+- Features that threaten the final two-week Cyber Range window are deferred.
 
----
+## Current priority order
 
-### Milestone 7: CITEF Deployment + Demo Prep (Week 7-8)
-**Goal:** Scenario runs on actual CITEF cyber range, ready for capstone demo.
-
-- [ ] `citef-config/citef.yaml`: CITEF-specific environment config
-- [ ] Deploy and test against CITEF environment with Cyber Range team
-- [ ] Record scenario execution for demo backup (in case of live environment issues)
-- [ ] Portability report: document what changed between local and CITEF deployment
-- [ ] Final README cleanup
-- [ ] Tag `v1.0` release
-
----
-
-## Current Status
-
-| Component | Status |
-|-----------|--------|
-| Repo structure | ✅ Done |
-| README | ✅ Done |
-| Architecture docs | ✅ Done |
-| Schemas | 🔄 In progress |
-| Module 01 (OSINT) | 🔄 In progress |
-| Modules 02-07 | ⬜ Not started |
-| Orchestrator | 🔄 Stub exists |
-| Detection layer | ⬜ Not started |
-| Dashboard | ⬜ Not started |
-| Vagrant/Ansible | ⬜ Not started |
-| CITEF deployment | ⬜ Pending range access |
-
----
-
-## How We Work
-
-- **Sprints:** 1-week sprints, milestone-aligned
-- **Standups:** 2x per week, 15 min
-- **Branches:** `feature/<module-name>` → PR to `dev` → merge to `main` at milestone
-- **PRs:** minimum 1 reviewer, CI must pass
-- **Issues:** one GitHub Issue per checklist item above, labeled by module
+1. Close the completed safe-action contract work after PR #95.
+2. Complete the M1 response package and obtain remaining scheduling details.
+3. Deliver the identity vertical slice.
+4. Prove Splunk ingestion and snapshot restoration early.
+5. Extend the proven path to endpoint/AD, cloud, and impact/recovery.

@@ -35,6 +35,12 @@ export NETSTRIKE_RUN_ID='run-001'
 The simulator reads `NETSTRIKE_ACTION_API_TOKEN` and submits
 `identity.mfa.challenge.record` through this authenticated boundary.
 
+The former inline vendor-branded login and victim pages have been retired.
+`GET /` and `GET /victim` now return `410 Gone`; the maintained participant
+experience is the dashboard's `/sso` path. It uses the same authoritative
+identity state and canonical audit evidence without a hardcoded shared
+password.
+
 ## Reset and readiness
 
 Exercise staff use the same authenticated endpoint for:

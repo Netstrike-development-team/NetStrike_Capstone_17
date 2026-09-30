@@ -6,9 +6,9 @@
 
 **Working pull request:** [#87](https://github.com/Netstrike-development-team/NetStrike_Capstone_17/pull/87)
 
-**Target decision date:** September 28, 2026
+**Cyber Range response received:** September 24, 2026
 
-**Status:** Proposed decisions are ready for team and CITEF review. External confirmations and named sign-off are pending.
+**Status:** Scope, audience, objectives, and safety approach accepted with changes. Tool details, final topology/configuration, and dates coordinated with Latifa remain follow-up work.
 
 ## Purpose
 
@@ -43,20 +43,20 @@ decision owner. A blank row means the decision remains pending.
 
 | Decision | Proposed baseline | Status | Owner/date | Change or rationale |
 |---|---|---|---|---|
-| Audience | Post-secondary learners, co-op students, and junior SOC/IR practitioners | Pending | — | — |
-| Prerequisite skill | Basic networking, authentication, AD, command line, incident response, and introductory Splunk | Pending | — | — |
-| Team size | Ideal 4; supported 2–6 | Pending | — | — |
-| Duration | 20-minute briefing, 2h50 play, 30-minute hotwash; 3h40 total | Pending | — | — |
-| Delivery model | One participant team in one isolated CITEF instance | Pending | — | — |
-| Exercise perspective | Blue-team-only MVP beginning after identity compromise | Pending | — | — |
-| Learning objectives | Five objectives: triage, timeline, identity/endpoint containment, mock-cloud containment, recovery/communication | Pending | — | — |
-| Decision model | Four deterministic checkpoints with contained/adverse variants | Pending | — | — |
-| Simulation control | MSEL-driven automation with manual facilitator fallback | Pending | — | — |
-| SIEM | CITEF-provided Splunk; the project supplies sources, field mappings, searches, and dashboards | Pending | — | — |
-| Cloud | Stateful Python mock only; no public-cloud account | Pending | — | — |
-| Impact | Marker/move simulation on disposable fixtures; no encryption | Pending | — | — |
-| Reset target | Validated baseline restored within 20 minutes | Pending | — | — |
-| Deferred work | Learner-operated red team, open-ended attacker, CALDERA dependency, GHOSTS, public cloud, multi-tenancy, custom SIEM | Pending | — | — |
+| Audience | Post-secondary learners, co-op students, and junior SOC/IR practitioners | Approved | Cyber Range, 2026-09-24 | Flexibility permitted in delivery details |
+| Prerequisite skill | Basic networking, authentication, AD, command line, incident response, and introductory Splunk | Approved | Cyber Range, 2026-09-24 | — |
+| Team size | Ideal 4; supported 2–6 | Approved | Cyber Range, 2026-09-24 | — |
+| Duration | 15-minute briefing, 2h10 play, 25-minute hotwash; 2h50 total | Approved with change | Cyber Range, 2026-09-24 | Total must include briefing and hotwash |
+| Delivery model | One participant team in one isolated Cyber Range instance | Approved | Cyber Range, 2026-09-24 | Team designs the topology in the available platform |
+| Exercise perspective | Blue-team-only MVP beginning after identity compromise | Approved | Cyber Range, 2026-09-24 | — |
+| Learning objectives | Five objectives: triage, timeline, identity/endpoint containment, mock-cloud containment, recovery/communication | Approved | Cyber Range, 2026-09-24 | Details may be tuned during rehearsal |
+| Decision model | Four deterministic checkpoints with contained/adverse variants | Approved | Cyber Range, 2026-09-24 | — |
+| Simulation control | MSEL-driven automation with manual facilitator fallback | Approved | Cyber Range, 2026-09-24 | — |
+| SIEM | Cyber Range-provided Splunk; the project supplies sources, field mappings, searches, and dashboards | Approved with follow-up | Cyber Range, 2026-09-24 | Enterprise educational license with stated 10 GB limit; exact version/limit semantics remain to confirm |
+| Cloud | Stateful Python mock only; no public-cloud account | Approved | Cyber Range, 2026-09-24 | — |
+| Impact | Marker/move simulation on disposable fixtures; no encryption | Approved | Cyber Range, 2026-09-24 | — |
+| Reset approach | Cyber Range snapshot restore followed by readiness validation | Approved with change | Cyber Range, 2026-09-24 | No 20-minute Ansible reset target is required |
+| Deferred work | Learner-operated red team, open-ended attacker, CALDERA dependency, GHOSTS, public cloud, multi-tenancy, custom SIEM | Approved | Team/Cyber Range, 2026-09-24 | — |
 
 ### Learning-objective approval
 
@@ -67,11 +67,11 @@ confirmed environment, and achievable in the available play time.
 
 | Objective | Approved? | Required change | Approver/date |
 |---|---|---|---|
-| LO1 — Triage the identity incident | Pending | — | — |
-| LO2 — Reconstruct the intrusion | Pending | — | — |
-| LO3 — Contain identity and endpoint access | Pending | — | — |
-| LO4 — Determine and contain mock-cloud exposure | Pending | — | — |
-| LO5 — Recover and communicate | Pending | — | — |
+| LO1 — Triage the identity incident | Approved | Timing compressed for 2h10 play | Cyber Range, 2026-09-24 |
+| LO2 — Reconstruct the intrusion | Approved | Timing compressed for 2h10 play | Cyber Range, 2026-09-24 |
+| LO3 — Contain identity and endpoint access | Approved | Timing compressed for 2h10 play | Cyber Range, 2026-09-24 |
+| LO4 — Determine and contain mock-cloud exposure | Approved | Timing compressed for 2h10 play | Cyber Range, 2026-09-24 |
+| LO5 — Recover and communicate | Approved | Timing compressed for 2h10 play | Cyber Range, 2026-09-24 |
 
 ## CITEF environment questionnaire
 
@@ -79,12 +79,12 @@ confirmed environment, and achievable in the available play time.
 
 | Question | CITEF answer | Owner or source | Confirm by |
 |---|---|---|---|
-| Who is the primary technical contact and delivery-day escalation contact? | Pending | — | — |
-| Who owns VM creation, snapshots, restoration, and deletion? | Pending | — | — |
+| Who is the primary technical contact and delivery-day escalation contact? | Zian and Julien are technical/escalation contacts | Julien Cassagne email, 2026-09-24 | Confirm delivery-day channel with Latifa |
+| Who owns VM creation, snapshots, restoration, and deletion? | Student team owns topology/provisioning/snapshots/restoration; Zian and Julien can assist | Julien Cassagne email, 2026-09-24 | Before first deployment |
 | How will students access CITEF during development and exercise delivery? | Pending | — | — |
 | What approval is required before deploying services, agents, or Ansible changes? | Pending | — | — |
 | Are participant accounts persistent or created per event? | Pending | — | — |
-| What dates are available for the first deployment, rehearsal, and final exercise? | Pending | — | — |
+| What dates are available for the first deployment, rehearsal, and final exercise? | Coordinate with Latifa | Ashley | M1 follow-up |
 | How much lead time does CITEF require for topology or software changes? | Pending | — | — |
 
 ### Compute and logical-asset mapping
@@ -95,14 +95,14 @@ Splunk separate while consolidating project-owned services.
 
 | Logical asset | Preferred placement | Can consolidate with | Confirmed CITEF mapping/specification |
 |---|---|---|---|
-| `CTRL01` | Linux VM controlled by exercise staff | `IDP01`, `HELPDESK01`, `CLOUD01`, `FILE01` | Pending |
+| `CTRL01` | Linux VM controlled by exercise staff | `IDP01`, `HELPDESK01`, `CLOUD01`, `FILE01` | Team may create any required amd64 Linux VM; final image/spec pending |
 | `IDP01` | Project service | `CTRL01` | Pending |
 | `HELPDESK01` | Project service | `CTRL01` | Pending |
 | `CLOUD01` | Stateful Python mock | `CTRL01` | Pending |
 | `FILE01` | Disposable fixture storage | `CTRL01` or `FIN-WS01` | Pending |
-| `DC01` | Separate Windows Server VM | None preferred | Pending |
-| `FIN-WS01` | Separate Windows workstation VM | None preferred | Pending |
-| `SPLUNK01` | CITEF-managed Splunk VM | None preferred | Pending |
+| `DC01` | Separate Windows Server VM | None preferred | Windows Server image available; team configures AD and telemetry |
+| `FIN-WS01` | Separate Windows workstation VM | None preferred | Windows 11 image available; team configures telemetry and participant access |
+| `SPLUNK01` | Splunk Enterprise VM | None preferred | Educational Enterprise license available with stated 10 GB limit; exact image/version pending |
 
 Confirm for every supplied VM:
 
@@ -118,11 +118,11 @@ Confirm for every supplied VM:
 | Requirement | CITEF answer | Evidence/owner |
 |---|---|---|
 | Exercise subnet and address allocation | Pending | — |
-| Internet-egress policy and enforcement point | Pending | — |
+| Internet-egress policy and enforcement point | Scenario VMs deliberately have no Internet access | Cyber Range, 2026-09-24 |
 | Management paths that remain reachable during endpoint isolation | Pending | — |
-| DNS service and approved internal exercise domain | Pending | — |
+| DNS service and approved internal exercise domain | Team may configure DNS through Ansible; domain remains to select | Patrick |
 | Firewall changes the project may request or automate | Pending | — |
-| NTP/time source for Windows, Linux, controller, and Splunk | Pending | — |
+| NTP/time source for Windows, Linux, controller, and Splunk | Team may configure NTP through Ansible; authoritative source remains to select | Patrick |
 | Maximum expected clock skew | Pending | — |
 | Reserved address to represent the fictitious threat source | `203.0.113.77` proposed | — |
 
@@ -134,8 +134,8 @@ path and must not be reachable by participants or simulation modules.
 
 | Question | CITEF answer | Evidence/owner |
 |---|---|---|
-| Splunk product, edition, and exact version | Pending | — |
-| License constraints during development and delivery | Pending | — |
+| Splunk product, edition, and exact version | Splunk Enterprise; exact version pending | Cyber Range/Patrick |
+| License constraints during development and delivery | Educational license with a stated 10 GB data limit; whether this is per day or another limit must be confirmed | Cyber Range/Patrick |
 | VM owner and Splunk administrator | Pending | — |
 | Allowed ingestion methods: HEC, Universal Forwarder, syslog, file monitor | Pending | — |
 | Available indexes and whether a dedicated index is permitted | Pending | — |
@@ -162,23 +162,23 @@ artifact and transfer method.
 
 | Question | CITEF answer | Evidence/owner |
 |---|---|---|
-| Windows Server and workstation versions | Pending | — |
+| Windows Server and workstation versions | Windows Server and Windows 11 images available; exact versions selected during topology design | Patrick |
 | Domain/forest name and ability to seed fictitious accounts/groups | Pending | — |
 | Participant permissions for approved account/group actions | Pending | — |
 | Available Windows event channels and audit policy | Pending | — |
-| Sysmon availability and approved configuration | Pending | — |
+| Sysmon availability and approved configuration | Team may configure it; proposed MVP telemetry source, subject to bundle review | Patrick |
 | Endpoint isolation mechanism that preserves controller visibility | Pending | — |
-| Whether the project may schedule safe PowerShell/Ansible tasks | Pending | — |
+| Whether the project may schedule safe PowerShell/Ansible tasks | No stated restriction; team owns approach within the isolated topology | Cyber Range, 2026-09-24 |
 | Snapshot/reset behavior for AD and endpoint state | Pending | — |
 
 ### Automation, deployment, and secrets
 
 | Question | CITEF answer | Evidence/owner |
 |---|---|---|
-| Approved Ansible control host and connection method | Pending | — |
+| Approved Ansible control host and connection method | Team owns the approach; proposed `CTRL01` over SSH/WinRM | Patrick |
 | Allowed automation protocols and ports | Pending | — |
 | Runtime secret-injection method | Pending | — |
-| Offline package or artifact-transfer mechanism | Pending | — |
+| Offline package or artifact-transfer mechanism | Cyber Range can push files to scenario VMs | Cyber Range/Patrick |
 | Container runtime availability, if any | Pending | — |
 | Source/artifact review required before installation | Pending | — |
 | Location for exported run evidence and retention period | Pending | — |
@@ -190,8 +190,8 @@ artifact and transfer method.
 | Approved target/identity/path allowlist owner | Pending | — |
 | Emergency-stop operator and communication channel | Pending | — |
 | Hypervisor/snapshot controls remain outside participant access | Required | — |
-| Snapshot restore target time | Pending | — |
-| Maximum total reset window | 20 minutes proposed | — |
+| Snapshot restore target time | No target required by the Cyber Range | Cyber Range, 2026-09-24 |
+| Maximum total reset window | Not required; snapshots are the reset mechanism | Cyber Range, 2026-09-24 |
 | Recovery path when a snapshot restore fails | Pending | — |
 | Required evidence retention after emergency stop | Pending | — |
 | CITEF incident/escalation procedure for unexpected external contact or modification | Pending | — |
@@ -206,7 +206,7 @@ delivery baseline.
 |---|---|---|---|
 | Eight separate logical hosts | Consolidate project-owned Linux services on `CTRL01`; keep Splunk, DC, and workstation separate | Lower infrastructure realism; objectives unchanged | Pending |
 | Early access to CITEF VMs | Use local containers/processes and synthetic event fixtures for the vertical slice | Development only; CITEF rehearsal remains mandatory | Pending |
-| VM snapshots | Idempotent Ansible reset plus versioned state/fixture manifests | Higher reset risk; must still meet the 20-minute target | Pending |
+| VM snapshots | Stop delivery, escalate to Zian/Julien, and restore or recreate an approved clean snapshot before admitting participants | Delivery is delayed; readiness must still pass | Approved operating rule |
 | Splunk during early development | Validate JSONL events and searches against fixtures; avoid building a new dashboard/SIEM | Development only; Splunk acceptance remains mandatory | Pending |
 | Dedicated Splunk index | Isolate all content by mandatory `exercise_id` and `run_id` with CITEF-approved retention | More careful role/search filtering required | Pending |
 | Splunk add-ons | Send normalized JSON through HEC or a monitored file with project-owned field mappings | Less native parsing; objectives unchanged | Pending |
@@ -229,8 +229,8 @@ Use this 60-minute agenda with the team and CITEF contact:
    network, DNS, time, accounts, permissions, and dates.
 4. **15 minutes — Splunk and evidence:** confirm version, ingestion, roles,
    retention, add-ons, and the telemetry acceptance method.
-5. **10 minutes — Safety and reset:** confirm isolation, emergency stop,
-   snapshot ownership, evidence preservation, and reset target.
+5. **10 minutes — Safety and restoration:** confirm isolation, emergency stop,
+   snapshot ownership, evidence preservation, and readiness validation.
 6. **5 minutes — Decisions and owners:** select fallbacks, assign unanswered
    questions, record due dates, and identify approvers.
 
@@ -244,10 +244,13 @@ Record only decisions that change, constrain, or formally confirm the baseline.
 
 | ID | Date | Decision or exception | Rationale/evidence | Owner | Affected docs/issues |
 |---|---|---|---|---|---|
-| D-001 | Pending | Blue-team-only MVP | Three-month delivery constraint and Cyber Range meeting direction | Team | All MVP work |
-| D-002 | Pending | CITEF supplies Splunk | Avoids SIEM implementation and paid student resources | CITEF | #35, #79, #80 |
-| D-003 | Pending | Python mock is the cloud boundary | No public cloud or cost required | Team/CITEF | #82 |
-| D-004 | Pending | Marker mode replaces encryption | Protects range infrastructure and makes reset deterministic | Team/CITEF | #83 |
+| D-001 | 2026-09-24 | Blue-team-only MVP accepted | Three-month delivery constraint and Cyber Range direction | Team/Cyber Range | All MVP work |
+| D-002 | 2026-09-24 | Cyber Range supplies Splunk Enterprise under its educational license | Avoids SIEM implementation and paid student resources | Cyber Range | #35, #79, #80 |
+| D-003 | 2026-09-24 | Python mock is the cloud boundary | No public cloud or cost required | Team/Cyber Range | #82 |
+| D-004 | 2026-09-24 | Marker mode replaces encryption | Protects range infrastructure and makes restoration deterministic | Team/Cyber Range | #83 |
+| D-005 | 2026-09-24 | Total exercise duration is 2h50 | Cyber Range delivery constraint includes briefing and hotwash | Cyber Range | Charter, MSEL, guides |
+| D-006 | 2026-09-24 | Clean VM snapshots replace the 20-minute Ansible reset target | Cyber Range platform already supplies reliable restoration | Cyber Range/team | #79, #86, safety guide |
+| D-007 | 2026-09-24 | No commercial EDR dependency in MVP | Sysmon/Windows logs plus Splunk and safe controls meet the exercise objectives without a paid/cloud dependency | Team proposal | #35, #79 |
 
 ## Backlog re-estimation record
 
@@ -255,11 +258,11 @@ Complete this section after the requirements meeting.
 
 | Milestone | Current target | Feasibility after confirmation | Change required |
 |---|---|---|---|
-| M1 — Design approval | Weeks 1–2 | Pending | — |
-| M2 — Identity vertical slice | Weeks 3–4 | Pending | — |
-| M3 — Complete scenario | Weeks 5–8 | Pending | — |
-| M4 — Exercise operations | Weeks 9–10 | Pending | — |
-| M5 — CITEF release | Weeks 11–12 | Pending | — |
+| M1 — Design approval | September 14–27 | Feasible; close after tools/schedule response is sent and remaining confirmations have owners | Incorporate 2h50 duration and snapshot model |
+| M2 — Identity vertical slice | September 28–October 11 | Feasible locally while topology details are completed | Prove Splunk input and snapshot workflow early |
+| M3 — Complete scenario | October 12–November 8 | Feasible with fixed branches and no commercial EDR | Keep CALDERA/GHOSTS/public cloud deferred |
+| M4 — Exercise operations | November 9–22 | Feasible | Anna owns content; Patrick owns telemetry/test evidence |
+| M5 — Cyber Range release | November 23–December 6 | Dates require Latifa coordination | Preserve final two-week deployment/rehearsal window |
 
 Any change that consumes the protected Weeks 11–12 buffer must remove or defer
 scope rather than assume additional student time or paid resources.
@@ -268,18 +271,18 @@ scope rather than assume additional student time or paid resources.
 
 ### Student team
 
-- **Decision:** Pending
-- **Representative:** Pending
-- **Date:** Pending
+- **Decision:** Approved with the recorded scope assignments and follow-ups
+- **Representative:** Aya Debbagh
+- **Date:** September 24, 2026
 - **Approved exceptions:** None recorded
 
 ### CITEF / Cyber Range
 
-- **Decision:** Pending
-- **Representative:** Pending
-- **Role:** Pending
-- **Date:** Pending
-- **Approved exceptions:** None recorded
+- **Decision:** Scope accepted with duration/reset changes and follow-up requests
+- **Representative:** Julien Cassagne
+- **Role:** Cyber Range technical contact
+- **Date:** September 24, 2026
+- **Approved exceptions:** 2h50 total duration; snapshot restoration with no 20-minute Ansible target
 
 Approval may be recorded by an issue comment or meeting record from the named
 representative; this document should then link to that evidence.
@@ -287,15 +290,15 @@ representative; this document should then link to that evidence.
 ## Issue #76 completion checklist
 
 - [ ] Team decisions table has no pending rows.
-- [ ] All five learning objectives are approved or amended in the charter.
-- [ ] A named CITEF contact is recorded.
+- [x] All five learning objectives are approved or amended in the charter.
+- [x] Named Cyber Range contacts are recorded.
 - [ ] Logical assets are mapped to confirmed CITEF resources.
 - [ ] Network, DNS, time, access, and automation constraints are recorded.
 - [ ] Splunk version, ingestion, indexes, roles, retention, and add-ons are confirmed.
 - [ ] Windows/AD and endpoint capabilities are confirmed.
-- [ ] Safety, emergency-stop, snapshot, and reset ownership are confirmed.
+- [x] Snapshot/restoration ownership is confirmed; emergency-stop delivery channel remains to confirm.
 - [ ] Every unavailable dependency has an accepted zero-cost fallback or scope reduction.
-- [ ] The decision/exception log is current.
-- [ ] Milestones and issues are re-estimated from confirmed constraints.
-- [ ] Team and CITEF approval evidence is linked.
-- [ ] Design documents and acceptance criteria reflect all approved changes.
+- [x] The decision/exception log is current.
+- [x] Milestones and issues are re-estimated from confirmed constraints.
+- [x] Team and Cyber Range approval evidence is recorded from the September 24 email.
+- [x] Design documents and acceptance criteria reflect the approved duration and restoration changes.

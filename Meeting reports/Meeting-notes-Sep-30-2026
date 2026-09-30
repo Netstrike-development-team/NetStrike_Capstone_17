@@ -1,0 +1,13 @@
+The purpose of this meeting was to update Professor Garzon on the status of our project. 
+
+- Drawing on the Cyber Range’s expertise, we decided to repurpose our initial ‘Scattered Spider’ attack simulation into a blue-team exercise, whose starting environment holds detectable traces of an attack.
+
+- We went over the agreed tools confirmed by the Cyber Range (Splunk, Ansible, Windows telemetry, React, FastAPI, Python), discussed our roadmap and presented him our new roles for this semester.
+
+-  As mentioned in the call, our goal for this week would be to complete our identity slice, thus providing us with a minimal runnable-scenario we'd able to run. 
+
+- Our suggestion of Profession Garzon was to make the logs agnostic and have an intermediate platform transforming them into .csv files so that they could be reused regardless of the SIEM platform (Elastic, Wazuh, etc)
+
+
+
+ 

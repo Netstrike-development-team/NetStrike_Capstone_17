@@ -192,3 +192,59 @@ Cyber Range team and should be followed up in the next meeting:
 | Create VirtualBox VMs and export as .ovf | Team | Not started: pending CITEF access |
 | Schedule next meeting with Cyber Range team | Team | Pending |
 | Follow up on unanswered questions from Exchange 2 | Aya | Pending |
+
+---
+
+## Exchange 4: Blue-Team Scope Accepted with Delivery Changes
+
+**From:** Julien Cassagne, Cyber Range
+**To:** Aya (on behalf of NetStrike)
+**Date recorded:** September 24, 2026
+
+### Accepted direction
+
+- The Cyber Range accepted the Operation Silent Spider blue-team scope,
+  audience, learning objectives, and safety rules, with flexibility in details.
+- The full session must be **2 hours 50 minutes including briefing and hotwash**.
+- The team will design the topology in the platform using available amd64
+  Windows 11, Windows Server, and Linux images.
+- Scenario VMs intentionally have no Internet access, but files can be pushed
+  into them.
+- The team may configure DNS, NTP, Windows/AD, Sysmon, permissions, automation,
+  secrets, and software transfer. Evaluation licenses may be used where
+  appropriate.
+- The Cyber Range provides Splunk Enterprise under an educational license with
+  a stated 10 GB data limit.
+- Clean VM snapshots are the restoration mechanism. A custom 20-minute Ansible
+  reset target is not required.
+- Zian and Julien are technical/escalation contacts. Deployment, rehearsal, and
+  delivery dates must be coordinated with Latifa.
+
+### Requested follow-up
+
+- Send the exact proposed tools, including EDR choice, licensing needs, and
+  whether every tool works without Internet access.
+- Send the capstone schedule, key milestones, and roadmap.
+
+### Team response decisions
+
+- Propose no commercial EDR dependency for the MVP. Use Sysmon, Windows audit
+  and PowerShell logs, Splunk Universal Forwarder, and allowlisted NetStrike
+  exercise controls.
+- Use a 15-minute briefing, 2-hour-10-minute play period, and 25-minute hotwash.
+- Use snapshots for restoration and Ansible for provisioning, configuration,
+  and readiness validation.
+- Pre-stage a versioned offline bundle containing Python wheels, Ansible
+  collections, approved installers, Splunk content, configuration, and
+  checksums.
+- Use the 12-week schedule from September 14 to December 6, with the final two
+  weeks protected for Cyber Range deployment and rehearsals.
+
+### Named team ownership
+
+| Person | Role |
+|---|---|
+| Aya Debbagh | Development lead |
+| Ashley Goman | Client and project coordinator |
+| Patrick Luu | Splunk, environment, and testing lead |
+| Anna Brimacombe-Tanner | Exercise content and participant-experience lead |
