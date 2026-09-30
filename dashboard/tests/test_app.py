@@ -33,13 +33,23 @@ def portal():
             ),
         }
     )
-    with TestClient(create_app(service, authenticator)) as client:
+    with TestClient(
+        create_app(
+            service,
+            authenticator,
+            sso_allowed_origins={"http://testserver"},
+        )
+    ) as client:
         yield client, service
     store.close()
 
 
 def _headers(token):
     return {"Authorization": f"Bearer {token}"}
+
+
+def _sso_headers(origin="http://testserver"):
+    return {"Origin": origin}
 
 
 def test_health_is_public_but_portal_state_requires_authentication(portal) -> None:
@@ -196,6 +206,139 @@ def test_offline_browser_surfaces_have_security_headers_and_no_answer_ids(
     assert "https://" not in facilitator.text
 
 
+def test_sso_browser_surface_is_offline_accessible_and_vendor_neutral(portal) -> None:
+    client, _service = portal
+
+    page = client.get("/sso")
+    script = client.get("/static/sso.js")
+    stylesheet = client.get("/static/sso.css")
+
+    assert page.status_code == 200
+    assert script.status_code == 200
+    assert stylesheet.status_code == 200
+    assert "SimCorp Access" in page.text
+    assert 'aria-live="polite"' in page.text
+    assert 'for="username"' in page.text
+    assert "okta" not in page.text.casefold()
+    assert "https://" not in page.text
+    assert "https://" not in script.text
+    assert "default-src 'self'" in page.headers["content-security-policy"]
+
+
+def test_sso_rejects_unapproved_origins_and_external_accounts(portal) -> None:
+    client, service = portal
+    external_account = "real-person@external.example"
+    raw_value = "-".join(("never", "persist", "this"))
+
+    assert client.get(
+        "/api/sso/state", headers=_sso_headers("https://outside.example")
+    ).status_code == 403
+    assert client.get(
+        "/sso", headers={"Host": "outside.example"}
+    ).status_code == 403
+    response = client.post(
+        "/api/sso/sign-in",
+        headers=_sso_headers(),
+        json={"username": external_account, "credential": raw_value},
+    )
+
+    assert response.status_code == 403
+    serialized = str(
+        service.store.events(service.run.definition.exercise_id, service.run.run_id)
+    )
+    assert external_account not in serialized
+    assert raw_value not in serialized
+    assert "identity.sign_in.rejected" in serialized
+
+
+def test_sso_flow_emits_correlated_evidence_and_shows_suspicious_session(
+    portal,
+) -> None:
+    client, service = portal
+    raw_value = "-".join(("exercise", "access", "phrase"))
+    sign_in = {
+        "username": "sarah@simcorp.test",
+        "credential": raw_value,
+    }
+
+    failed = client.post(
+        "/api/sso/sign-in", headers=_sso_headers(), json=sign_in
+    )
+    challenge = client.post(
+        "/api/sso/sign-in", headers=_sso_headers(), json=sign_in
+    )
+
+    assert failed.status_code == 200
+    assert failed.json()["view"] == "failure"
+    assert challenge.status_code == 200
+    assert challenge.json()["view"] == "mfa"
+    approved = client.post(
+        "/api/sso/mfa",
+        headers=_sso_headers(),
+        json={
+            "challenge_id": challenge.json()["challenge"]["id"],
+            "decision": "approve",
+        },
+    )
+    assert approved.status_code == 200
+    assert approved.json()["view"] == "success"
+    assert approved.json()["has_suspicious_sessions"] is True
+
+    sessions = client.post(
+        "/api/sso/review-sessions", headers=_sso_headers(), json={}
+    )
+    assert sessions.status_code == 200
+    assert sessions.json()["view"] == "suspicious_session"
+    assert sessions.json()["sessions"][0]["id"] == "sess-red-01"
+
+    timeline = service.identity_timeline()
+    assert {item["run_id"] for item in timeline} == {"run-portal-test"}
+    assert [item["action"] for item in timeline] == [
+        "identity.sign_in.attempt",
+        "identity.sign_in.attempt",
+        "identity.mfa.challenge.delivered",
+        "identity.mfa.challenge.approve",
+        "identity.session.created",
+        "identity.session.reviewed",
+    ]
+    assert raw_value not in str(timeline)
+    assert raw_value not in str(
+        service.store.events(service.run.definition.exercise_id, service.run.run_id)
+    )
+
+
+def test_sso_disabled_identity_shows_lockout_and_reset_restores_baseline(portal) -> None:
+    client, service = portal
+    service.run.identity_state.identities["sarah"]["enabled"] = False
+    response = client.post(
+        "/api/sso/sign-in",
+        headers=_sso_headers(),
+        json={
+            "username": "sarah@simcorp.test",
+            "credential": "exercise-only-value",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["view"] == "locked"
+    client.post("/api/facilitator/start", headers=_headers(FACILITATOR_TOKEN))
+    client.post(
+        "/api/facilitator/stop",
+        headers=_headers(FACILITATOR_TOKEN),
+        json={"reason": "SSO reset test"},
+    )
+    reset = client.post(
+        "/api/facilitator/reset",
+        headers=_headers(FACILITATOR_TOKEN),
+        json={"new_run_id": "run-sso-reset"},
+    )
+
+    assert reset.status_code == 200
+    assert reset.json()["reset"]["sso_baseline_verified"] is True
+    assert service.sso_state()["view"] == "sign_in"
+    assert service.run.identity_state.readiness_mismatches() == ()
+
+
 def test_evidence_exports_are_facilitator_only_and_correlated(portal) -> None:
     client, _service = portal
     client.post("/api/facilitator/start", headers=_headers(FACILITATOR_TOKEN))
@@ -332,6 +475,7 @@ def test_reset_removes_transient_identity_audit_and_verifies_baseline(portal) ->
         "prior_run_id": "run-portal-test",
         "identity_audit_records_deleted": 1,
         "identity_audit_baseline_verified": True,
+        "sso_baseline_verified": True,
     }
     assert service.store.identity_audit(
         "operation-silent-spider", "run-portal-test"

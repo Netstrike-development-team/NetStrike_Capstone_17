@@ -7,7 +7,7 @@ import json
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response, status
 from fastapi.responses import FileResponse
@@ -25,7 +25,9 @@ from .auth import (
     TokenAuthenticator,
 )
 from .identity_audit import IdentityAuditError
+from .origin import OriginAllowlist, OriginDeniedError
 from .service import PortalService
+from .sso import SsoBoundaryError, SsoExperienceError
 from .store import PortalStore
 
 
@@ -40,6 +42,7 @@ PARTICIPANT_ROLES = frozenset(
 FACILITATOR_ROLES = frozenset({"facilitator", "technical_operator"})
 IDENTITY_CAPTURE_ROLES = frozenset({"identity_capture_service"})
 MAX_IDENTITY_CAPTURE_BYTES = 16 * 1024
+MAX_SSO_REQUEST_BYTES = 4 * 1024
 
 
 class StrictInput(BaseModel):
@@ -89,7 +92,10 @@ class ResetInput(StrictInput):
 # Route closures intentionally share injected service/authentication state.
 # pylint: disable=too-many-locals,too-many-statements
 def create_app(
-    service: PortalService, authenticator: TokenAuthenticator
+    service: PortalService,
+    authenticator: TokenAuthenticator,
+    *,
+    sso_allowed_origins: Iterable[str],
 ) -> FastAPI:
     """Create an app with injected state for offline operation and testing."""
 
@@ -119,6 +125,7 @@ def create_app(
     )
     static_root = Path(__file__).resolve().parent / "static"
     app.mount("/static", StaticFiles(directory=static_root), name="static")
+    sso_origins = OriginAllowlist(sso_allowed_origins)
 
     @app.middleware("http")
     async def security_headers(request, call_next):
@@ -170,6 +177,56 @@ def create_app(
                 status_code=status.HTTP_409_CONFLICT, detail=str(exc)
             ) from exc
 
+    def authorize_sso_request(request: Request) -> None:
+        try:
+            sso_origins.authorize(request)
+        except OriginDeniedError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)
+            ) from exc
+
+    async def bounded_json(
+        request: Request, *, maximum: int, description: str
+    ) -> dict[str, Any]:
+        content_length = request.headers.get("content-length")
+        if content_length:
+            try:
+                declared_length = int(content_length)
+            except ValueError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="invalid content length",
+                ) from exc
+            if declared_length < 0:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="invalid content length",
+                )
+            if declared_length > maximum:
+                raise HTTPException(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    detail=f"{description} payload is too large",
+                )
+        body = await request.body()
+        if len(body) > maximum:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"{description} payload is too large",
+            )
+        try:
+            payload = json.loads(body)
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="request body must be valid JSON",
+            ) from exc
+        if not isinstance(payload, dict):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="request body must be a JSON object",
+            )
+        return payload
+
     @app.get("/health")
     def health() -> dict[str, str]:
         return {"status": "ok", "component": "netstrike-portal"}
@@ -181,6 +238,70 @@ def create_app(
     @app.get("/facilitator", include_in_schema=False)
     def facilitator_page() -> FileResponse:
         return FileResponse(static_root / "facilitator.html")
+
+    @app.get("/sso", include_in_schema=False)
+    def sso_page(request: Request) -> FileResponse:
+        authorize_sso_request(request)
+        return FileResponse(static_root / "sso.html")
+
+    @app.get("/api/sso/state")
+    def sso_state(request: Request) -> dict[str, Any]:
+        authorize_sso_request(request)
+        return service.sso_state()
+
+    @app.post("/api/sso/sign-in")
+    async def sso_sign_in(request: Request) -> dict[str, Any]:
+        authorize_sso_request(request)
+        payload = await bounded_json(
+            request, maximum=MAX_SSO_REQUEST_BYTES, description="SSO sign-in"
+        )
+        if set(payload) != {"username", "credential"}:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="sign-in fields are invalid",
+            )
+        try:
+            return service.sso_sign_in(
+                payload.get("username"), payload.get("credential")
+            )
+        except SsoBoundaryError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)
+            ) from exc
+        except SsoExperienceError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(exc)
+            ) from exc
+
+    @app.post("/api/sso/mfa")
+    async def sso_mfa(request: Request) -> dict[str, Any]:
+        authorize_sso_request(request)
+        payload = await bounded_json(
+            request, maximum=MAX_SSO_REQUEST_BYTES, description="SSO MFA"
+        )
+        if set(payload) != {"challenge_id", "decision"}:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="MFA decision fields are invalid",
+            )
+        try:
+            return service.sso_decide_mfa(
+                payload.get("challenge_id"), payload.get("decision")
+            )
+        except SsoExperienceError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(exc)
+            ) from exc
+
+    @app.post("/api/sso/review-sessions")
+    def sso_review_sessions(request: Request) -> dict[str, Any]:
+        authorize_sso_request(request)
+        try:
+            return service.sso_review_sessions()
+        except SsoExperienceError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(exc)
+            ) from exc
 
     @app.get("/api/participant/state")
     def participant_state(
@@ -231,38 +352,11 @@ def create_app(
     ) -> dict[str, Any]:
         """Accept a bounded payload without reflecting credential-like input."""
 
-        content_length = request.headers.get("content-length")
-        if content_length:
-            try:
-                declared_length = int(content_length)
-            except ValueError as exc:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="invalid content length",
-                ) from exc
-            if declared_length > MAX_IDENTITY_CAPTURE_BYTES:
-                raise HTTPException(
-                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                    detail="identity interaction payload is too large",
-                )
-        body = await request.body()
-        if len(body) > MAX_IDENTITY_CAPTURE_BYTES:
-            raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail="identity interaction payload is too large",
-            )
-        try:
-            payload = json.loads(body)
-        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="request body must be valid JSON",
-            ) from exc
-        if not isinstance(payload, dict):
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="request body must be a JSON object",
-            )
+        payload = await bounded_json(
+            request,
+            maximum=MAX_IDENTITY_CAPTURE_BYTES,
+            description="identity interaction",
+        )
         return execute(
             lambda: service.capture_identity_interaction(
                 principal.actor_id, payload
@@ -417,10 +511,27 @@ def create_default_app() -> FastAPI:
         raise ValueError(
             "NETSTRIKE_IDENTITY_AUDIT_KEY must contain at least 32 bytes"
         )
+    raw_origins = os.getenv("NETSTRIKE_SSO_ALLOWED_ORIGINS")
+    if not raw_origins:
+        raise ValueError("NETSTRIKE_SSO_ALLOWED_ORIGINS must be configured")
+    try:
+        allowed_origins = json.loads(raw_origins)
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            "NETSTRIKE_SSO_ALLOWED_ORIGINS must be a JSON array"
+        ) from exc
+    if not isinstance(allowed_origins, list) or not all(
+        isinstance(item, str) for item in allowed_origins
+    ):
+        raise ValueError("NETSTRIKE_SSO_ALLOWED_ORIGINS must be a JSON array")
     store = PortalStore(database_path)
     service = PortalService(
         store,
         run_id=run_id,
         identity_audit_key=audit_key.encode("utf-8"),
     )
-    return create_app(service, TokenAuthenticator.from_environment())
+    return create_app(
+        service,
+        TokenAuthenticator.from_environment(),
+        sso_allowed_origins=allowed_origins,
+    )

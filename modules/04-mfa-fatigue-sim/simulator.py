@@ -1,6 +1,6 @@
 #  simulator.py
 #  MFA fatigue attacker script.
-#  Run this AFTER mock_okta_api.py is running.
+#  Run this after the contained identity action API is running.
 
 import os
 import time
@@ -45,9 +45,8 @@ def send_push(attempt_number: int) -> dict:
         }
 
     except requests.exceptions.ConnectionError:
-        print("\n[!] ERROR: Could not connect to the mock Okta API.")
-        print("[!] Make sure mock_okta_api.py is running in another terminal.")
-        print("[!] Run:  python mock_okta_api.py\n")
+        print("\n[!] ERROR: Could not connect to the identity action API.")
+        print("[!] Make sure the contained action service is running.")
         exit(1)
 
     except requests.exceptions.Timeout:

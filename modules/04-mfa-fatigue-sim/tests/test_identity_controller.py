@@ -139,6 +139,10 @@ def test_http_boundary_and_removed_legacy_routes(controller_system, monkeypatch)
     assert client.post("/api/push", json={}).status_code == 410
     assert client.post("/api/human-approve", json={}).status_code == 410
     assert client.post("/api/reset", json={}).status_code == 410
+    retired = client.get("/")
+    assert retired.status_code == 410
+    assert "dashboard /sso" in retired.get_json()["error"]
+    assert client.get("/victim").status_code == 410
 
 
 def reset_controller(run_state="stopped"):

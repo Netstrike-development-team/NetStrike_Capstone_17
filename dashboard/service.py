@@ -17,6 +17,7 @@ from shared.events import entity
 
 from .auth import PortalPrincipal
 from .identity_audit import IdentityAuditRecorder
+from .sso import SsoExperience, SsoExperienceConfig
 from .store import PortalStore
 
 
@@ -43,6 +44,14 @@ class PortalService:
         self.identity_audit = IdentityAuditRecorder(
             store,
             audit_key=identity_audit_key or secrets.token_bytes(32),
+        )
+        sso_configuration = self.run.definition.participant_experience.get("sso")
+        self.sso = SsoExperience(
+            SsoExperienceConfig.from_mapping(sso_configuration),
+            identity_state=lambda: self.run.identity_state,
+            audit_sink=lambda payload: self.capture_identity_interaction(
+                "simcorp-sso", payload
+            ),
         )
 
     def participant_state(self) -> dict[str, Any]:
@@ -98,6 +107,7 @@ class PortalService:
             ),
             "submissions": self.store.submissions(self.run.run_id),
             "identity_audit": self.identity_timeline(),
+            "sso": self.sso.state(),
             "dp2_preview": self.evaluation_dict(self.run.evaluate_dp2()),
         }
 
@@ -123,6 +133,26 @@ class PortalService:
             self.run.definition.exercise_id, self.run.run_id
         )
 
+    def sso_state(self) -> dict[str, Any]:
+        """Return the participant-safe current SSO experience state."""
+
+        return self.sso.state()
+
+    def sso_sign_in(self, username: Any, credential: Any) -> dict[str, Any]:
+        """Submit one contained synthetic sign-in attempt."""
+
+        return self.sso.sign_in(username, credential)
+
+    def sso_decide_mfa(self, challenge_id: Any, decision: Any) -> dict[str, Any]:
+        """Resolve the current synthetic MFA challenge."""
+
+        return self.sso.decide_mfa(challenge_id, decision)
+
+    def sso_review_sessions(self) -> dict[str, Any]:
+        """Show configured suspicious sessions after approved sign-in."""
+
+        return self.sso.review_sessions()
+
     def reset_run(self, *, new_run_id: str | None = None) -> dict[str, Any]:
         """Reset runtime state and remove the prior run's transient audit view."""
 
@@ -130,6 +160,7 @@ class PortalService:
         prior_run_id = self.run.run_id
         self.run.reset(new_run_id=new_run_id)
         self.scheduler.reset()
+        self.sso.reset()
         deleted = self.store.delete_identity_audit(exercise_id, prior_run_id)
         if self.store.identity_audit(exercise_id, prior_run_id):
             raise RuntimeError("identity audit cleanup did not reach a clean baseline")
@@ -138,7 +169,10 @@ class PortalService:
             "prior_run_id": prior_run_id,
             "identity_audit_records_deleted": deleted,
             "identity_audit_baseline_verified": True,
+            "sso_baseline_verified": not self.sso.baseline_mismatches(),
         }
+        if not state["reset"]["sso_baseline_verified"]:
+            raise RuntimeError("SSO reset did not reach a clean baseline")
         return state
 
     # Action fields remain explicit so the service cannot trust client actor data.

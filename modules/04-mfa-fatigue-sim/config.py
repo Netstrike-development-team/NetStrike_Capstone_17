@@ -13,7 +13,7 @@ APPROVAL_THRESHOLD = 4
 TARGET_URL = "http://localhost:5050/api/action"
 
 # Who the attacker is targeting (fake employee ID)
-TARGET_USER = "AyaAshleyPatrick@simcorp.com"
+TARGET_USER = "sarah@simcorp.test"
 
 # How many push notifications to send in one run
 BURST_SIZE = 10
