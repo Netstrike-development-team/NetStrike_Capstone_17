@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import secrets
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -15,6 +16,7 @@ from orchestrator.scheduler import ScenarioScheduler
 from shared.events import entity
 
 from .auth import PortalPrincipal
+from .identity_audit import IdentityAuditRecorder
 from .store import PortalStore
 
 
@@ -27,6 +29,7 @@ class PortalService:
         *,
         run_id: str | None = None,
         scenario_path: Path | str | None = None,
+        identity_audit_key: bytes | None = None,
     ) -> None:
         self.store = store
         options: dict[str, Any] = {
@@ -37,6 +40,10 @@ class PortalService:
             options["scenario_path"] = scenario_path
         self.run = IdentitySliceRun(**options)
         self.scheduler = ScenarioScheduler(self.run.controller)
+        self.identity_audit = IdentityAuditRecorder(
+            store,
+            audit_key=identity_audit_key or secrets.token_bytes(32),
+        )
 
     def participant_state(self) -> dict[str, Any]:
         """Return only participant-visible injects and non-sensitive run metadata."""
@@ -90,8 +97,49 @@ class PortalService:
                 self.run.definition.exercise_id, self.run.run_id
             ),
             "submissions": self.store.submissions(self.run.run_id),
+            "identity_audit": self.identity_timeline(),
             "dp2_preview": self.evaluation_dict(self.run.evaluate_dp2()),
         }
+
+    def capture_identity_interaction(
+        self,
+        source_service: str,
+        payload: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Record a safe identity interaction for the authoritative current run."""
+
+        return self.identity_audit.record(
+            exercise_id=self.run.definition.exercise_id,
+            run_id=self.run.run_id,
+            source_service=source_service,
+            sequence_factory=self.run.sequencer.next,
+            payload=payload,
+        )
+
+    def identity_timeline(self) -> list[dict[str, Any]]:
+        """Return the current run's queryable synthetic identity timeline."""
+
+        return self.store.identity_audit(
+            self.run.definition.exercise_id, self.run.run_id
+        )
+
+    def reset_run(self, *, new_run_id: str | None = None) -> dict[str, Any]:
+        """Reset runtime state and remove the prior run's transient audit view."""
+
+        exercise_id = self.run.definition.exercise_id
+        prior_run_id = self.run.run_id
+        self.run.reset(new_run_id=new_run_id)
+        self.scheduler.reset()
+        deleted = self.store.delete_identity_audit(exercise_id, prior_run_id)
+        if self.store.identity_audit(exercise_id, prior_run_id):
+            raise RuntimeError("identity audit cleanup did not reach a clean baseline")
+        state = self.facilitator_state()
+        state["reset"] = {
+            "prior_run_id": prior_run_id,
+            "identity_audit_records_deleted": deleted,
+            "identity_audit_baseline_verified": True,
+        }
+        return state
 
     # Action fields remain explicit so the service cannot trust client actor data.
     # pylint: disable=too-many-arguments

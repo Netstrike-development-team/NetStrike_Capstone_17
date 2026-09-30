@@ -15,6 +15,7 @@ FACILITATOR_TOKEN = "facilitator-token-at-least-24-characters"
 IDENTITY_TOKEN = "identity-user-token-at-least-24-characters"
 ENDPOINT_TOKEN = "endpoint-user-token-at-least-24-characters"
 LEAD_TOKEN = "incident-lead-token-at-least-24-characters"
+SERVICE_TOKEN = "identity-service-token-at-least-24-characters"
 
 
 @pytest.fixture
@@ -27,6 +28,9 @@ def portal():
             IDENTITY_TOKEN: PortalPrincipal("learner-id", "identity_responder"),
             ENDPOINT_TOKEN: PortalPrincipal("learner-endpoint", "endpoint_responder"),
             LEAD_TOKEN: PortalPrincipal("learner-lead", "incident_lead"),
+            SERVICE_TOKEN: PortalPrincipal(
+                "simcorp-sso", "identity_capture_service"
+            ),
         }
     )
     with TestClient(create_app(service, authenticator)) as client:
@@ -217,3 +221,118 @@ def test_evidence_exports_are_facilitator_only_and_correlated(portal) -> None:
     )
     assert csv_response.status_code == 200
     assert "exercise_id,run_id" in csv_response.text
+
+
+def test_allowlisted_service_captures_safe_identity_evidence(portal) -> None:
+    client, service = portal
+    raw_value = "synthetic-only-password-value"
+    payload = {
+        "phase": "identity",
+        "synthetic_identity": "sarah",
+        "occurred_at": "2026-09-30T19:30:00Z",
+        "action": "identity.sign_in.attempt",
+        "result": "failure",
+        "source_event_id": "sso-attempt-001",
+        "credential_kind": "password",
+        "synthetic_credential": raw_value,
+    }
+
+    denied = client.post(
+        "/api/services/identity/interactions",
+        headers=_headers(IDENTITY_TOKEN),
+        json=payload,
+    )
+    captured = client.post(
+        "/api/services/identity/interactions",
+        headers=_headers(SERVICE_TOKEN),
+        json=payload,
+    )
+
+    assert denied.status_code == 403
+    assert captured.status_code == 200
+    assert raw_value not in captured.text
+    assert captured.json()["submission_reference"].startswith("hmac-sha256:")
+    timeline = service.identity_timeline()
+    assert timeline[0]["synthetic_identity"] == "sarah"
+    assert timeline[0]["provenance"]["source_event_id"] == "sso-attempt-001"
+    assert client.get(
+        "/api/facilitator/identity-audit",
+        headers=_headers(IDENTITY_TOKEN),
+    ).status_code == 403
+    timeline_response = client.get(
+        "/api/facilitator/identity-audit",
+        headers=_headers(FACILITATOR_TOKEN),
+    )
+    assert timeline_response.status_code == 200
+    assert timeline_response.json()[0]["source_service"] == "simcorp-sso"
+    stored = str(
+        service.store.events(service.run.definition.exercise_id, service.run.run_id)
+    )
+    assert "identity.interaction.recorded" in stored
+    assert raw_value not in stored
+    export = client.get(
+        "/api/facilitator/exports/events.jsonl",
+        headers=_headers(FACILITATOR_TOKEN),
+    )
+    assert "identity.interaction.recorded" in export.text
+    assert raw_value not in export.text
+
+
+def test_identity_capture_rejects_unknown_secret_field_without_echoing_it(
+    portal,
+) -> None:
+    client, service = portal
+    raw_value = "must-never-appear-in-an-error"
+    response = client.post(
+        "/api/services/identity/interactions",
+        headers=_headers(SERVICE_TOKEN),
+        json={
+            "phase": "identity",
+            "synthetic_identity": "sarah",
+            "action": "identity.sign_in.attempt",
+            "result": "failure",
+            "source_event_id": "sso-invalid-001",
+            "password": raw_value,
+        },
+    )
+
+    assert response.status_code == 409
+    assert raw_value not in response.text
+    assert service.identity_timeline() == []
+
+
+def test_reset_removes_transient_identity_audit_and_verifies_baseline(portal) -> None:
+    client, service = portal
+    client.post(
+        "/api/services/identity/interactions",
+        headers=_headers(SERVICE_TOKEN),
+        json={
+            "phase": "identity",
+            "synthetic_identity": "sarah",
+            "action": "identity.sign_in.attempt",
+            "result": "success",
+            "source_event_id": "sso-reset-001",
+        },
+    )
+    client.post("/api/facilitator/start", headers=_headers(FACILITATOR_TOKEN))
+    client.post(
+        "/api/facilitator/stop",
+        headers=_headers(FACILITATOR_TOKEN),
+        json={"reason": "reset audit test"},
+    )
+
+    response = client.post(
+        "/api/facilitator/reset",
+        headers=_headers(FACILITATOR_TOKEN),
+        json={"new_run_id": "run-after-audit-reset"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["reset"] == {
+        "prior_run_id": "run-portal-test",
+        "identity_audit_records_deleted": 1,
+        "identity_audit_baseline_verified": True,
+    }
+    assert service.store.identity_audit(
+        "operation-silent-spider", "run-portal-test"
+    ) == []
