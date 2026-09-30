@@ -49,7 +49,7 @@ build in parallel.
 
 - [ ] `modules/05-lateral-movement/`: AD enumeration + Pass-the-Hash simulation
 - [ ] `modules/06-cloud-exfil/`: LocalStack S3 enumeration + bulk download
-- [ ] `modules/07-ransomware-sim/`: benign AES encryptor + RansomHub note format
+- [ ] `modules/07-ransomware-sim/`: marker-only disposable impact + recovery
 - [ ] `citef-config/localstack/seed_s3.py`: synthetic PII dataset generator
 - [ ] Unit tests for modules 05-07
 
