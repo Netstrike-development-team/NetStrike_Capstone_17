@@ -65,8 +65,8 @@ supported MVP behavior.
 ## Current state
 
 The exercise design, shared event contract, safe-action contract, and safe
-identity, endpoint/AD, mock-cloud, and impact/recovery controls have been built
-or are under review. The next delivery goal is a complete identity vertical
+identity, endpoint/AD, mock-cloud, and impact/recovery controls have been built.
+The next delivery goal is a complete identity vertical
 slice: start a run, deliver an inject, investigate it in Splunk, take a safe
 containment action, score the checkpoint, export evidence, and restore the
 environment.

@@ -48,7 +48,7 @@ from participant-facing information only.
 
 - Add endpoint/AD investigation and response.
 - Add mock-cloud investigation and containment.
-- Add safe marker-impact and recovery.
+- Integrate the completed safe marker-impact and recovery adapter.
 - Implement all four checkpoint branches and fallback evidence.
 
 **Exit:** every planned branch can run safely and creates the expected
@@ -88,7 +88,7 @@ with Latifa.
 
 ## Current priority order
 
-1. Merge the safe impact/recovery work and close the safe-action contract.
+1. Close the completed safe-action contract work after PR #95.
 2. Complete the M1 response package and obtain remaining scheduling details.
 3. Deliver the identity vertical slice.
 4. Prove Splunk ingestion and snapshot restoration early.

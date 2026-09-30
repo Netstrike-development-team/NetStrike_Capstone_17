@@ -38,13 +38,10 @@ file_extensions:
   - .db
 
 # ============================================================================
-# ENCRYPTION MODE (Always enabled - choose between 'marker' or 'safe')
+# IMPACT MODE (MVP is marker-only; real encryption is prohibited)
 # ============================================================================
 encryption:
-  mode: "marker"  # "marker" (default) = create .RANSOMHUB files, "safe" = copy + AES-256 encrypt
-  # These options are only used if mode: "safe"
-  static_key: "0123456789ABCDEF0123456789ABCDEF"  # 32 hex chars for 256-bit AES key
-  copy_destination: "./encrypted_copies"  # Where to copy files before encryption
+  mode: "marker"
   
 # ============================================================================
 # SIMULATION MODE (Educational use)

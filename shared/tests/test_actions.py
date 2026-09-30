@@ -114,6 +114,7 @@ def test_request_and_result_validate(action_system):
         "action.execution.started",
         "action.execution.completed",
     ]
+    assert events[-1]["data"]["metadata"] == {"synthetic": True}
     for event in events:
         EventValidator().validate(event)
 
