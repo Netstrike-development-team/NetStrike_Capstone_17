@@ -123,3 +123,11 @@ cloud investigation, preservation/remediation, assessment and staff-only DP3.
 The identity-only fixture remains the default.
 See [cloud handoff](../docs/mock-cloud-dev-handoff.md) for the compressed timeline
 and development/acceptance boundaries.
+## Opt-in full-play recovery tools
+
+Select `NETSTRIKE_SCENARIO_PATH=orchestrator/scenarios/full-play.v1.json` and
+configure the existing empty, dedicated `NETSTRIKE_IMPACT_ROOT`. Participant
+recovery defaults to preview; actual restore and validation require explicit
+execution with the cloud/recovery role. Staff get DP4 and one-use impact rollback.
+See [impact/recovery handoff](../docs/impact-recovery-dev-handoff.md) for file
+safety, reset, final brief and acceptance boundaries.

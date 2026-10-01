@@ -2,6 +2,11 @@
 
 ## Purpose
 
+The safe module is connected to the selectable full-play runtime, DP4,
+participant default-preview recovery, hash/evidence inspection, final brief,
+staff rollback and stop/reset. See [integration handoff](../../docs/impact-recovery-dev-handoff.md)
+for root configuration, timing, demonstrations and remaining acceptance.
+
 This module implements the marker-only impact and recovery phase of Operation
 Silent Spider. The MVP does not encrypt files, access VM disks, disable real
 backups, or connect to vCenter.
@@ -28,7 +33,9 @@ overwriting an existing run:
 The fixture has five exact filenames and an expected SHA-256 manifest embedded
 in code. The implementation rejects relative roots, unsafe run IDs, symlinks,
 unexpected files or directories, escaped paths, and modified known-good data.
-No action accepts a caller-provided filesystem path.
+No action accepts a caller-provided filesystem path. Read-only inspection shows
+hashes and availability without server paths; hardlinks and oversized entries
+are also refused.
 
 ## Registered safe actions
 

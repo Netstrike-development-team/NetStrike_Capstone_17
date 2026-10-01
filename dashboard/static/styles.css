@@ -192,5 +192,5 @@ th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spa
 }
 /* Explicitly preserve native hidden behavior on display:grid action cards. */
 [hidden] { display: none !important; }
-#cloud-state { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 28rem; overflow: auto; }
+#cloud-state, #recovery-state { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 28rem; overflow: auto; }
 #cloud-audit p { overflow-wrap: anywhere; }

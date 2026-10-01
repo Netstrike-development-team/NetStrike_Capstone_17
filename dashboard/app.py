@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from orchestrator.controller import ControllerError
 from orchestrator.evidence import render_csv, render_jsonl
-from shared.actions import ActionContractError, ActionValidationError
+from shared.actions import ActionContractError, ActionExecutionError, ActionValidationError
 
 from .auth import (
     PortalAuthenticationError,
@@ -77,6 +77,27 @@ class CloudAssessmentInput(StrictInput):
     evidence_ids: list[Annotated[str, Field(min_length=1, max_length=128)]] = Field(
         min_length=1, max_length=20,
     )
+
+
+class RecoveryActionInput(StrictInput):
+    action_id: str = Field(pattern=r"^(recovery\.fixture\.restore|recovery\.health\.validate)$")
+    fixture_id: str = Field(min_length=1, max_length=128)
+    key: str = Field(min_length=1, max_length=128)
+    dry_run: bool = Field(default=True, strict=True)
+
+
+BriefText = Annotated[str, Field(min_length=1, max_length=1024, pattern=r"\S")]
+BriefEvidence = Annotated[str, Field(min_length=1, max_length=128)]
+
+
+class RecoveryBriefInput(StrictInput):
+    confirmed_scope: BriefText
+    confirmed_cloud_records: int = Field(ge=0, le=25, strict=True)
+    business_impact: BriefText
+    actions_taken: BriefText
+    remaining_risk: BriefText
+    recommendations: list[BriefText] = Field(min_length=2, max_length=5)
+    evidence_ids: list[BriefEvidence] = Field(min_length=1, max_length=20)
 
 
 class AdvanceInput(StrictInput):
@@ -186,6 +207,7 @@ def create_app(
         except (
             ControllerError,
             ActionContractError,
+            ActionExecutionError,
             ActionValidationError,
             IdentityAuditError,
             ValueError,
@@ -428,6 +450,27 @@ def create_app(
     ) -> dict[str, Any]:
         return service.facilitator_state()
 
+    @app.get("/api/participant/recovery")
+    def impact_view(_principal: PortalPrincipal = Depends(participant)):
+        return execute(service.impact_view)
+
+    @app.post("/api/participant/recovery/action")
+    def recover_fixture(
+        request: RecoveryActionInput,
+        principal: PortalPrincipal = Depends(participant),
+    ):
+        result = execute(lambda: service.recover_fixture(principal, **request.model_dump()))
+        if not result["successful"]:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=result)
+        return result
+
+    @app.post("/api/participant/recovery/brief")
+    def recovery_brief(
+        request: RecoveryBriefInput,
+        principal: PortalPrincipal = Depends(participant),
+    ):
+        return execute(lambda: service.submit_recovery_brief(principal, request.model_dump()))
+
     @app.get("/api/facilitator/identity-audit")
     def identity_audit(
         _principal: PortalPrincipal = Depends(facilitator),
@@ -535,6 +578,17 @@ def create_app(
             lambda: service.reset_run(new_run_id=request.new_run_id)
         )
 
+    @app.post("/api/facilitator/checkpoints/dp4")
+    def resolve_dp4(_principal: PortalPrincipal = Depends(facilitator)):
+        return execute(lambda: {
+            "evaluation": PortalService.evaluation_dict(service.resolve_impact()),
+            "state": service.facilitator_state(),
+        })
+
+    @app.post("/api/facilitator/impact/rollback")
+    def rollback_impact(principal: PortalPrincipal = Depends(facilitator)):
+        return execute(lambda: service.rollback_impact(principal))
+
     def current_events() -> list[dict[str, Any]]:
         return service.store.events(
             service.run.definition.exercise_id, service.run.run_id
@@ -596,6 +650,7 @@ def create_default_app() -> FastAPI:
         run_id=run_id,
         profile_path=os.getenv("NETSTRIKE_PROFILE_FIXTURE"),
         scenario_path=os.getenv("NETSTRIKE_SCENARIO_PATH"),
+        impact_root=os.getenv("NETSTRIKE_IMPACT_ROOT"),
         identity_audit_key=audit_key.encode("utf-8"),
     )
     return create_app(

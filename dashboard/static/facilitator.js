@@ -23,7 +23,7 @@ function renderMsel(items) {
     const actions = row.querySelector(".row-actions");
     if (["pending", "ready"].includes(item.status)) {
       for (const [label, command, className] of [["Deliver", "deliver", "small"], ["Skip", "skip", "secondary small"]]) {
-        if (command === "deliver" && item.trigger === "checkpoint" && item.phase === "cloud") continue;
+        if (command === "deliver" && item.trigger === "checkpoint" && ["cloud", "impact_recovery"].includes(item.phase)) continue;
         const button = document.createElement("button");
         button.textContent = label;
         button.className = className;
@@ -107,6 +107,16 @@ async function refresh() {
     document.querySelector("#resolve-dp3").hidden = !state.cloud.enabled;
     document.querySelector("#resolve-dp3").disabled = state.controller.items.DP3?.status !== "ready";
     if (state.cloud.enabled) renderChecks(state.cloud.dp3_preview, "#cloud-checks");
+    document.querySelector("#impact-verifier").hidden = !state.impact.enabled;
+    document.querySelector("#resolve-dp4").hidden = !state.impact.enabled;
+    document.querySelector("#rollback-impact").hidden = !state.impact.enabled;
+    document.querySelector("#resolve-dp4").disabled = state.controller.items.DP4?.status !== "ready" || state.controller.state !== "running";
+    document.querySelector("#rollback-impact").disabled = !state.impact.rollback_available;
+    if (state.impact.enabled) {
+      renderChecks(state.impact.dp4_preview, "#impact-checks");
+      renderChecks(state.impact.recovery_preview, "#recovery-checks");
+      if (state.impact.health_error) notify(notice, "Disposable fixture safety/readability failed. Stop and investigate before reset.", "error");
+    }
     renderEvents(state.events);
     renderSubmissions(state.submissions);
     const profiles = state.profile_initialization;
@@ -146,6 +156,8 @@ document.querySelector("#stop").addEventListener("click", () => command("/api/fa
 document.querySelector("#reset").addEventListener("click", () => command("/api/facilitator/reset", {new_run_id: document.querySelector("#new-run-id").value || null}));
 document.querySelector("#resolve-dp2").addEventListener("click", () => command("/api/facilitator/checkpoints/dp2"));
 document.querySelector("#resolve-dp3").addEventListener("click", () => command("/api/facilitator/checkpoints/dp3"));
+document.querySelector("#resolve-dp4").addEventListener("click", () => command("/api/facilitator/checkpoints/dp4"));
+document.querySelector("#rollback-impact").addEventListener("click", () => command("/api/facilitator/impact/rollback"));
 for (const decision of ["approve", "deny"]) {
   document.querySelector(`#mfa-${decision}`).addEventListener("click", () => {
     if (pendingMfa) command("/api/facilitator/mfa/decision", {challenge_id: pendingMfa.id, decision});

@@ -44,7 +44,7 @@ def _manifest(files: Mapping[str, bytes]) -> dict[str, str]:
     return {name: _sha256(content) for name, content in sorted(files.items())}
 
 
-class ImpactFixture:
+class ImpactFixture:  # pylint: disable=too-many-instance-attributes
     """Filesystem fixture confined to one approved, run-specific directory."""
 
     def __init__(
@@ -147,6 +147,8 @@ class ImpactFixture:
                 path.name not in allowed_names
                 or path.is_symlink()
                 or not path.is_file()
+                or path.stat().st_nlink != 1
+                or path.stat().st_size > 64 * 1024
             ):
                 raise ActionExecutionError(
                     "unsafe_fixture", "Fixture contains an unexpected or unsafe entry"
@@ -176,6 +178,35 @@ class ImpactFixture:
         if inventories["staging"]:
             mismatches.append("staging_not_empty")
         return tuple(mismatches)
+
+    def inspect(self) -> dict[str, Any]:
+        """Return logical inventories and hashes without exposing server paths."""
+
+        inventories = self._inventories()
+        manifests = {name: _manifest(files) for name, files in inventories.items()}
+        originals = {
+            name: manifests["live"].get(name, manifests["staging"].get(name))
+            for name in self.expected_manifest
+        }
+        return {
+            "fixture_id": FIXTURE_ID, "synthetic": True,
+            "expected_manifest": deepcopy(self.expected_manifest),
+            "manifests": manifests,
+            "originals_unchanged": originals == self.expected_manifest,
+            "backup_intact": manifests["backup"] == self.expected_manifest,
+            "available_originals": sum(
+                manifests["live"].get(name) == expected
+                for name, expected in self.expected_manifest.items()
+            ),
+            "marker_count": sum(name.endswith(MARKER_SUFFIX) for name in manifests["live"]),
+            "note_present": NOTE_NAME in manifests["live"],
+            "baseline_verified": (
+                manifests["live"] == self.expected_manifest
+                and manifests["backup"] == self.expected_manifest
+                and not manifests["staging"]
+            ),
+            "encryption_performed": False,
+        }
 
     def _capture(self) -> str:
         inventories = self._inventories()
@@ -219,6 +250,8 @@ class ImpactFixture:
         """Apply the blocked or realized marker-only MSEL branch."""
 
         control.checkpoint()
+        if variant not in {"blocked", "realized"}:
+            raise ActionExecutionError("invalid_variant", "Unknown marker variant")
         mismatches = self.health_mismatches()
         if mismatches:
             raise ActionExecutionError(

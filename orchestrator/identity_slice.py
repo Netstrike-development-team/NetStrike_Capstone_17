@@ -32,6 +32,7 @@ from .checkpoints import (
 )
 from .controller import AutomationResult, RunState, ScenarioController
 from .cloud import CLOUD_ACTIONS, CloudStage
+from .impact import ImpactStage
 from .mfa import ScheduledMfa
 from .scenario import ScenarioItem, load_scenario
 
@@ -592,6 +593,8 @@ class IdentitySliceAutomation:  # pylint: disable=too-many-instance-attributes
 class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
     """Own one correlated controller, simulation, and containment state graph."""
 
+    # Root/fixture/clock inputs remain explicit for startup safety review.
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         *,
@@ -599,11 +602,14 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
         run_id: str | None = None,
         scenario_path: Path | str = DEFAULT_SCENARIO_PATH,
         profile_path: Path | str = DEFAULT_PROFILE_PATH,
+        impact_root: Path | str | None = None,
         clock: Callable[[], datetime] = _utc_now,
     ) -> None:
         self.event_sink = event_sink
         self.clock = clock
         self.definition = load_scenario(scenario_path)
+        self.impact_root = impact_root
+        self.impact_enabled = any(item.item_id == "DP4" for item in self.definition.items)
         configuration = self.definition.participant_experience.get("profiles")
         if (not isinstance(configuration, Mapping)
                 or set(configuration) != {"seed", "identity_employee_id", "helpdesk_employee_id"}):
@@ -652,7 +658,9 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
         controller = getattr(self, "controller", None)
         return controller.state.value if controller is not None else "ready"
 
-    def _initialize(self, run_id: str, *, keep_controller: bool = False) -> None:
+    def _initialize(
+        self, run_id: str, *, keep_controller: bool = False, impact_fixture=None,
+    ) -> None:
         identity_module = importlib.import_module(
             "modules.04-mfa-fatigue-sim.identity_actions"
         )
@@ -742,6 +750,12 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
         self.cloud = CloudStage(self, run_id)
         if self.cloud_enabled:
             self.controller.handlers.update(self.cloud.handlers)
+        self.impact = (
+            ImpactStage(self, run_id, self.impact_root, fixture=impact_fixture)
+            if self.impact_enabled else None
+        )
+        if self.impact:
+            self.controller.handlers.update(self.impact.handlers)
         self.controller.time_observers = [self.mfa.advance]
 
     @property
@@ -821,19 +835,22 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
         return result
 
     def fail_safe_stop(self, reason: str) -> None:
-        """Stop controller delivery and all three action adapters."""
+        """Stop controller delivery and every active exercise adapter."""
 
         with self.state_lock:
             self.controller.fail_safe_stop(reason)
             self.mfa.stop()
             operator = entity("facilitator", "facilitator", role="facilitator")
-            for adapter in (
+            adapters = (
                 self.automation.adapter,
                 self.identity_adapter,
                 self.endpoint_adapter,
                 self.cloud.adapter,
                 self.cloud.automation_adapter,
-            ):
+            )
+            if self.impact:
+                adapters += (self.impact.adapter, self.impact.automation_adapter)
+            for adapter in adapters:
                 adapter.activate_fail_safe(self.run_id, operator, reason)
 
     def reset(self, *, new_run_id: str | None = None) -> None:
@@ -844,6 +861,15 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
                 raise ActionContractError("run must be stopped or completed before reset")
             if new_run_id == self.run_id:
                 raise ActionContractError("reset requires a new run id")
+            impact_fixture = None
+            if self.impact:
+                new_run_id = new_run_id or str(uuid.uuid4())
+                self.impact.validate_next_run(new_run_id)
+                self.impact.restore_for_reset()
+                impact_fixture = self.impact.provision_next_run(new_run_id)
             self.sequencer.reset()
             self.controller.reset(new_run_id=new_run_id)
-            self._initialize(self.controller.run_id, keep_controller=True)
+            self._initialize(
+                self.controller.run_id, keep_controller=True,
+                impact_fixture=impact_fixture,
+            )
