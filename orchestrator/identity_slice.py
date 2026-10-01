@@ -31,6 +31,7 @@ from .checkpoints import (
     evaluate_identity_triage,
 )
 from .controller import AutomationResult, RunState, ScenarioController
+from .cloud import CLOUD_ACTIONS, CloudStage
 from .mfa import ScheduledMfa
 from .scenario import ScenarioItem, load_scenario
 
@@ -737,6 +738,10 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
         self.controller.handlers = {
             **self.automation.handlers, "identity.mfa.challenge.deliver": self.mfa.deliver,
         }
+        self.cloud_enabled = any(item.item_id == "ACT-05" for item in self.definition.items)
+        self.cloud = CloudStage(self, run_id)
+        if self.cloud_enabled:
+            self.controller.handlers.update(self.cloud.handlers)
         self.controller.time_observers = [self.mfa.advance]
 
     @property
@@ -762,6 +767,8 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
                 adapter = self.identity_adapter
             elif action_id in ENDPOINT_ACTIONS:
                 adapter = self.endpoint_adapter
+            elif action_id in CLOUD_ACTIONS and self.cloud_enabled:
+                adapter = self.cloud.adapter
             else:
                 raise ActionContractError("action is not available in the identity slice")
             request = make_action_request(
@@ -824,6 +831,8 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
                 self.automation.adapter,
                 self.identity_adapter,
                 self.endpoint_adapter,
+                self.cloud.adapter,
+                self.cloud.automation_adapter,
             ):
                 adapter.activate_fail_safe(self.run_id, operator, reason)
 

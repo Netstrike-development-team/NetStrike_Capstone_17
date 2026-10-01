@@ -12,6 +12,7 @@ from orchestrator.checkpoints import (
     IdentityTriageSubmission,
 )
 from orchestrator.identity_slice import IdentitySliceRun, PARTICIPANT_ACTIONS
+from orchestrator.cloud import CLOUD_ACTIONS
 from orchestrator.scheduler import ScenarioScheduler
 from shared.events import entity
 
@@ -83,7 +84,10 @@ class PortalService:
             "state": self.run.controller.state.value,
             "elapsed_seconds": self.run.controller.elapsed_seconds,
             "injects": injects,
-            "available_actions": sorted(PARTICIPANT_ACTIONS),
+            "available_actions": sorted(PARTICIPANT_ACTIONS | (
+                CLOUD_ACTIONS if self.run.cloud_enabled else frozenset()
+            )),
+            "cloud_enabled": self.run.cloud_enabled,
         }
 
     def facilitator_state(self) -> dict[str, Any]:
@@ -114,6 +118,11 @@ class PortalService:
             "scheduled_mfa": self.run.mfa.snapshot(),
             "profile_initialization": self.run.profiles.summary(),
             "dp2_preview": self.evaluation_dict(self.run.evaluate_dp2()),
+            "cloud": {
+                "enabled": self.run.cloud_enabled,
+                "dp3_preview": self.evaluation_dict(self.run.cloud.evaluate()),
+                "state": self.run.cloud.view(),
+            },
         }
 
     def capture_identity_interaction(
@@ -135,6 +144,34 @@ class PortalService:
         """Read-only reviewed directory, without target bindings or attack rankings."""
 
         return self.run.profiles.directory()
+
+    def cloud_view(self) -> dict[str, Any]:
+        """Expose synthetic objects, current policy and actual audit events only."""
+        with self.run.state_lock:
+            if not self.run.cloud_enabled:
+                raise ValueError("selected scenario has no cloud stage")
+            return self.run.cloud.view()
+
+    def submit_cloud_assessment(self, principal: PortalPrincipal, **payload) -> dict[str, Any]:
+        """Retain the learner's assessment without returning hidden grading logic."""
+        with self.run.state_lock:
+            if not self.run.cloud_enabled:
+                raise ValueError("selected scenario has no cloud stage")
+            self.run.cloud.submit_assessment(**payload)
+            submission_id = self.store.save_submission(
+                exercise_id=self.run.definition.exercise_id, run_id=self.run.run_id,
+                actor_id=principal.actor_id, submission_type="DP3",
+                payload=self.run.cloud.assessment, result={"status": "submitted"},
+            )
+            return {
+                "submission_id": submission_id, "status": "submitted",
+                "run_id": self.run.run_id,
+            }
+
+    def resolve_cloud(self):
+        """Resolve cloud grading and its branch under the shared mutation lock."""
+        with self.run.state_lock:
+            return self.run.cloud.resolve()
 
     def identity_timeline(self) -> list[dict[str, Any]]:
         """Return the current run's queryable synthetic identity timeline."""
@@ -228,6 +265,13 @@ class PortalService:
             "scheduled_mfa_baseline_verified": not self.run.mfa.snapshot()["history"],
             "profile_baseline_verified": not self.run.identity_state.readiness_mismatches(),
         }
+        if self.run.cloud_enabled:
+            state["reset"]["cloud_baseline_verified"] = (
+                not self.run.cloud.state.readiness_mismatches()
+            )
+            if (not state["reset"]["cloud_baseline_verified"]
+                    or self.run.cloud.audit or self.run.cloud.assessment):
+                raise RuntimeError("cloud reset did not reach a clean baseline")
         if not all(state["reset"][key] for key in (
             "sso_baseline_verified", "profile_baseline_verified", "scheduled_mfa_baseline_verified",
         )):

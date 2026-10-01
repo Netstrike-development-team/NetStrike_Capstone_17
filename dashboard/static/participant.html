@@ -53,6 +53,10 @@
             <div class="action-card"><div><strong>Rotate a credential</strong><small>Enter the affected synthetic identity ID.</small></div><input aria-label="Identity ID" placeholder="Identity ID"><button data-action="identity.credential.reset" data-type="identity">Rotate credential</button></div>
             <div class="action-card"><div><strong>Preserve endpoint evidence</strong><small>Enter the designated evidence artifact ID.</small></div><input aria-label="Evidence artifact ID" placeholder="Artifact ID"><button data-action="evidence.artifact.preserve" data-type="evidence_artifact">Preserve evidence</button></div>
             <div class="action-card"><div><strong>Isolate a remote path</strong><small>Enter the affected exercise host ID.</small></div><input aria-label="Host ID" placeholder="Host ID"><button data-action="endpoint.host.isolate" data-type="host">Isolate host</button></div>
+            <div class="action-card cloud-action" hidden><div><strong>Preserve cloud evidence</strong><small>Freeze the current bucket state and audit before remediation.</small></div><input aria-label="Cloud evidence bucket ID" placeholder="Bucket ID"><button data-action="cloud.evidence.preserve" data-type="cloud_bucket">Preserve cloud evidence</button></div>
+            <div class="action-card cloud-action" hidden><div><strong>Revoke a cloud key</strong><small>Use the opaque key ID found in the mock audit.</small></div><input aria-label="Cloud key ID" placeholder="Key ID"><button data-action="cloud.key.revoke" data-type="cloud_key">Revoke key</button></div>
+            <div class="action-card cloud-action" hidden><div><strong>Disable a cloud principal</strong><small>Disables the mock service identity and its keys.</small></div><input aria-label="Cloud principal ID" placeholder="Principal ID"><button data-action="cloud.principal.disable" data-type="cloud_principal">Disable principal</button></div>
+            <div class="action-card cloud-action" hidden><div><strong>Restore a bucket policy</strong><small>Restore the approved exercise policy.</small></div><input aria-label="Cloud policy bucket ID" placeholder="Bucket ID"><button data-action="cloud.policy.restore" data-type="cloud_bucket">Restore policy</button></div>
           </div>
         </article>
         <details class="panel">
@@ -60,6 +64,20 @@
           <div class="panel-header"><div><h2>Reviewed staff context</h2><p>Account names are configured. Contact candidates are inferred, not verified addresses.</p></div><button id="load-directory" class="secondary small">Load directory</button></div>
           <div id="directory" class="timeline"><div class="empty">Load the synthetic directory to review staff context.</div></div>
         </details>
+        <article id="cloud-panel" class="panel" hidden>
+          <div class="panel-header"><div><h2>Mock-cloud investigation</h2><p>Local synthetic storage only. Access evidence does not prove external transfer.</p></div><button id="load-cloud" class="secondary small">Refresh cloud evidence</button></div>
+          <p id="cloud-summary" class="muted">Load current state and audit facts.</p>
+          <details><summary>Current objects and access controls</summary><pre id="cloud-state"></pre></details>
+          <div id="cloud-audit" class="timeline"></div>
+          <h3>Cloud assessment</h3>
+          <form id="cloud-form" class="form-grid">
+            <label class="form-wide">Affected service principal<input name="principal_id" required maxlength="128" placeholder="Principal found in audit"></label>
+            <label class="form-wide">Confirmed records accessed<input name="confirmed_count" type="number" min="0" max="25" required></label>
+            <label class="form-wide">Evidence conclusion<select name="conclusion" required><option value="">Select conclusion</option><option value="unknown">Insufficient evidence</option><option value="mock_access_only">Mock access confirmed; external transfer not established</option><option value="external_transfer_proven">External transfer proven</option></select></label>
+            <label class="form-wide">Cloud audit event IDs (one per line)<textarea name="evidence_ids" rows="3" required></textarea></label>
+            <button class="form-wide" type="submit">Submit cloud assessment</button>
+          </form>
+        </article>
       </div>
 
       <aside class="panel">

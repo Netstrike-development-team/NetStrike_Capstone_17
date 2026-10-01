@@ -7,7 +7,7 @@ import json
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Annotated, Any, Iterable
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response, status
 from fastapi.responses import FileResponse
@@ -37,6 +37,7 @@ PARTICIPANT_ROLES = frozenset(
         "soc_analyst",
         "identity_responder",
         "endpoint_responder",
+        "cloud_responder",
     }
 )
 FACILITATOR_ROLES = frozenset({"facilitator", "technical_operator"})
@@ -67,6 +68,15 @@ class Dp1Input(StrictInput):
     affected_identity: str = Field(min_length=1, max_length=256)
     classification: str = Field(min_length=1, max_length=256)
     evidence: list[EvidenceInput] = Field(min_length=1, max_length=20)
+
+
+class CloudAssessmentInput(StrictInput):
+    principal_id: str = Field(min_length=1, max_length=128)
+    confirmed_count: int = Field(ge=0, le=25, strict=True)
+    conclusion: str = Field(pattern="^(mock_access_only|external_transfer_proven|unknown)$")
+    evidence_ids: list[Annotated[str, Field(min_length=1, max_length=128)]] = Field(
+        min_length=1, max_length=20,
+    )
 
 
 class AdvanceInput(StrictInput):
@@ -399,6 +409,19 @@ def create_app(
             )
         )
 
+    @app.get("/api/participant/cloud")
+    def cloud_view(_principal: PortalPrincipal = Depends(participant)):
+        return execute(service.cloud_view)
+
+    @app.post("/api/participant/cloud/assessment")
+    def cloud_assessment(
+        request: CloudAssessmentInput,
+        principal: PortalPrincipal = Depends(participant),
+    ):
+        return execute(lambda: service.submit_cloud_assessment(
+            principal, **request.model_dump(),
+        ))
+
     @app.get("/api/facilitator/state")
     def facilitator_state(
         _principal: PortalPrincipal = Depends(facilitator),
@@ -496,6 +519,13 @@ def create_app(
             )[1]
         )
 
+    @app.post("/api/facilitator/checkpoints/dp3")
+    def resolve_dp3(_principal: PortalPrincipal = Depends(facilitator)):
+        return execute(lambda: {
+            "evaluation": PortalService.evaluation_dict(service.resolve_cloud()),
+            "state": service.facilitator_state(),
+        })
+
     @app.post("/api/facilitator/reset")
     def reset(
         request: ResetInput,
@@ -565,6 +595,7 @@ def create_default_app() -> FastAPI:
         store,
         run_id=run_id,
         profile_path=os.getenv("NETSTRIKE_PROFILE_FIXTURE"),
+        scenario_path=os.getenv("NETSTRIKE_SCENARIO_PATH"),
         identity_audit_key=audit_key.encode("utf-8"),
     )
     return create_app(

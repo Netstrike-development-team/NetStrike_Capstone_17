@@ -115,3 +115,11 @@ Canonical delivered/approved/denied/expired/blocked/cancelled events are retaine
 in SQLite and existing exports, correlated with identity/session/action audit
 events. Live Splunk ingestion must still be verified in Patrick's environment.
 See [the developer demonstration and evidence handoff](../docs/scheduled-mfa-dev-handoff.md).
+# Optional identity + mock-cloud exercise
+
+Set `NETSTRIKE_SCENARIO_PATH=orchestrator/scenarios/cloud-slice.v1.json` and
+provide a server-owned `cloud_responder` token alongside existing roles to enable
+cloud investigation, preservation/remediation, assessment and staff-only DP3.
+The identity-only fixture remains the default.
+See [cloud handoff](../docs/mock-cloud-dev-handoff.md) for the compressed timeline
+and development/acceptance boundaries.

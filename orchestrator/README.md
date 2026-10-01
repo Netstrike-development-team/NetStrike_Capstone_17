@@ -84,3 +84,10 @@ controller.resolve_checkpoint(
     reason="Sarah identified with correlated identity and helpdesk evidence",
 )
 ```
+# Mock-cloud integration slice
+
+Select `scenarios/cloud-slice.v1.json` to exercise identity + cloud on the
+approved compressed MSEL. Run `python -m orchestrator.cloud_demo --outcome
+contained` (or `full` / `partial`) from the repository root.
+See [cloud handoff](../docs/mock-cloud-dev-handoff.md) for participant actions,
+DP3 evidence, reset, safety and acceptance boundaries.

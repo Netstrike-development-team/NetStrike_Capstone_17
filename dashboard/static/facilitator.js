@@ -23,6 +23,7 @@ function renderMsel(items) {
     const actions = row.querySelector(".row-actions");
     if (["pending", "ready"].includes(item.status)) {
       for (const [label, command, className] of [["Deliver", "deliver", "small"], ["Skip", "skip", "secondary small"]]) {
+        if (command === "deliver" && item.trigger === "checkpoint" && item.phase === "cloud") continue;
         const button = document.createElement("button");
         button.textContent = label;
         button.className = className;
@@ -35,8 +36,8 @@ function renderMsel(items) {
   }
 }
 
-function renderChecks(evaluation) {
-  const container = document.querySelector("#checks");
+function renderChecks(evaluation, selector = "#checks") {
+  const container = document.querySelector(selector);
   container.replaceChildren();
   for (const [name, passed] of Object.entries(evaluation.checks)) {
     const item = document.createElement("div");
@@ -86,7 +87,7 @@ function renderSubmissions(submissions) {
     const title = document.createElement("strong");
     title.textContent = `${submission.submission_type} · ${submission.actor_id}`;
     const result = document.createElement("p");
-    result.textContent = submission.result.passed ? "Passed" : submission.result.reason;
+    result.textContent = submission.result.status === "submitted" ? "Recorded for checkpoint evaluation" : submission.result.passed ? "Passed" : submission.result.reason;
     card.append(title, result);
     container.append(card);
   }
@@ -102,6 +103,10 @@ async function refresh() {
     document.querySelector("#run-id").textContent = state.controller.run_id;
     renderMsel(state.msel);
     renderChecks(state.dp2_preview);
+    document.querySelector("#cloud-verifier").hidden = !state.cloud.enabled;
+    document.querySelector("#resolve-dp3").hidden = !state.cloud.enabled;
+    document.querySelector("#resolve-dp3").disabled = state.controller.items.DP3?.status !== "ready";
+    if (state.cloud.enabled) renderChecks(state.cloud.dp3_preview, "#cloud-checks");
     renderEvents(state.events);
     renderSubmissions(state.submissions);
     const profiles = state.profile_initialization;
@@ -140,6 +145,7 @@ document.querySelector("#advance").addEventListener("click", () => command("/api
 document.querySelector("#stop").addEventListener("click", () => command("/api/facilitator/stop", {reason: document.querySelector("#stop-reason").value}));
 document.querySelector("#reset").addEventListener("click", () => command("/api/facilitator/reset", {new_run_id: document.querySelector("#new-run-id").value || null}));
 document.querySelector("#resolve-dp2").addEventListener("click", () => command("/api/facilitator/checkpoints/dp2"));
+document.querySelector("#resolve-dp3").addEventListener("click", () => command("/api/facilitator/checkpoints/dp3"));
 for (const decision of ["approve", "deny"]) {
   document.querySelector(`#mfa-${decision}`).addEventListener("click", () => {
     if (pendingMfa) command("/api/facilitator/mfa/decision", {challenge_id: pendingMfa.id, decision});
