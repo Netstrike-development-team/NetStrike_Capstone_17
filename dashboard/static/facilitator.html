@@ -22,7 +22,7 @@
 
     <section class="panel">
       <div class="panel-header"><div><h2>Run controls</h2><p>Reviewed lifecycle operations only.</p></div><button id="refresh" class="secondary small">Refresh</button></div>
-      <div class="controls"><button data-command="prepare">Prepare</button><button data-command="start">Start</button><button data-command="pause" class="warn">Pause</button><button data-command="resume" class="secondary">Resume</button><button id="resolve-dp2" class="secondary">Resolve DP2</button><button id="download-jsonl" class="secondary">Download JSONL</button><button id="download-csv" class="secondary">Download CSV</button></div>
+      <div class="controls"><button data-command="prepare">Prepare</button><button data-command="start">Start</button><button data-command="pause" class="warn">Pause</button><button data-command="resume" class="secondary">Resume</button><button id="resolve-dp2" class="secondary">Resolve DP2</button><button id="resolve-dp3" class="secondary" hidden>Resolve DP3</button><button id="download-jsonl" class="secondary">Download JSONL</button><button id="download-csv" class="secondary">Download CSV</button></div>
       <div class="form-grid controls-top">
         <div><label>Advance to elapsed seconds<input id="advance-seconds" type="number" min="0" max="10800" value="300"></label><button id="advance" class="small button-top">Advance clock</button></div>
         <div><label>Emergency-stop reason<input id="stop-reason" placeholder="Required safety or platform reason"></label><button id="stop" class="danger small button-top">Emergency stop</button></div>
@@ -39,6 +39,7 @@
         <article class="panel"><div class="panel-header"><div><h2>Profile readiness</h2><p>Startup-validated synthetic fixture; setup audit recorded during Prepare.</p></div></div><div id="profile-summary" class="timeline">Connect to inspect profile readiness.</div></article>
         <article class="panel"><div class="panel-header"><div><h2>Scheduled MFA</h2><p>Act as the synthetic user. Approval does not undo containment or create a real session.</p></div></div><div id="mfa-summary" class="timeline">No pending request.</div><div class="controls"><button id="mfa-deny" class="secondary" disabled>Deny request</button><button id="mfa-approve" disabled>Approve request</button></div></article>
         <article class="panel"><div class="panel-header"><div><h2>DP2 verifier preview</h2><p>Authoritative state; does not resolve the branch until commanded.</p></div></div><div id="checks" class="checklist"></div></article>
+        <article id="cloud-verifier" class="panel" hidden><div class="panel-header"><div><h2>DP3 cloud verifier preview</h2><p>State and evidence checks; resolve only when DP3 is due.</p></div></div><div id="cloud-checks" class="checklist"></div></article>
         <article class="panel"><div class="panel-header"><div><h2>Participant submissions</h2><p>Structured checkpoint responses retained for evaluation.</p></div></div><div id="submissions" class="timeline"><div class="empty">No submissions.</div></div></article>
       </aside>
     </section>

@@ -38,6 +38,8 @@ async function refresh() {
     document.querySelector("#inject-count").textContent = state.injects.length;
     document.querySelector("#run-id").textContent = state.run_id;
     renderInjects(state.injects);
+    document.querySelector("#cloud-panel").hidden = !state.cloud_enabled;
+    for (const card of document.querySelectorAll(".cloud-action")) card.hidden = !state.cloud_enabled;
   } catch (error) {
     notify(notice, error.message, "error");
   }
@@ -78,6 +80,48 @@ document.querySelector("#load-directory").addEventListener("click", async () => 
   } finally {
     button.disabled = false;
   }
+});
+
+document.querySelector("#load-cloud").addEventListener("click", async () => {
+  try {
+    const cloud = await api("/api/participant/cloud");
+    const count = Object.keys(cloud.state.objects).length;
+    document.querySelector("#cloud-summary").textContent = `${count} synthetic objects · ${cloud.audit.length} audit events · Run ${cloud.run_id}`;
+    document.querySelector("#cloud-state").textContent = JSON.stringify(cloud.state, null, 2);
+    const container = document.querySelector("#cloud-audit");
+    container.replaceChildren();
+    for (const event of cloud.audit.slice().reverse()) {
+      const card = document.createElement("article");
+      card.className = "inject";
+      const title = document.createElement("strong");
+      title.textContent = `${event.event_type} · ${event.outcome.status}`;
+      const facts = document.createElement("p");
+      facts.textContent = JSON.stringify(event.data);
+      const reference = document.createElement("input");
+      reference.readOnly = true;
+      reference.value = event.event_id;
+      reference.setAttribute("aria-label", "Cloud audit event ID");
+      card.append(title, facts, reference);
+      container.append(card);
+    }
+  } catch (error) { notify(notice, error.message, "error"); }
+});
+
+document.querySelector("#cloud-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = new FormData(event.currentTarget);
+  try {
+    await api("/api/participant/cloud/assessment", {
+      method: "POST",
+      body: JSON.stringify({
+        principal_id: form.get("principal_id").trim(),
+        confirmed_count: Number(form.get("confirmed_count")),
+        conclusion: form.get("conclusion"),
+        evidence_ids: form.get("evidence_ids").split(/\r?\n/).map((value) => value.trim()).filter(Boolean),
+      }),
+    });
+    notify(notice, "Cloud assessment recorded. Continue validating containment.");
+  } catch (error) { notify(notice, error.message, "error"); }
 });
 
 document.querySelector("#actions").addEventListener("click", async (event) => {

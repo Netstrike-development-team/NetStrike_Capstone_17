@@ -1,0 +1,492 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "silent-spider-identity-cloud-slice-v1",
+  "exercise_id": "operation-silent-spider",
+  "name": "Operation Silent Spider — Identity and Mock Cloud Slice",
+  "participant_experience": {
+    "profiles": {
+      "seed": "silent-spider-profiles-v1",
+      "identity_employee_id": "emp_001",
+      "helpdesk_employee_id": "emp_005"
+    },
+    "mfa": {
+      "seed": "silent-spider-mfa-v1",
+      "identity_id": "sarah",
+      "session_id": "sess-red-01",
+      "factor_id": "factor-red-01",
+      "timeout_seconds": 30
+    },
+    "sso": {
+      "service_name": "SimCorp Access",
+      "heading": "Sign in to your workspace",
+      "introduction": "Use only the synthetic exercise identity and access phrase supplied by exercise control.",
+      "identity": {
+        "id": "sarah",
+        "username": "sarah@simcorp.test",
+        "display_name": "Sarah Mitchell"
+      },
+      "initial_failures_before_mfa": 1,
+      "lockout_threshold": 3,
+      "mfa_timeout_seconds": 30,
+      "messages": {
+        "failure": "The simulated sign-in could not be completed. Check the exercise identity and try again.",
+        "locked": "This exercise account is locked or disabled. Contact the simulated service desk.",
+        "mfa": "Review the exercise sign-in request and choose whether to approve it.",
+        "success": "The synthetic sign-in was approved.",
+        "suspicious": "Review the active exercise sessions and report anything unexpected.",
+        "rejected": "This sign-in is outside the permitted exercise identity boundary."
+      },
+      "suspicious_sessions": [
+        {
+          "id": "sess-red-01",
+          "label": "Finance workstation browser",
+          "location": "External exercise network",
+          "last_seen": "19 minutes before exercise start"
+        }
+      ]
+    }
+  },
+  "items": [
+    {
+      "id": "PRE-01",
+      "kind": "setup",
+      "title": "Load safe baseline",
+      "summary": "Load baseline identities, tickets, expected telemetry and recovery fixtures.",
+      "phase": "setup",
+      "delivery": "automatic",
+      "visibility": "facilitator",
+      "trigger": {
+        "type": "pre_exercise",
+        "order": 10
+      },
+      "action_id": "scenario.baseline.load"
+    },
+    {
+      "id": "PRE-02",
+      "kind": "setup",
+      "title": "Stage identity compromise history",
+      "summary": "Generate the pre-exercise identity and helpdesk evidence tagged to this run.",
+      "phase": "identity",
+      "delivery": "automatic",
+      "visibility": "facilitator",
+      "trigger": {
+        "type": "pre_exercise",
+        "order": 20
+      },
+      "action_id": "identity.history.stage",
+      "objective_ids": [
+        "LO1"
+      ]
+    },
+    {
+      "id": "MSEL-01",
+      "kind": "inject",
+      "title": "Unexpected MFA prompts",
+      "summary": "Sarah reports repeated MFA prompts and asks whether IT is performing maintenance.",
+      "participant_prompt": "Acknowledge the report, open an incident, and establish severity and scope.",
+      "phase": "identity",
+      "delivery": "automatic",
+      "visibility": "participant",
+      "trigger": {
+        "type": "elapsed",
+        "seconds": 0,
+        "order": 10
+      },
+      "objective_ids": [
+        "LO1"
+      ]
+    },
+    {
+      "id": "MFA-01",
+      "kind": "action",
+      "title": "First synthetic MFA request",
+      "summary": "Deliver a local MFA challenge for an explicit simulated-user or facilitator decision.",
+      "phase": "identity",
+      "delivery": "automatic",
+      "visibility": "participant",
+      "trigger": {
+        "type": "elapsed",
+        "seconds": 30,
+        "order": 20
+      },
+      "action_id": "identity.mfa.challenge.deliver",
+      "objective_ids": [
+        "LO1",
+        "LO2"
+      ]
+    },
+    {
+      "id": "MFA-02",
+      "kind": "action",
+      "title": "Repeated synthetic MFA request",
+      "summary": "Repeat a contained request unless the designated identity path has been contained.",
+      "phase": "identity",
+      "delivery": "automatic",
+      "visibility": "participant",
+      "trigger": {
+        "type": "elapsed",
+        "seconds": 90,
+        "order": 20
+      },
+      "action_id": "identity.mfa.challenge.deliver",
+      "objective_ids": [
+        "LO1",
+        "LO2"
+      ]
+    },
+    {
+      "id": "MFA-03",
+      "kind": "action",
+      "title": "Final bounded synthetic MFA request",
+      "summary": "Final local request; no automatic approval and no unlimited fatigue loop.",
+      "phase": "identity",
+      "delivery": "automatic",
+      "visibility": "participant",
+      "trigger": {
+        "type": "elapsed",
+        "seconds": 150,
+        "order": 20
+      },
+      "action_id": "identity.mfa.challenge.deliver",
+      "objective_ids": [
+        "LO1",
+        "LO2"
+      ]
+    },
+    {
+      "id": "MSEL-02",
+      "kind": "inject",
+      "title": "Urgent helpdesk reset ticket",
+      "summary": "Provide the previous evening's reset ticket with the callback-verification field missing.",
+      "participant_prompt": "Correlate the caller claim, ticket timing, identity changes, and policy failure.",
+      "phase": "identity",
+      "delivery": "automatic",
+      "visibility": "participant",
+      "trigger": {
+        "type": "elapsed",
+        "seconds": 300,
+        "order": 10
+      },
+      "objective_ids": [
+        "LO1"
+      ]
+    },
+    {
+      "id": "ACT-01",
+      "kind": "action",
+      "title": "Replay compromised session",
+      "summary": "Use the synthetic compromised session for a second authentication and FIN-WS01 access event.",
+      "phase": "identity",
+      "delivery": "automatic",
+      "visibility": "participant",
+      "trigger": {
+        "type": "elapsed",
+        "seconds": 600,
+        "order": 10
+      },
+      "action_id": "identity.session.replay",
+      "objective_ids": [
+        "LO1",
+        "LO2"
+      ]
+    },
+    {
+      "id": "MSEL-03",
+      "kind": "inject",
+      "title": "Helpdesk witness statement",
+      "summary": "Tyler says the caller knew Sarah's manager and travel story, so he completed the reset.",
+      "participant_prompt": "Interview the simulated witness and separate facts from recollection.",
+      "phase": "identity",
+      "delivery": "facilitator",
+      "visibility": "participant",
+      "trigger": {
+        "type": "elapsed",
+        "seconds": 900,
+        "order": 10
+      },
+      "objective_ids": [
+        "LO1"
+      ]
+    },
+    {
+      "id": "DP1",
+      "kind": "checkpoint",
+      "title": "Incident classification checkpoint",
+      "summary": "Evaluate the affected identity, incident classification, and submitted evidence.",
+      "participant_prompt": "Submit the affected identity, likely classification, and three relevant artifacts.",
+      "phase": "identity",
+      "delivery": "facilitator",
+      "visibility": "facilitator",
+      "trigger": {
+        "type": "elapsed",
+        "seconds": 1500,
+        "order": 10
+      },
+      "objective_ids": [
+        "LO1"
+      ],
+      "checkpoint_id": "DP1"
+    },
+    {
+      "id": "MSEL-04",
+      "kind": "inject",
+      "title": "Management status request",
+      "summary": "Rebecca requests the affected identity, confidence, immediate risk, and next action.",
+      "participant_prompt": "Provide a concise, evidence-based status update.",
+      "phase": "identity",
+      "delivery": "automatic",
+      "visibility": "participant",
+      "trigger": {
+        "type": "elapsed",
+        "seconds": 1800,
+        "order": 10
+      },
+      "objective_ids": [
+        "LO1"
+      ]
+    },
+    {
+      "id": "ACT-02",
+      "kind": "action",
+      "title": "Run safe endpoint discovery",
+      "summary": "Run allowlisted process and directory discovery on FIN-WS01.",
+      "phase": "endpoint_ad",
+      "delivery": "automatic",
+      "visibility": "participant",
+      "trigger": {
+        "type": "elapsed",
+        "seconds": 2100,
+        "order": 10
+      },
+      "action_id": "endpoint.discovery.run",
+      "objective_ids": [
+        "LO2"
+      ]
+    },
+    {
+      "id": "ACT-03",
+      "kind": "action",
+      "title": "Attempt designated persistence",
+      "summary": "Attempt the pre-defined exercise account and group change.",
+      "phase": "endpoint_ad",
+      "delivery": "automatic",
+      "visibility": "participant",
+      "trigger": {
+        "type": "elapsed",
+        "seconds": 2700,
+        "order": 10
+      },
+      "action_id": "identity.persistence.attempt",
+      "objective_ids": [
+        "LO2"
+      ]
+    },
+    {
+      "id": "MSEL-05",
+      "kind": "inject",
+      "title": "Restore access request",
+      "summary": "Helpdesk asks whether Sarah's access can be restored immediately for payroll approval.",
+      "participant_prompt": "Explain the conditions for safe restoration and the business trade-off.",
+      "phase": "identity",
+      "delivery": "automatic",
+      "visibility": "participant",
+      "trigger": {
+        "type": "elapsed",
+        "seconds": 3000,
+        "order": 10
+      },
+      "objective_ids": [
+        "LO2"
+      ]
+    },
+    {
+      "id": "DP2",
+      "kind": "checkpoint",
+      "title": "Identity and endpoint containment checkpoint",
+      "summary": "Verify session, factor, password, endpoint isolation, preserved evidence, and group state.",
+      "participant_prompt": "Complete containment and validate each change with evidence.",
+      "phase": "endpoint_ad",
+      "delivery": "facilitator",
+      "visibility": "facilitator",
+      "trigger": {
+        "type": "elapsed",
+        "seconds": 3600,
+        "order": 10
+      },
+      "objective_ids": [
+        "LO2"
+      ],
+      "checkpoint_id": "DP2"
+    },
+    {
+      "id": "ACT-04A",
+      "kind": "action",
+      "title": "Verify contained identity branch",
+      "summary": "Reject a new authentication and record blocked directory access.",
+      "phase": "endpoint_ad",
+      "delivery": "automatic",
+      "visibility": "participant",
+      "trigger": {
+        "type": "checkpoint",
+        "checkpoint_id": "DP2",
+        "outcome": "pass",
+        "order": 10
+      },
+      "action_id": "identity.containment.verify",
+      "objective_ids": [
+        "LO2"
+      ],
+      "checkpoint_id": "DP2"
+    },
+    {
+      "id": "ACT-04B",
+      "kind": "action",
+      "title": "Run adverse identity branch",
+      "summary": "Use the pre-defined persistence account and enumerate additional directory objects.",
+      "phase": "endpoint_ad",
+      "delivery": "automatic",
+      "visibility": "participant",
+      "trigger": {
+        "type": "checkpoint",
+        "checkpoint_id": "DP2",
+        "outcome": "miss",
+        "order": 10
+      },
+      "action_id": "identity.persistence.escalate",
+      "objective_ids": [
+        "LO2"
+      ],
+      "checkpoint_id": "DP2"
+    },
+    {
+      "id": "ACT-05",
+      "kind": "action",
+      "title": "Mock-cloud service-key activity",
+      "summary": "Evaluate the pre-staged service key, enumerate storage, and record a single synthetic object access.",
+      "phase": "cloud",
+      "delivery": "automatic",
+      "visibility": "participant",
+      "trigger": {
+        "type": "elapsed",
+        "seconds": 3900,
+        "order": 10
+      },
+      "action_id": "cloud.access.stage",
+      "objective_ids": [
+        "LO3"
+      ]
+    },
+    {
+      "id": "MSEL-06",
+      "kind": "inject",
+      "title": "Customer export delayed",
+      "summary": "Finance reports an unexpected delay in the customer export job.",
+      "phase": "cloud",
+      "delivery": "automatic",
+      "visibility": "participant",
+      "trigger": {
+        "type": "elapsed",
+        "seconds": 4200,
+        "order": 10
+      },
+      "objective_ids": [
+        "LO3"
+      ],
+      "participant_prompt": "Correlate business symptoms with observed evidence; avoid assuming encryption."
+    },
+    {
+      "id": "ACT-06",
+      "kind": "action",
+      "title": "Mock bucket policy change",
+      "summary": "Evaluate the designated policy-change attempt and bounded synthetic-record access.",
+      "phase": "cloud",
+      "delivery": "automatic",
+      "visibility": "participant",
+      "trigger": {
+        "type": "elapsed",
+        "seconds": 4500,
+        "order": 10
+      },
+      "action_id": "cloud.policy.expand",
+      "objective_ids": [
+        "LO3"
+      ]
+    },
+    {
+      "id": "MSEL-07",
+      "kind": "inject",
+      "title": "Legal requests confirmed data scope",
+      "summary": "Legal asks what data is confirmed accessed and whether external transfer is proven.",
+      "phase": "cloud",
+      "delivery": "automatic",
+      "visibility": "participant",
+      "trigger": {
+        "type": "elapsed",
+        "seconds": 5100,
+        "order": 10
+      },
+      "objective_ids": [
+        "LO3"
+      ],
+      "participant_prompt": "Submit the service principal, confirmed record count, conclusion and cloud audit references."
+    },
+    {
+      "id": "DP3",
+      "kind": "checkpoint",
+      "title": "Cloud containment checkpoint",
+      "summary": "Verify current key and policy state against the team's evidenced exposure assessment.",
+      "phase": "cloud",
+      "delivery": "facilitator",
+      "visibility": "facilitator",
+      "trigger": {
+        "type": "elapsed",
+        "seconds": 5700,
+        "order": 10
+      },
+      "objective_ids": [
+        "LO3"
+      ],
+      "checkpoint_id": "DP3"
+    },
+    {
+      "id": "ACT-07A",
+      "kind": "action",
+      "title": "Verify blocked bulk access",
+      "summary": "Evaluate the bulk attempt against authoritative current controls; never bypass containment.",
+      "phase": "cloud",
+      "delivery": "automatic",
+      "visibility": "participant",
+      "trigger": {
+        "type": "checkpoint",
+        "checkpoint_id": "DP3",
+        "outcome": "pass",
+        "order": 10
+      },
+      "action_id": "cloud.bulk.verify",
+      "objective_ids": [
+        "LO3"
+      ],
+      "checkpoint_id": "DP3"
+    },
+    {
+      "id": "ACT-07B",
+      "kind": "action",
+      "title": "Evaluate adverse bulk attempt",
+      "summary": "Evaluate the bulk attempt against authoritative current controls; never bypass containment.",
+      "phase": "cloud",
+      "delivery": "automatic",
+      "visibility": "participant",
+      "trigger": {
+        "type": "checkpoint",
+        "checkpoint_id": "DP3",
+        "outcome": "miss",
+        "order": 10
+      },
+      "action_id": "cloud.bulk.attempt",
+      "objective_ids": [
+        "LO3"
+      ],
+      "checkpoint_id": "DP3"
+    }
+  ]
+}

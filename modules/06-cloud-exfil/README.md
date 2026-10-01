@@ -2,6 +2,11 @@
 
 ## Purpose
 
+The mock is connected to the selectable identity + cloud runtime, participant
+investigation/containment tools, DP3 assessment, canonical audit and reset.
+See [developer handoff](../../docs/mock-cloud-dev-handoff.md) for timing,
+API roles, local demonstrations and remaining Cyber Range acceptance.
+
 This module supplies the state and containment controls for the Silent Spider
 mock-cloud phase. It does not connect to AWS or any other external service.
 
@@ -38,6 +43,7 @@ The following actions require the `cloud_responder` or `facilitator` role, a
 | `cloud.key.revoke` | `cloud_key:svc-cloud-backup-key-01` | revokes the pre-staged mock key |
 | `cloud.principal.disable` | `cloud_principal:svc-cloud-backup` | disables the principal and atomically revokes its owned keys |
 | `cloud.policy.restore` | `cloud_bucket:simcorp-customer-exports` | restores the approved policy hash and denies bulk access |
+| `cloud.evidence.preserve` | `cloud_bucket:simcorp-customer-exports` | freezes copied state/audit; later calls do not overwrite it |
 
 Exercise-control actions are limited to a `technical_operator` or
 `facilitator`:
@@ -53,7 +59,7 @@ dry-run, idempotency, cancellation, result validation, and audit events.
 
 ## Exposure and containment verification
 
-`MockCloudState.access_decision()` is a read-only verifier for future scenario
+`MockCloudState.access_decision()` is the read-only verifier used by scenario
 engine integration. It distinguishes `principal_disabled`, `key_revoked`,
 `key_principal_mismatch`, and `policy_denied`, allowing the contained branch to
 produce a defensible blocked-access event without making a network request.

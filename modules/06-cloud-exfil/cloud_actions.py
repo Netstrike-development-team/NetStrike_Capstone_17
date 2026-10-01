@@ -31,6 +31,8 @@ def _policy_hash(policy_id: str) -> str:
 
 
 @dataclass
+# State sections stay independently inspectable for reset and evidence review.
+# pylint: disable=too-many-instance-attributes
 class MockCloudState:
     """Run-scoped mock state containing synthetic metadata and no key material."""
 
@@ -38,6 +40,8 @@ class MockCloudState:
     keys: dict[str, dict[str, Any]] = field(default_factory=dict)
     buckets: dict[str, dict[str, Any]] = field(default_factory=dict)
     exposure: dict[str, dict[str, Any]] = field(default_factory=dict)
+    objects: dict[str, dict[str, Any]] = field(default_factory=dict)
+    preserved_evidence: dict[str, Any] = field(default_factory=dict)
     _rollbacks: dict[str, dict[str, Any]] = field(default_factory=dict)
     _rollback_sequence: int = 0
 
@@ -47,11 +51,18 @@ class MockCloudState:
 
         approved_hash = _policy_hash(APPROVED_POLICY_ID)
         return cls(
+            objects={
+                f"synthetic-record-{index:03d}": {
+                    "bucket_id": BUCKET_ID, "size_bytes": 200, "synthetic": True,
+                }
+                for index in range(1, 26)
+            },
             principals={
                 PRINCIPAL_ID: {
                     "enabled": True,
                     "synthetic": True,
                     "kind": "service",
+                    "roles": ["simcorp-export-reader"],
                 }
             },
             keys={
@@ -105,6 +116,8 @@ class MockCloudState:
             "keys": deepcopy(self.keys),
             "buckets": deepcopy(self.buckets),
             "exposure": deepcopy(self.exposure),
+            "objects": deepcopy(self.objects),
+            "preserved_evidence": deepcopy(self.preserved_evidence),
         }
 
     def _capture(self) -> str:
@@ -179,6 +192,19 @@ class MockCloudState:
         self.keys = baseline.keys
         self.buckets = baseline.buckets
         self.exposure = baseline.exposure
+        self.objects = baseline.objects
+        self.preserved_evidence = baseline.preserved_evidence
+        return token
+
+    def preserve_evidence(self, audit: list[dict[str, Any]], control: ExecutionControl) -> str:
+        """Freeze one pre-remediation view; later actions do not overwrite it."""
+
+        control.checkpoint()
+        token = self._capture()
+        if not self.preserved_evidence:
+            snapshot = self.snapshot()
+            snapshot.pop("preserved_evidence")
+            self.preserved_evidence = {"state": snapshot, "audit": deepcopy(audit)}
         return token
 
     def readiness_mismatches(self) -> tuple[str, ...]:
@@ -206,6 +232,8 @@ class MockCloudState:
         self.keys = snapshot["keys"]
         self.buckets = snapshot["buckets"]
         self.exposure = snapshot["exposure"]
+        self.objects = snapshot["objects"]
+        self.preserved_evidence = snapshot["preserved_evidence"]
         return ("restored pre-action mock-cloud state",)
 
 
@@ -217,7 +245,8 @@ def _no_parameters(parameters: Mapping[str, Any]) -> None:
 # The complete mutation surface stays together for role/target policy review.
 # pylint: disable=too-many-locals
 def register_cloud_actions(
-    registry: ActionRegistry, state: MockCloudState, *, run_id: str
+    registry: ActionRegistry, state: MockCloudState, *, run_id: str,
+    audit_provider: Callable[[], list[dict[str, Any]]] | None = None,
 ) -> None:
     """Register cloud containment, reset, and readiness actions."""
 
@@ -232,6 +261,11 @@ def register_cloud_actions(
     def restore(_params, target, control):
         token = state.restore_policy(target["id"], control)
         return ActionEffect((f"restored approved policy for {target['id']}",), token)
+
+    def preserve(_params, _target, control):
+        audit = audit_provider() if audit_provider else []
+        token = state.preserve_evidence(audit, control)
+        return ActionEffect(("preserved immutable mock-cloud evidence snapshot",), token)
 
     def reset(_params, _target, control):
         token = state.reset_to_baseline(control)
@@ -248,6 +282,12 @@ def register_cloud_actions(
         return ActionEffect(("validated approved mock-cloud baseline",))
 
     for action_id, target, handler, rollback_method in (
+        (
+            "cloud.evidence.preserve",
+            f"cloud_bucket:{BUCKET_ID}",
+            preserve,
+            "restore prior evidence preservation state",
+        ),
         (
             "cloud.key.revoke",
             f"cloud_key:{KEY_ID}",
