@@ -350,3 +350,20 @@ website/*.html ──► WebsiteConnector ─────┘        │
                                   profiles.json        pretext_template.txt
                                   sample_profile.json  events.jsonl
 ```
+# Maintained blue-team exercise input
+
+The exercise-ready exporter reuses this module's local identity and email
+extractors without scraping an external source:
+
+```bash
+python -m modules.01-osint-profiler.exercise_profiles \
+  --output /tmp/simcorp-profiles.json
+```
+
+Run that command from the repository root. The output validates against
+`schemas/target_profile.v1.json`, uses only the approved `simcorp.test`
+namespace, and retains inferred email confidence. Its seeded IDs and content
+are repeatable. The legacy profiler output/schema below remain available for
+historical module tests, but their `.com` contacts are rejected by the
+maintained exercise initializer. See
+[the profile contract](../../docs/synthetic-profile-contract-v1.md).

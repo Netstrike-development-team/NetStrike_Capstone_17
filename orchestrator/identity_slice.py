@@ -22,6 +22,7 @@ from shared.actions import (
     make_action_request,
 )
 from shared.events import EventBuilder, EventContext, EventSequencer, entity
+from shared.profiles import ProfileCatalog, ProfileInitializationError
 
 from .checkpoints import (
     CheckpointEvaluation,
@@ -37,6 +38,7 @@ from .scenario import ScenarioItem, load_scenario
 DEFAULT_SCENARIO_PATH = (
     Path(__file__).resolve().parent / "scenarios" / "identity-slice.v1.json"
 )
+DEFAULT_PROFILE_PATH = Path(__file__).resolve().parent / "fixtures" / "identity-profiles.v1.json"
 IDENTITY_ACTIONS = frozenset(
     {
         "identity.session.revoke",
@@ -234,11 +236,14 @@ class IdentitySliceAutomation:  # pylint: disable=too-many-instance-attributes
         event_sink: Callable[[Mapping[str, Any]], Any],
         sequence_factory: Callable[[], int],
         clock: Callable[[], datetime] = _utc_now,
+        profile_summary: Mapping[str, Any],
     ) -> None:
         self.exercise_id = exercise_id
         self.run_id = run_id
         self.event_sink = event_sink
         self.clock = clock
+        self.profile_summary = deepcopy(dict(profile_summary))
+        self.profile_context = self.profile_summary["bindings"]
         self.containment_check = containment_check
         self.state = IdentitySliceSimulationState(endpoint_state)
         self._emitted: set[str] = set()
@@ -301,6 +306,7 @@ class IdentitySliceAutomation:  # pylint: disable=too-many-instance-attributes
                 "identity": "identity-simulator",
                 "helpdesk": "helpdesk-simulator",
                 "endpoint": "endpoint-ad-simulator",
+                "profiles": "osint-profile-initializer",
             }.items()
         }
 
@@ -361,6 +367,8 @@ class IdentitySliceAutomation:  # pylint: disable=too-many-instance-attributes
         data: Mapping[str, Any] | None = None,
         objectives: tuple[str, ...] = ("LO1",),
         timestamp: datetime | None = None,
+        visibility: str = "participant",
+        correlation_ids: tuple[str, ...] = (),
     ) -> dict[str, Any]:
         event = self.builders[source].build(
             event_type=event_type,
@@ -370,11 +378,12 @@ class IdentitySliceAutomation:  # pylint: disable=too-many-instance-attributes
             target=target,
             outcome_status=outcome,
             message=message,
-            visibility="participant",
+            visibility=visibility,
             dry_run=False,
             safety_controls=("synthetic-data", "reviewed-msel", "allowlisted-target"),
             objective_ids=objectives,
             data=data or {},
+            correlation_ids=correlation_ids,
             timestamp=timestamp,
         )
         self.event_sink(event)
@@ -382,6 +391,13 @@ class IdentitySliceAutomation:  # pylint: disable=too-many-instance-attributes
 
     def _emit_evidence(self, action_id: str) -> None:
         if action_id == "scenario.baseline.load":
+            self._event(
+                "profiles", "scenario.profiles.initialized", "setup",
+                entity("system", "scenario-engine", role="scenario_engine"),
+                "scenario.profiles.initialize", entity("service", "IDP01"),
+                "Validated synthetic OSINT context loaded into the exercise",
+                visibility="facilitator", objectives=(), data=self.profile_summary,
+            )
             return
         if action_id == "identity.history.stage":
             self._emit_history()
@@ -485,30 +501,44 @@ class IdentitySliceAutomation:  # pylint: disable=too-many-instance-attributes
 
     def _emit_history(self) -> None:
         now = self.clock()
+        identity = self.profile_context["identity"]
+        helpdesk = self.profile_context["helpdesk"]
         self._event(
             "identity",
             "identity.fake_sso.submitted",
             "identity",
-            entity("identity", "sarah", display_name="Sarah Mitchell"),
+            entity("identity", identity["identity_id"], display_name=identity["display_name"]),
             "identity.synthetic_secret.submit",
             entity("service", "simcorp-sso-copy"),
             "Synthetic identity submitted a test-only SSO form",
-            data={"landing_id": "landing-001", "source_ip": "203.0.113.77"},
+            data={"landing_id": "landing-001", "source_ip": "203.0.113.77",
+                  "profile_id": identity["profile_id"],
+                  "contact_candidates": identity["email_candidates"],
+                  "field_confidence": identity["field_confidence"]},
+            correlation_ids=(identity["profile_id"],),
             timestamp=now - timedelta(minutes=35),
         )
         self._event(
             "helpdesk",
             "helpdesk.identity_reset.completed",
             "identity",
-            entity("helpdesk_agent", "tyler", display_name="Tyler Brennan"),
+            entity("helpdesk_agent", helpdesk["identity_id"],
+                   display_name=helpdesk["display_name"]),
             "helpdesk.identity_reset",
-            entity("identity", "sarah", display_name="Sarah Mitchell"),
+            entity("identity", identity["identity_id"], display_name=identity["display_name"]),
             "Helpdesk completed the synthetic password and MFA reset",
             data={
                 "ticket_id": "HD-1042",
-                "caller_claim": "Sarah Mitchell",
+                "caller_claim": identity["display_name"],
                 "callback_verified": False,
+                "caller_employee_id": identity["employee_id"],
+                "manager": self.profile_context["manager"]["display_name"],
+                "contact_candidates": identity["email_candidates"],
+                "field_confidence": identity["field_confidence"],
+                "identity_profile_id": identity["profile_id"],
+                "helpdesk_profile_id": helpdesk["profile_id"],
             },
+            correlation_ids=(identity["profile_id"], helpdesk["profile_id"]),
             timestamp=now - timedelta(minutes=30),
         )
         self._event(
@@ -567,11 +597,47 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
         event_sink: Callable[[Mapping[str, Any]], Any],
         run_id: str | None = None,
         scenario_path: Path | str = DEFAULT_SCENARIO_PATH,
+        profile_path: Path | str = DEFAULT_PROFILE_PATH,
         clock: Callable[[], datetime] = _utc_now,
     ) -> None:
         self.event_sink = event_sink
         self.clock = clock
         self.definition = load_scenario(scenario_path)
+        configuration = self.definition.participant_experience.get("profiles")
+        if (not isinstance(configuration, Mapping)
+                or set(configuration) != {"seed", "identity_employee_id", "helpdesk_employee_id"}):
+            raise ProfileInitializationError(
+                "scenario requires reviewed profile initialization fields"
+            )
+        self.profiles = ProfileCatalog.load(
+            profile_path, expected_seed=configuration["seed"],
+            identity_employee_id=configuration["identity_employee_id"],
+            helpdesk_employee_id=configuration["helpdesk_employee_id"],
+        )
+        identity = self.profiles.context()["identity"]
+        if self.profiles.context()["helpdesk"]["identity_id"] != "tyler":
+            raise ProfileInitializationError(
+                "helpdesk profile binding must match the reviewed scenario witness"
+            )
+        sso = self.definition.participant_experience.get("sso")
+        mfa = self.definition.participant_experience.get("mfa")
+        if not isinstance(sso, Mapping) or not isinstance(mfa, Mapping):
+            raise ProfileInitializationError(
+                "profile initialization requires SSO/MFA configuration"
+            )
+        sso_identity = sso.get("identity")
+        if not isinstance(sso_identity, Mapping):
+            raise ProfileInitializationError(
+                "profile initialization requires an SSO identity mapping"
+            )
+        mfa_identity = mfa.get("identity_id")
+        if (identity["identity_id"] != "sarah" or mfa_identity != identity["identity_id"]
+                or sso_identity.get("id") != identity["identity_id"]
+                or sso_identity.get("username") != identity["username"]
+                or sso_identity.get("display_name") != identity["display_name"]):
+            raise ProfileInitializationError(
+                "profile binding must match the reviewed SSO/MFA identity"
+            )
         self.sequencer = EventSequencer()
         self.state_lock = threading.RLock()
         self.identity_state: Any
@@ -592,7 +658,9 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
         endpoint_module = importlib.import_module(
             "modules.05-lateral-movement.endpoint_actions"
         )
-        self.identity_state = identity_module.SyntheticIdentityState.baseline()
+        self.identity_state = identity_module.SyntheticIdentityState.baseline(
+            profile_metadata=self.profiles.context()["identity"]
+        )
         self.endpoint_state = endpoint_module.EndpointAdState.baseline()
 
         identity_registry = ActionRegistry()
@@ -641,6 +709,7 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
             event_sink=self.event_sink,
             sequence_factory=self.sequencer.next,
             clock=self.clock,
+            profile_summary=self.profiles.summary(),
         )
         if keep_controller:
             controller = getattr(self, "controller", None)

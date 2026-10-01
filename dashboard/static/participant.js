@@ -52,6 +52,33 @@ document.querySelector("#connect").addEventListener("click", () => {
   }
 });
 document.querySelector("#refresh").addEventListener("click", refresh);
+document.querySelector("#load-directory").addEventListener("click", async () => {
+  const button = document.querySelector("#load-directory");
+  button.disabled = true;
+  try {
+    const profiles = await api("/api/participant/directory");
+    const container = document.querySelector("#directory");
+    container.replaceChildren();
+    for (const profile of profiles) {
+      const card = document.createElement("article");
+      card.className = "inject";
+      const title = document.createElement("strong");
+      title.textContent = `${profile.display_name} · ${profile.title}`;
+      const context = document.createElement("p");
+      context.textContent = `${profile.department} · Account: ${profile.username} (configured) · Manager: ${profile.manager || "unknown"}`;
+      const contacts = document.createElement("p");
+      contacts.textContent = profile.email_candidates.length
+        ? `Inferred contact candidates: ${profile.email_candidates.map((item) => `${item.address} (${item.confidence})`).join(", ")}`
+        : "Contact email unknown; no verified candidate provided.";
+      card.append(title, context, contacts);
+      container.append(card);
+    }
+  } catch (error) {
+    notify(notice, error.message, "error");
+  } finally {
+    button.disabled = false;
+  }
+});
 
 document.querySelector("#actions").addEventListener("click", async (event) => {
   const button = event.target.closest("button[data-action]");

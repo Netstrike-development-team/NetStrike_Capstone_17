@@ -104,6 +104,8 @@ async function refresh() {
     renderChecks(state.dp2_preview);
     renderEvents(state.events);
     renderSubmissions(state.submissions);
+    const profiles = state.profile_initialization;
+    document.querySelector("#profile-summary").textContent = `${profiles.profile_count} reviewed profiles · Catalog SHA256 ${profiles.catalog_sha256.slice(0, 12)}… · ${profiles.bindings.identity.display_name} / ${profiles.bindings.helpdesk.display_name}`;
     pendingMfa = state.scheduled_mfa.pending;
     const latest = state.scheduled_mfa.history.at(-1);
     document.querySelector("#mfa-summary").textContent = pendingMfa

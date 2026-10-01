@@ -30,6 +30,7 @@ class PortalService:
         *,
         run_id: str | None = None,
         scenario_path: Path | str | None = None,
+        profile_path: Path | str | None = None,
         identity_audit_key: bytes | None = None,
     ) -> None:
         self.store = store
@@ -39,6 +40,8 @@ class PortalService:
         }
         if scenario_path is not None:
             options["scenario_path"] = scenario_path
+        if profile_path is not None:
+            options["profile_path"] = profile_path
         self.run = IdentitySliceRun(**options)
         self.scheduler = ScenarioScheduler(self.run.controller)
         self.identity_audit = IdentityAuditRecorder(
@@ -109,6 +112,7 @@ class PortalService:
             "identity_audit": self.identity_timeline(),
             "sso": self.sso.state(),
             "scheduled_mfa": self.run.mfa.snapshot(),
+            "profile_initialization": self.run.profiles.summary(),
             "dp2_preview": self.evaluation_dict(self.run.evaluate_dp2()),
         }
 
@@ -126,6 +130,11 @@ class PortalService:
             sequence_factory=self.run.sequencer.next,
             payload=payload,
         )
+
+    def participant_directory(self) -> list[dict[str, Any]]:
+        """Read-only reviewed directory, without target bindings or attack rankings."""
+
+        return self.run.profiles.directory()
 
     def identity_timeline(self) -> list[dict[str, Any]]:
         """Return the current run's queryable synthetic identity timeline."""
@@ -217,9 +226,12 @@ class PortalService:
             "identity_audit_baseline_verified": True,
             "sso_baseline_verified": not self.sso.baseline_mismatches(),
             "scheduled_mfa_baseline_verified": not self.run.mfa.snapshot()["history"],
+            "profile_baseline_verified": not self.run.identity_state.readiness_mismatches(),
         }
-        if not state["reset"]["sso_baseline_verified"]:
-            raise RuntimeError("SSO reset did not reach a clean baseline")
+        if not all(state["reset"][key] for key in (
+            "sso_baseline_verified", "profile_baseline_verified", "scheduled_mfa_baseline_verified",
+        )):
+            raise RuntimeError("SSO/profile/MFA reset did not reach a clean baseline")
         return state
 
     # Action fields remain explicit so the service cannot trust client actor data.

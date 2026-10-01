@@ -339,6 +339,12 @@ def create_app(
     ) -> dict[str, Any]:
         return service.participant_state()
 
+    @app.get("/api/participant/directory")
+    def participant_directory(
+        _principal: PortalPrincipal = Depends(participant),
+    ) -> list[dict[str, Any]]:
+        return service.participant_directory()
+
     @app.post("/api/participant/actions")
     def participant_action(
         request: ActionInput,
@@ -558,6 +564,7 @@ def create_default_app() -> FastAPI:
     service = PortalService(
         store,
         run_id=run_id,
+        profile_path=os.getenv("NETSTRIKE_PROFILE_FIXTURE"),
         identity_audit_key=audit_key.encode("utf-8"),
     )
     return create_app(
