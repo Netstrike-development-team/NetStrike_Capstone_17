@@ -4,6 +4,11 @@
   "exercise_id": "operation-silent-spider",
   "name": "Operation Silent Spider — Identity Vertical Slice",
   "participant_experience": {
+    "profiles": {
+      "seed": "silent-spider-profiles-v1",
+      "identity_employee_id": "emp_001",
+      "helpdesk_employee_id": "emp_005"
+    },
     "mfa": {
       "seed": "silent-spider-mfa-v1",
       "identity_id": "sarah",

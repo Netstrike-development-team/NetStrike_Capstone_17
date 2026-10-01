@@ -1,0 +1,806 @@
+{
+  "schema_version": "1.0.0",
+  "seed": "silent-spider-profiles-v1",
+  "profiles": [
+    {
+      "schema_version": "1.0.0",
+      "synthetic": true,
+      "id": "42c7a2d3-9711-5124-a87e-f0329ec50b42",
+      "employee_id": "emp_001",
+      "name": "Sarah Mitchell",
+      "title": "VP of Finance",
+      "role_group": "Executive",
+      "department": "Finance",
+      "manager": "James Okafor",
+      "username": "sarah@simcorp.test",
+      "email_candidates": [
+        {
+          "address": "sarah.mitchell@simcorp.test",
+          "pattern": "first.last",
+          "confidence": "inferred",
+          "rank": 1
+        },
+        {
+          "address": "s.mitchell@simcorp.test",
+          "pattern": "f.last",
+          "confidence": "inferred",
+          "rank": 2
+        },
+        {
+          "address": "sarahmitchell@simcorp.test",
+          "pattern": "firstlast",
+          "confidence": "inferred",
+          "rank": 3
+        }
+      ],
+      "phone_numbers": [],
+      "source_id": "linkedin",
+      "confidence": {
+        "name": "explicit",
+        "role": "explicit",
+        "manager": "explicit",
+        "username": "configured"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "synthetic": true,
+      "id": "79f47539-d6fe-5f1e-b91a-314ab5759271",
+      "employee_id": "emp_002",
+      "name": "James Okafor",
+      "title": "Chief Financial Officer",
+      "role_group": "Executive",
+      "department": "Executive",
+      "manager": "CEO",
+      "username": "james@simcorp.test",
+      "email_candidates": [
+        {
+          "address": "james.okafor@simcorp.test",
+          "pattern": "first.last",
+          "confidence": "inferred",
+          "rank": 1
+        },
+        {
+          "address": "j.okafor@simcorp.test",
+          "pattern": "f.last",
+          "confidence": "inferred",
+          "rank": 2
+        },
+        {
+          "address": "jamesokafor@simcorp.test",
+          "pattern": "firstlast",
+          "confidence": "inferred",
+          "rank": 3
+        }
+      ],
+      "phone_numbers": [],
+      "source_id": "linkedin",
+      "confidence": {
+        "name": "explicit",
+        "role": "explicit",
+        "manager": "explicit",
+        "username": "configured"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "synthetic": true,
+      "id": "a7df349c-bbab-56af-98f2-2271f29489a8",
+      "employee_id": "emp_003",
+      "name": "Daniel Pryce",
+      "title": "IT Administrator",
+      "role_group": "IT_Admin",
+      "department": "IT",
+      "manager": "Rebecca Nwosu",
+      "username": "daniel@simcorp.test",
+      "email_candidates": [
+        {
+          "address": "daniel.pryce@simcorp.test",
+          "pattern": "first.last",
+          "confidence": "inferred",
+          "rank": 1
+        },
+        {
+          "address": "d.pryce@simcorp.test",
+          "pattern": "f.last",
+          "confidence": "inferred",
+          "rank": 2
+        },
+        {
+          "address": "danielpryce@simcorp.test",
+          "pattern": "firstlast",
+          "confidence": "inferred",
+          "rank": 3
+        }
+      ],
+      "phone_numbers": [],
+      "source_id": "linkedin",
+      "confidence": {
+        "name": "explicit",
+        "role": "explicit",
+        "manager": "explicit",
+        "username": "configured"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "synthetic": true,
+      "id": "c63ee9c1-158a-5281-a354-d3ba95d3fbb6",
+      "employee_id": "emp_004",
+      "name": "Rebecca Nwosu",
+      "title": "Director of IT",
+      "role_group": "IT_Admin",
+      "department": "IT",
+      "manager": "James Okafor",
+      "username": "rebecca@simcorp.test",
+      "email_candidates": [
+        {
+          "address": "rebecca.nwosu@simcorp.test",
+          "pattern": "first.last",
+          "confidence": "inferred",
+          "rank": 1
+        },
+        {
+          "address": "r.nwosu@simcorp.test",
+          "pattern": "f.last",
+          "confidence": "inferred",
+          "rank": 2
+        },
+        {
+          "address": "rebeccanwosu@simcorp.test",
+          "pattern": "firstlast",
+          "confidence": "inferred",
+          "rank": 3
+        }
+      ],
+      "phone_numbers": [],
+      "source_id": "linkedin",
+      "confidence": {
+        "name": "explicit",
+        "role": "explicit",
+        "manager": "explicit",
+        "username": "configured"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "synthetic": true,
+      "id": "a12c87e5-9d73-512d-9218-18ef64896f48",
+      "employee_id": "emp_005",
+      "name": "Tyler Brennan",
+      "title": "IT Support Specialist",
+      "role_group": "Helpdesk",
+      "department": "Helpdesk",
+      "manager": "Rebecca Nwosu",
+      "username": "tyler@simcorp.test",
+      "email_candidates": [
+        {
+          "address": "tyler.brennan@simcorp.test",
+          "pattern": "first.last",
+          "confidence": "inferred",
+          "rank": 1
+        },
+        {
+          "address": "t.brennan@simcorp.test",
+          "pattern": "f.last",
+          "confidence": "inferred",
+          "rank": 2
+        },
+        {
+          "address": "tylerbrennan@simcorp.test",
+          "pattern": "firstlast",
+          "confidence": "inferred",
+          "rank": 3
+        }
+      ],
+      "phone_numbers": [],
+      "source_id": "linkedin",
+      "confidence": {
+        "name": "explicit",
+        "role": "explicit",
+        "manager": "explicit",
+        "username": "configured"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "synthetic": true,
+      "id": "a3c89af2-e216-5682-88c4-28957a2699f7",
+      "employee_id": "emp_006",
+      "name": "Mariam Diallo",
+      "title": "Helpdesk Agent",
+      "role_group": "Helpdesk",
+      "department": "Helpdesk",
+      "manager": "Rebecca Nwosu",
+      "username": "mariam@simcorp.test",
+      "email_candidates": [
+        {
+          "address": "mariam.diallo@simcorp.test",
+          "pattern": "first.last",
+          "confidence": "inferred",
+          "rank": 1
+        },
+        {
+          "address": "m.diallo@simcorp.test",
+          "pattern": "f.last",
+          "confidence": "inferred",
+          "rank": 2
+        },
+        {
+          "address": "mariamdiallo@simcorp.test",
+          "pattern": "firstlast",
+          "confidence": "inferred",
+          "rank": 3
+        }
+      ],
+      "phone_numbers": [],
+      "source_id": "linkedin",
+      "confidence": {
+        "name": "explicit",
+        "role": "explicit",
+        "manager": "explicit",
+        "username": "configured"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "synthetic": true,
+      "id": "d2ec8eb0-1b68-50f3-b32b-3db53b5531d8",
+      "employee_id": "emp_007",
+      "name": "Kevin Ashworth",
+      "title": "Senior Helpdesk Technician",
+      "role_group": "Helpdesk",
+      "department": "Helpdesk",
+      "manager": "Rebecca Nwosu",
+      "username": "kevin@simcorp.test",
+      "email_candidates": [
+        {
+          "address": "kevin.ashworth@simcorp.test",
+          "pattern": "first.last",
+          "confidence": "inferred",
+          "rank": 1
+        },
+        {
+          "address": "k.ashworth@simcorp.test",
+          "pattern": "f.last",
+          "confidence": "inferred",
+          "rank": 2
+        },
+        {
+          "address": "kevinashworth@simcorp.test",
+          "pattern": "firstlast",
+          "confidence": "inferred",
+          "rank": 3
+        }
+      ],
+      "phone_numbers": [],
+      "source_id": "linkedin",
+      "confidence": {
+        "name": "explicit",
+        "role": "explicit",
+        "manager": "explicit",
+        "username": "configured"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "synthetic": true,
+      "id": "a58fc98e-9ff0-56f9-9631-91297cf2b9c6",
+      "employee_id": "emp_008",
+      "name": "Priya Sharma",
+      "title": "Okta Administrator",
+      "role_group": "IT_Admin",
+      "department": "IT",
+      "manager": "Rebecca Nwosu",
+      "username": "priya@simcorp.test",
+      "email_candidates": [
+        {
+          "address": "priya.sharma@simcorp.test",
+          "pattern": "first.last",
+          "confidence": "inferred",
+          "rank": 1
+        },
+        {
+          "address": "p.sharma@simcorp.test",
+          "pattern": "f.last",
+          "confidence": "inferred",
+          "rank": 2
+        },
+        {
+          "address": "priyasharma@simcorp.test",
+          "pattern": "firstlast",
+          "confidence": "inferred",
+          "rank": 3
+        }
+      ],
+      "phone_numbers": [],
+      "source_id": "linkedin",
+      "confidence": {
+        "name": "explicit",
+        "role": "explicit",
+        "manager": "explicit",
+        "username": "configured"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "synthetic": true,
+      "id": "f7c00732-bcc4-556b-b803-f78350973f55",
+      "employee_id": "emp_009",
+      "name": "Marcus Webb",
+      "title": "Systems Administrator",
+      "role_group": "IT_Admin",
+      "department": "IT",
+      "manager": "Rebecca Nwosu",
+      "username": "marcus@simcorp.test",
+      "email_candidates": [
+        {
+          "address": "marcus.webb@simcorp.test",
+          "pattern": "first.last",
+          "confidence": "inferred",
+          "rank": 1
+        },
+        {
+          "address": "m.webb@simcorp.test",
+          "pattern": "f.last",
+          "confidence": "inferred",
+          "rank": 2
+        },
+        {
+          "address": "marcuswebb@simcorp.test",
+          "pattern": "firstlast",
+          "confidence": "inferred",
+          "rank": 3
+        }
+      ],
+      "phone_numbers": [],
+      "source_id": "linkedin",
+      "confidence": {
+        "name": "explicit",
+        "role": "explicit",
+        "manager": "explicit",
+        "username": "configured"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "synthetic": true,
+      "id": "534718cc-6923-52e5-aeec-e48926816130",
+      "employee_id": "emp_010",
+      "name": "Claire Fontaine",
+      "title": "Chief Executive Officer",
+      "role_group": "Executive",
+      "department": "Executive",
+      "manager": null,
+      "username": "claire@simcorp.test",
+      "email_candidates": [
+        {
+          "address": "claire.fontaine@simcorp.test",
+          "pattern": "first.last",
+          "confidence": "inferred",
+          "rank": 1
+        },
+        {
+          "address": "c.fontaine@simcorp.test",
+          "pattern": "f.last",
+          "confidence": "inferred",
+          "rank": 2
+        },
+        {
+          "address": "clairefontaine@simcorp.test",
+          "pattern": "firstlast",
+          "confidence": "inferred",
+          "rank": 3
+        }
+      ],
+      "phone_numbers": [],
+      "source_id": "linkedin",
+      "confidence": {
+        "name": "explicit",
+        "role": "explicit",
+        "manager": "unknown",
+        "username": "configured"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "synthetic": true,
+      "id": "3a995526-0cde-5fca-8f5f-94b993fb8c59",
+      "employee_id": "emp_011",
+      "name": "Andre Bouchard",
+      "title": "Finance Manager",
+      "role_group": "Staff",
+      "department": "Finance",
+      "manager": "Sarah Mitchell",
+      "username": "andre@simcorp.test",
+      "email_candidates": [
+        {
+          "address": "andre.bouchard@simcorp.test",
+          "pattern": "first.last",
+          "confidence": "inferred",
+          "rank": 1
+        },
+        {
+          "address": "a.bouchard@simcorp.test",
+          "pattern": "f.last",
+          "confidence": "inferred",
+          "rank": 2
+        },
+        {
+          "address": "andrebouchard@simcorp.test",
+          "pattern": "firstlast",
+          "confidence": "inferred",
+          "rank": 3
+        }
+      ],
+      "phone_numbers": [],
+      "source_id": "linkedin",
+      "confidence": {
+        "name": "explicit",
+        "role": "explicit",
+        "manager": "explicit",
+        "username": "configured"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "synthetic": true,
+      "id": "5b5d22f1-a7b0-54d9-bc5d-8403558fcb77",
+      "employee_id": "emp_012",
+      "name": "Natasha Cole",
+      "title": "HR Director",
+      "role_group": "Executive",
+      "department": "HR",
+      "manager": "Claire Fontaine",
+      "username": "natasha@simcorp.test",
+      "email_candidates": [
+        {
+          "address": "natasha.cole@simcorp.test",
+          "pattern": "first.last",
+          "confidence": "inferred",
+          "rank": 1
+        },
+        {
+          "address": "n.cole@simcorp.test",
+          "pattern": "f.last",
+          "confidence": "inferred",
+          "rank": 2
+        },
+        {
+          "address": "natashacole@simcorp.test",
+          "pattern": "firstlast",
+          "confidence": "inferred",
+          "rank": 3
+        }
+      ],
+      "phone_numbers": [],
+      "source_id": "linkedin",
+      "confidence": {
+        "name": "explicit",
+        "role": "explicit",
+        "manager": "explicit",
+        "username": "configured"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "synthetic": true,
+      "id": "425f0e57-6e78-5380-9821-9e8abe25e56d",
+      "employee_id": "emp_013",
+      "name": "Omar Khalil",
+      "title": "Network Engineer",
+      "role_group": "IT_Admin",
+      "department": "IT",
+      "manager": "Rebecca Nwosu",
+      "username": "omar@simcorp.test",
+      "email_candidates": [
+        {
+          "address": "omar.khalil@simcorp.test",
+          "pattern": "first.last",
+          "confidence": "inferred",
+          "rank": 1
+        },
+        {
+          "address": "o.khalil@simcorp.test",
+          "pattern": "f.last",
+          "confidence": "inferred",
+          "rank": 2
+        },
+        {
+          "address": "omarkhalil@simcorp.test",
+          "pattern": "firstlast",
+          "confidence": "inferred",
+          "rank": 3
+        }
+      ],
+      "phone_numbers": [],
+      "source_id": "linkedin",
+      "confidence": {
+        "name": "explicit",
+        "role": "explicit",
+        "manager": "explicit",
+        "username": "configured"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "synthetic": true,
+      "id": "c711652f-63a7-5115-bb8a-27e1ed67adf3",
+      "employee_id": "emp_014",
+      "name": "Jessica Park",
+      "title": "Security Analyst",
+      "role_group": "IT_Admin",
+      "department": "IT",
+      "manager": "Rebecca Nwosu",
+      "username": "jessica@simcorp.test",
+      "email_candidates": [
+        {
+          "address": "jessica.park@simcorp.test",
+          "pattern": "first.last",
+          "confidence": "inferred",
+          "rank": 1
+        },
+        {
+          "address": "j.park@simcorp.test",
+          "pattern": "f.last",
+          "confidence": "inferred",
+          "rank": 2
+        },
+        {
+          "address": "jessicapark@simcorp.test",
+          "pattern": "firstlast",
+          "confidence": "inferred",
+          "rank": 3
+        }
+      ],
+      "phone_numbers": [],
+      "source_id": "linkedin",
+      "confidence": {
+        "name": "explicit",
+        "role": "explicit",
+        "manager": "explicit",
+        "username": "configured"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "synthetic": true,
+      "id": "91cd672b-5454-5fe3-beab-788ebedfa74a",
+      "employee_id": "emp_015",
+      "name": "Brian Holloway",
+      "title": "VP of Sales",
+      "role_group": "Executive",
+      "department": "Sales",
+      "manager": "Claire Fontaine",
+      "username": "brian@simcorp.test",
+      "email_candidates": [
+        {
+          "address": "brian.holloway@simcorp.test",
+          "pattern": "first.last",
+          "confidence": "inferred",
+          "rank": 1
+        },
+        {
+          "address": "b.holloway@simcorp.test",
+          "pattern": "f.last",
+          "confidence": "inferred",
+          "rank": 2
+        },
+        {
+          "address": "brianholloway@simcorp.test",
+          "pattern": "firstlast",
+          "confidence": "inferred",
+          "rank": 3
+        }
+      ],
+      "phone_numbers": [],
+      "source_id": "linkedin",
+      "confidence": {
+        "name": "explicit",
+        "role": "explicit",
+        "manager": "explicit",
+        "username": "configured"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "synthetic": true,
+      "id": "a960e2e8-f1bf-5cb8-ba7e-7cfc2d1345e4",
+      "employee_id": "emp_016",
+      "name": "Aisha Mensah",
+      "title": "Legal Counsel",
+      "role_group": "Staff",
+      "department": "Legal",
+      "manager": "Claire Fontaine",
+      "username": "aisha@simcorp.test",
+      "email_candidates": [
+        {
+          "address": "aisha.mensah@simcorp.test",
+          "pattern": "first.last",
+          "confidence": "inferred",
+          "rank": 1
+        },
+        {
+          "address": "a.mensah@simcorp.test",
+          "pattern": "f.last",
+          "confidence": "inferred",
+          "rank": 2
+        },
+        {
+          "address": "aishamensah@simcorp.test",
+          "pattern": "firstlast",
+          "confidence": "inferred",
+          "rank": 3
+        }
+      ],
+      "phone_numbers": [],
+      "source_id": "linkedin",
+      "confidence": {
+        "name": "explicit",
+        "role": "explicit",
+        "manager": "explicit",
+        "username": "configured"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "synthetic": true,
+      "id": "bfa06155-2e0f-5d79-a049-3ae164aa245c",
+      "employee_id": "emp_017",
+      "name": "Tom Gallagher",
+      "title": "DevOps Engineer",
+      "role_group": "IT_Admin",
+      "department": "IT",
+      "manager": "Rebecca Nwosu",
+      "username": "tom@simcorp.test",
+      "email_candidates": [
+        {
+          "address": "tom.gallagher@simcorp.test",
+          "pattern": "first.last",
+          "confidence": "inferred",
+          "rank": 1
+        },
+        {
+          "address": "t.gallagher@simcorp.test",
+          "pattern": "f.last",
+          "confidence": "inferred",
+          "rank": 2
+        },
+        {
+          "address": "tomgallagher@simcorp.test",
+          "pattern": "firstlast",
+          "confidence": "inferred",
+          "rank": 3
+        }
+      ],
+      "phone_numbers": [],
+      "source_id": "linkedin",
+      "confidence": {
+        "name": "explicit",
+        "role": "explicit",
+        "manager": "explicit",
+        "username": "configured"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "synthetic": true,
+      "id": "7871e6a6-749c-5f5e-8e21-16ff59415e1e",
+      "employee_id": "emp_018",
+      "name": "Laura Simmons",
+      "title": "Finance Analyst",
+      "role_group": "Staff",
+      "department": "Finance",
+      "manager": "Sarah Mitchell",
+      "username": "laura@simcorp.test",
+      "email_candidates": [
+        {
+          "address": "laura.simmons@simcorp.test",
+          "pattern": "first.last",
+          "confidence": "inferred",
+          "rank": 1
+        },
+        {
+          "address": "l.simmons@simcorp.test",
+          "pattern": "f.last",
+          "confidence": "inferred",
+          "rank": 2
+        },
+        {
+          "address": "laurasimmons@simcorp.test",
+          "pattern": "firstlast",
+          "confidence": "inferred",
+          "rank": 3
+        }
+      ],
+      "phone_numbers": [],
+      "source_id": "linkedin",
+      "confidence": {
+        "name": "explicit",
+        "role": "explicit",
+        "manager": "explicit",
+        "username": "configured"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "synthetic": true,
+      "id": "88ce4968-ba09-5325-a949-3b13de8e521e",
+      "employee_id": "emp_019",
+      "name": "David Osei",
+      "title": "IT Support Specialist",
+      "role_group": "Helpdesk",
+      "department": "Helpdesk",
+      "manager": "Rebecca Nwosu",
+      "username": "david@simcorp.test",
+      "email_candidates": [
+        {
+          "address": "david.osei@simcorp.test",
+          "pattern": "first.last",
+          "confidence": "inferred",
+          "rank": 1
+        },
+        {
+          "address": "d.osei@simcorp.test",
+          "pattern": "f.last",
+          "confidence": "inferred",
+          "rank": 2
+        },
+        {
+          "address": "davidosei@simcorp.test",
+          "pattern": "firstlast",
+          "confidence": "inferred",
+          "rank": 3
+        }
+      ],
+      "phone_numbers": [],
+      "source_id": "linkedin",
+      "confidence": {
+        "name": "explicit",
+        "role": "explicit",
+        "manager": "explicit",
+        "username": "configured"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "synthetic": true,
+      "id": "d2dfa6e0-fdb1-5ef0-bb5d-73ea9ae76b91",
+      "employee_id": "emp_020",
+      "name": "Rachel Torres",
+      "title": "Chief Technology Officer",
+      "role_group": "Executive",
+      "department": "Executive",
+      "manager": "Claire Fontaine",
+      "username": "rachel@simcorp.test",
+      "email_candidates": [
+        {
+          "address": "rachel.torres@simcorp.test",
+          "pattern": "first.last",
+          "confidence": "inferred",
+          "rank": 1
+        },
+        {
+          "address": "r.torres@simcorp.test",
+          "pattern": "f.last",
+          "confidence": "inferred",
+          "rank": 2
+        },
+        {
+          "address": "racheltorres@simcorp.test",
+          "pattern": "firstlast",
+          "confidence": "inferred",
+          "rank": 3
+        }
+      ],
+      "phone_numbers": [],
+      "source_id": "linkedin",
+      "confidence": {
+        "name": "explicit",
+        "role": "explicit",
+        "manager": "explicit",
+        "username": "configured"
+      }
+    }
+  ]
+}

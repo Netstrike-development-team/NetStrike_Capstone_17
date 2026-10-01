@@ -46,6 +46,12 @@ def _normalise_role_group(title: str) -> str:
     return "Staff"
 
 
+def normalise_role_group(title: str) -> str:
+    """Public role mapping shared by the profiler and exercise input validator."""
+
+    return _normalise_role_group(title)
+
+
 def extract_identity(linkedin_record: dict) -> dict:
     """
     Parse a raw LinkedIn connector record and extract core identity fields.

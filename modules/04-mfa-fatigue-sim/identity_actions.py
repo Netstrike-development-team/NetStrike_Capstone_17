@@ -29,15 +29,19 @@ class SyntheticIdentityState:
     mfa: dict[str, dict[str, Any]] = field(default_factory=dict)
     _rollbacks: dict[str, tuple[str, str, dict[str, Any]]] = field(default_factory=dict)
     _rollback_sequence: int = 0
+    _profile_metadata: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def baseline(cls) -> "SyntheticIdentityState":
+    def baseline(
+        cls, *, profile_metadata: Mapping[str, Any] | None = None
+    ) -> "SyntheticIdentityState":
         """Return the deterministic checkpoint-one identity fixture."""
 
         return cls(
             identities={
                 "sarah": {
                     "display_name": "Sarah Mitchell",
+                    **deepcopy(dict(profile_metadata or {})),
                     "enabled": True,
                     "credential_version": 1,
                     "synthetic": True,
@@ -55,6 +59,7 @@ class SyntheticIdentityState:
                 }
             },
             mfa={"sarah": {"push_count": 0, "decision": "pending"}},
+            _profile_metadata=deepcopy(dict(profile_metadata or {})),
         )
 
     def snapshot(self) -> dict[str, Any]:
@@ -136,7 +141,7 @@ class SyntheticIdentityState:
         self._rollback_sequence += 1
         token = f"identity-rb-{self._rollback_sequence}"
         self._rollbacks[token] = ("__state__", "", self.snapshot())
-        baseline = self.baseline()
+        baseline = self.baseline(profile_metadata=self._profile_metadata)
         self.identities = baseline.identities
         self.sessions = baseline.sessions
         self.factors = baseline.factors
@@ -146,7 +151,7 @@ class SyntheticIdentityState:
     def readiness_mismatches(self) -> tuple[str, ...]:
         """Return baseline sections that differ from the deterministic fixture."""
 
-        baseline = self.baseline().snapshot()
+        baseline = self.baseline(profile_metadata=self._profile_metadata).snapshot()
         current = self.snapshot()
         return tuple(
             section

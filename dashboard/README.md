@@ -28,6 +28,18 @@ python -m uvicorn dashboard.app:create_default_app --factory --host 0.0.0.0 --po
 Tokens are injected on `CTRL01`; they must not be committed, logged, or included in exported evidence.
 The audit key is also injected at runtime and must remain stable for the duration of a run.
 
+## Profile initialization
+
+At startup the portal validates the committed synthetic OSINT fixture. A
+reviewed replacement can be provided through `NETSTRIKE_PROFILE_FIXTURE` as
+a bounded local JSON file, with the seed matching the scenario configuration.
+The participant console offers a role-protected, read-only staff directory
+at `/api/participant/directory`; it preserves contact-confidence markers and
+does not expose target bindings or attack rankings. Facilitators inspect the
+profile count/catalog fingerprint in **Profile readiness**. Reset verifies the
+pinned profile baseline as well as SSO/MFA state. See
+[the profile input contract](../docs/synthetic-profile-contract-v1.md).
+
 ## Synthetic identity capture
 
 Only a token configured with the `identity_capture_service` role may call

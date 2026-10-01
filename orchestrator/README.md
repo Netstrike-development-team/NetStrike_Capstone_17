@@ -45,6 +45,16 @@ DP2 continues to score authoritative containment, not arbitrary points for a
 facilitator role-play choice. MFA history retains outcome and evidence IDs for
 evaluation. This application-state reset does not replace VM snapshot restore.
 
+## Synthetic profile initialization
+
+`IdentitySliceRun` validates and pins the reviewed synthetic profile bundle
+before creating mutable state or emitting run evidence. Sarah's identity,
+Tyler's helpdesk evidence, and manager/contact/confidence context share profile
+references. Prepare records the catalog fingerprint; reset restores the same
+validated metadata rather than re-reading a changed source file.
+The input contract and export workflow are documented in
+[Synthetic profile initialization v1](../docs/synthetic-profile-contract-v1.md).
+
 ## Minimal use
 
 ```python
