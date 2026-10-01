@@ -17,7 +17,7 @@ from shared.events import entity
 
 from .auth import PortalPrincipal
 from .identity_audit import IdentityAuditRecorder
-from .sso import SsoExperience, SsoExperienceConfig
+from .sso import SsoExperience, SsoExperienceConfig, SsoExperienceError
 from .store import PortalStore
 
 
@@ -108,6 +108,7 @@ class PortalService:
             "submissions": self.store.submissions(self.run.run_id),
             "identity_audit": self.identity_timeline(),
             "sso": self.sso.state(),
+            "scheduled_mfa": self.run.mfa.snapshot(),
             "dp2_preview": self.evaluation_dict(self.run.evaluate_dp2()),
         }
 
@@ -136,21 +137,62 @@ class PortalService:
     def sso_state(self) -> dict[str, Any]:
         """Return the participant-safe current SSO experience state."""
 
-        return self.sso.state()
+        state = self.sso.state()
+        scheduled = self.run.mfa.snapshot()
+        state["exercise_state"] = scheduled["state"]
+        state["scheduled_result"] = (
+            scheduled["history"][-1] if scheduled["history"] else None
+        )
+        if scheduled["pending"]:
+            state.update(view="mfa", challenge=scheduled["pending"],
+                         display_name=self.sso.config.display_name,
+                         message="Unexpected exercise sign-in request. "
+                                 "Approve only if you initiated it.")
+        return state
 
     def sso_sign_in(self, username: Any, credential: Any) -> dict[str, Any]:
         """Submit one contained synthetic sign-in attempt."""
 
-        return self.sso.sign_in(username, credential)
+        with self.run.state_lock:
+            self._require_sso_active()
+            if self.run.mfa.snapshot()["pending"]:
+                return self.sso_state()
+            self.sso.sign_in(username, credential)
+            self.run.mfa.advance(self.run.controller.elapsed_seconds)
+            return self.sso_state()
 
     def sso_decide_mfa(self, challenge_id: Any, decision: Any) -> dict[str, Any]:
         """Resolve the current synthetic MFA challenge."""
 
-        return self.sso.decide_mfa(challenge_id, decision)
+        with self.run.state_lock:
+            self._require_sso_active()
+            if self.run.mfa.snapshot()["pending"]:
+                raise SsoExperienceError("scheduled challenge requires authenticated MFA decision")
+            self.sso.decide_mfa(challenge_id, decision)
+            return self.sso_state()
+
+    def _require_sso_active(self) -> None:
+        if self.run.controller.state.value in {"paused", "stopped", "completed"}:
+            raise SsoExperienceError(
+                "SSO changes are unavailable while exercise is paused or stopped"
+            )
+
+    def decide_scheduled_mfa(
+        self, principal: PortalPrincipal, challenge_id: Any, decision: Any,
+    ) -> dict[str, Any]:
+        """Bind the human decision to the authenticated staff/user principal."""
+
+        self.run.mfa.decide(
+            challenge_id, decision,
+            entity("facilitator" if principal.role == "facilitator" else "participant",
+                   principal.actor_id, role=principal.role),
+        )
+        return self.sso_state()
 
     def sso_review_sessions(self) -> dict[str, Any]:
         """Show configured suspicious sessions after approved sign-in."""
 
+        self._require_sso_active()
         return self.sso.review_sessions()
 
     def reset_run(self, *, new_run_id: str | None = None) -> dict[str, Any]:
@@ -158,6 +200,10 @@ class PortalService:
 
         exercise_id = self.run.definition.exercise_id
         prior_run_id = self.run.run_id
+        if new_run_id and (
+            new_run_id == prior_run_id or self.store.events(exercise_id, new_run_id)
+        ):
+            raise SsoExperienceError("reset requires a new, unused run id")
         self.run.reset(new_run_id=new_run_id)
         self.scheduler.reset()
         self.sso.reset()
@@ -170,6 +216,7 @@ class PortalService:
             "identity_audit_records_deleted": deleted,
             "identity_audit_baseline_verified": True,
             "sso_baseline_verified": not self.sso.baseline_mismatches(),
+            "scheduled_mfa_baseline_verified": not self.run.mfa.snapshot()["history"],
         }
         if not state["reset"]["sso_baseline_verified"]:
             raise RuntimeError("SSO reset did not reach a clean baseline")

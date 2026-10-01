@@ -4,6 +4,7 @@ import {api, clearNotice, connect, formatElapsed, notify, setStatus, token} from
 
 const notice = document.querySelector("#notice");
 const tokenInput = document.querySelector("#token-input");
+let pendingMfa = null;
 
 function renderMsel(items) {
   const body = document.querySelector("#msel-body");
@@ -103,6 +104,14 @@ async function refresh() {
     renderChecks(state.dp2_preview);
     renderEvents(state.events);
     renderSubmissions(state.submissions);
+    pendingMfa = state.scheduled_mfa.pending;
+    const latest = state.scheduled_mfa.history.at(-1);
+    document.querySelector("#mfa-summary").textContent = pendingMfa
+      ? `${pendingMfa.msel_id} · ${pendingMfa.expires_in_seconds}s left · ${state.controller.state}`
+      : latest ? `${latest.msel_id} · ${latest.outcome} · ${latest.reason}` : "No request delivered yet.";
+    for (const id of ["#mfa-deny", "#mfa-approve"]) {
+      document.querySelector(id).disabled = !pendingMfa || state.controller.state !== "running";
+    }
   } catch (error) {
     notify(notice, error.message, "error");
   }
@@ -129,6 +138,11 @@ document.querySelector("#advance").addEventListener("click", () => command("/api
 document.querySelector("#stop").addEventListener("click", () => command("/api/facilitator/stop", {reason: document.querySelector("#stop-reason").value}));
 document.querySelector("#reset").addEventListener("click", () => command("/api/facilitator/reset", {new_run_id: document.querySelector("#new-run-id").value || null}));
 document.querySelector("#resolve-dp2").addEventListener("click", () => command("/api/facilitator/checkpoints/dp2"));
+for (const decision of ["approve", "deny"]) {
+  document.querySelector(`#mfa-${decision}`).addEventListener("click", () => {
+    if (pendingMfa) command("/api/facilitator/mfa/decision", {challenge_id: pendingMfa.id, decision});
+  });
+}
 
 document.querySelector("#msel-body").addEventListener("click", (event) => {
   const button = event.target.closest("button[data-command]");

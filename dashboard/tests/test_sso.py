@@ -111,6 +111,26 @@ def test_external_account_is_rejected_without_forwarding_its_credential() -> Non
     assert audit.credential_submissions == 0
 
 
+def test_account_disable_cannot_be_bypassed_by_pending_local_mfa():
+    experience, state, audit, _clock = _experience()
+    experience.sign_in("sarah@simcorp.test", "exercise-first")
+    challenge = experience.sign_in("sarah@simcorp.test", "exercise-second")
+    state.identities["sarah"]["enabled"] = False
+    with pytest.raises(SsoExperienceError, match="disabled"):
+        experience.decide_mfa(challenge["challenge"]["id"], "approve")
+    assert experience.state()["view"] == "locked"
+    assert "sess-sso-current" not in state.sessions
+    assert audit.actions[-1] == "identity.mfa.challenge.cancelled"
+
+
+def test_unicode_and_non_string_decisions_fail_cleanly():
+    experience, _state_value, _audit, _clock = _experience()
+    with pytest.raises(SsoBoundaryError):
+        experience.sign_in("é@external.example", "unused")
+    with pytest.raises(SsoExperienceError):
+        experience.decide_mfa("any", [])
+
+
 def test_failure_mfa_success_and_suspicious_session_views_are_reachable() -> None:
     experience, state, audit, _clock = _experience()
 

@@ -25,7 +25,7 @@ button, input { font: inherit; }
 .sso-mark { display: grid; width: 38px; height: 38px; place-items: center; color: #fff; background: var(--primary); border-radius: 11px; }
 .exercise-badge { padding: 6px 10px; color: var(--primary-dark); background: #e9f0ff; border: 1px solid #bfd1f1; border-radius: 999px; font-size: 12px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
 
-.sso-main { display: grid; min-height: calc(100vh - 172px); place-items: center; padding: 48px 20px; }
+.sso-main { display: grid; min-height: calc(100vh - 172px); place-items: center; gap: 20px; padding: 48px 20px; }
 .sso-card { width: min(100%, 470px); padding: clamp(28px, 5vw, 44px); background: var(--surface); border: 1px solid var(--line); border-radius: 22px; box-shadow: 0 24px 70px rgba(36, 57, 92, 0.14); }
 .state-card { text-align: center; }
 .eyebrow { margin: 0 0 10px; color: var(--primary); font-size: 12px; font-weight: 850; letter-spacing: 0.12em; text-transform: uppercase; }

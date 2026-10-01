@@ -109,13 +109,14 @@ class SyntheticIdentityState:
     def record_push(
         self, identity_id: str, threshold: int, control: ExecutionControl
     ) -> str:
-        """Record one synthetic challenge and its deterministic outcome."""
+        """Record delivery only; the legacy threshold never grants approval."""
 
+        del threshold  # Retain call compatibility without threshold-driven approval.
         control.checkpoint()
         token = self._save_rollback("mfa", identity_id)
         state = self.mfa[identity_id]
         state["push_count"] += 1
-        state["decision"] = "approved" if state["push_count"] >= threshold else "denied"
+        state["decision"] = "pending"
         return token
 
     def record_decision(

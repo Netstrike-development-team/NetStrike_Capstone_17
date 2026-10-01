@@ -88,6 +88,7 @@ class ScenarioController:  # pylint: disable=too-many-instance-attributes
         self.clock = clock
         self.state = RunState.READY
         self.elapsed_seconds = 0
+        self.time_observers: list[Callable[[int], None]] = []
         self.items = {
             item.item_id: ItemRuntime() for item in self.definition.items
         }
@@ -216,9 +217,9 @@ class ScenarioController:  # pylint: disable=too-many-instance-attributes
         """Advance to an absolute exercise time and process due elapsed triggers."""
 
         self._require_state(RunState.RUNNING)
-        if not isinstance(elapsed_seconds, int) or elapsed_seconds < self.elapsed_seconds:
+        if (not isinstance(elapsed_seconds, int) or isinstance(elapsed_seconds, bool)
+                or elapsed_seconds < self.elapsed_seconds):
             raise ControllerError("elapsed time must be a non-decreasing integer")
-        self.elapsed_seconds = elapsed_seconds
         due = sorted(
             (
                 item
@@ -231,7 +232,16 @@ class ScenarioController:  # pylint: disable=too-many-instance-attributes
             key=lambda item: (item.trigger.seconds or 0, item.trigger.order),
         )
         for item in due:
+            self._advance_clock(item.trigger.seconds or 0)
             self._make_due(item)
+        self._advance_clock(elapsed_seconds)
+
+    def _advance_clock(self, elapsed_seconds: int) -> None:
+        """Notify bounded runtime observers before delivery at each due instant."""
+
+        self.elapsed_seconds = elapsed_seconds
+        for observer in self.time_observers:
+            observer(elapsed_seconds)
 
     def _make_due(self, item: ScenarioItem) -> None:
         runtime = self.items[item.item_id]

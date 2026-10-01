@@ -4,6 +4,13 @@
   "exercise_id": "operation-silent-spider",
   "name": "Operation Silent Spider — Identity Vertical Slice",
   "participant_experience": {
+    "mfa": {
+      "seed": "silent-spider-mfa-v1",
+      "identity_id": "sarah",
+      "session_id": "sess-red-01",
+      "factor_id": "factor-red-01",
+      "timeout_seconds": 30
+    },
     "sso": {
       "service_name": "SimCorp Access",
       "heading": "Sign in to your workspace",
@@ -69,6 +76,33 @@
       "visibility": "participant",
       "trigger": {"type": "elapsed", "seconds": 0, "order": 10},
       "objective_ids": ["LO1"]
+    },
+    {
+      "id": "MFA-01",
+      "kind": "action",
+      "title": "First synthetic MFA request",
+      "summary": "Deliver a local MFA challenge for an explicit simulated-user or facilitator decision.",
+      "phase": "identity", "delivery": "automatic", "visibility": "participant",
+      "trigger": {"type": "elapsed", "seconds": 30, "order": 20},
+      "action_id": "identity.mfa.challenge.deliver", "objective_ids": ["LO1", "LO2"]
+    },
+    {
+      "id": "MFA-02",
+      "kind": "action",
+      "title": "Repeated synthetic MFA request",
+      "summary": "Repeat a contained request unless the designated identity path has been contained.",
+      "phase": "identity", "delivery": "automatic", "visibility": "participant",
+      "trigger": {"type": "elapsed", "seconds": 90, "order": 20},
+      "action_id": "identity.mfa.challenge.deliver", "objective_ids": ["LO1", "LO2"]
+    },
+    {
+      "id": "MFA-03",
+      "kind": "action",
+      "title": "Final bounded synthetic MFA request",
+      "summary": "Final local request; no automatic approval and no unlimited fatigue loop.",
+      "phase": "identity", "delivery": "automatic", "visibility": "participant",
+      "trigger": {"type": "elapsed", "seconds": 150, "order": 20},
+      "action_id": "identity.mfa.challenge.deliver", "objective_ids": ["LO1", "LO2"]
     },
     {
       "id": "MSEL-02",

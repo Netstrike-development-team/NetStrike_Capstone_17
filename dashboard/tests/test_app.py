@@ -476,6 +476,7 @@ def test_reset_removes_transient_identity_audit_and_verifies_baseline(portal) ->
         "identity_audit_records_deleted": 1,
         "identity_audit_baseline_verified": True,
         "sso_baseline_verified": True,
+        "scheduled_mfa_baseline_verified": True,
     }
     assert service.store.identity_audit(
         "operation-silent-spider", "run-portal-test"

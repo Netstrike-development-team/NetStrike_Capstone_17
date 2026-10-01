@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import threading
 import uuid
 from copy import deepcopy
 from dataclasses import dataclass, field
@@ -29,6 +30,7 @@ from .checkpoints import (
     evaluate_identity_triage,
 )
 from .controller import AutomationResult, RunState, ScenarioController
+from .mfa import ScheduledMfa
 from .scenario import ScenarioItem, load_scenario
 
 
@@ -41,8 +43,6 @@ IDENTITY_ACTIONS = frozenset(
         "identity.factor.remove",
         "identity.account.disable",
         "identity.credential.reset",
-        "identity.mfa.challenge.record",
-        "identity.mfa.decision.record",
     }
 )
 ENDPOINT_ACTIONS = frozenset(
@@ -573,6 +573,7 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
         self.clock = clock
         self.definition = load_scenario(scenario_path)
         self.sequencer = EventSequencer()
+        self.state_lock = threading.RLock()
         self.identity_state: Any
         self.endpoint_state: Any
         self.identity_adapter: SafeActionAdapter
@@ -655,6 +656,19 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
                 sequence_factory=self.sequencer.next,
                 clock=self.clock,
             )
+        self.mfa = ScheduledMfa(
+            exercise_id=self.definition.exercise_id, run_id=run_id,
+            configuration=self.definition.participant_experience["mfa"],
+            identity_state=lambda: self.identity_state,
+            run_state=lambda: self.controller.state.value,
+            elapsed=lambda: self.controller.elapsed_seconds,
+            event_sink=self.event_sink, sequence_factory=self.sequencer.next,
+            clock=self.clock, state_lock=self.state_lock,
+        )
+        self.controller.handlers = {
+            **self.automation.handlers, "identity.mfa.challenge.deliver": self.mfa.deliver,
+        }
+        self.controller.time_observers = [self.mfa.advance]
 
     @property
     def run_id(self) -> str:
@@ -674,25 +688,28 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
     ) -> dict[str, Any]:
         """Route one server-authenticated participant action to its safe adapter."""
 
-        if action_id in IDENTITY_ACTIONS:
-            adapter = self.identity_adapter
-        elif action_id in ENDPOINT_ACTIONS:
-            adapter = self.endpoint_adapter
-        else:
-            raise ActionContractError("action is not available in the identity slice")
-        request = make_action_request(
-            exercise_id=self.definition.exercise_id,
-            run_id=self.run_id,
-            actor=actor,
-            action_id=action_id,
-            target=target,
-            idempotency_key=idempotency_key,
-            parameters=parameters,
-            dry_run=dry_run,
-            timeout_seconds=15 if action_id in IDENTITY_ACTIONS else 20,
-            clock=self.clock,
-        )
-        return adapter.execute(request)
+        with self.state_lock:
+            if action_id in IDENTITY_ACTIONS:
+                adapter = self.identity_adapter
+            elif action_id in ENDPOINT_ACTIONS:
+                adapter = self.endpoint_adapter
+            else:
+                raise ActionContractError("action is not available in the identity slice")
+            request = make_action_request(
+                exercise_id=self.definition.exercise_id,
+                run_id=self.run_id,
+                actor=actor,
+                action_id=action_id,
+                target=target,
+                idempotency_key=idempotency_key,
+                parameters=parameters,
+                dry_run=dry_run,
+                timeout_seconds=15 if action_id in IDENTITY_ACTIONS else 20,
+                clock=self.clock,
+            )
+            result = adapter.execute(request)
+            self.mfa.advance(self.controller.elapsed_seconds)
+            return result
 
     def submit_dp1(
         self, submission: IdentityTriageSubmission
@@ -730,20 +747,25 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
     def fail_safe_stop(self, reason: str) -> None:
         """Stop controller delivery and all three action adapters."""
 
-        self.controller.fail_safe_stop(reason)
-        operator = entity("facilitator", "facilitator", role="facilitator")
-        for adapter in (
-            self.automation.adapter,
-            self.identity_adapter,
-            self.endpoint_adapter,
-        ):
-            adapter.activate_fail_safe(self.run_id, operator, reason)
+        with self.state_lock:
+            self.controller.fail_safe_stop(reason)
+            self.mfa.stop()
+            operator = entity("facilitator", "facilitator", role="facilitator")
+            for adapter in (
+                self.automation.adapter,
+                self.identity_adapter,
+                self.endpoint_adapter,
+            ):
+                adapter.activate_fail_safe(self.run_id, operator, reason)
 
     def reset(self, *, new_run_id: str | None = None) -> None:
         """Reset app state for a new run after stop/completion."""
 
-        if self.controller.state not in {RunState.STOPPED, RunState.COMPLETED}:
-            raise ActionContractError("run must be stopped or completed before reset")
-        self.sequencer.reset()
-        self.controller.reset(new_run_id=new_run_id)
-        self._initialize(self.controller.run_id, keep_controller=True)
+        with self.state_lock:
+            if self.controller.state not in {RunState.STOPPED, RunState.COMPLETED}:
+                raise ActionContractError("run must be stopped or completed before reset")
+            if new_run_id == self.run_id:
+                raise ActionContractError("reset requires a new run id")
+            self.sequencer.reset()
+            self.controller.reset(new_run_id=new_run_id)
+            self._initialize(self.controller.run_id, keep_controller=True)
