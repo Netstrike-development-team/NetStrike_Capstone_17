@@ -22,9 +22,11 @@ from .sso import SsoExperience, SsoExperienceConfig, SsoExperienceError
 from .store import PortalStore
 
 
-class PortalService:
+class PortalService:  # pylint: disable=too-many-public-methods
     """Expose participant-safe workflows and full facilitator control separately."""
 
+    # Deployment inputs stay explicit rather than trusting an arbitrary option map.
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         store: PortalStore,
@@ -32,6 +34,7 @@ class PortalService:
         run_id: str | None = None,
         scenario_path: Path | str | None = None,
         profile_path: Path | str | None = None,
+        impact_root: Path | str | None = None,
         identity_audit_key: bytes | None = None,
     ) -> None:
         self.store = store
@@ -43,6 +46,8 @@ class PortalService:
             options["scenario_path"] = scenario_path
         if profile_path is not None:
             options["profile_path"] = profile_path
+        if impact_root is not None:
+            options["impact_root"] = impact_root
         self.run = IdentitySliceRun(**options)
         self.scheduler = ScenarioScheduler(self.run.controller)
         self.identity_audit = IdentityAuditRecorder(
@@ -88,6 +93,7 @@ class PortalService:
                 CLOUD_ACTIONS if self.run.cloud_enabled else frozenset()
             )),
             "cloud_enabled": self.run.cloud_enabled,
+            "impact_enabled": self.run.impact_enabled,
         }
 
     def facilitator_state(self) -> dict[str, Any]:
@@ -123,6 +129,7 @@ class PortalService:
                 "dp3_preview": self.evaluation_dict(self.run.cloud.evaluate()),
                 "state": self.run.cloud.view(),
             },
+            "impact": self.run.impact.staff_state() if self.run.impact else {"enabled": False},
         }
 
     def capture_identity_interaction(
@@ -172,6 +179,40 @@ class PortalService:
         """Resolve cloud grading and its branch under the shared mutation lock."""
         with self.run.state_lock:
             return self.run.cloud.resolve()
+
+    def require_impact(self):
+        if not self.run.impact:
+            raise ValueError("selected scenario has no impact/recovery stage")
+        return self.run.impact
+
+    def impact_view(self):
+        return self.require_impact().view()
+
+    def recover_fixture(self, principal, **payload):
+        return self.require_impact().recover(
+            actor=entity("participant", principal.actor_id, role=principal.role), **payload,
+        )
+
+    def resolve_impact(self):
+        return self.require_impact().resolve()
+
+    def rollback_impact(self, principal):
+        return self.require_impact().rollback(
+            entity("facilitator", principal.actor_id, role=principal.role),
+        )
+
+    def submit_recovery_brief(self, principal, payload):
+        with self.run.state_lock:
+            self.require_impact().submit_brief(payload)
+            submission_id = self.store.save_submission(
+                exercise_id=self.run.definition.exercise_id, run_id=self.run.run_id,
+                actor_id=principal.actor_id, submission_type="recovery_brief",
+                payload=payload, result={"status": "submitted"},
+            )
+            return {
+                "submission_id": submission_id, "status": "submitted",
+                "run_id": self.run.run_id,
+            }
 
     def identity_timeline(self) -> list[dict[str, Any]]:
         """Return the current run's queryable synthetic identity timeline."""
@@ -272,6 +313,13 @@ class PortalService:
             if (not state["reset"]["cloud_baseline_verified"]
                     or self.run.cloud.audit or self.run.cloud.assessment):
                 raise RuntimeError("cloud reset did not reach a clean baseline")
+        if self.run.impact:
+            state["reset"]["impact_baseline_verified"] = (
+                self.run.impact.fixture.inspect()["baseline_verified"]
+                and not self.run.impact.audit and self.run.impact.brief is None
+            )
+            if not state["reset"]["impact_baseline_verified"]:
+                raise RuntimeError("impact reset did not reach a clean baseline")
         if not all(state["reset"][key] for key in (
             "sso_baseline_verified", "profile_baseline_verified", "scheduled_mfa_baseline_verified",
         )):

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -105,6 +106,39 @@ def test_provision_creates_hash_verified_run_specific_fixture(tmp_path):
     assert fixture.health_mismatches() == ()
     assert {path.name for path in fixture.live_dir.iterdir()} == set(FIXTURE_CONTENTS)
     assert {path.name for path in fixture.backup_dir.iterdir()} == set(FIXTURE_CONTENTS)
+
+
+def test_read_only_inspection_proves_original_bytes_without_exposing_paths(tmp_path):
+    fixture, adapter, _events, _current = build_system(tmp_path)
+    baseline = fixture.inspect()
+    assert baseline["baseline_verified"] and baseline["originals_unchanged"]
+    assert baseline["available_originals"] == 5
+    adapter.execute(impact_request("inspect-impact", "realized"))
+    changed = fixture.inspect()
+    assert changed["available_originals"] == 0 and changed["marker_count"] == 5
+    assert changed["originals_unchanged"] and changed["backup_intact"]
+    assert changed["encryption_performed"] is False
+    assert str(tmp_path) not in str(changed)
+
+
+def test_hardlink_to_outside_original_is_denied_without_outside_mutation(tmp_path):
+    fixture, adapter, _events, _current = build_system(tmp_path)
+    name = "billing-export.csv"
+    outside = tmp_path / "outside"
+    outside.write_bytes(FIXTURE_CONTENTS[name])
+    original = fixture.live_dir / name
+    original.unlink()
+    os.link(outside, original)
+    result = adapter.execute(impact_request("deny-hardlink", "realized"))
+    assert result["error_code"] == "unsafe_fixture"
+    assert outside.read_bytes() == FIXTURE_CONTENTS[name]
+
+
+def test_oversized_allowlisted_entry_fails_closed(tmp_path):
+    fixture, adapter, _events, _current = build_system(tmp_path)
+    (fixture.live_dir / "billing-export.csv").write_bytes(b"x" * (64 * 1024 + 1))
+    result = adapter.execute(impact_request("deny-oversized"))
+    assert result["error_code"] == "unsafe_fixture"
 
 
 @pytest.mark.parametrize("run_id", ["../escape", "nested/run", "", " space"])

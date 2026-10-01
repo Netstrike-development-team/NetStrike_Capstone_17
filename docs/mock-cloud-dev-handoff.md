@@ -2,6 +2,10 @@
 
 ## What works and how to select it
 
+The later opt-in full-play path adds impact/recovery and play end.
+See [impact/recovery handoff](impact-recovery-dev-handoff.md). The boundaries
+below describe this document's identity + cloud slice, which remains selectable.
+
 The existing Python mock is now connected to an identity + cloud scenario,
 authenticated investigation/response tools, canonical evidence and DP3.
 It is **not AWS**: no cloud SDK, Internet access, paid account, reusable key,

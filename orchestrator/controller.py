@@ -404,6 +404,8 @@ class ScenarioController:  # pylint: disable=too-many-instance-attributes
             key=lambda branch: branch.trigger.order,
         )
         for branch in branches:
+            if self.state == RunState.STOPPED:
+                break
             if branch.trigger.checkpoint_outcome == result:
                 self._make_due(branch)
             else:

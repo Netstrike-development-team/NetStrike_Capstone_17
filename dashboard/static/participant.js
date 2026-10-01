@@ -4,6 +4,7 @@ import {api, clearNotice, connect, formatElapsed, idempotency, notify, setStatus
 
 const notice = document.querySelector("#notice");
 const tokenInput = document.querySelector("#token-input");
+let lastRunId = null;
 
 function renderInjects(injects) {
   const container = document.querySelector("#injects");
@@ -33,6 +34,15 @@ async function refresh() {
   if (!token()) return;
   try {
     const state = await api("/api/participant/state");
+    if (lastRunId && lastRunId !== state.run_id) {
+      document.querySelector("#recovery-actions").reset();
+      document.querySelector("#recovery-brief").reset();
+      document.querySelector("#cloud-form").reset();
+      for (const id of ["#recovery-state", "#recovery-audit", "#cloud-state", "#cloud-audit"]) {
+        document.querySelector(id).replaceChildren();
+      }
+    }
+    lastRunId = state.run_id;
     setStatus(document.querySelector("#run-state"), state.state);
     document.querySelector("#elapsed").textContent = formatElapsed(state.elapsed_seconds);
     document.querySelector("#inject-count").textContent = state.injects.length;
@@ -40,6 +50,8 @@ async function refresh() {
     renderInjects(state.injects);
     document.querySelector("#cloud-panel").hidden = !state.cloud_enabled;
     for (const card of document.querySelectorAll(".cloud-action")) card.hidden = !state.cloud_enabled;
+    document.querySelector("#recovery-panel").hidden = !state.impact_enabled;
+    for (const card of document.querySelectorAll(".impact-control")) card.hidden = !state.impact_enabled;
   } catch (error) {
     notify(notice, error.message, "error");
   }
@@ -147,6 +159,67 @@ document.querySelector("#actions").addEventListener("click", async (event) => {
   } finally {
     button.disabled = false;
   }
+});
+
+document.querySelector("#load-recovery").addEventListener("click", async () => {
+  try {
+    const state = await api("/api/participant/recovery");
+    document.querySelector("#recovery-summary").textContent = `${state.fixture.available_originals}/5 originals available · ${state.fixture.marker_count} harmless markers · Originals unchanged: ${state.fixture.originals_unchanged} · Run ${state.run_id}`;
+    document.querySelector("#recovery-state").textContent = JSON.stringify({fixture: state.fixture, endpoint: state.endpoint}, null, 2);
+    const container = document.querySelector("#recovery-audit");
+    container.replaceChildren();
+    for (const event of state.audit.slice().reverse()) {
+      const card = document.createElement("article");
+      card.className = "inject";
+      const title = document.createElement("strong");
+      title.textContent = event.event_type;
+      const reference = document.createElement("input");
+      reference.readOnly = true;
+      reference.value = event.event_id;
+      reference.setAttribute("aria-label", "Recovery audit event ID");
+      card.append(title, reference);
+      container.append(card);
+    }
+  } catch (error) { notify(notice, error.message, "error"); }
+});
+
+document.querySelector("#recovery-actions").addEventListener("click", async (event) => {
+  const button = event.target.closest("button[data-recovery]");
+  if (!button) return;
+  const form = event.currentTarget;
+  if (!form.reportValidity()) return;
+  button.disabled = true;
+  try {
+    const result = await api("/api/participant/recovery/action", {
+      method: "POST", body: JSON.stringify({
+        action_id: button.dataset.recovery,
+        fixture_id: new FormData(form).get("fixture_id").trim(),
+        key: idempotency(button.dataset.recovery),
+        dry_run: document.querySelector("#recovery-preview").checked,
+      }),
+    });
+    notify(notice, result.status === "dry_run" ? "Preview passed. No files changed and no health validation was recorded." : "Action recorded. Refresh evidence to inspect the result.");
+  } catch (error) { notify(notice, error.message, "error"); }
+  finally { button.disabled = false; }
+});
+
+document.querySelector("#recovery-brief").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = new FormData(event.currentTarget);
+  const lines = (key) => form.get(key).split(/\r?\n/).map((value) => value.trim()).filter(Boolean);
+  try {
+    await api("/api/participant/recovery/brief", {
+      method: "POST", body: JSON.stringify({
+        confirmed_scope: form.get("confirmed_scope").trim(),
+        confirmed_cloud_records: Number(form.get("confirmed_cloud_records")),
+        business_impact: form.get("business_impact").trim(),
+        actions_taken: form.get("actions_taken").trim(),
+        remaining_risk: form.get("remaining_risk").trim(),
+        recommendations: lines("recommendations"), evidence_ids: lines("evidence_ids"),
+      }),
+    });
+    notify(notice, "Incident brief recorded for evaluator review.");
+  } catch (error) { notify(notice, error.message, "error"); }
 });
 
 document.querySelector("#dp1-form").addEventListener("submit", async (event) => {
