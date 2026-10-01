@@ -282,7 +282,9 @@ class SsoExperience:  # pylint: disable=too-many-instance-attributes
         normalized_username = username.strip().casefold()
 
         with self._lock:
-            if not hmac.compare_digest(normalized_username, self.config.username):
+            if not hmac.compare_digest(
+                normalized_username.encode("utf-8"), self.config.username.encode("utf-8")
+            ):
                 self._audit(
                     action="identity.sign_in.rejected",
                     result="denied",
@@ -353,11 +355,11 @@ class SsoExperience:  # pylint: disable=too-many-instance-attributes
 
         if not isinstance(challenge_id, str) or not challenge_id:
             raise SsoExperienceError("challenge id is required")
-        if decision not in {"approve", "deny"}:
+        if not isinstance(decision, str) or decision not in {"approve", "deny"}:
             raise SsoExperienceError("decision must be approve or deny")
         with self._lock:
             if not self._state.challenge_id or not hmac.compare_digest(
-                challenge_id, self._state.challenge_id
+                challenge_id.encode("utf-8"), self._state.challenge_id.encode("utf-8")
             ):
                 raise SsoExperienceError("challenge is unknown or no longer active")
             expired = (
@@ -365,6 +367,13 @@ class SsoExperience:  # pylint: disable=too-many-instance-attributes
                 or self._clock() >= self._state.challenge_expires_at
             )
             identity_state = self._identity_state()
+            if not identity_state.identities[self.config.identity_id]["enabled"]:
+                self._state.challenge_id = None
+                self._state.challenge_expires_at = None
+                self._state.view = "locked"
+                self._state.message = self.config.messages["locked"]
+                self._audit(action="identity.mfa.challenge.cancelled", result="blocked")
+                raise SsoExperienceError("account disabled; challenge cancelled")
             mfa_state = identity_state.mfa[self.config.identity_id]
             mfa_state["push_count"] += 1
             self._state.challenge_id = None

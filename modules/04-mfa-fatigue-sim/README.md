@@ -34,6 +34,11 @@ export NETSTRIKE_RUN_ID='run-001'
 
 The simulator reads `NETSTRIKE_ACTION_API_TOKEN` and submits
 `identity.mfa.challenge.record` through this authenticated boundary.
+Recording pushes now leaves a decision pending regardless of the legacy
+approval-threshold parameter; repeated prompts never approve automatically.
+The maintained exercise uses `orchestrator.mfa.ScheduledMfa` and the dashboard's
+authenticated challenge-bound decision endpoints. The standalone Flask action
+service is a legacy test harness, not the scheduled exercise entry point.
 
 The former inline vendor-branded login and victim pages have been retired.
 `GET /` and `GET /victim` now return `410 Gone`; the maintained participant

@@ -26,6 +26,25 @@ The CSV is for portability and facilitator review. JSONL remains the canonical s
 
 `ScenarioScheduler` advances the deterministic controller from a monotonic real-time clock. Paused time is excluded, and an explicit facilitator time jump safely re-anchors the clock. The portal drives it once per second while the application is running.
 
+## Scheduled MFA
+
+`ScheduledMfa` registers `identity.mfa.challenge.deliver` for the reviewed
+`MFA-01`–`MFA-03` items. Due items are processed at their own elapsed instant,
+not all at the final time-jump destination. Time observers expire pending
+requests before later deliveries, preserving the same logical evidence for
+one-second ticks and a single large jump. Configuration lives in
+`participant_experience.mfa`; all identity, session, and factor references must
+belong to the configured synthetic identity. The same seed and decision inputs
+produce the same logical schedule/outcomes. Challenge IDs are namespaced by
+run ID to reject stale decisions after reset; audit event UUIDs and wall-clock
+timestamps are deliberately run-specific.
+
+The runtime's old challenge/decision record actions are no longer directly
+routable: only the stateful challenge decision path may resolve scheduled MFA.
+DP2 continues to score authoritative containment, not arbitrary points for a
+facilitator role-play choice. MFA history retains outcome and evidence IDs for
+evaluation. This application-state reset does not replace VM snapshot restore.
+
 ## Minimal use
 
 ```python

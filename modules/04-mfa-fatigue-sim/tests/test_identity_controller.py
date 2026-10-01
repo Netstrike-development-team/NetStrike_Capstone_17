@@ -82,12 +82,21 @@ def test_server_owned_principal_drives_authorization(controller_system):
     assert result["successful"] is True
     assert controller.state.mfa["sarah"] == {
         "push_count": 1,
-        "decision": "denied",
+        "decision": "pending",
     }
     assert events[0]["actor"]["id"] == "scenario-engine"
     assert events[0]["actor"]["role"] == "scenario_engine"
     for event in events:
         EventValidator().validate(event)
+
+
+def test_repeated_pushes_never_automatically_approve(controller_system):
+    controller, _events = controller_system
+    principal = controller.authenticate(f"Bearer {ENGINE_TOKEN}")
+    for attempt in range(5):
+        result = controller.submit(principal, payload(idempotency_key=f"push-{attempt}"))
+        assert result["successful"] is True
+    assert controller.state.mfa["sarah"] == {"push_count": 5, "decision": "pending"}
 
 
 def test_client_cannot_forge_actor_or_run(controller_system):

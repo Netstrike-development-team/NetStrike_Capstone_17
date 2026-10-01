@@ -89,6 +89,11 @@ class ResetInput(StrictInput):
     new_run_id: str | None = Field(default=None, min_length=1, max_length=128)
 
 
+class MfaDecisionInput(StrictInput):
+    challenge_id: str = Field(min_length=1, max_length=128)
+    decision: str = Field(pattern="^(approve|deny)$")
+
+
 # Route closures intentionally share injected service/authentication state.
 # pylint: disable=too-many-locals,too-many-statements
 def create_app(
@@ -162,6 +167,8 @@ def create_app(
     participant = authorize(PARTICIPANT_ROLES)
     facilitator = authorize(FACILITATOR_ROLES)
     identity_capture_service = authorize(IDENTITY_CAPTURE_ROLES)
+    simulated_user = authorize(frozenset({"simulated_user"}))
+    mfa_facilitator = authorize(frozenset({"facilitator"}))
 
     def execute(operation):
         try:
@@ -302,6 +309,29 @@ def create_app(
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT, detail=str(exc)
             ) from exc
+
+    @app.post("/api/sso/scheduled-mfa")
+    async def scheduled_mfa_decision(
+        request: Request,
+        principal: PortalPrincipal = Depends(simulated_user),
+    ) -> dict[str, Any]:
+        authorize_sso_request(request)
+        payload = await bounded_json(request, maximum=MAX_SSO_REQUEST_BYTES,
+                                     description="scheduled MFA decision")
+        if set(payload) != {"challenge_id", "decision"}:
+            raise HTTPException(status_code=422, detail="MFA decision fields are invalid")
+        return execute(lambda: service.decide_scheduled_mfa(
+            principal, payload["challenge_id"], payload["decision"],
+        ))
+
+    @app.post("/api/facilitator/mfa/decision")
+    def facilitator_mfa_decision(
+        decision: MfaDecisionInput,
+        principal: PortalPrincipal = Depends(mfa_facilitator),
+    ) -> dict[str, Any]:
+        return execute(lambda: service.decide_scheduled_mfa(
+            principal, decision.challenge_id, decision.decision,
+        ))
 
     @app.get("/api/participant/state")
     def participant_state(

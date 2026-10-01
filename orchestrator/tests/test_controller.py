@@ -63,6 +63,9 @@ def test_preparation_and_timed_delivery_are_deterministic() -> None:
     assert [call[0] for call in calls] == [
         "scenario.baseline.load",
         "identity.history.stage",
+        "identity.mfa.challenge.deliver",
+        "identity.mfa.challenge.deliver",
+        "identity.mfa.challenge.deliver",
         "identity.session.replay",
     ]
     assert [event["sequence"] for event in events] == list(

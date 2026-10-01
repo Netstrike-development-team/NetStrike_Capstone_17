@@ -19,6 +19,12 @@
 
   <main id="sso-main" class="sso-main">
     <div id="live-status" class="sr-only" role="status" aria-live="polite"></div>
+    <aside class="sso-card" aria-label="Exercise control connection">
+      <label for="mfa-access-token">Simulated-user access token</label>
+      <input id="mfa-access-token" type="password" autocomplete="off" maxlength="512" aria-describedby="mfa-access-help">
+      <small id="mfa-access-help">Required only for scheduled MFA decisions. Use the token provided by exercise control, never a real account token.</small>
+      <p id="scheduled-result" role="status" aria-live="polite"></p>
+    </aside>
 
     <section id="view-sign_in" class="sso-card" aria-labelledby="sign-in-title">
       <p class="eyebrow">Employee workspace</p>
@@ -60,6 +66,7 @@
       <p id="mfa-message" class="lede"></p>
       <div class="identity-summary"><span>Exercise identity</span><strong id="mfa-identity">Synthetic user</strong></div>
       <div class="countdown"><span>Request expires in</span><strong><span id="mfa-seconds">—</span>s</strong></div>
+      <p id="mfa-clock-note" class="support-note"></p>
       <div class="button-row">
         <button id="deny-mfa" class="secondary" type="button">Deny</button>
         <button id="approve-mfa" type="button">Approve</button>

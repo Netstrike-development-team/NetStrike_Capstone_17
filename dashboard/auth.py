@@ -76,7 +76,7 @@ class TokenAuthenticator:
         supplied = authorization.removeprefix("Bearer ")
         principal = None
         for token, candidate in self._principals.items():
-            if hmac.compare_digest(supplied, token):
+            if hmac.compare_digest(supplied.encode("utf-8"), token.encode("utf-8")):
                 principal = candidate
         if principal is None:
             raise PortalAuthenticationError("invalid bearer credential")
