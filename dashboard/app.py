@@ -12,9 +12,10 @@ from typing import Annotated, Any, Iterable
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response, status
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 from orchestrator.controller import ControllerError
+from orchestrator.aar import RATINGS, render_markdown
 from orchestrator.evidence import render_csv, render_jsonl
 from shared.actions import ActionContractError, ActionExecutionError, ActionValidationError
 
@@ -125,6 +126,39 @@ class MfaDecisionInput(StrictInput):
     decision: str = Field(pattern="^(approve|deny)$")
 
 
+class ImprovementInput(StrictInput):
+    description: BriefText
+    owner: Annotated[str, Field(min_length=1, max_length=128, pattern=r"\S")]
+    priority: str = Field(pattern="^(high|medium|low)$")
+    target_date: Annotated[str, Field(min_length=1, max_length=128, pattern=r"\S")]
+
+
+class ObjectiveJudgmentInput(StrictInput):
+    run_id: str = Field(min_length=1, max_length=128)
+    objective_id: str = Field(pattern="^LO[1-5]$")
+    rating: str = Field(pattern="^(" + "|".join(RATINGS) + ")$")
+    rationale: Annotated[str, Field(min_length=1, max_length=2048, pattern=r"\S")]
+    evidence_ids: list[BriefEvidence] = Field(default_factory=list, max_length=20)
+    expected_revision: int = Field(ge=0, strict=True)
+    override_reason: str = Field(default="", max_length=2048)
+    platform_reason: str = Field(default="", max_length=2048)
+    improvement_actions: list[ImprovementInput] = Field(
+        default_factory=list, max_length=5
+    )
+
+
+class TimelineEntryInput(StrictInput):
+    occurred_at: AwareDatetime
+    statement_type: str = Field(pattern="^(fact|inference)$")
+    event_id: BriefEvidence
+    summary: Annotated[str, Field(min_length=1, max_length=512, pattern=r"\S")]
+
+
+class TimelineInput(StrictInput):
+    run_id: str = Field(min_length=1, max_length=128)
+    entries: list[TimelineEntryInput] = Field(min_length=6, max_length=12)
+
+
 # Route closures intentionally share injected service/authentication state.
 # pylint: disable=too-many-locals,too-many-statements
 def create_app(
@@ -200,6 +234,7 @@ def create_app(
     identity_capture_service = authorize(IDENTITY_CAPTURE_ROLES)
     simulated_user = authorize(frozenset({"simulated_user"}))
     mfa_facilitator = authorize(frozenset({"facilitator"}))
+    evaluator = authorize(frozenset({"evaluator", "facilitator"}))
 
     def execute(operation):
         try:
@@ -281,6 +316,10 @@ def create_app(
     @app.get("/evidence", include_in_schema=False)
     def evidence_page() -> FileResponse:
         return FileResponse(static_root / "evidence.html")
+
+    @app.get("/evaluator", include_in_schema=False)
+    def evaluator_page() -> FileResponse:
+        return FileResponse(static_root / "evaluator.html")
 
     @app.get("/sso", include_in_schema=False)
     def sso_page(request: Request) -> FileResponse:
@@ -427,6 +466,18 @@ def create_app(
             )
         )
 
+    @app.post("/api/participant/timeline")
+    def submit_timeline(
+        request: TimelineInput,
+        principal: PortalPrincipal = Depends(participant),
+    ):
+        return execute(
+            lambda: service.submit_timeline(
+                principal,
+                **request.model_dump(mode="json"),
+            )
+        )
+
     @app.post("/api/services/identity/interactions")
     async def capture_identity_interaction(
         request: Request,
@@ -463,6 +514,41 @@ def create_app(
         _principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
         return service.facilitator_state()
+
+    @app.get("/api/evaluator/report")
+    def aar_report(_principal: PortalPrincipal = Depends(evaluator)):
+        return execute(service.aar_report)
+
+    @app.post("/api/evaluator/judgments")
+    def objective_judgment(
+        request: ObjectiveJudgmentInput,
+        principal: PortalPrincipal = Depends(evaluator),
+    ):
+        return execute(
+            lambda: service.judge_objective(
+                principal,
+                request.model_dump(exclude={"run_id"}),
+                run_id=request.run_id,
+            )
+        )
+
+    @app.get("/api/evaluator/exports/bundle.json")
+    def aar_bundle(_principal: PortalPrincipal = Depends(evaluator)):
+        return execute(service.aar_bundle)
+
+    @app.get("/api/evaluator/exports/aar.md")
+    def aar_markdown(_principal: PortalPrincipal = Depends(evaluator)):
+        return Response(
+            execute(lambda: render_markdown(service.aar_report())),
+            media_type="text/markdown",
+            headers={
+                "Content-Disposition": 'attachment; filename="after-action-review.md"'
+            },
+        )
+
+    @app.get("/api/participant/feedback")
+    def learner_feedback(_principal: PortalPrincipal = Depends(participant)):
+        return execute(service.participant_feedback)
 
     @app.get("/api/participant/recovery")
     def impact_view(_principal: PortalPrincipal = Depends(participant)):

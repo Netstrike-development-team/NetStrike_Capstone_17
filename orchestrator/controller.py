@@ -361,6 +361,7 @@ class ScenarioController:  # pylint: disable=too-many-instance-attributes
         passed: bool,
         evidence_ids: tuple[str, ...] = (),
         reason: str,
+        checks: Mapping[str, bool] | None = None,
     ) -> None:
         """Record an evidence-backed result and run only its matching branch."""
 
@@ -375,6 +376,12 @@ class ScenarioController:  # pylint: disable=too-many-instance-attributes
             )
         if not reason.strip():
             raise ControllerError("checkpoint reason is required")
+        if checks is not None and (
+            not isinstance(checks, Mapping)
+            or any(not isinstance(name, str) or not isinstance(value, bool)
+                   for name, value in checks.items())
+        ):
+            raise ControllerError("checkpoint checks must map names to boolean observations")
 
         result = "pass" if passed else "miss"
         runtime.status = ItemStatus.DELIVERED
@@ -391,6 +398,7 @@ class ScenarioController:  # pylint: disable=too-many-instance-attributes
                 "result": result,
                 "reason": reason.strip(),
                 "evidence_ids": list(dict.fromkeys(evidence_ids)),
+                **({"verifier_checks": dict(checks)} if checks is not None else {}),
             },
         )
 

@@ -6,6 +6,7 @@ import secrets
 from pathlib import Path
 from typing import Any, Mapping
 
+from orchestrator.aar import build_bundle, build_report, validate_judgment, participant_feedback
 from orchestrator.checkpoints import (
     CheckpointEvaluation,
     EvidenceReference,
@@ -14,7 +15,7 @@ from orchestrator.checkpoints import (
 from orchestrator.identity_slice import IdentitySliceRun, PARTICIPANT_ACTIONS
 from orchestrator.cloud import CLOUD_ACTIONS
 from orchestrator.scheduler import ScenarioScheduler
-from shared.events import entity
+from shared.events import EventBuilder, EventContext, entity
 
 from .auth import PortalPrincipal
 from .evidence import project_signal
@@ -176,6 +177,151 @@ class PortalService:  # pylint: disable=too-many-public-methods
         """Read-only reviewed directory, without target bindings or attack rankings."""
 
         return self.run.profiles.directory()
+
+    def aar_bundle(self) -> dict[str, Any]:
+        """Snapshot everything needed for offline staff review, under one lock."""
+        with self.run.state_lock:
+            return build_bundle(
+                exercise_id=self.run.definition.exercise_id,
+                run_id=self.run.run_id,
+                scenario_id=self.run.definition.scenario_id,
+                run_state=self.run.controller.state.value,
+                checkpoint_ids=[
+                    item.item_id
+                    for item in self.run.definition.items
+                    if item.kind == "checkpoint"
+                ],
+                events=self.store.events(
+                    self.run.definition.exercise_id, self.run.run_id
+                ),
+                submissions=self.store.submissions(self.run.run_id),
+            )
+
+    def aar_report(self) -> dict[str, Any]:
+        """Machine observations do not replace attributable human judgments."""
+        return build_report(self.aar_bundle())
+
+    def judge_objective(
+        self, principal: PortalPrincipal, payload: dict, *, run_id: str
+    ) -> dict[str, Any]:
+        """Append a review after play; never overwrite events or alter branches."""
+        with self.run.state_lock:
+            if run_id != self.run.run_id:
+                raise ValueError("run changed; refresh before reviewing")
+            if self.run.controller.state.value not in {"stopped", "completed"}:
+                raise ValueError("objective review requires stopped or completed play")
+            bundle = self.aar_bundle()
+            report = build_report(bundle)
+            item = next(
+                (
+                    item
+                    for item in report["objectives"]
+                    if item["objective_id"] == payload["objective_id"]
+                ),
+                None,
+            )
+            if item is None:
+                raise ValueError("unknown learning objective")
+            references = {event["event_id"] for event in bundle["events"]}
+            references.update(
+                f"submission:{item['submission_id']}" for item in bundle["submissions"]
+            )
+            validate_judgment(
+                payload,
+                references=references,
+                previous=item["judgment"],
+                observation=item["observation"],
+            )
+            builder = EventBuilder(
+                EventContext(
+                    exercise_id=self.run.definition.exercise_id,
+                    run_id=self.run.run_id,
+                    source_kind="facilitator",
+                    source_component="objective-evaluator",
+                    producer_version="1.0.0",
+                ),
+                sequence_factory=self.run.sequencer.next,
+            )
+            event = builder.build(
+                event_type="evaluation.objective.judged",
+                phase="post_exercise",
+                actor=entity("facilitator", principal.actor_id, role=principal.role),
+                action="evaluation.objective.judge",
+                target=entity("objective", payload["objective_id"]),
+                outcome_status="success",
+                message="Attributable objective review recorded",
+                visibility="evaluator",
+                objective_ids=(payload["objective_id"],),
+                data={
+                    **payload,
+                    "revision": payload["expected_revision"] + 1,
+                    "supersedes_event_id": (
+                        item["judgment"]["event_id"] if item["judgment"] else None
+                    ),
+                },
+                safety_controls=("staff-only", "append-only", "no-branch-mutation"),
+            )
+            self.store.append_event(event)
+            return {
+                "event_id": event["event_id"],
+                "revision": event["data"]["revision"],
+                "run_id": self.run.run_id,
+                "status": "recorded",
+            }
+
+    def participant_feedback(self) -> dict[str, Any]:
+        """Participant feedback contains no evaluator free text or answer key."""
+        return participant_feedback(self.aar_report())
+
+    def submit_timeline(
+        self, principal: PortalPrincipal, *, run_id: str, entries: list
+    ) -> dict:
+        """Retain learner fact/inference statements without automatically grading prose."""
+        with self.run.state_lock:
+            if run_id != self.run.run_id:
+                raise ValueError("run changed; refresh before submitting")
+            controller = self.run.controller
+            dp2 = next(
+                item for item in self.run.definition.items if item.item_id == "DP2"
+            )
+            if (
+                controller.state.value not in {"running", "paused"}
+                or "DP2" in controller.checkpoint_results
+                or controller.elapsed_seconds > dp2.trigger.seconds
+            ):
+                raise ValueError(
+                    "timeline must be submitted during play before the containment checkpoint"
+                )
+            events = self.store.events(self.run.definition.exercise_id, self.run.run_id)
+            visible_ids = {
+                event["event_id"]
+                for event in events
+                if project_signal(event, principal.actor_id) is not None
+            }
+            references = [entry["event_id"] for entry in entries]
+            if (
+                len(references) != len(set(references))
+                or not set(references) <= visible_ids
+            ):
+                raise ValueError(
+                    "timeline requires distinct current-run participant-visible event IDs"
+                )
+            submission_id = self.store.save_submission(
+                exercise_id=self.run.definition.exercise_id,
+                run_id=self.run.run_id,
+                actor_id=principal.actor_id,
+                submission_type="intrusion_timeline",
+                payload={
+                    "entries": entries,
+                    "elapsed_seconds": controller.elapsed_seconds,
+                },
+                result={"status": "submitted", "quality_requires_evaluator": True},
+            )
+            return {
+                "submission_id": submission_id,
+                "run_id": self.run.run_id,
+                "status": "submitted",
+            }
 
     def cloud_view(self) -> dict[str, Any]:
         """Expose synthetic objects, current policy and actual audit events only."""

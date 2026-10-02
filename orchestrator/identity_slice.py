@@ -812,6 +812,7 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
             passed=result.passed,
             evidence_ids=result.evidence_ids,
             reason=result.reason,
+            checks=result.checks,
         )
         return result
 
@@ -831,6 +832,7 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
             passed=result.passed,
             evidence_ids=result.evidence_ids,
             reason=result.reason,
+            checks=result.checks,
         )
         return result
 

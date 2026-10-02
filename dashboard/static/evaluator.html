@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Operation Silent Spider · Evaluator review</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script type="module" src="/static/evaluator.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><div class="brand-mark" aria-hidden="true">NS</div><div><strong>Operation Silent Spider</strong><small>Evaluator review · Staff only</small></div></div>
+      <div class="connection"><label>Evaluator or facilitator token<input id="token-input" type="password" autocomplete="off" placeholder="Paste token"></label><button id="connect">Connect</button></div>
+    </header>
+    <div id="notice" class="notice" role="status" aria-live="polite"></div>
+    <section class="panel">
+      <div class="panel-header"><div><h1>Review the exercise</h1><p id="review-summary">Connect to load the current run. Ratings can be recorded after play stops or completes.</p></div><button id="refresh" class="secondary">Refresh</button></div>
+      <p>System observations are not final ratings. Review evidence quality, hints, timing and platform faults. Never enter credentials or personal information.</p>
+      <div class="controls"><button id="bundle" class="secondary" disabled>Download offline bundle</button><button id="aar" class="secondary" disabled>Download after-action report</button></div>
+      <p class="muted">The report keeps the charter’s suggested weighting but does not invent a numeric grade before calibration.</p>
+    </section>
+    <section class="layout space-top">
+      <article class="panel">
+        <h2>Objective ratings</h2>
+        <div id="objectives" class="timeline"><p class="empty">No run loaded.</p></div>
+      </article>
+      <aside class="stack">
+        <article class="panel">
+          <h2>Record a judgment</h2>
+          <p>Corrections append a new revision. They never change the exercise branch.</p>
+          <form id="judgment" class="form-grid">
+            <label class="form-wide">Learning objective<select name="objective_id" required><option value="">Select objective</option></select></label>
+            <label class="form-wide">Rating<select name="rating" required><option value="">Select rating</option><option value="performed">Performed</option><option value="performed_with_support">Performed with support</option><option value="partially_performed">Partially performed</option><option value="not_performed">Not performed</option><option value="not_observed">Not observed</option></select></label>
+            <label class="form-wide">Rationale<textarea name="rationale" rows="3" required maxlength="2048"></textarea></label>
+            <label class="form-wide">Supporting event IDs or submission IDs (one per line)<textarea name="evidence_ids" rows="3" placeholder="Copy an event ID below, or submission:1"></textarea></label>
+            <label class="form-wide">Override or revision reason<textarea name="override_reason" rows="2" maxlength="2048" placeholder="Required for a correction or disagreement with the system observation"></textarea></label>
+            <label class="form-wide">Platform or exercise-control reason<textarea name="platform_reason" rows="2" maxlength="2048" placeholder="Required for Not observed; do not penalize unavailable telemetry"></textarea></label>
+            <label class="form-wide">Improvement action (optional)<textarea name="description" rows="2" maxlength="1024"></textarea></label>
+            <label>Action owner<input name="owner" maxlength="128"></label>
+            <label>Priority<select name="priority"><option value="medium">Medium</option><option value="high">High</option><option value="low">Low</option></select></label>
+            <label class="form-wide">Target date or milestone<input name="target_date" maxlength="128"></label>
+            <p id="revision" class="muted form-wide">Select an objective to see its current revision.</p>
+            <button id="save" class="form-wide" disabled>Record judgment</button>
+          </form>
+        </article>
+      </aside>
+    </section>
+    <details class="panel space-top"><summary>Evidence and submissions · Staff only</summary><p>Copy references into the review. Event order is ingestion order, not necessarily occurrence order.</p><div id="evidence" class="timeline"></div></details>
+    <p class="footer-note">Local synthetic exercise · Not Cyber Range acceptance or live Splunk verification</p>
+  </main>
+</body>
+</html>

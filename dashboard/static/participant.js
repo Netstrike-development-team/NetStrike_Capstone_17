@@ -35,6 +35,8 @@ async function refresh() {
   try {
     const state = await api("/api/participant/state");
     if (lastRunId && lastRunId !== state.run_id) {
+      document.querySelector("#feedback").replaceChildren();
+      document.querySelector("#intrusion-timeline").reset();
       document.querySelector("#recovery-actions").reset();
       document.querySelector("#recovery-brief").reset();
       document.querySelector("#cloud-form").reset();
@@ -48,6 +50,7 @@ async function refresh() {
     document.querySelector("#inject-count").textContent = state.injects.length;
     document.querySelector("#run-id").textContent = state.run_id;
     renderInjects(state.injects);
+    document.querySelector("#feedback-panel").hidden = !["stopped", "completed"].includes(state.state);
     document.querySelector("#cloud-panel").hidden = !state.cloud_enabled;
     for (const card of document.querySelectorAll(".cloud-action")) card.hidden = !state.cloud_enabled;
     document.querySelector("#recovery-panel").hidden = !state.impact_enabled;
@@ -66,6 +69,84 @@ document.querySelector("#connect").addEventListener("click", () => {
   }
 });
 document.querySelector("#refresh").addEventListener("click", refresh);
+
+function addTimelineEntry() {
+  const container = document.querySelector("#timeline-entries");
+  if (container.children.length >= 12) return;
+  const index = container.children.length + 1;
+  const row = document.createElement("fieldset");
+  row.className = "form-grid";
+  const legend = document.createElement("legend");
+  legend.textContent = `Event ${index}`;
+  row.append(legend);
+  for (const [name, label, placeholder, maximum] of [
+    ["occurred_at", "Occurrence time (ISO 8601, with timezone)", "2026-10-02T14:00:00Z", 64],
+    ["event_id", "Supporting event ID", "Copy the event ID from evidence", 128],
+    ["summary", "What happened", "Your evidence-supported statement", 512],
+  ]) {
+    const wrapper = document.createElement("label");
+    wrapper.className = "form-wide";
+    wrapper.textContent = label;
+    const input = document.createElement("input");
+    input.name = `${name}-${index}`;
+    input.dataset.field = name;
+    input.required = true;
+    input.maxLength = maximum;
+    input.placeholder = placeholder;
+    wrapper.append(input);
+    row.append(wrapper);
+  }
+  const wrapper = document.createElement("label");
+  wrapper.className = "form-wide";
+  wrapper.textContent = "Statement type";
+  const select = document.createElement("select");
+  select.dataset.field = "statement_type";
+  select.add(new Option("Observed fact", "fact"));
+  select.add(new Option("Analyst inference", "inference"));
+  wrapper.append(select);
+  row.append(wrapper);
+  container.append(row);
+  document.querySelector("#add-timeline-entry").disabled = container.children.length >= 12;
+}
+for (let index = 0; index < 6; index += 1) addTimelineEntry();
+document.querySelector("#add-timeline-entry").addEventListener("click", addTimelineEntry);
+document.querySelector("#intrusion-timeline").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!lastRunId) { notify(notice, "Connect to the current exercise first.", "error"); return; }
+  const credential = token();
+  const runId = lastRunId;
+  const entries = Array.from(document.querySelector("#timeline-entries").children, (row) =>
+    Object.fromEntries(Array.from(row.querySelectorAll("[data-field]"), (field) => [field.dataset.field, field.value.trim()])));
+  try {
+    const receipt = await api("/api/participant/timeline", {method: "POST", body: JSON.stringify({run_id: runId, entries})});
+    if (token() !== credential || lastRunId !== runId) return;
+    notify(notice, `Timeline recorded as submission:${receipt.submission_id} for evaluator review.`);
+  } catch (error) {
+    if (token() === credential && lastRunId === runId) notify(notice, error.message, "error");
+  }
+});
+document.querySelector("#load-feedback").addEventListener("click", async () => {
+  const credential = token();
+  const runId = lastRunId;
+  const container = document.querySelector("#feedback");
+  container.replaceChildren();
+  try {
+    const result = await api("/api/participant/feedback");
+    if (token() !== credential || lastRunId !== runId || result.run_id !== runId) return;
+    for (const item of result.objectives) {
+      const card = document.createElement("article");
+      card.className = "inject";
+      const title = document.createElement("strong");
+      title.textContent = `${item.title} · ${item.rating.replaceAll("_", " ")}`;
+      const advice = document.createElement("p");
+      advice.textContent = item.next_step;
+      card.append(title, advice);
+      container.append(card);
+    }
+  } catch (error) {
+    if (token() === credential && lastRunId === runId) notify(notice, error.message, "error");
+  }
+});
 document.querySelector("#load-directory").addEventListener("click", async () => {
   const button = document.querySelector("#load-directory");
   button.disabled = true;

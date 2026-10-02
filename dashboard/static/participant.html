@@ -43,12 +43,26 @@
       <a class="button secondary" href="/evidence" target="_blank" rel="noopener">Open evidence timeline</a>
     </nav>
 
+    <article id="feedback-panel" class="panel space-top" hidden>
+      <div class="panel-header"><div><h2>Exercise feedback</h2><p>Available after staff have reviewed all five objectives. No public leaderboard.</p></div><button id="load-feedback" class="secondary">Load reviewed feedback</button></div>
+      <div id="feedback" class="timeline"></div>
+    </article>
+
     <section class="layout">
       <div class="stack">
         <article class="panel">
           <div class="panel-header"><div><h2>Situation updates</h2><p>New information delivered by exercise control.</p></div><button id="refresh" class="secondary small">Refresh</button></div>
           <div id="injects" class="timeline"><div class="empty">Connect to receive exercise injects.</div></div>
         </article>
+
+        <details class="panel">
+          <summary>Submit your intrusion timeline</summary>
+          <p>Record at least six significant events before the containment checkpoint. Use occurrence times, cite event IDs from the evidence viewer, and distinguish observed facts from inference. Quality is reviewed by staff.</p>
+          <form id="intrusion-timeline">
+            <div id="timeline-entries" class="stack"></div>
+            <div class="controls space-top"><button id="add-timeline-entry" type="button" class="secondary">Add event</button><button type="submit">Submit timeline</button></div>
+          </form>
+        </details>
 
         <article class="panel">
           <div class="panel-header"><div><h2>Approved containment actions</h2><p>Every action is role-checked, allowlisted, reversible, and recorded.</p></div></div>
