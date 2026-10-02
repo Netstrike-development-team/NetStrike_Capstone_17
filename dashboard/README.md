@@ -1,5 +1,11 @@
 # Participant and facilitator portal API
 
+Objective review and portable AAR exports are available at `/evaluator` for
+configured evaluator/facilitator roles. Participants can submit their intrusion
+timeline and load safe feedback after all five objectives are reviewed at end
+of play. See [the review workflow](../docs/after-action-review.md) for roles,
+offline report generation and calibration limits.
+
 This FastAPI service exposes the identity vertical slice without trusting actor, role, run, or exercise identifiers supplied by a browser.
 
 - Participant endpoints show only participant-visible injects, accept allowlisted safe actions, and score the DP1 submission.

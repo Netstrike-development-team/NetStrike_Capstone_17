@@ -323,6 +323,7 @@ class ImpactStage:  # pylint: disable=too-many-instance-attributes
             controller.resolve_checkpoint(
                 "DP4", passed=result.passed, reason=result.reason,
                 evidence_ids=("state:host:FIN-WS01", "state:process:impact-task-01"),
+                checks=result.checks,
             )
             return result
 

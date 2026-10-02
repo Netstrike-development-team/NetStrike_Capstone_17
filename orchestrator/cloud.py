@@ -351,5 +351,6 @@ class CloudStage:  # pylint: disable=too-many-instance-attributes
         result = self.evaluate()
         controller.resolve_checkpoint(
             "DP3", passed=result.passed, evidence_ids=result.evidence_ids, reason=result.reason,
+            checks=result.checks,
         )
         return result

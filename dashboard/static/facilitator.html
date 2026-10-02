@@ -20,6 +20,11 @@
     </section>
     <div id="notice" class="notice" role="status" aria-live="polite"></div>
 
+    <nav class="evidence-link" aria-label="Exercise review">
+      <div><strong>After-action review</strong><span>Review the five learning objectives and export a portable run bundle.</span></div>
+      <a class="button secondary" href="/evaluator" target="_blank" rel="noopener">Open evaluator review</a>
+    </nav>
+
     <section class="panel">
       <div class="panel-header"><div><h2>Run controls</h2><p>Reviewed lifecycle operations only.</p></div><button id="refresh" class="secondary small">Refresh</button></div>
       <div class="controls"><button data-command="prepare">Prepare</button><button data-command="start">Start</button><button data-command="pause" class="warn">Pause</button><button data-command="resume" class="secondary">Resume</button><button id="resolve-dp2" class="secondary">Resolve DP2</button><button id="resolve-dp3" class="secondary" hidden>Resolve DP3</button><button id="resolve-dp4" class="secondary" hidden>Resolve DP4</button><button id="rollback-impact" class="secondary" hidden>Roll back marker impact</button><button id="download-jsonl" class="secondary">Download JSONL</button><button id="download-csv" class="secondary">Download CSV</button></div>
