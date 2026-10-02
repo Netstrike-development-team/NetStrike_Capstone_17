@@ -1,5 +1,9 @@
 # Scenario controller
 
+For automated full-play developer coverage, use the
+[local rehearsal runner](../docs/local-rehearsal.md): 16 checkpoint paths,
+eight partial-control/fault cases, retained evidence and read-only verification.
+
 This package is the application-side control plane for Operation Silent Spider. It loads a reviewed, versioned MSEL, advances it deterministically, records every transition through the shared event contract, and exposes only explicitly registered automation handlers.
 
 The first definition, `scenarios/identity-slice.v1.json`, covers setup through the DP2 contained/adverse branch. It supports:
