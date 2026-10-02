@@ -1,0 +1,9 @@
+[monitor:///var/log/syslog]
+disabled = 0
+index = {{ splunk.linux_index }}
+sourcetype = linux_syslog
+
+[monitor:///var/log/auth.log]
+disabled = 0
+index = {{ splunk.linux_index }}
+sourcetype = linux_auth
