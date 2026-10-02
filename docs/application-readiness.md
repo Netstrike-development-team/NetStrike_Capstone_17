@@ -95,7 +95,7 @@ access to emergency stop, or facilitator admission sign-off. These remain
 Patrick's environment/readiness work and the team's release acceptance under
 #79, #103, #104 and #86. No 20-minute Ansible reset target is introduced.
 
-Aya owns this code-level gate. The strict full-play CI workflow runs the readiness
-tests and rehearses normal paths through this service boundary. The deliberate
+Aya owns this code-level gate. The strict full-play CI workflow runs the complete
+portal suite, including readiness tests, and rehearses normal paths through this service boundary. The deliberate
 missing-impact-source rehearsal uses a fixed low-level fault injection to test
 downstream fail-closed grading; it is not an HTTP bypass exposed to learners.
