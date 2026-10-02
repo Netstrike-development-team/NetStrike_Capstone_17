@@ -144,7 +144,7 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
         self.ffmpeg = None
         self.base = None
         self.run_id = None
-        self.context = None
+        self.playwright = None
         self.video = None
         self.confirmed_count = None
         self.health_id = None
@@ -338,6 +338,7 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
                     else:
                         raise RuntimeError("local recording server readiness timed out")
                     with sync_playwright() as playwright:
+                        self.playwright = playwright
                         browser = playwright.chromium.launch(channel="chrome", headless=True)
                         context = browser.new_context(
                             viewport={"width": 1600, "height": 820},
@@ -345,7 +346,6 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
                             record_video_size={"width": 1600, "height": 820},
                             accept_downloads=True,
                         )
-                        self.context = context
                         self.page = context.new_page()
                         self.page.on(
                             "pageerror", lambda error: self.console_errors.append(str(error))
@@ -614,7 +614,7 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
                 self.page.locator("#download-jsonl").click()
             pending.value.save_as(self.output / "events.jsonl")
             self.validate_ledger()
-            self.mobile_check(self.context)
+            self.mobile_check()
 
         self.scene(16, finish)
 
@@ -662,17 +662,24 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
         )
         self.events_count = len(events)
 
-    def mobile_check(self, context):
-        page = context.new_page()
-        page.set_viewport_size({"width": 390, "height": 844})
-        page.goto(self.base + "/evidence", wait_until="networkidle")
-        page.locator("#token-input").fill(self.roles["soc_analyst"])
-        with page.expect_response(lambda response: "/api/participant/evidence" in response.url):
-            page.locator("#connect").click()
-        page.locator(".signal-card").first.wait_for(state="visible")
-        assert page.locator("html").evaluate("(node) => node.scrollWidth <= window.innerWidth")
-        page.screenshot(path=str(self.output / "frames" / "mobile-evidence.png"))
-        page.close()
+    def mobile_check(self):
+        # A separate browser process prevents a secondary mobile viewport from
+        # changing the primary headless Chrome compositor's recorded surface.
+        browser = self.playwright.chromium.launch(channel="chrome", headless=True)
+        try:
+            context = browser.new_context(viewport={"width": 390, "height": 844})
+            page = context.new_page()
+            page.goto(self.base + "/evidence", wait_until="networkidle")
+            page.locator("#token-input").fill(self.roles["soc_analyst"])
+            with page.expect_response(
+                lambda response: "/api/participant/evidence" in response.url
+            ):
+                page.locator("#connect").click()
+            page.locator(".signal-card").first.wait_for(state="visible")
+            assert page.locator("html").evaluate("(node) => node.scrollWidth <= window.innerWidth")
+            page.screenshot(path=str(self.output / "frames" / "mobile-evidence.png"))
+        finally:
+            browser.close()
 
     # wave.open's write-mode return type is mis-inferred by the lint dependency.
     # pylint: disable=no-member
