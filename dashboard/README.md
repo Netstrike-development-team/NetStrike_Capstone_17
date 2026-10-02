@@ -131,3 +131,13 @@ recovery defaults to preview; actual restore and validation require explicit
 execution with the cloud/recovery role. Staff get DP4 and one-use impact rollback.
 See [impact/recovery handoff](../docs/impact-recovery-dev-handoff.md) for file
 safety, reset, final brief and acceptance boundaries.
+
+## Local evidence timeline and UI walkthrough
+
+`/participant` links to `/evidence`, a participant-authenticated timeline of
+current-run synthetic identity/endpoint/cloud/recovery signals and the caller's
+own response receipts. Search/filter controls and copyable event IDs support
+investigation; facilitator-only criteria and other actors' action receipts are
+not exposed. This local viewer is explicitly **not Splunk**. Existing situation
+updates remain messages rather than pretending each attack event is an inject.
+See [the boundary and reproducible video workflow](../docs/ui-walkthrough.md).
