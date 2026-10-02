@@ -240,7 +240,7 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
                         "offline narration requires macOS say; use --no-narration elsewhere"
                     )
                 source = self.output / "narration" / f"{index + 1:02}.aiff"
-                path = source.with_suffix("wav")
+                path = source.with_suffix(".wav")
                 checked(
                     ["say", "-v", "Samantha", "-r", "165", "-f", str(text_path), "-o", str(source)]
                 )
