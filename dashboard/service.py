@@ -17,6 +17,7 @@ from orchestrator.scheduler import ScenarioScheduler
 from shared.events import entity
 
 from .auth import PortalPrincipal
+from .evidence import project_signal
 from .identity_audit import IdentityAuditRecorder
 from .sso import SsoExperience, SsoExperienceConfig, SsoExperienceError
 from .store import PortalStore
@@ -95,6 +96,30 @@ class PortalService:  # pylint: disable=too-many-public-methods
             "cloud_enabled": self.run.cloud_enabled,
             "impact_enabled": self.run.impact_enabled,
         }
+
+    def participant_evidence(
+        self, principal: PortalPrincipal, *, after_sequence: int = 0, limit: int = 100,
+    ) -> dict[str, Any]:
+        """Current-run facts in ingestion order, scoped to the authenticated actor."""
+        if after_sequence < 0 or not 1 <= limit <= 100:
+            raise ValueError("invalid evidence page boundary")
+        with self.run.state_lock:
+            signals = [
+                signal for event in self.store.events(
+                    self.run.definition.exercise_id, self.run.run_id,
+                ) if event["sequence"] > after_sequence
+                and (signal := project_signal(event, principal.actor_id)) is not None
+            ]
+            page = signals[:limit]
+            return {
+                "exercise_id": self.run.definition.exercise_id, "run_id": self.run.run_id,
+                "state": self.run.controller.state.value,
+                "elapsed_seconds": self.run.controller.elapsed_seconds,
+                "environment": "local_synthetic_evidence_not_splunk",
+                "ordering": "ingestion_sequence_not_occurrence_time",
+                "signals": page, "has_more": len(signals) > limit,
+                "next_sequence": page[-1]["sequence"] if page else after_sequence,
+            }
 
     def facilitator_state(self) -> dict[str, Any]:
         """Return controller state, all events, submissions, and verifier state."""

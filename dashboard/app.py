@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated, Any, Iterable
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response, status
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response, status
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
@@ -278,6 +278,10 @@ def create_app(
     def facilitator_page() -> FileResponse:
         return FileResponse(static_root / "facilitator.html")
 
+    @app.get("/evidence", include_in_schema=False)
+    def evidence_page() -> FileResponse:
+        return FileResponse(static_root / "evidence.html")
+
     @app.get("/sso", include_in_schema=False)
     def sso_page(request: Request) -> FileResponse:
         authorize_sso_request(request)
@@ -370,6 +374,16 @@ def create_app(
         _principal: PortalPrincipal = Depends(participant),
     ) -> dict[str, Any]:
         return service.participant_state()
+
+    @app.get("/api/participant/evidence")
+    def participant_evidence(
+        principal: PortalPrincipal = Depends(participant),
+        after_sequence: int = Query(default=0, ge=0),
+        limit: int = Query(default=100, ge=1, le=100),
+    ) -> dict[str, Any]:
+        return service.participant_evidence(
+            principal, after_sequence=after_sequence, limit=limit,
+        )
 
     @app.get("/api/participant/directory")
     def participant_directory(
