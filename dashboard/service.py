@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import secrets
+import sqlite3
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -15,6 +16,7 @@ from orchestrator.checkpoints import (
 from orchestrator.identity_slice import IdentitySliceRun, PARTICIPANT_ACTIONS
 from orchestrator.cloud import CLOUD_ACTIONS
 from orchestrator.scheduler import ScenarioScheduler
+from orchestrator.controller import ControllerError
 from shared.events import EventBuilder, EventContext, entity
 
 from .auth import PortalPrincipal
@@ -22,6 +24,7 @@ from .evidence import project_signal
 from .identity_audit import IdentityAuditRecorder
 from .sso import SsoExperience, SsoExperienceConfig, SsoExperienceError
 from .store import PortalStore
+from .readiness import application_readiness
 
 
 class PortalService:  # pylint: disable=too-many-public-methods
@@ -64,6 +67,60 @@ class PortalService:  # pylint: disable=too-many-public-methods
                 "simcorp-sso", payload
             ),
         )
+
+    def readiness(self) -> dict[str, Any]:
+        """Local pre-play inspection is not VM/Splunk readiness or admission approval."""
+        return application_readiness(self)
+
+    def _check_readiness(self, principal: PortalPrincipal, operation: str) -> None:
+        if principal.role not in {"facilitator", "technical_operator"}:
+            raise ControllerError("Local readiness controls require an exercise-control role")
+        report = self.readiness()
+        allowed = report[f"ready_to_{operation}"]
+        # A corrupt/reused ledger cannot safely accept another audit event.
+        if any(check["check_id"] == "event_ledger" and not check["passed"]
+               for check in report["checks"]):
+            raise ControllerError("Local readiness blocked: event_ledger; preserve evidence and reset safely")
+        builder = EventBuilder(
+            EventContext(exercise_id=self.run.definition.exercise_id, run_id=self.run.run_id,
+                         source_kind="facilitator", source_component="application-readiness",
+                         producer_version="1.0.0"),
+            sequence_factory=self.run.sequencer.next,
+        )
+        event = builder.build(
+            event_type="exercise.readiness.checked", phase="control",
+            actor=entity("facilitator", principal.actor_id, role=principal.role),
+            action=f"exercise.readiness.{operation}",
+            target=entity("scenario_run", self.run.run_id),
+            outcome_status="success" if allowed else "blocked", visibility="facilitator",
+            message="Local application readiness checked; external range checks remain required",
+            dry_run=False, safety_controls=("local-only", "pre-play-baselines", "fail-closed"),
+            data={"operation": operation, "report": report},
+        )
+        try:
+            self.store.append_event(event)  # Persist before any transition.
+        except (sqlite3.Error, OSError) as exc:
+            raise ControllerError("Local readiness audit unavailable; no transition performed") from exc
+        if not allowed:
+            blockers = report["blockers"] or ["preparation_incomplete"]
+            raise ControllerError("Local readiness blocked: " + ", ".join(blockers))
+
+    def prepare_run(self, principal: PortalPrincipal) -> dict[str, Any]:
+        """Audit and gate preparation; failed setup requires repair/reset, not start."""
+        with self.run.state_lock:
+            self._check_readiness(principal, "prepare")
+            self.run.controller.prepare()
+            self._check_readiness(principal, "start")
+            return self.facilitator_state()
+
+    def start_run(self, principal: PortalPrincipal) -> dict[str, Any]:
+        """Recheck just before start, preparing first for existing Start-only clients."""
+        with self.run.state_lock:
+            if not self.readiness()["preparation_complete"]:
+                self.prepare_run(principal)
+            self._check_readiness(principal, "start")
+            self.scheduler.start()
+            return self.facilitator_state()
 
     def participant_state(self) -> dict[str, Any]:
         """Return only participant-visible injects and non-sensitive run metadata."""
@@ -165,13 +222,14 @@ class PortalService:  # pylint: disable=too-many-public-methods
     ) -> dict[str, Any]:
         """Record a safe identity interaction for the authoritative current run."""
 
-        return self.identity_audit.record(
-            exercise_id=self.run.definition.exercise_id,
-            run_id=self.run.run_id,
-            source_service=source_service,
-            sequence_factory=self.run.sequencer.next,
-            payload=payload,
-        )
+        with self.run.state_lock:
+            return self.identity_audit.record(
+                exercise_id=self.run.definition.exercise_id,
+                run_id=self.run.run_id,
+                source_service=source_service,
+                sequence_factory=self.run.sequencer.next,
+                payload=payload,
+            )
 
     def participant_directory(self) -> list[dict[str, Any]]:
         """Read-only reviewed directory, without target bindings or attack rankings."""
@@ -450,11 +508,18 @@ class PortalService:  # pylint: disable=too-many-public-methods
     def sso_review_sessions(self) -> dict[str, Any]:
         """Show configured suspicious sessions after approved sign-in."""
 
-        self._require_sso_active()
-        return self.sso.review_sessions()
+        with self.run.state_lock:
+            self._require_sso_active()
+            return self.sso.review_sessions()
 
     def reset_run(self, *, new_run_id: str | None = None) -> dict[str, Any]:
         """Reset runtime state and remove the prior run's transient audit view."""
+
+        with self.run.state_lock:
+            return self._reset_run(new_run_id=new_run_id)
+
+    def _reset_run(self, *, new_run_id: str | None = None) -> dict[str, Any]:
+        """Hold the same mutation boundary through SSO and audit cleanup."""
 
         exercise_id = self.run.definition.exercise_id
         prior_run_id = self.run.run_id

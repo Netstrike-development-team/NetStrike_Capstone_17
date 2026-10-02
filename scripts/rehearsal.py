@@ -155,6 +155,7 @@ def _source() -> dict:
     paths = [
         "scripts/rehearsal.py",
         "dashboard/service.py",
+        "dashboard/readiness.py",
         "dashboard/store.py",
         "dashboard/evidence.py",
         "orchestrator/aar.py",
@@ -289,8 +290,13 @@ class Driver:
     def opening(self):
         if self.case.mode == "missing-impact-source":
             self.run.controller.skip("PRE-03", "Injected local missing source")
-        self.run.controller.prepare()
-        self.service.scheduler.start()
+            # Deliberate low-level fault injection, not a supported portal bypass.
+            self.run.controller.prepare()
+            self.service.scheduler.start()
+        else:
+            staff = PortalPrincipal("rehearsal-facilitator", "facilitator")
+            self.service.prepare_run(staff)
+            self.service.start_run(staff)
         self.advance(1500)
         signals = self.service.participant_evidence(PERSONAS["soc_analyst"])["signals"]
         identity = [

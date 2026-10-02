@@ -579,15 +579,20 @@ def create_app(
 
     @app.post("/api/facilitator/prepare")
     def prepare(
-        _principal: PortalPrincipal = Depends(facilitator),
+        principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
-        return execute(lambda: (service.run.controller.prepare(), service.facilitator_state())[1])
+        return execute(lambda: service.prepare_run(principal))
 
     @app.post("/api/facilitator/start")
     def start(
-        _principal: PortalPrincipal = Depends(facilitator),
+        principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
-        return execute(lambda: (service.scheduler.start(), service.facilitator_state())[1])
+        return execute(lambda: service.start_run(principal))
+
+    @app.get("/api/facilitator/readiness")
+    def readiness(response: Response, _principal: PortalPrincipal = Depends(facilitator)) -> dict[str, Any]:
+        response.headers["Cache-Control"] = "no-store"
+        return service.readiness()
 
     @app.post("/api/facilitator/pause")
     def pause(
