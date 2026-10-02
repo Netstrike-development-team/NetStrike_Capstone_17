@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import secrets
 import sqlite3
+import uuid
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -259,6 +260,71 @@ class PortalService:  # pylint: disable=too-many-public-methods
         """Machine observations do not replace attributable human judgments."""
         return build_report(self.aar_bundle())
 
+    def capture_review_archive(
+        self, principal: PortalPrincipal, *, run_id: str, expected_bundle_sha256: str,
+    ) -> dict[str, Any]:
+        """Guard against stale run/hash inputs and replay exact captures without effects."""
+        if principal.role not in {"facilitator", "evaluator"}:
+            raise ControllerError("review archive capture requires a review role")
+        with self.run.state_lock:
+            if run_id != self.run.run_id:
+                raise ValueError("run changed; refresh before archiving")
+            if self.run.controller.state.value not in {"stopped", "completed"}:
+                raise ValueError("review archive requires stopped or completed play")
+            existing = self.store.review_archive_by_hash(
+                self.run.definition.exercise_id, run_id, expected_bundle_sha256,
+            )
+            if existing:
+                return {"status": "already_captured", "metadata": existing["metadata"]}
+            bundle = self.aar_bundle()
+            if expected_bundle_sha256 != bundle["content_sha256"]:
+                raise ValueError("review changed; refresh before archiving")
+            return {"status": "captured", "metadata": self._capture_review(
+                bundle, entity("facilitator", principal.actor_id, role=principal.role), "staff_capture",
+            )}
+
+    def _capture_review(self, bundle: dict, actor: dict, reason: str) -> dict:
+        """Atomically freeze a terminal snapshot plus its audit, before runtime reset."""
+        identifier = str(uuid.uuid4())
+        last_sequence = bundle["events"][-1]["sequence"] if bundle["events"] else 0
+        if self.run.sequencer.sequence != last_sequence:
+            raise ValueError("review archive requires consistent live ledger sequencing")
+        builder = EventBuilder(
+            EventContext(exercise_id=self.run.definition.exercise_id, run_id=self.run.run_id,
+                         source_kind="facilitator", source_component="review-archive",
+                         producer_version="1.0.0"),
+            sequence_factory=self.run.sequencer.next,
+        )
+        try:
+            event = builder.build(
+                event_type="evaluation.archive.created", phase="post_exercise",
+                actor=actor, action="evaluation.archive.capture", target=entity("review_archive", identifier),
+                outcome_status="success", visibility="evaluator",
+                message="Terminal review snapshot captured; later reset/cleanup events are outside its boundary",
+                dry_run=False, safety_controls=("staff-only", "immutable-snapshot", "no-branch-mutation"),
+                data={"archive_id": identifier, "bundle_sha256": bundle["content_sha256"],
+                      "last_sequence": last_sequence, "capture_reason": reason},
+            )
+            return self.store.append_review_archive(bundle, event)
+        except (ValueError, sqlite3.Error, OSError) as exc:
+            # A failed transaction can cancel its reservation only after confirming
+            # the old ledger is unchanged. Never rewind over persisted evidence.
+            try:
+                current = self.store.events(self.run.definition.exercise_id, self.run.run_id)
+                if current == bundle["events"]:
+                    self.run.sequencer.reset(last_sequence)
+            except (ValueError, sqlite3.Error, OSError):
+                pass  # Unreadable persistence remains fail-closed until repaired.
+            raise ControllerError("review archive capture failed; no reset performed") from exc
+
+    def review_archives(self, *, after_sequence: int = 0, limit: int = 50) -> dict:
+        return self.store.review_archives(
+            self.run.definition.exercise_id, after_sequence=after_sequence, limit=limit,
+        )
+
+    def review_archive(self, identifier: str) -> dict | None:
+        return self.store.review_archive(self.run.definition.exercise_id, identifier)
+
     def judge_objective(
         self, principal: PortalPrincipal, payload: dict, *, run_id: str
     ) -> dict[str, Any]:
@@ -512,21 +578,33 @@ class PortalService:  # pylint: disable=too-many-public-methods
             self._require_sso_active()
             return self.sso.review_sessions()
 
-    def reset_run(self, *, new_run_id: str | None = None) -> dict[str, Any]:
+    def reset_run(self, *, new_run_id: str | None = None,
+                  principal: PortalPrincipal | None = None) -> dict[str, Any]:
         """Reset runtime state and remove the prior run's transient audit view."""
 
         with self.run.state_lock:
-            return self._reset_run(new_run_id=new_run_id)
+            if principal and principal.role not in {"facilitator", "technical_operator"}:
+                raise ControllerError("reset requires an exercise-control role")
+            return self._reset_run(new_run_id=new_run_id, principal=principal)
 
-    def _reset_run(self, *, new_run_id: str | None = None) -> dict[str, Any]:
+    def _reset_run(self, *, new_run_id: str | None = None,
+                   principal: PortalPrincipal | None = None) -> dict[str, Any]:
         """Hold the same mutation boundary through SSO and audit cleanup."""
 
         exercise_id = self.run.definition.exercise_id
         prior_run_id = self.run.run_id
+        if self.run.controller.state.value not in {"stopped", "completed"}:
+            raise ControllerError("run must be stopped or completed before reset")
+        new_run_id = new_run_id or str(uuid.uuid4())
         if new_run_id and (
             new_run_id == prior_run_id or self.store.events(exercise_id, new_run_id)
         ):
             raise SsoExperienceError("reset requires a new, unused run id")
+        if self.run.impact:
+            self.run.impact.validate_next_run(new_run_id)
+        actor = (entity("facilitator", principal.actor_id, role=principal.role) if principal
+                 else entity("system", "application-reset", role="system"))
+        archive = self._capture_review(self.aar_bundle(), actor, "application_reset")
         self.run.reset(new_run_id=new_run_id)
         self.scheduler.reset()
         self.sso.reset()
@@ -536,6 +614,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
         state = self.facilitator_state()
         state["reset"] = {
             "prior_run_id": prior_run_id,
+            "review_archive_id": archive["archive_id"],
             "identity_audit_records_deleted": deleted,
             "identity_audit_baseline_verified": True,
             "sso_baseline_verified": not self.sso.baseline_mismatches(),

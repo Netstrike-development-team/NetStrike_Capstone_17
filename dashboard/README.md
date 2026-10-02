@@ -121,6 +121,13 @@ Canonical delivered/approved/denied/expired/blocked/cancelled events are retaine
 in SQLite and existing exports, correlated with identity/session/action audit
 events. Live Splunk ingestion must still be verified in Patrick's environment.
 See [the developer demonstration and evidence handoff](../docs/scheduled-mfa-dev-handoff.md).
+## Staff run-review archives
+
+Staff review snapshots are now retained before application reset and can be
+downloaded afterward using authenticated archive APIs. They remain read-only
+and do not survive a VM rollback unless exported externally. See
+[run-review archive usage and capture boundaries](../docs/run-review-archives.md).
+
 ## Application readiness
 
 Staff can inspect `GET /api/facilitator/readiness`. Prepare and Start now audit

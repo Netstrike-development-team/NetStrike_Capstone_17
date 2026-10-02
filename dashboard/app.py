@@ -121,6 +121,11 @@ class ResetInput(StrictInput):
     new_run_id: str | None = Field(default=None, min_length=1, max_length=128)
 
 
+class ArchiveInput(StrictInput):
+    run_id: str = Field(min_length=1, max_length=128)
+    expected_bundle_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
 class MfaDecisionInput(StrictInput):
     challenge_id: str = Field(min_length=1, max_length=128)
     decision: str = Field(pattern="^(approve|deny)$")
@@ -550,6 +555,47 @@ def create_app(
     def learner_feedback(_principal: PortalPrincipal = Depends(participant)):
         return execute(service.participant_feedback)
 
+    @app.post("/api/evaluator/archives")
+    def capture_archive(request: ArchiveInput, principal: PortalPrincipal = Depends(evaluator)):
+        return execute(lambda: service.capture_review_archive(principal, **request.model_dump()))
+
+    @app.get("/api/evaluator/archives")
+    def list_archives(response: Response, _principal: PortalPrincipal = Depends(evaluator),
+                      after_sequence: int = Query(default=0, ge=0),
+                      limit: int = Query(default=50, ge=1, le=100)):
+        response.headers["Cache-Control"] = "no-store"
+        return execute(lambda: service.review_archives(after_sequence=after_sequence, limit=limit))
+
+    def archived(identifier: str) -> dict:
+        snapshot = execute(lambda: service.review_archive(identifier))
+        if snapshot is None:
+            raise HTTPException(status_code=404, detail="review archive not found")
+        return snapshot
+
+    @app.get("/api/evaluator/archives/{identifier}/bundle.json")
+    def archived_bundle(identifier: str, response: Response,
+                        _principal: PortalPrincipal = Depends(evaluator)):
+        response.headers["Cache-Control"] = "no-store"
+        return archived(identifier)["bundle"]
+
+    @app.get("/api/evaluator/archives/{identifier}/report")
+    def archived_report(identifier: str, response: Response,
+                        _principal: PortalPrincipal = Depends(evaluator)):
+        response.headers["Cache-Control"] = "no-store"
+        return archived(identifier)["report"]
+
+    @app.get("/api/evaluator/archives/{identifier}/aar.md")
+    def archived_markdown(identifier: str, _principal: PortalPrincipal = Depends(evaluator)):
+        return Response(render_markdown(archived(identifier)["report"]), media_type="text/markdown",
+                        headers={"Cache-Control": "no-store", "Content-Disposition":
+                                 'attachment; filename="archived-after-action-review.md"'})
+
+    @app.get("/api/evaluator/archives/{identifier}/events.jsonl")
+    def archived_events(identifier: str, _principal: PortalPrincipal = Depends(evaluator)):
+        return Response(render_jsonl(archived(identifier)["bundle"]["events"]),
+                        media_type="application/x-ndjson", headers={"Cache-Control": "no-store",
+                        "Content-Disposition": 'attachment; filename="archived-events.jsonl"'})
+
     @app.get("/api/participant/recovery")
     def impact_view(_principal: PortalPrincipal = Depends(participant)):
         return execute(service.impact_view)
@@ -677,10 +723,10 @@ def create_app(
     @app.post("/api/facilitator/reset")
     def reset(
         request: ResetInput,
-        _principal: PortalPrincipal = Depends(facilitator),
+        principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
         return execute(
-            lambda: service.reset_run(new_run_id=request.new_run_id)
+            lambda: service.reset_run(new_run_id=request.new_run_id, principal=principal)
         )
 
     @app.post("/api/facilitator/checkpoints/dp4")

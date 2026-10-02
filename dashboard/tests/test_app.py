@@ -471,8 +471,11 @@ def test_reset_removes_transient_identity_audit_and_verifies_baseline(portal) ->
     )
 
     assert response.status_code == 200
+    archive_identifier = response.json()["reset"]["review_archive_id"]
+    assert service.review_archive(archive_identifier)["metadata"]["run_id"] == "run-portal-test"
     assert response.json()["reset"] == {
         "prior_run_id": "run-portal-test",
+        "review_archive_id": archive_identifier,
         "identity_audit_records_deleted": 1,
         "identity_audit_baseline_verified": True,
         "sso_baseline_verified": True,
