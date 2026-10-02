@@ -22,6 +22,15 @@ Thumbs.db
 .env
 .env.local
 
+# CITEF-specific approved configuration and generated credentials/inventory
+citef-config/environment.json
+citef-config/inventory.ini
+citef-config/secrets.yml
+citef-config/vault.yml
+citef-config/*.vault.yml
+citef-config/vault-password.txt
+citef-config/collections/
+
 # Logs
 logs/
 *.log
