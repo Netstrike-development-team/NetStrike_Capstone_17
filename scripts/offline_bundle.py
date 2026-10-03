@@ -21,6 +21,14 @@ from pathlib import Path, PurePosixPath
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CHECKSUMS_NAME = "SHA256SUMS"
 UNKNOWN = "UNKNOWN (review required)"
+SOURCE_DIRECTORIES = (
+    "modules",
+    "dashboard",
+    "citef-config",
+    "shared",
+    "orchestrator",
+    "schemas",
+)
 
 
 def _safe_relative_path(value: str) -> PurePosixPath:
@@ -205,6 +213,86 @@ def _write_lock_and_inventory(wheels: list[Path], wheelhouse: Path) -> list[dict
     )
 
 
+def _copy_source_directories(bundle: Path) -> list[dict[str, str]]:
+    source_root = bundle / "source"
+    source_root.mkdir(parents=True)
+    copied = []
+    for name in SOURCE_DIRECTORIES:
+        source = REPO_ROOT / name
+        if not source.is_dir():
+            raise FileNotFoundError(f"required source directory is missing: {name}")
+        destination = source_root / name
+        shutil.copytree(
+            source,
+            destination,
+            ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc"),
+        )
+        copied.append({"name": name, "path": destination.relative_to(bundle).as_posix()})
+    return copied
+
+
+def _copy_ansible_collection_archives(archives: list[str], bundle: Path) -> list[dict]:
+    collection_dir = bundle / "ansible" / "collections"
+    collection_dir.mkdir(parents=True)
+    inventory = []
+    names = set()
+    for archive_name in archives:
+        source = Path(archive_name).resolve()
+        if not source.is_file() or source.suffixes[-2:] != [".tar", ".gz"]:
+            raise ValueError(f"Ansible collection must be a .tar.gz archive: {archive_name}")
+
+        with tarfile.open(source, "r:gz") as archive:
+            manifests = [
+                member for member in archive.getmembers()
+                if PurePosixPath(member.name).name == "MANIFEST.json" and member.isfile()
+            ]
+            if len(manifests) != 1:
+                raise ValueError(f"expected one MANIFEST.json in Ansible collection {source.name}")
+            manifest_file = archive.extractfile(manifests[0])
+            if manifest_file is None:
+                raise ValueError(f"unable to read Ansible collection manifest: {source.name}")
+            manifest = json.load(manifest_file)
+
+        collection = manifest.get("collection_info", {})
+        namespace = collection.get("namespace")
+        collection_name = collection.get("name")
+        version = collection.get("version")
+        if not all(isinstance(value, str) and value for value in (namespace, collection_name, version)):
+            raise ValueError(f"invalid Ansible collection identity in {source.name}")
+        identity = f"{namespace}.{collection_name}".lower()
+        if identity in names:
+            raise ValueError(f"duplicate Ansible collection: {identity}")
+        names.add(identity)
+
+        destination = collection_dir / source.name
+        shutil.copyfile(source, destination)
+        licenses = collection.get("license", [])
+        if isinstance(licenses, str):
+            licenses = [licenses]
+        if not isinstance(licenses, list) or not all(
+            isinstance(license_name, str) for license_name in licenses
+        ):
+            licenses = []
+        authors = collection.get("authors", [])
+        inventory.append(
+            {
+                "name": identity,
+                "version": version,
+                "source": "Ansible Galaxy",
+                "license": ", ".join(licenses) or UNKNOWN,
+                "owner": (
+                    ", ".join(authors)
+                    if isinstance(authors, list) and all(isinstance(author, str) for author in authors)
+                    else str(authors or UNKNOWN)
+                ),
+                "file": destination.relative_to(bundle).as_posix(),
+            }
+        )
+    if not inventory:
+        raise ValueError("no Ansible collection archives were provided")
+    return sorted(inventory, key=lambda item: item["name"].lower())
+
+
 def _write_checksums(root: Path) -> None:
     entries = []
     for path in sorted(root.rglob("*")):
@@ -271,6 +359,10 @@ def build_bundle(args: argparse.Namespace) -> None:
         if not wheels:
             raise ValueError("pip produced no wheels; refusing to create an empty bundle")
         artifacts = _write_lock_and_inventory(wheels, wheelhouse)
+        source_artifacts = _copy_source_directories(bundle)
+        ansible_collections = _copy_ansible_collection_archives(
+            args.ansible_collection_archive, bundle
+        )
 
         manifest = {
             "repository_revision": revision,
@@ -285,6 +377,8 @@ def build_bundle(args: argparse.Namespace) -> None:
                 path.relative_to(REPO_ROOT).as_posix() for path in requirement_files
             ],
             "artifacts": artifacts,
+            "source_artifacts": source_artifacts,
+            "ansible_collections": ansible_collections,
         }
         (bundle / "inventory.json").write_text(
             json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -293,7 +387,11 @@ def build_bundle(args: argparse.Namespace) -> None:
         with tarfile.open(output, "w:gz") as archive:
             archive.add(bundle, arcname=bundle.name)
 
-    print(f"Created {output} with {len(artifacts)} Python packages for {destination}.")
+    print(
+        f"Created {output} with {len(artifacts)} Python packages, "
+        f"{len(source_artifacts)} source trees, and {len(ansible_collections)} "
+        f"Ansible collections for {destination}."
+    )
 
 
 def _extract_bundle(archive_path: Path, target: Path) -> Path:
@@ -371,16 +469,51 @@ def verify_bundle(args: argparse.Namespace) -> None:
         env["PIP_CONFIG_FILE"] = os.devnull
         subprocess.run(command, check=True, env=env)
 
+        source_artifacts = inventory.get("source_artifacts", [])
+        source_names = {artifact["name"] for artifact in source_artifacts}
+        if source_names != set(SOURCE_DIRECTORIES):
+            raise ValueError("bundle is missing required module, dashboard, or Ansible source")
+        for artifact in source_artifacts:
+            source_path = _safe_relative_path(artifact["path"])
+            if source_path.parts[0] != "source" or not bundle.joinpath(*source_path.parts).is_dir():
+                raise ValueError(f"missing bundled source directory: {artifact['path']}")
+
+        collection_archives = []
+        for collection in inventory.get("ansible_collections", []):
+            collection_path = _safe_relative_path(collection["file"])
+            if collection_path.parts[:2] != ("ansible", "collections"):
+                raise ValueError(f"invalid Ansible collection path: {collection['file']}")
+            collection_archive = bundle.joinpath(*collection_path.parts)
+            if not collection_archive.is_file():
+                raise ValueError(f"missing Ansible collection archive: {collection['file']}")
+            collection_archives.append(str(collection_archive))
+        if not collection_archives:
+            raise ValueError("bundle contains no Ansible collection archives")
+
+        ansible_galaxy = python.parent / "ansible-galaxy"
+        collection_install = [
+            str(ansible_galaxy),
+            "collection",
+            "install",
+            "--offline",
+            "--collections-path",
+            str(Path(temporary) / "ansible-collections"),
+            *collection_archives,
+        ]
+        subprocess.run(collection_install, check=True, env=env)
+
     print(
-        f"Checksums, Python {runtime_version}, and offline dependency installation "
-        f"are valid for {destination}."
+        f"Checksums, source files, Python {runtime_version}, offline dependency "
+        f"installation, and Ansible collections are valid for {destination}."
     )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
-    build = commands.add_parser("build", help="package Python runtime and dependencies")
+    build = commands.add_parser(
+        "build", help="package runtime, dependencies, project source, and Ansible collections"
+    )
     build.add_argument(
         "--requirements",
         action="append",
@@ -392,6 +525,12 @@ def main() -> None:
         "--python-runtime-archive",
         required=True,
         help="CPython standalone Linux x86_64 install-only .tar.gz archive",
+    )
+    build.add_argument(
+        "--ansible-collection-archive",
+        action="append",
+        required=True,
+        help="Ansible Galaxy collection .tar.gz archive (repeat for each collection)",
     )
     build.set_defaults(handler=build_bundle)
 
