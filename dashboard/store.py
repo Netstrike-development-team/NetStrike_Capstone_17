@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from shared.events import EventValidator, redact_sensitive
+from .archive import MAX_BYTES, archive_id, encode_bundle, metadata, validate_snapshot
 
 
 class PortalStore:
@@ -71,6 +72,27 @@ class PortalStore:
                     ON identity_audit(
                         exercise_id, run_id, occurred_at, audit_id
                     );
+                CREATE TABLE IF NOT EXISTS review_archives (
+                    archive_sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+                    archive_id TEXT NOT NULL UNIQUE,
+                    exercise_id TEXT NOT NULL,
+                    run_id TEXT NOT NULL,
+                    bundle_sha256 TEXT NOT NULL,
+                    audit_event_id TEXT NOT NULL UNIQUE,
+                    metadata TEXT NOT NULL,
+                    bundle TEXT NOT NULL,
+                    UNIQUE(exercise_id, run_id, bundle_sha256)
+                );
+                CREATE INDEX IF NOT EXISTS review_archives_exercise_sequence
+                    ON review_archives(exercise_id, archive_sequence);
+                CREATE TRIGGER IF NOT EXISTS review_archives_no_update
+                BEFORE UPDATE ON review_archives BEGIN
+                    SELECT RAISE(ABORT, 'review archives are immutable');
+                END;
+                CREATE TRIGGER IF NOT EXISTS review_archives_no_delete
+                BEFORE DELETE ON review_archives BEGIN
+                    SELECT RAISE(ABORT, 'review archives are immutable');
+                END;
                 """
             )
 
@@ -321,6 +343,86 @@ class PortalStore:
                 (exercise_id, run_id),
             )
         return int(cursor.rowcount)
+
+    def append_review_archive(self, bundle: dict, audit: dict) -> dict:
+        """Commit the frozen snapshot and its canonical audit as one transaction."""
+        encoded = encode_bundle(bundle)
+        record = metadata(bundle, audit)
+        event_payload = json.dumps(audit, sort_keys=True, separators=(",", ":"))
+        with self._lock, self._connection:
+            self._connection.execute(
+                """INSERT INTO review_archives(
+                    archive_id, exercise_id, run_id, bundle_sha256, audit_event_id, metadata, bundle
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (record["archive_id"], record["exercise_id"], record["run_id"],
+                 record["bundle_sha256"], record["audit_event_id"], json.dumps(record, sort_keys=True), encoded),
+            )
+            self._connection.execute(
+                """INSERT INTO events(event_id, exercise_id, run_id, sequence, visibility, payload)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (audit["event_id"], audit["exercise_id"], audit["run_id"], audit["sequence"],
+                 audit["visibility"], event_payload),
+            )
+        return record
+
+    def _review_snapshot(self, row) -> dict:
+        if len(row["bundle"].encode("utf-8")) > MAX_BYTES:
+            raise ValueError("review archive exceeds the offline review limit")
+        record = json.loads(row["metadata"])
+        bundle = json.loads(row["bundle"])
+        with self._lock:
+            event = self._connection.execute(
+                "SELECT payload FROM events WHERE event_id = ?", (row["audit_event_id"],)
+            ).fetchone()
+        if event is None:
+            raise ValueError("review archive audit is missing")
+        report = validate_snapshot(record, bundle, json.loads(event["payload"]))
+        if any(row[key] != record[key] for key in (
+            "archive_id", "exercise_id", "run_id", "bundle_sha256", "audit_event_id",
+        )):
+            raise ValueError("review archive storage correlation is invalid")
+        return {"metadata": {**record, "archive_sequence": row["archive_sequence"]},
+                "bundle": bundle, "report": report}
+
+    def review_archive(self, exercise_id: str, identifier: str) -> dict | None:
+        """Retrieve only a validated, exercise-scoped immutable staff snapshot."""
+        archive_id(identifier)
+        with self._lock:
+            row = self._connection.execute(
+                "SELECT * FROM review_archives WHERE exercise_id = ? AND archive_id = ?",
+                (exercise_id, identifier),
+            ).fetchone()
+        return self._review_snapshot(row) if row is not None else None
+
+    def review_archive_by_hash(self, exercise_id: str, run_id: str, digest: str) -> dict | None:
+        """Find an already-captured exact snapshot without creating a new audit."""
+        with self._lock:
+            row = self._connection.execute(
+                "SELECT * FROM review_archives WHERE exercise_id = ? AND run_id = ? AND bundle_sha256 = ?",
+                (exercise_id, run_id, digest),
+            ).fetchone()
+        return self._review_snapshot(row) if row is not None else None
+
+    def review_archives(self, exercise_id: str, *, after_sequence: int = 0, limit: int = 50) -> dict:
+        """Return a bounded metadata page; no old-run learner or evaluator prose."""
+        if not isinstance(after_sequence, int) or isinstance(after_sequence, bool) or after_sequence < 0:
+            raise ValueError("invalid review archive page")
+        if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 100:
+            raise ValueError("invalid review archive page")
+        with self._lock:
+            rows = self._connection.execute(
+                """SELECT archive_id FROM review_archives WHERE exercise_id = ? AND archive_sequence > ?
+                   ORDER BY archive_sequence LIMIT ?""", (exercise_id, after_sequence, limit + 1),
+            ).fetchall()
+        # Validate one bounded bundle at a time, not up to 101 large bundles in memory.
+        page = []
+        for row in rows[:limit]:
+            snapshot = self.review_archive(exercise_id, row["archive_id"])
+            if snapshot is None:
+                raise ValueError("review archive changed during listing")
+            page.append(snapshot["metadata"])
+        return {"archives": page, "has_more": len(rows) > limit,
+                "next_sequence": page[-1]["archive_sequence"] if page else after_sequence}
 
     def close(self) -> None:
         """Close the SQLite connection."""

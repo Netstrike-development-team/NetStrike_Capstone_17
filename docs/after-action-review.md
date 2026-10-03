@@ -33,7 +33,9 @@ hosted Sites project.
 7. Corrections require the current revision and a reason. New events link to
    prior judgments; previous evaluator, rationale, timestamp and references
    remain available. Conflicting/stale writes fail. Reviews never alter branches.
-8. Download the offline bundle and Markdown AAR before reset. A terminal run
+8. Download the offline bundle and Markdown AAR for a durable copy. Application
+   reset now also preserves a staff-only [frozen review archive](run-review-archives.md).
+   Export outside restored VMs before hypervisor snapshot restoration. A terminal run
    with five ratings is `reviewed`: this means review completeness, not external
    acceptance. Unrated objectives are not zeroes.
 
