@@ -327,11 +327,12 @@ def test_new_run_cannot_reply_to_an_old_request_even_with_current_run_id(runtime
     assert events(runtime) == before
 
 
-def test_write_failure_yields_no_false_ack_and_stops_play(runtime, monkeypatch):
+@pytest.mark.parametrize("failure", [sqlite3.OperationalError, RuntimeError])
+def test_write_failure_yields_no_false_ack_and_stops_play(runtime, monkeypatch, failure):
     start(runtime)
 
     def broken(_event):
-        raise sqlite3.OperationalError("private-database-error")
+        raise failure("private-database-error")
 
     monkeypatch.setattr(runtime.store, "append_event", broken)
     with pytest.raises(ControllerError, match="evidence unavailable") as error:
@@ -342,6 +343,15 @@ def test_write_failure_yields_no_false_ack_and_stops_play(runtime, monkeypatch):
     assert not runtime.readiness()["ready_to_start"]
     with pytest.raises(ValueError):
         runtime.reset_run(new_run_id="must-preserve-gap")
+
+
+def test_event_construction_failure_after_sequence_allocation_stops_safely(runtime):
+    start(runtime)
+    misconfigured = PortalPrincipal("x" * 257, "soc_analyst")
+    with pytest.raises(ControllerError, match="evidence unavailable"):
+        request(runtime, misconfigured)
+    assert runtime.run.controller.state == RunState.STOPPED
+    assert runtime.support.view(LEARNER)["requests"] == []
 
 
 def test_post_commit_failure_recovers_same_request_without_duplicates(runtime, monkeypatch):

@@ -1,7 +1,5 @@
 """Run-scoped human support API operations over append-only canonical events."""
 
-import sqlite3
-
 from orchestrator.controller import ControllerError
 from orchestrator.support import (
     COMPONENT, KINDS, LEARNER_ROLES, MAX_ACTOR_REQUESTS, MAX_REQUESTS,
@@ -70,22 +68,23 @@ class SupportWorkflow:
             EventContext(run.definition.exercise_id, run.run_id, actor_type, COMPONENT, "1.0.0"),
             sequence_factory=run.sequencer.next,
         )
-        event = builder.build(
-            event_type=event_type, phase="control",
-            actor=entity(actor_type, principal.actor_id, role=principal.role),
-            action="exercise.support.request" if request else "exercise.support.respond",
-            target=entity("support_queue", run.run_id) if request else entity(
-                "support_request", data["request_id"]),
-            outcome_status="success", visibility="facilitator", dry_run=False,
-            message="Participant help requested" if request else "Exercise staff reply recorded",
-            objective_ids=scope_ids, correlation_ids=() if request else (data["request_id"],),
-            safety_controls=("human-authored", "run-scoped", "append-only", "no-auto-grading"),
-            data={**data, "elapsed_seconds": run.controller.elapsed_seconds,
-                  "run_state": run.controller.state.value},
-        )
         try:
+            event = builder.build(
+                event_type=event_type, phase="control",
+                actor=entity(actor_type, principal.actor_id, role=principal.role),
+                action="exercise.support.request" if request else "exercise.support.respond",
+                target=entity("support_queue", run.run_id) if request else entity(
+                    "support_request", data["request_id"]),
+                outcome_status="success", visibility="facilitator", dry_run=False,
+                message="Participant help requested" if request else "Exercise staff reply recorded",
+                objective_ids=scope_ids, correlation_ids=() if request else (data["request_id"],),
+                safety_controls=("human-authored", "run-scoped", "append-only", "no-auto-grading"),
+                data={**data, "elapsed_seconds": run.controller.elapsed_seconds,
+                      "run_state": run.controller.state.value},
+            )
             self.service.store.append_event(event)
-        except (sqlite3.Error, OSError, ValueError) as exc:
+        # This safety boundary includes construction errors after sequence allocation.
+        except Exception as exc:  # pylint: disable=broad-exception-caught
             # Never issue an unaudited answer/receipt or rewind a possibly written event.
             try:
                 run.fail_safe_stop(
