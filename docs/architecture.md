@@ -52,10 +52,12 @@ safe identity, endpoint/AD, mock-cloud, and marker-impact/recovery actions.
 
 ### Telemetry and Splunk
 
-Windows VMs emit native audit, PowerShell, and Sysmon events through the
-Splunk Universal Forwarder. Project-owned services send normalized NetStrike
-events through a confirmed Splunk input, preferably HEC. Splunk is the only
-SIEM in the MVP.
+The target design sends native Windows audit, PowerShell, and Sysmon events
+through the Splunk Universal Forwarder. Project-owned services should send
+normalized NetStrike events through a confirmed Splunk input, preferably HEC.
+Windows-forwarder configuration is implemented in the proposed offline
+Ansible roles; normalized portal-event forwarding and live Splunk ingestion
+are not yet implemented or verified. Splunk is the only SIEM in the MVP.
 
 No commercial EDR is required. Sysmon provides endpoint activity telemetry;
 NetStrike's allowlisted action adapters provide the exercise containment
@@ -66,31 +68,24 @@ EDR deployment.
 
 The team designs the topology in the Cyber Range platform. Ansible configures
 DNS, NTP, Windows/AD policy, services, telemetry, fixtures, and health checks
-using SSH or WinRM. The range has no Internet access, so all required packages,
-collections, installers, and configuration are transferred as a reviewed,
-versioned offline bundle.
+using SSH or WinRM. Scenario VMs have no Internet access, so all required
+packages, collections, installers, and configuration are transferred as a
+reviewed, versioned offline bundle.
 
 Clean Cyber Range snapshots are the primary restoration mechanism. Ansible is
 used for initial provisioning and readiness validation, not as a replacement
 for snapshots or as a timed full reset mechanism.
 
-## Delivery VM baseline
-
-| Logical asset | Proposed platform | Responsibility |
-|---|---|---|
-| `CTRL01` | Linux | Controller, portal, ledger, mock IdP/helpdesk/cloud services |
-| `DC01` | Windows Server | SimCorp Active Directory and directory audit evidence |
-| `FIN-WS01` | Windows 11 | Participant investigation and endpoint scenario state |
-| `SPLUNK01` | Supported Linux or Cyber Range image | Splunk Enterprise and exercise content |
-| `FILE01` | On `CTRL01` or a small Linux VM | Disposable impact fixtures and known-good copy |
-
-The final VM count, images, resources, network, and access model are captured
-as environment configuration rather than hard-coded in application logic.
+The final VM count, image versions, resources, network, and access model are
+captured as environment configuration rather than hard-coded in application
+logic. The proposed logical mapping, fail-closed inventory, Ansible procedure,
+and external readiness workflow are documented in
+[`citef-config/README.md`](../citef-config/README.md). CITEF has not yet
+confirmed the target addresses, images, or access paths, so the example
+manifest cannot be used for deployment.
 
 ## Explicitly out of scope for the MVP
 
-- A commercial EDR or Microsoft Defender for Endpoint dependency
-- Wazuh/Elastic as a second SIEM
 - CALDERA or an open-ended autonomous attacker
 - GHOSTS background-traffic simulation
 - LocalStack or public-cloud accounts
@@ -104,3 +99,4 @@ as environment configuration rather than hard-coded in application logic.
 - Exercise behavior: [exercise-design/02-storyline-and-msel.md](exercise-design/02-storyline-and-msel.md)
 - Telemetry: [exercise-design/03-telemetry-evidence-matrix.md](exercise-design/03-telemetry-evidence-matrix.md)
 - Tools/offline plan: [exercise-design/07-tools-and-offline-deployment.md](exercise-design/07-tools-and-offline-deployment.md)
+- CITEF topology and readiness: [citef-config/README.md](../citef-config/README.md)
