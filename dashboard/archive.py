@@ -30,6 +30,10 @@ def archive_id(value: str) -> str:
 def encode_bundle(bundle) -> str:
     """Apply existing AAR validation and reject unsafe/oversized stored inputs."""
     report = build_report(bundle)
+    if [event["sequence"] for event in bundle["events"]] != list(
+        range(1, len(bundle["events"]) + 1)
+    ):
+        raise ValueError("review archive requires a complete event prefix")
     if report["run_state"] not in {"stopped", "completed"}:
         raise ValueError("review archive requires stopped or completed play")
     if redact_sensitive(bundle) != bundle:

@@ -43,6 +43,13 @@ Hints, support, valid alternate procedures and platform faults must be reflected
 in the evaluator's rationale and appropriate charter rating. Never enter
 credentials or personal information into free-text fields.
 
+The [human support API](exercise-support.md) now records attributable questions
+and staff replies. JSON AAR includes `support_requests`; Markdown includes a
+Human assistance section with reply kind, objective scope, actor and event IDs.
+Requests alone do not prove assistance was given, and an empty queue does not
+exclude off-platform coaching. No rating is automatically changed by a hint or
+platform label. Browser support forms remain a separate integration step.
+
 ## Mapping and limits
 
 | Objective | Machine observation | Human review |
