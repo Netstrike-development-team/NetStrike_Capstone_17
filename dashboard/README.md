@@ -128,6 +128,16 @@ downloaded afterward using authenticated archive APIs. They remain read-only
 and do not survive a VM rollback unless exported externally. See
 [run-review archive usage and capture boundaries](../docs/run-review-archives.md).
 
+## Canonical event publication
+
+`python -m dashboard.event_spool` offers an inert preview or explicit, private
+incremental JSONL publication from the SQLite ledger for a staff-only monitored
+file input. It preserves old/new run evidence without changing the portal event
+sink or claiming Splunk acknowledgement. Patrick owns UF/Splunk configuration
+and deployment; see [usage, integrity and the handoff](../docs/event-spool.md).
+An offline partial-play demonstration is available with
+`python -m dashboard.event_spool_demo` (preview by default).
+
 ## Application readiness
 
 Staff can inspect `GET /api/facilitator/readiness`. Prepare and Start now audit
