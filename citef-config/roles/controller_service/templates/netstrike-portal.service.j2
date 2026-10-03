@@ -1,0 +1,32 @@
+[Unit]
+Description=NetStrike exercise portal
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=netstrike
+Group=netstrike
+WorkingDirectory=/opt/netstrike/current
+EnvironmentFile=/etc/netstrike/controller.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/netstrike/venv/bin/uvicorn dashboard.app:create_default_app --factory --host {{ ansible_host }} --port {{ controller.listen_port }} --ssl-certfile /etc/netstrike/tls.crt --ssl-keyfile /etc/netstrike/tls.key
+Restart=on-failure
+RestartSec=5
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectHome=true
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/var/lib/netstrike
+
+[Install]
+WantedBy=multi-user.target

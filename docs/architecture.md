@@ -103,4 +103,4 @@ as environment configuration rather than hard-coded in application logic.
 - Action safety: [safe-action-contract-v1.md](safe-action-contract-v1.md)
 - Exercise behavior: [exercise-design/02-storyline-and-msel.md](exercise-design/02-storyline-and-msel.md)
 - Telemetry: [exercise-design/03-telemetry-evidence-matrix.md](exercise-design/03-telemetry-evidence-matrix.md)
-- Tools/offline plan: [exercise-design/07-tools-and-offline-deployment.md](exercise-design/07-tools-and-offline-deployment.md)
+- Tools/offline plan: [exercise-design/07-offline-tool-bundle-inventory.md](exercise-design/07-offline-tool-bundle-inventory.md)

@@ -1,0 +1,178 @@
+---
+- name: Confirm the approved manifest after provisioning
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/../environment.json"
+  tasks:
+    - name: Validate the approved environment and baseline manifest
+      ansible.builtin.command:
+        argv:
+          - python3
+          - "{{ playbook_dir }}/../validate_environment.py"
+          - validate
+          - --config
+          - "{{ playbook_dir }}/../environment.json"
+      changed_when: false
+
+- name: Validate provisioned services, names, and clocks
+  hosts: all
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/../environment.json"
+  tasks:
+    - name: Gather target facts
+      ansible.builtin.setup:
+
+    - name: Require approved host name and amd64 architecture
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.hostname | lower == logical_name | lower
+          - ansible_facts.architecture in ["64-bit", "AMD64", "x86_64", "amd64"]
+        fail_msg: "{{ logical_name }} does not match its approved inventory identity."
+
+    - name: Read the control-host clock immediately before comparison
+      ansible.builtin.command:
+        argv: [date, -u, +%s]
+      delegate_to: localhost
+      register: control_epoch_current
+      changed_when: false
+
+    - name: Require target clock skew to be within the approved limit
+      ansible.builtin.assert:
+        that:
+          - >-
+            (((ansible_facts.date_time.epoch | int) -
+            (control_epoch_current.stdout | int)) | abs)
+            <= (network.max_clock_skew_seconds | int)
+        fail_msg: "{{ logical_name }} exceeds the approved clock-skew limit."
+
+    - name: Verify forward DNS on Linux hosts
+      ansible.builtin.command:
+        argv: [getent, ahostsv4, "{{ item.dns_name }}"]
+      loop: "{{ assets }}"
+      register: linux_dns_results
+      changed_when: false
+      when: expected_os_family == "linux"
+
+    - name: Require approved Linux DNS answers
+      ansible.builtin.assert:
+        that:
+          - item.item.address in item.stdout
+        fail_msg: "{{ item.item.dns_name }} did not resolve to its approved address."
+      loop: "{{ linux_dns_results.results | default([]) }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+      when: expected_os_family == "linux"
+
+    - name: Verify forward DNS on Windows hosts
+      ansible.windows.win_powershell:
+        parameters:
+          approved_hosts: "{{ assets | to_json }}"
+        script: |
+          $ErrorActionPreference = 'Stop'
+          $approved = ConvertFrom-Json -InputObject $Ansible.Params.approved_hosts
+          foreach ($entry in $approved) {
+            $answers = @(
+              Resolve-DnsName -Name $entry.dns_name -Type A |
+                Select-Object -ExpandProperty IPAddress
+            )
+            if ($entry.address -notin $answers) {
+              throw "Forward DNS does not match the approved address for $($entry.name)."
+            }
+          }
+          $Ansible.Changed = $false
+      when: expected_os_family == "windows"
+
+    - name: Confirm Linux services are active
+      ansible.builtin.command:
+        argv: [systemctl, is-active, "{{ item }}"]
+      loop: "{{ required_services.split(',') }}"
+      register: linux_service_results
+      changed_when: false
+      failed_when: linux_service_results.rc != 0
+      when: expected_os_family == "linux"
+
+    - name: Confirm Windows services are active
+      ansible.windows.win_service_info:
+        name: "{{ item }}"
+      loop: "{{ required_services.split(',') }}"
+      register: windows_service_results
+      when: expected_os_family == "windows"
+
+    - name: Require each configured Windows service to be running
+      ansible.builtin.assert:
+        that:
+          - item.services | length == 1
+          - item.services[0].state == "started"
+        fail_msg: "{{ logical_name }} required service is missing or stopped."
+      loop: "{{ windows_service_results.results | default([]) }}"
+      loop_control:
+        label: "{{ item.item }}"
+      when: expected_os_family == "windows"
+
+    - name: Check time synchronization status on Linux hosts
+      ansible.builtin.command:
+        argv: [timedatectl, show, --property=NTPSynchronized, --value]
+      register: linux_time_state
+      changed_when: false
+      when: expected_os_family == "linux"
+
+    - name: Require Linux time to be synchronized
+      ansible.builtin.assert:
+        that:
+          - linux_time_state.stdout | trim == "yes"
+      when: expected_os_family == "linux"
+
+    - name: Confirm Linux selected an approved internal time source
+      ansible.builtin.command:
+        argv: [timedatectl, timesync-status]
+      register: linux_time_source
+      changed_when: false
+      when: expected_os_family == "linux"
+
+    - name: Require Linux NTP status to identify DC01
+      ansible.builtin.assert:
+        that:
+          - >-
+            (network.ntp_servers
+            | select('in', linux_time_source.stdout)
+            | list
+            | length) > 0
+        fail_msg: "{{ logical_name }} is not synchronized to an approved internal NTP source."
+      when: expected_os_family == "linux"
+
+    - name: Check Windows domain time source
+      ansible.windows.win_command: w32tm.exe /query /source
+      register: windows_time_source
+      changed_when: false
+      when: expected_os_family == "windows"
+
+    - name: Verify the isolated DC01 time-source configuration
+      ansible.windows.win_powershell:
+        script: |
+          $ErrorActionPreference = 'Stop'
+          $type = Get-ItemPropertyValue `
+            -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Parameters' `
+            -Name Type
+          $ntpServer = Get-ItemPropertyValue `
+            -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\NtpServer' `
+            -Name Enabled
+          $announce = Get-ItemPropertyValue `
+            -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Config' `
+            -Name AnnounceFlags
+          if ($type -ne 'NoSync' -or $ntpServer -ne 1 -or $announce -ne 5) {
+            throw 'DC01 is not configured as the isolated authoritative time source.'
+          }
+          $Ansible.Changed = $false
+      when:
+        - expected_os_family == "windows"
+        - logical_name == "DC01"
+
+    - name: Require Windows time to use the exercise domain controller
+      ansible.builtin.assert:
+        that:
+          - "'dc01' in windows_time_source.stdout | lower"
+      when:
+        - expected_os_family == "windows"
+        - logical_name != "DC01"
