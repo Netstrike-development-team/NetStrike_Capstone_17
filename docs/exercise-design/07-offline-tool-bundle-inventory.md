@@ -29,8 +29,8 @@ as a resolved version.
 | Offline artifact delivery | Scenario VMs have no Internet; team can push files to them; no restrictions reported on approach | Stage dependencies/installers/configuration and document the chosen secure transfer, checksum verification, and installation workflow |
 | Student-funded software | No paid software or public-cloud services are required from the student team | Use the Cyber Range-provided Splunk educational license and free/open-source or project-owned components; verify applicable evaluation terms |
 | Project runtime package lock and wheelhouse | Not produced | Resolve all runtime dependencies to exact versions, acquire wheels and metadata, record hashes/licenses, and install from the wheelhouse with network disabled |
-| Ansible collections and other system installers | Not inventoried in repository | Pin `ansible-core` and `ansible.windows`; record exact artifacts, hashes, licenses, and offline installation commands |
-| Portal network independence | Not verified; portal implementation is not present in the repository | Audit the delivered portal for CDN, external API, cloud, and online package dependencies; test the built portal with Internet access disabled |
+| Ansible collections and other system installers | `citef-config/requirements.yml` pins `ansible.windows` and `microsoft.ad`; `citef-config/requirements-controller.txt` constrains `ansible-core`; build-time archives and resolved wheel versions are recorded in the generated bundle inventory | Review generated versions, hashes, and licenses, then validate installation on the target VM; system installers remain unselected |
+| Portal network independence | Dashboard implementation and static assets are in the repository; external dependency audit and disconnected target test are not recorded | Audit the delivered portal for CDN, external API, cloud, and online package dependencies; test the built portal with Internet access disabled |
 | Clean offline installation | Not tested | Complete and record the procedure in [Offline installation test record](#offline-installation-test-record) on clean amd64 test VMs matching selected target images, with Internet access disabled |
 | Versioned release bundle | Not built | Include source/release archive, locked Python wheels, pinned Ansible collections, required signed installers/configuration, Splunk inputs and field mappings, playbooks, synthetic fixtures, known-good manifests, and installation/readiness/removal instructions |
 | Artifact licensing and transfer | Team owns software selection and transfer approach; use of licensed/evaluation artifacts must remain license-compliant | Record license/owner, approval where required, and transfer eligibility for each artifact; keep proprietary installers, secrets, and credentials out of Git |
@@ -80,12 +80,14 @@ be included on exercise VMs unless operationally required.
 
 ## System tools, collections, installers, and project configuration
 
-No active Ansible collection requirements file, package lock/wheelhouse,
-Splunk/Universal Forwarder installer, or Sysmon binary is present in the
-current repository inventory. The `citef-config/` directory currently contains
-only a placeholder, and the infrastructure description is not a tested
-deployment manifest. Do not infer that Wazuh, Elastic, or another SIEM in
-legacy documentation is part of the approved Splunk-based MVP.
+The Ansible collection requirements and configuration source are present, and
+the workflow now records downloaded collection metadata and resolved Python
+artifacts in each generated bundle. A release bundle has not yet been produced
+or tested on a target VM. No Splunk/Universal Forwarder installer or Sysmon
+binary is present in the current repository inventory. The infrastructure
+description is not a tested deployment manifest. Do not infer that Wazuh,
+Elastic, or another SIEM in legacy documentation is part of the approved
+Splunk-based MVP.
 
 | Name | Version | Source / owner | License | SHA-256 | Destination VM | Offline installation method |
 |---|---|---|---|---|---|---|
