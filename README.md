@@ -34,13 +34,13 @@ encryption.
 | Need | MVP choice |
 |---|---|
 | Scenario controller and portal | Python 3.11, FastAPI, SQLite, server-rendered web UI |
-| SIEM | Cyber Range-provided Splunk Enterprise |
+| SIEM | Cyber Range-provided Splunk Enterprise 10.0.1; capacity limits are recorded in the [CITEF decision log](docs/exercise-design/06-citef-requirements-and-approval.md) |
 | Windows collection | Splunk Universal Forwarder, Sysmon, Windows audit and PowerShell logs |
 | Endpoint response | NetStrike allowlisted safe actions; no commercial EDR dependency |
 | Infrastructure configuration | Ansible over SSH/WinRM plus PowerShell where required |
 | Cloud stage | Project-owned stateful Python mock; no AWS or LocalStack |
 | Impact stage | Marker files and reversible moves inside disposable fixtures; no encryption |
-| Offline installation | Versioned Python wheelhouse, Ansible collections, installers, configs, and checksums pushed into the range |
+| Offline installation | Staged and verified artifacts; see the [bundle status and installation guide](docs/offline-bundle.md) |
 
 CALDERA, GHOSTS, Wazuh/Elastic, public cloud, and a custom SIEM are outside the
 MVP. They may be reconsidered only after the complete blue-team exercise works.
@@ -66,6 +66,11 @@ supported MVP behavior.
 
 The exercise design, shared event contract, safe-action contract, and safe
 identity, endpoint/AD, mock-cloud, and impact/recovery controls have been built.
+Offline Ansible provisioning and manifest validation are implemented, but have
+not yet been exercised against CITEF VMs. The current CI bundle contains the
+Python runtime/dependencies only; the complete source/runtime/collection
+release bundle and normalized portal-event forwarding remain open, as does
+end-to-end telemetry acceptance.
 The next delivery goal is a complete identity vertical
 slice: start a run, deliver an inject, investigate it in Splunk, take a safe
 containment action, score the checkpoint, export evidence, and restore the

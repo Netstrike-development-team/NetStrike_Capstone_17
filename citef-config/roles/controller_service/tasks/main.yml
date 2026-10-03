@@ -1,0 +1,243 @@
+---
+- name: Require runtime-injected portal credentials and TLS key
+  ansible.builtin.assert:
+    that:
+      - controller_service_tokens is mapping
+      - controller_service_tokens | length > 0
+      - controller_readiness_token in controller_service_tokens
+      - controller_service_tokens[controller_readiness_token].role == "facilitator"
+      - controller_identity_audit_key is string
+      - controller_identity_audit_key | length >= 32
+      - controller_tls_private_key_pem is string
+      - controller_tls_private_key_pem | length > 0
+      - controller_readiness_token is string
+      - controller_readiness_token | length >= 32
+      - "'\n' not in controller_identity_audit_key"
+      - "'\r' not in controller_identity_audit_key"
+    fail_msg: "Inject portal tokens, audit key, TLS key, and readiness token through the approved secret manager."
+  no_log: true
+
+- name: Define controller release and artifact paths
+  ansible.builtin.set_fact:
+    controller_offline_root: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}"
+    controller_release_path: "/opt/netstrike/releases/{{ deployment_id }}-{{ offline_artifacts.controller_source.sha256 | lower }}"
+    controller_wheelhouse_path: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ offline_artifacts.python_runtime.requirements_lock.file | dirname }}/wheelhouse"
+  changed_when: false
+
+- name: Create the unprivileged portal service account
+  ansible.builtin.user:
+    name: netstrike
+    system: true
+    create_home: false
+    shell: /usr/sbin/nologin
+    home: /var/lib/netstrike
+
+- name: Create protected controller directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - {path: /opt/netstrike, mode: "0755"}
+    - {path: /opt/netstrike/releases, mode: "0755"}
+    - {path: /opt/netstrike/runtime, mode: "0755"}
+    - {path: /opt/netstrike/offline, mode: "0755"}
+    - {path: /opt/netstrike/wheelhouse, mode: "0755"}
+    - {path: /etc/netstrike, mode: "0700"}
+    - {path: /var/lib/netstrike, owner: netstrike, group: netstrike, mode: "0750"}
+    - {path: /var/lib/netstrike/fixtures, owner: netstrike, group: netstrike, mode: "0750"}
+
+- name: Stage the approved application source archive
+  ansible.builtin.copy:
+    src: "{{ controller_offline_root }}/{{ offline_artifacts.controller_source.file }}"
+    dest: /opt/netstrike/offline/application-source.tar.gz
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Extract the application release
+  ansible.builtin.unarchive:
+    src: /opt/netstrike/offline/application-source.tar.gz
+    dest: "{{ controller_release_path }}"
+    remote_src: true
+    creates: "{{ controller_release_path }}/dashboard/app.py"
+
+- name: Require the staged release to contain its service entry point and fixtures
+  ansible.builtin.stat:
+    path: "{{ controller_release_path }}/{{ item }}"
+  loop:
+    - dashboard/app.py
+    - orchestrator/scenarios/identity-slice.v1.json
+    - orchestrator/fixtures/identity-profiles.v1.json
+  register: controller_source_contents
+
+- name: Fail when the source archive is incomplete
+  ansible.builtin.assert:
+    that: item.stat.exists and item.stat.isreg
+    fail_msg: "The approved controller source archive is missing {{ item.item }}."
+  loop: "{{ controller_source_contents.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+
+- name: Stage the portable Python runtime
+  ansible.builtin.copy:
+    src: "{{ controller_offline_root }}/{{ offline_artifacts.python_runtime.archive.file }}"
+    dest: /opt/netstrike/offline/python-runtime.tar.gz
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Extract the portable Python runtime
+  ansible.builtin.unarchive:
+    src: /opt/netstrike/offline/python-runtime.tar.gz
+    dest: /opt/netstrike/runtime
+    remote_src: true
+    creates: /opt/netstrike/runtime/python/bin/python3.11
+
+- name: Stage the hash-pinned offline Python wheelhouse
+  ansible.builtin.copy:
+    src: "{{ controller_wheelhouse_path }}/"
+    dest: /opt/netstrike/wheelhouse/
+    owner: root
+    group: root
+    mode: preserve
+
+- name: Stage the hash-pinned Python requirements lock
+  ansible.builtin.copy:
+    src: "{{ controller_offline_root }}/{{ offline_artifacts.python_runtime.requirements_lock.file }}"
+    dest: /opt/netstrike/requirements.lock
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Create the isolated application virtual environment
+  ansible.builtin.command:
+    argv:
+      - /opt/netstrike/runtime/python/bin/python3.11
+      - -m
+      - venv
+      - /opt/netstrike/venv
+    creates: /opt/netstrike/venv/bin/uvicorn
+
+- name: Install hash-pinned application requirements without network access
+  ansible.builtin.pip:
+    requirements: /opt/netstrike/requirements.lock
+    executable: /opt/netstrike/venv/bin/pip
+    extra_args: "--no-index --find-links=/opt/netstrike/wheelhouse --require-hashes"
+  environment:
+    PIP_NO_INDEX: "1"
+
+- name: Link the selected controller release
+  ansible.builtin.file:
+    src: "{{ controller_release_path }}"
+    dest: /opt/netstrike/current
+    state: link
+    force: true
+  notify: Restart NetStrike portal
+
+- name: Install the controller TLS certificate and trusted CA
+  ansible.builtin.copy:
+    src: "{{ controller_offline_root }}/{{ item.source.file }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - {source: "{{ controller.tls_certificate }}", dest: /etc/netstrike/tls.crt}
+    - {source: "{{ controller.tls_ca }}", dest: /etc/netstrike/tls-ca.pem}
+  notify: Restart NetStrike portal
+
+- name: Install the controller TLS private key
+  ansible.builtin.copy:
+    content: "{{ controller_tls_private_key_pem }}"
+    dest: /etc/netstrike/tls.key
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  notify: Restart NetStrike portal
+
+- name: Verify the controller certificate chain
+  ansible.builtin.command:
+    argv:
+      - openssl
+      - verify
+      - -CAfile
+      - /etc/netstrike/tls-ca.pem
+      - /etc/netstrike/tls.crt
+  register: controller_certificate_check
+  changed_when: false
+
+- name: Require the TLS certificate to match its private key
+  ansible.builtin.command:
+    argv: [openssl, x509, -in, /etc/netstrike/tls.crt, -pubkey, -noout]
+  register: controller_certificate_public_key
+  changed_when: false
+
+- name: Read the public key derived from the controller private key
+  ansible.builtin.command:
+    argv: [openssl, pkey, -in, /etc/netstrike/tls.key, -pubout]
+  register: controller_private_key_public_key
+  changed_when: false
+  no_log: true
+
+- name: Assert the TLS certificate and private key match
+  ansible.builtin.assert:
+    that:
+      - controller_certificate_public_key.stdout == controller_private_key_public_key.stdout
+    fail_msg: "The controller TLS certificate does not match its injected private key."
+  no_log: true
+
+- name: Install the protected portal environment
+  ansible.builtin.template:
+    src: controller.env.j2
+    dest: /etc/netstrike/controller.env
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  notify: Restart NetStrike portal
+
+- name: Install the hardened systemd portal service
+  ansible.builtin.template:
+    src: netstrike-portal.service.j2
+    dest: /etc/systemd/system/netstrike-portal.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart NetStrike portal
+
+- name: Enable and start the NetStrike portal
+  ansible.builtin.systemd_service:
+    name: netstrike-portal.service
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Apply changed portal configuration before readiness checks
+  ansible.builtin.meta: flush_handlers
+
+- name: Verify the local controller readiness endpoint
+  ansible.builtin.uri:
+    url: "{{ controller.readiness_url }}"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ controller_readiness_token }}"
+    return_content: true
+    status_code: 200
+    validate_certs: true
+    ca_path: /etc/netstrike/tls-ca.pem
+    timeout: 30
+  register: controller_local_readiness
+  no_log: true
+
+- name: Require controller application and event ledger readiness
+  ansible.builtin.assert:
+    that:
+      - controller_local_readiness.json.scope == 'local_application_only'
+      - controller_local_readiness.json.ready_to_prepare | bool
+      - not (controller_local_readiness.json.external_readiness_verified | bool)
+    fail_msg: "Controller baseline readiness failed; exercise admission remains blocked."
+  no_log: true

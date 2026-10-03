@@ -8,6 +8,8 @@
 
 **Cyber Range response received:** September 24, 2026
 
+**Additional environment constraints confirmed:** October 2, 2026
+
 **Status:** Scope, audience, objectives, and safety approach accepted with changes. Tool details, final topology/configuration, and dates coordinated with Latifa remain follow-up work.
 
 ## Purpose
@@ -52,7 +54,7 @@ decision owner. A blank row means the decision remains pending.
 | Learning objectives | Five objectives: triage, timeline, identity/endpoint containment, mock-cloud containment, recovery/communication | Approved | Cyber Range, 2026-09-24 | Details may be tuned during rehearsal |
 | Decision model | Four deterministic checkpoints with contained/adverse variants | Approved | Cyber Range, 2026-09-24 | — |
 | Simulation control | MSEL-driven automation with manual facilitator fallback | Approved | Cyber Range, 2026-09-24 | — |
-| SIEM | Cyber Range-provided Splunk; the project supplies sources, field mappings, searches, and dashboards | Approved with follow-up | Cyber Range, 2026-09-24 | Enterprise educational license with stated 10 GB limit; exact version/limit semantics remain to confirm |
+| SIEM | Cyber Range-provided Splunk; the project supplies sources, field mappings, searches, and dashboards | Approved with follow-up | Cyber Range, 2026-09-24; version and capacity confirmed 2026-10-02 | Splunk Enterprise 10.0.1; maximum 10 GB ingestion per day and 300 GB disk size |
 | Cloud | Stateful Python mock only; no public-cloud account | Approved | Cyber Range, 2026-09-24 | — |
 | Impact | Marker/move simulation on disposable fixtures; no encryption | Approved | Cyber Range, 2026-09-24 | — |
 | Reset approach | Cyber Range snapshot restore followed by readiness validation | Approved with change | Cyber Range, 2026-09-24 | No 20-minute Ansible reset target is required |
@@ -95,14 +97,12 @@ Splunk separate while consolidating project-owned services.
 
 | Logical asset | Preferred placement | Can consolidate with | Confirmed CITEF mapping/specification |
 |---|---|---|---|
-| `CTRL01` | Linux VM controlled by exercise staff | `IDP01`, `HELPDESK01`, `CLOUD01`, `FILE01` | Team may create any required amd64 Linux VM; final image/spec pending |
-| `IDP01` | Project service | `CTRL01` | Pending |
-| `HELPDESK01` | Project service | `CTRL01` | Pending |
-| `CLOUD01` | Stateful Python mock | `CTRL01` | Pending |
-| `FILE01` | Disposable fixture storage | `CTRL01` or `FIN-WS01` | Pending |
-| `DC01` | Separate Windows Server VM | None preferred | Windows Server image available; team configures AD and telemetry |
-| `FIN-WS01` | Separate Windows workstation VM | None preferred | Windows 11 image available; team configures telemetry and participant access |
-| `SPLUNK01` | Splunk Enterprise VM | None preferred | Educational Enterprise license available with stated 10 GB limit; exact image/version pending |
+| `CTRL01` | Linux amd64 controller and project services | `IDP01`, `HELPDESK01`, `CLOUD01`, `FILE01` | Proposed role; exact CITEF image/build and sizing pending |
+| `IDP01`, `HELPDESK01`, `CLOUD01` | Project services, not necessarily separate VMs | `CTRL01` | Logical services; placement and resource sizing to confirm |
+| `FILE01` | Disposable fixture storage | `CTRL01` or separate Linux VM | Proposed role; confirm storage and separation |
+| `DC01` | Separate Windows Server amd64 VM | None preferred | Proposed role; exact CITEF image/build and sizing pending; team configures AD, DNS, and telemetry |
+| `FIN-WS01` | Separate Windows 11 amd64 VM | None preferred | Proposed role; exact CITEF image/build and sizing pending; team configures telemetry and participant access |
+| `SPLUNK01` | Range-provided Splunk Enterprise VM | None preferred | Product/version confirmed above; underlying OS/image, sizing, and ownership pending |
 
 Confirm for every supplied VM:
 
@@ -113,29 +113,42 @@ Confirm for every supplied VM:
 - hostname/IP persistence across reset; and
 - whether nested virtualization or containers are permitted.
 
+The Cyber Range confirmed on October 2 that the team may create amd64 VMs and
+that Windows 11, Windows Server, and multiple Linux distributions are
+available. Candidate images, proposed network values, and host assignments
+are maintained in the
+[`citef-config` topology guide](../../citef-config/README.md) and example
+manifest. They are planning values, not CITEF allocations; this questionnaire
+tracks confirmation of exact image/build, sizing, network overlap, and
+approved assignments before inventory generation.
+
 ### Network, DNS, and time
 
 | Requirement | CITEF answer | Evidence/owner |
 |---|---|---|
-| Exercise subnet and address allocation | Pending | — |
-| Internet-egress policy and enforcement point | Scenario VMs deliberately have no Internet access | Cyber Range, 2026-09-24 |
+| Planning address allocation | Candidate CIDRs, domain, and host assignments are in the `citef-config` topology guide and example manifest. Verify no conflict and obtain CITEF approval before use. | Team proposal, 2026-10-02 |
+| Internet access | Scenario VMs do not have Internet access | Cyber Range confirmation, 2026-10-02 |
+| Egress policy enforcement point | Deny-by-default is the delivery design; record how the platform enforces it and who verifies it | Team/Cyber Range before deployment |
 | Management paths that remain reachable during endpoint isolation | Pending | — |
-| DNS service and approved internal exercise domain | Team may configure DNS through Ansible; domain remains to select | Patrick |
+| DNS service and exercise domain | Team configures DNS through Ansible; the candidate domain, host, and address are in the `citef-config` topology guide. Confirm assignments and permitted DNS paths | Team proposal, 2026-10-02 |
 | Firewall changes the project may request or automate | Pending | — |
-| NTP/time source for Windows, Linux, controller, and Splunk | Team may configure NTP through Ansible; authoritative source remains to select | Patrick |
+| NTP/time source for Windows, Linux, controller, and Splunk | Team configures NTP through Ansible; the candidate source and domain-time design are in the `citef-config` topology guide. Confirm assignments and permitted time-service paths | Team proposal, 2026-10-02 |
 | Maximum expected clock skew | Pending | — |
 | Reserved address to represent the fictitious threat source | `203.0.113.77` proposed | — |
 
-The exercise requires Internet egress to be denied by default during delivery.
-Any development-time package access must be a separately approved management
-path and must not be reachable by participants or simulation modules.
+Scenario VMs have no Internet access per the Cyber Range. Any dependencies,
+updates, or licensed artifacts must be staged and transferred through the
+approved offline process. The proposed `10.77.1.0/24` management subnet is a
+planning value only; confirm its allocation and permitted control paths with
+CITEF. Participants and simulation modules must not be able to use management
+access.
 
 ### Splunk
 
 | Question | CITEF answer | Evidence/owner |
 |---|---|---|
-| Splunk product, edition, and exact version | Splunk Enterprise; exact version pending | Cyber Range/Patrick |
-| License constraints during development and delivery | Educational license with a stated 10 GB data limit; whether this is per day or another limit must be confirmed | Cyber Range/Patrick |
+| Splunk product, edition, and exact version | Splunk Enterprise 10.0.1 | Cyber Range confirmation, 2026-10-02 |
+| License and capacity constraints | See the Splunk decision above; confirm administration, retention, and source allocation | Cyber Range/Patrick |
 | VM owner and Splunk administrator | Pending | — |
 | Allowed ingestion methods: HEC, Universal Forwarder, syslog, file monitor | Pending | — |
 | Available indexes and whether a dedicated index is permitted | Pending | — |

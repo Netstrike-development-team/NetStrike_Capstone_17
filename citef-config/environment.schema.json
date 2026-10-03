@@ -1,0 +1,279 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://netstrike.example/schemas/citef-environment.schema.json",
+  "title": "Approved CITEF environment manifest",
+  "description": "Structure and local constraints for the non-secret environment configuration.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "network",
+    "assets",
+    "identity_baseline",
+    "fixtures",
+    "offline_artifacts",
+    "splunk",
+    "controller",
+    "snapshots"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "network": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "exercise_cidr",
+        "management_cidr",
+        "internet_egress",
+        "dns_servers",
+        "ntp_servers",
+        "reverse_dns_zone",
+        "domain_dns_name",
+        "max_clock_skew_seconds",
+        "egress_verified_by",
+        "egress_verified_at"
+      ],
+      "properties": {
+        "exercise_cidr": {"type": "string", "pattern": "^[0-9.]+/[0-9]{1,2}$"},
+        "management_cidr": {"type": "string", "pattern": "^[0-9.]+/[0-9]{1,2}$"},
+        "internet_egress": {"const": "deny"},
+        "dns_servers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "format": "ipv4"}
+        },
+        "ntp_servers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "format": "ipv4"}
+        },
+        "reverse_dns_zone": {"type": "string", "minLength": 1},
+        "domain_dns_name": {
+          "type": "string",
+          "pattern": "^(?=.{1,253}$)(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$"
+        },
+        "max_clock_skew_seconds": {"type": "integer", "minimum": 0, "maximum": 300},
+        "egress_verified_by": {"type": "string", "minLength": 1},
+        "egress_verified_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "assets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "address",
+          "dns_name",
+          "os_family",
+          "os_image_assumption",
+          "os_version_assumption",
+          "connection",
+          "port",
+          "logical_assets",
+          "required_services"
+        ],
+        "properties": {
+          "name": {"enum": ["CTRL01", "DC01", "FIN-WS01", "SPLUNK01", "FILE01"]},
+          "address": {"type": "string", "format": "ipv4"},
+          "dns_name": {"type": "string", "minLength": 1},
+          "os_family": {"enum": ["linux", "windows"]},
+          "os_image_assumption": {"type": "string", "minLength": 1},
+          "os_version_assumption": {"type": "string", "minLength": 1},
+          "splunk_enterprise_version": {"type": "string", "minLength": 1},
+          "connection": {"enum": ["ssh", "winrm"]},
+          "port": {"type": "integer", "minimum": 1, "maximum": 65535},
+          "logical_assets": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": ["CTRL01", "DC01", "FIN-WS01", "SPLUNK01", "FILE01", "IDP01", "HELPDESK01", "CLOUD01"]
+            }
+          },
+          "required_services": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "identity_baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["domain_dns_name", "search_base_dn", "organizational_units", "groups", "users"],
+      "properties": {
+        "domain_dns_name": {"type": "string", "minLength": 1},
+        "search_base_dn": {"type": "string", "minLength": 1},
+        "organizational_units": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1, "pattern": "^[^,=]+$"}
+        },
+        "groups": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "users": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["sam_account_name", "enabled", "member_of"],
+            "properties": {
+              "sam_account_name": {"type": "string", "minLength": 1},
+              "display_name": {"type": "string", "minLength": 1},
+              "enabled": {"type": "boolean"},
+              "member_of": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        }
+      }
+    },
+    "fixtures": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"}
+        }
+      }
+    },
+    "offline_artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["directory", "controller_source", "python_runtime", "universal_forwarder", "sysmon"],
+      "properties": {
+        "directory": {"type": "string", "minLength": 1},
+        "controller_source": {"$ref": "#/$defs/artifact"},
+        "python_runtime": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["archive", "requirements_lock"],
+          "properties": {
+            "archive": {"$ref": "#/$defs/artifact"},
+            "requirements_lock": {"$ref": "#/$defs/artifact"}
+          }
+        },
+        "universal_forwarder": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["version", "linux_deb", "windows_msi", "receiver_ca"],
+          "properties": {
+            "version": {"type": "string", "minLength": 1},
+            "linux_deb": {"$ref": "#/$defs/artifact"},
+            "windows_msi": {"$ref": "#/$defs/artifact"},
+            "receiver_ca": {"$ref": "#/$defs/artifact"}
+          }
+        },
+        "sysmon": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["version", "executable", "config"],
+          "properties": {
+            "version": {"type": "string", "minLength": 1},
+            "executable": {"$ref": "#/$defs/artifact"},
+            "config": {"$ref": "#/$defs/artifact"}
+          }
+        }
+      }
+    },
+    "splunk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rest_url", "version", "forwarder_receiver", "windows_index", "linux_index", "required_sources"],
+      "properties": {
+        "rest_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+        "version": {"const": "10.0.1"},
+        "forwarder_receiver": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["host", "port"],
+          "properties": {
+            "host": {"type": "string", "minLength": 1},
+            "port": {"const": 9997}
+          }
+        },
+        "windows_index": {"type": "string", "minLength": 1},
+        "linux_index": {"type": "string", "minLength": 1},
+        "required_sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "probe_query", "expected_event_id"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1},
+              "probe_query": {"type": "string", "minLength": 1, "pattern": "\\{run_id\\}"},
+              "expected_event_id": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      }
+    },
+    "controller": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["listen_port", "readiness_url", "sso_allowed_origins", "tls_certificate", "tls_ca", "emergency_stop"],
+      "properties": {
+        "listen_port": {"type": "integer", "minimum": 1, "maximum": 65535},
+        "readiness_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+        "sso_allowed_origins": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "format": "uri", "pattern": "^https://"}
+        },
+        "tls_certificate": {"$ref": "#/$defs/artifact"},
+        "tls_ca": {"$ref": "#/$defs/artifact"},
+        "emergency_stop": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["verified", "operator", "contact_channel", "verified_at"],
+          "properties": {
+            "verified": {"const": true},
+            "operator": {"type": "string", "minLength": 1},
+            "contact_channel": {"type": "string", "minLength": 1},
+            "verified_at": {"type": "string", "format": "date-time"}
+          }
+        }
+      }
+    },
+    "snapshots": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["snapshot_ids"],
+      "properties": {
+        "snapshot_ids": {
+          "type": "object",
+          "additionalProperties": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "sha256"],
+      "properties": {
+        "file": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"}
+      }
+    }
+  }
+}
