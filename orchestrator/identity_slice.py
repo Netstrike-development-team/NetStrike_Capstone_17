@@ -30,7 +30,7 @@ from .checkpoints import (
     evaluate_identity_endpoint_containment,
     evaluate_identity_triage,
 )
-from .controller import AutomationResult, RunState, ScenarioController
+from .controller import AutomationResult, ControllerError, RunState, ScenarioController
 from .cloud import CLOUD_ACTIONS, CloudStage
 from .impact import ImpactStage
 from .mfa import ScheduledMfa
@@ -836,13 +836,32 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
         )
         return result
 
-    def fail_safe_stop(self, reason: str) -> None:
-        """Stop controller delivery and every active exercise adapter."""
+    def fail_safe_stop(self, reason: str, *, operator=None) -> None:
+        """Attempt every safety latch even when one audit sink is unavailable."""
+
+        # A safety boundary must try remaining latches after any handler/audit error.
+        # pylint: disable=broad-exception-caught
 
         with self.state_lock:
-            self.controller.fail_safe_stop(reason)
-            self.mfa.stop()
-            operator = entity("facilitator", "facilitator", role="facilitator")
+            if not reason.strip():
+                raise ControllerError("stop reason cannot be empty")
+            if operator is not None and operator.get("role") not in {
+                "facilitator", "technical_operator",
+            }:
+                raise ControllerError("stop requires an exercise-control role")
+            if self.controller.state == RunState.COMPLETED:
+                raise ControllerError("completed run cannot be stopped")
+            errors = []
+            if self.controller.state != RunState.STOPPED:
+                try:
+                    self.controller.fail_safe_stop(reason)
+                except Exception as exc:  # Safety cleanup must continue after audit failure.
+                    errors.append(exc)
+            try:
+                self.mfa.stop()
+            except Exception as exc:
+                errors.append(exc)
+            operator = operator or entity("facilitator", "facilitator", role="facilitator")
             adapters = (
                 self.automation.adapter,
                 self.identity_adapter,
@@ -853,7 +872,14 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
             if self.impact:
                 adapters += (self.impact.adapter, self.impact.automation_adapter)
             for adapter in adapters:
-                adapter.activate_fail_safe(self.run_id, operator, reason)
+                try:
+                    adapter.activate_fail_safe(self.run_id, operator, reason)
+                except Exception as exc:
+                    errors.append(exc)
+            if errors:
+                raise ControllerError(
+                    "run stopped; safety cleanup or audit incomplete"
+                ) from errors[0]
 
     def reset(self, *, new_run_id: str | None = None) -> None:
         """Reset app state for a new run after stop/completion."""

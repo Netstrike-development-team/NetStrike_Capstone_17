@@ -146,6 +146,21 @@ Start-only clients safely prepare first. This does not certify Splunk, VM
 snapshots or participant admission. See
 [guarded-start usage and failure handling](../docs/application-readiness.md).
 
+## Supervised exercise clock
+
+The ASGI lifespan supervises the existing one-second scheduler driver. Staff can
+inspect `GET /api/facilitator/clock` (also included in staff state); technical
+health is not exposed in participant state. A failed tick, invalid monotonic
+clock or heartbeat older than 30 seconds latches a safety stop before further
+timed/interactive delivery. Shutdown drains in-flight ticks and stops active
+play rather than declaring completion. Direct local CLI/service rehearsals stay
+deterministic and are explicitly `unmonitored`.
+
+Run one application process/ASGI worker per exercise, not multiple workers sharing
+SQLite. A fault requires evidence preservation and successful archive/reset;
+restarting a driver cannot clear the fault on the same live service/run.
+See [clock health, recovery and Patrick's handoff](../docs/exercise-clock.md).
+
 # Optional identity + mock-cloud exercise
 
 

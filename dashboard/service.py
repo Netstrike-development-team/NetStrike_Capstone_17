@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import secrets
 import sqlite3
+import time
 import uuid
+from functools import wraps
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 from orchestrator.aar import build_bundle, build_report, validate_judgment, participant_feedback
 from orchestrator.checkpoints import (
@@ -26,6 +28,26 @@ from .identity_audit import IdentityAuditRecorder
 from .sso import SsoExperience, SsoExperienceConfig, SsoExperienceError
 from .store import PortalStore
 from .readiness import application_readiness
+from .clock import ClockSupervisor
+
+
+def runtime_mutation(method):
+    """Use one lock order (run then scheduler/adapter) and guard clock health."""
+    @wraps(method)
+    def guarded(self, *args, **kwargs):
+        with self.run.state_lock:
+            self.clock.require_healthy()
+            return method(self, *args, **kwargs)
+    return guarded
+
+
+def run_snapshot(method):
+    """Prevent a snapshot from crossing a concurrent tick or reset boundary."""
+    @wraps(method)
+    def locked(self, *args, **kwargs):
+        with self.run.state_lock:
+            return method(self, *args, **kwargs)
+    return locked
 
 
 class PortalService:  # pylint: disable=too-many-public-methods
@@ -42,6 +64,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
         profile_path: Path | str | None = None,
         impact_root: Path | str | None = None,
         identity_audit_key: bytes | None = None,
+        monotonic: Callable[[], float] = time.monotonic,
     ) -> None:
         self.store = store
         options: dict[str, Any] = {
@@ -55,7 +78,8 @@ class PortalService:  # pylint: disable=too-many-public-methods
         if impact_root is not None:
             options["impact_root"] = impact_root
         self.run = IdentitySliceRun(**options)
-        self.scheduler = ScenarioScheduler(self.run.controller)
+        self.scheduler = ScenarioScheduler(self.run.controller, monotonic=monotonic)
+        self.clock = ClockSupervisor(self, monotonic)
         self.identity_audit = IdentityAuditRecorder(
             store,
             audit_key=identity_audit_key or secrets.token_bytes(32),
@@ -106,6 +130,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
             blockers = report["blockers"] or ["preparation_incomplete"]
             raise ControllerError("Local readiness blocked: " + ", ".join(blockers))
 
+    @runtime_mutation
     def prepare_run(self, principal: PortalPrincipal) -> dict[str, Any]:
         """Audit and gate preparation; failed setup requires repair/reset, not start."""
         with self.run.state_lock:
@@ -114,6 +139,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
             self._check_readiness(principal, "start")
             return self.facilitator_state()
 
+    @runtime_mutation
     def start_run(self, principal: PortalPrincipal) -> dict[str, Any]:
         """Recheck just before start, preparing first for existing Start-only clients."""
         with self.run.state_lock:
@@ -123,6 +149,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
             self.scheduler.start()
             return self.facilitator_state()
 
+    @run_snapshot
     def participant_state(self) -> dict[str, Any]:
         """Return only participant-visible injects and non-sensitive run metadata."""
 
@@ -180,12 +207,14 @@ class PortalService:  # pylint: disable=too-many-public-methods
                 "next_sequence": page[-1]["sequence"] if page else after_sequence,
             }
 
+    @run_snapshot
     def facilitator_state(self) -> dict[str, Any]:
         """Return controller state, all events, submissions, and verifier state."""
 
         snapshot = self.run.controller.snapshot()
         return {
             "controller": snapshot,
+            "clock": self.clock.snapshot(),
             "msel": [
                 {
                     "item_id": item.item_id,
@@ -216,6 +245,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
             "impact": self.run.impact.staff_state() if self.run.impact else {"enabled": False},
         }
 
+    @runtime_mutation
     def capture_identity_interaction(
         self,
         source_service: str,
@@ -454,6 +484,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
                 raise ValueError("selected scenario has no cloud stage")
             return self.run.cloud.view()
 
+    @runtime_mutation
     def submit_cloud_assessment(self, principal: PortalPrincipal, **payload) -> dict[str, Any]:
         """Retain the learner's assessment without returning hidden grading logic."""
         with self.run.state_lock:
@@ -470,6 +501,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
                 "run_id": self.run.run_id,
             }
 
+    @runtime_mutation
     def resolve_cloud(self):
         """Resolve cloud grading and its branch under the shared mutation lock."""
         with self.run.state_lock:
@@ -483,11 +515,13 @@ class PortalService:  # pylint: disable=too-many-public-methods
     def impact_view(self):
         return self.require_impact().view()
 
+    @runtime_mutation
     def recover_fixture(self, principal, **payload):
         return self.require_impact().recover(
             actor=entity("participant", principal.actor_id, role=principal.role), **payload,
         )
 
+    @runtime_mutation
     def resolve_impact(self):
         return self.require_impact().resolve()
 
@@ -532,6 +566,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
                                  "Approve only if you initiated it.")
         return state
 
+    @runtime_mutation
     def sso_sign_in(self, username: Any, credential: Any) -> dict[str, Any]:
         """Submit one contained synthetic sign-in attempt."""
 
@@ -543,6 +578,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
             self.run.mfa.advance(self.run.controller.elapsed_seconds)
             return self.sso_state()
 
+    @runtime_mutation
     def sso_decide_mfa(self, challenge_id: Any, decision: Any) -> dict[str, Any]:
         """Resolve the current synthetic MFA challenge."""
 
@@ -559,6 +595,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
                 "SSO changes are unavailable while exercise is paused or stopped"
             )
 
+    @runtime_mutation
     def decide_scheduled_mfa(
         self, principal: PortalPrincipal, challenge_id: Any, decision: Any,
     ) -> dict[str, Any]:
@@ -571,6 +608,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
         )
         return self.sso_state()
 
+    @runtime_mutation
     def sso_review_sessions(self) -> dict[str, Any]:
         """Show configured suspicious sessions after approved sign-in."""
 
@@ -639,10 +677,42 @@ class PortalService:  # pylint: disable=too-many-public-methods
             "sso_baseline_verified", "profile_baseline_verified", "scheduled_mfa_baseline_verified",
         )):
             raise RuntimeError("SSO/profile/MFA reset did not reach a clean baseline")
+        self.clock.reset()
+        state["clock"] = self.clock.snapshot()
         return state
+
+    @runtime_mutation
+    def control_run(self, operation: str, *args) -> dict[str, Any]:
+        """Staff routes use the same guarded mutation boundary as participant actions."""
+        controls = {
+            "pause": self.scheduler.pause,
+            "resume": self.scheduler.resume,
+            "advance": self.scheduler.advance_to,
+            "deliver": self.run.controller.deliver,
+            "skip": self.run.controller.skip,
+        }
+        if operation not in controls:
+            raise ControllerError("unsupported exercise control")
+        controls[operation](*args)
+        return self.facilitator_state()
+
+    @runtime_mutation
+    def resolve_dp2(self):
+        """Serialize checkpoint resolution with delivery and reset."""
+        return self.run.resolve_dp2()
+
+    @run_snapshot
+    def stop_run(self, reason: str, principal: PortalPrincipal) -> dict[str, Any]:
+        """Emergency stop remains available during a latched clock fault."""
+        if principal.role not in {"facilitator", "technical_operator"}:
+            raise ControllerError("stop requires an exercise-control role")
+        self.run.fail_safe_stop(reason, operator=entity("facilitator", principal.actor_id,
+                                                       role=principal.role))
+        return self.facilitator_state()
 
     # Action fields remain explicit so the service cannot trust client actor data.
     # pylint: disable=too-many-arguments
+    @runtime_mutation
     def submit_action(
         self,
         principal: PortalPrincipal,
@@ -667,6 +737,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
             dry_run=dry_run,
         )
 
+    @runtime_mutation
     def submit_dp1(
         self,
         principal: PortalPrincipal,
