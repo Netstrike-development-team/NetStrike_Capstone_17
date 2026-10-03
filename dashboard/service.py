@@ -29,6 +29,7 @@ from .sso import SsoExperience, SsoExperienceConfig, SsoExperienceError
 from .store import PortalStore
 from .readiness import application_readiness
 from .clock import ClockSupervisor
+from .support import SupportWorkflow
 
 
 def runtime_mutation(method):
@@ -92,6 +93,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
                 "simcorp-sso", payload
             ),
         )
+        self.support = SupportWorkflow(self)
 
     def readiness(self) -> dict[str, Any]:
         """Local pre-play inspection is not VM/Splunk readiness or admission approval."""
@@ -317,7 +319,9 @@ class PortalService:  # pylint: disable=too-many-public-methods
         """Atomically freeze a terminal snapshot plus its audit, before runtime reset."""
         identifier = str(uuid.uuid4())
         last_sequence = bundle["events"][-1]["sequence"] if bundle["events"] else 0
-        if self.run.sequencer.sequence != last_sequence:
+        if (self.run.sequencer.sequence != last_sequence
+                or [event["sequence"] for event in bundle["events"]]
+                != list(range(1, len(bundle["events"]) + 1))):
             raise ValueError("review archive requires consistent live ledger sequencing")
         builder = EventBuilder(
             EventContext(exercise_id=self.run.definition.exercise_id, run_id=self.run.run_id,

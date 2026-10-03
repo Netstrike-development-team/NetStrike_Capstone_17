@@ -12,7 +12,7 @@ from typing import Annotated, Any, Iterable
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response, status
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, ValidationError
 
 from orchestrator.controller import ControllerError
 from orchestrator.aar import RATINGS, render_markdown
@@ -45,6 +45,7 @@ FACILITATOR_ROLES = frozenset({"facilitator", "technical_operator"})
 IDENTITY_CAPTURE_ROLES = frozenset({"identity_capture_service"})
 MAX_IDENTITY_CAPTURE_BYTES = 16 * 1024
 MAX_SSO_REQUEST_BYTES = 4 * 1024
+MAX_SUPPORT_BYTES = 20 * 1024
 
 
 class StrictInput(BaseModel):
@@ -69,6 +70,35 @@ class Dp1Input(StrictInput):
     affected_identity: str = Field(min_length=1, max_length=256)
     classification: str = Field(min_length=1, max_length=256)
     evidence: list[EvidenceInput] = Field(min_length=1, max_length=20)
+
+
+class SupportRequestInput(StrictInput):
+    run_id: str = Field(min_length=1, max_length=128)
+    idempotency_key: str = Field(min_length=1, max_length=128)
+    objective_id: str = Field(pattern="^LO[1-5]$")
+    message: str = Field(min_length=1, max_length=1024, pattern=r"\S")
+
+
+class SupportReplyInput(StrictInput):
+    run_id: str = Field(min_length=1, max_length=128)
+    request_id: str = Field(min_length=1, max_length=128)
+    idempotency_key: str = Field(min_length=1, max_length=128)
+    kind: str = Field(pattern="^(hint|clarification|platform_issue)$")
+    message: str = Field(min_length=1, max_length=1024, pattern=r"\S")
+    objective_ids: list[Annotated[str, Field(pattern="^LO[1-5]$")]] = Field(min_length=1, max_length=5)
+
+
+async def support_input(request: Request, model):
+    """Bound streamed JSON before parsing; errors never echo private free text."""
+    body = bytearray()
+    async for chunk in request.stream():
+        if len(body) + len(chunk) > MAX_SUPPORT_BYTES:
+            raise HTTPException(status_code=413, detail="support payload is too large")
+        body.extend(chunk)
+    try:
+        return model.model_validate_json(bytes(body))
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail="invalid support payload fields") from exc
 
 
 class CloudAssessmentInput(StrictInput):
@@ -263,6 +293,7 @@ def create_app(
     simulated_user = authorize(frozenset({"simulated_user"}))
     mfa_facilitator = authorize(frozenset({"facilitator"}))
     evaluator = authorize(frozenset({"evaluator", "facilitator"}))
+    support_observer = authorize(frozenset({"evaluator", "facilitator", "technical_operator"}))
 
     def execute(operation):
         try:
@@ -457,6 +488,30 @@ def create_app(
         _principal: PortalPrincipal = Depends(participant),
     ) -> list[dict[str, Any]]:
         return service.participant_directory()
+
+    @app.get("/api/participant/support")
+    def participant_support(response: Response, principal: PortalPrincipal = Depends(participant)):
+        response.headers["Cache-Control"] = "no-store"
+        return execute(lambda: service.support.view(principal))
+
+    @app.post("/api/participant/support")
+    async def request_support(request: Request, principal: PortalPrincipal = Depends(participant)):
+        payload = await support_input(request, SupportRequestInput)
+        return await asyncio.to_thread(
+            execute, lambda: service.support.request(principal, **payload.model_dump())
+        )
+
+    @app.get("/api/facilitator/support")
+    def staff_support(response: Response, principal: PortalPrincipal = Depends(support_observer)):
+        response.headers["Cache-Control"] = "no-store"
+        return execute(lambda: service.support.view(principal, staff=True))
+
+    @app.post("/api/facilitator/support/replies")
+    async def reply_support(request: Request, principal: PortalPrincipal = Depends(facilitator)):
+        payload = await support_input(request, SupportReplyInput)
+        return await asyncio.to_thread(
+            execute, lambda: service.support.respond(principal, **payload.model_dump())
+        )
 
     @app.post("/api/participant/actions")
     def participant_action(

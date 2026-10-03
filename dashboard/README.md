@@ -121,6 +121,23 @@ Canonical delivered/approved/denied/expired/blocked/cancelled events are retaine
 in SQLite and existing exports, correlated with identity/session/action audit
 events. Live Splunk ingestion must still be verified in Patrick's environment.
 See [the developer demonstration and evidence handoff](../docs/scheduled-mfa-dev-handoff.md).
+
+## Human help requests (API foundation)
+
+Participants can ask for help through `/api/participant/support`; staff inspect
+the queue through `/api/facilitator/support` and author replies through
+`/api/facilitator/support/replies`. Learners see only their own threads. Replies
+are labeled hint, clarification or platform issue; no answers or grades are
+generated automatically. Run IDs and retry keys prevent stale requests and
+duplicate messages. Support evidence is retained in the staff AAR, review archive
+and existing private event spool.
+
+This PR adds the API and offline demo, **not browser forms**. Anna retains hint
+content and evaluator calibration; the existing consoles do not yet expose this
+workflow. `python -m dashboard.support_demo` is an inert preview;
+add `--execute` for a memory-only synthetic request/reply/archive/reset demo.
+See [API use, privacy and ownership](../docs/exercise-support.md).
+
 ## Staff run-review archives
 
 Staff review snapshots are now retained before application reset and can be
