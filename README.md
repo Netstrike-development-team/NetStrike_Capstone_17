@@ -54,6 +54,7 @@ schemas/               Shared versioned event contracts
 dashboard/             Existing participant/facilitator UI code
 detection/             Existing detection and scoring code
 citef-config/          Infrastructure and Ansible configuration
+docs/README.md         Index of guides, contracts, and planning snapshots
 docs/exercise-design/  Authoritative exercise design and delivery package
 docs/roadmap.md        Current schedule, ownership, and milestones
 ```
@@ -80,6 +81,7 @@ environment.
 
 See:
 
+- [Documentation index](docs/README.md)
 - [Exercise design package](docs/exercise-design/README.md)
 - [Architecture](docs/architecture.md)
 - [Roadmap and ownership](docs/roadmap.md)
