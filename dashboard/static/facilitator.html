@@ -37,6 +37,27 @@
 
     <section class="layout space-top">
       <div class="stack">
+        <details class="panel support-panel">
+          <summary id="support-title">Participant help requests · Staff only</summary>
+          <p>Write a human reply using the approved facilitator content. Each request gets one permanent reply. Technical operators can explain platform issues, not coach.</p>
+          <p>Choose the actual assistance kind and affected objectives. These labels do not assign a grade or change the exercise branch. Do not include secrets or real personal information.</p>
+          <p id="support-summary" class="muted" role="status" aria-live="polite">Connect to load exercise support.</p>
+          <form id="support-form" class="form-grid">
+            <label class="form-wide">Unanswered request<select name="request_id" required disabled><option value="">Select an unanswered request</option></select></label>
+            <label class="form-wide">Reply kind<select name="kind" required disabled><option value="clarification">Clarification</option><option value="hint">Hint</option><option value="platform_issue">Platform issue</option></select></label>
+            <fieldset class="form-wide support-objectives"><legend>Affected learning objectives (select at least one)</legend>
+              <label><input type="checkbox" name="objective_ids" value="LO1" disabled>LO1 · Triage the identity incident</label>
+              <label><input type="checkbox" name="objective_ids" value="LO2" disabled>LO2 · Reconstruct the intrusion</label>
+              <label><input type="checkbox" name="objective_ids" value="LO3" disabled>LO3 · Contain identity and endpoint access</label>
+              <label><input type="checkbox" name="objective_ids" value="LO4" disabled>LO4 · Determine and contain cloud data exposure</label>
+              <label><input type="checkbox" name="objective_ids" value="LO5" disabled>LO5 · Recover and communicate</label>
+            </fieldset>
+            <label class="form-wide">Reply to participant<textarea name="message" rows="3" required maxlength="1024" disabled></textarea></label>
+            <div class="controls form-wide"><button id="support-send" disabled>Record and send reply</button><button id="support-refresh" type="button" class="secondary">Refresh queue</button></div>
+          </form>
+          <h2>Assistance transcript</h2>
+          <div id="support-threads" class="timeline"><p class="empty">No authorized support queue loaded.</p></div>
+        </details>
         <article class="panel"><div class="panel-header"><div><h2>MSEL execution</h2><p>Ready items can be delivered or skipped explicitly.</p></div></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Item</th><th>Trigger</th><th>Status</th><th>Control</th></tr></thead><tbody id="msel-body"></tbody></table></div></article>
         <article class="panel"><div class="panel-header"><div><h2>Recent event ledger</h2><p>Controller, module, participant-action, and checkpoint evidence.</p></div></div><div id="event-log" class="event-log"><div class="empty">Connect to load events.</div></div></article>
       </div>

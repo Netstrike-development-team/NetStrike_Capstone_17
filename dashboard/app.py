@@ -26,6 +26,7 @@ from .auth import (
     TokenAuthenticator,
 )
 from .identity_audit import IdentityAuditError
+from .support import SupportEvidenceError
 from .origin import OriginAllowlist, OriginDeniedError
 from .service import PortalService
 from .sso import SsoBoundaryError, SsoExperienceError
@@ -298,6 +299,11 @@ def create_app(
     def execute(operation):
         try:
             return operation()
+        except SupportEvidenceError as exc:
+            # Distinguish possibly committed support writes from definite conflicts.
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
+            ) from exc
         except (
             ControllerError,
             ActionContractError,

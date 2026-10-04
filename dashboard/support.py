@@ -9,6 +9,10 @@ from orchestrator.support import (
 from shared.events import EventBuilder, EventContext, entity
 
 
+class SupportEvidenceError(ControllerError):
+    """Audit/acknowledgement failure: a write may have committed before the error."""
+
+
 class SupportWorkflow:
     """Communication only: never execute remediation, choose branches or grade."""
 
@@ -33,6 +37,8 @@ class SupportWorkflow:
             records = support_index(self._events())
             return {
                 "run_id": self.service.run.run_id,
+                "run_state": self.service.run.controller.state.value,
+                "principal_role": principal.role,
                 "requests": records if staff else participant_records(records, principal.actor_id),
                 "automatic_answers": False, "ratings_require_evaluator": True,
             }
@@ -92,10 +98,10 @@ class SupportWorkflow:
                     operator=entity("system", "exercise-support", role="technical_operator"),
                 )
             except ControllerError:  # Other latches were attempted despite partial audit failure.
-                raise ControllerError(
+                raise SupportEvidenceError(
                     "support evidence unavailable; safety audit incomplete; preserve evidence"
                 ) from exc
-            raise ControllerError(
+            raise SupportEvidenceError(
                 "support evidence unavailable; preserve evidence before reset"
             ) from exc
         return self._receipt(event)

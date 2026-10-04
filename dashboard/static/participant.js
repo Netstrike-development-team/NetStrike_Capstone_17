@@ -1,6 +1,7 @@
 "use strict";
 
 import {api, clearNotice, connect, formatElapsed, idempotency, notify, setStatus, token} from "/static/common.js";
+import {mountSupport} from "/static/support.js";
 
 const notice = document.querySelector("#notice");
 const tokenInput = document.querySelector("#token-input");
@@ -69,6 +70,7 @@ document.querySelector("#connect").addEventListener("click", () => {
   }
 });
 document.querySelector("#refresh").addEventListener("click", refresh);
+mountSupport();
 
 function addTimelineEntry() {
   const container = document.querySelector("#timeline-entries");
