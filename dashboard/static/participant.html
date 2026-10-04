@@ -48,6 +48,21 @@
       <div id="feedback" class="timeline"></div>
     </article>
 
+    <details class="panel support-panel space-top">
+      <summary id="support-title">Ask exercise staff for help</summary>
+      <p>Ask a question about the exercise or report a tool problem. Only you and authorized staff can see this thread. Staff reply manually; there are no automatic answers.</p>
+      <p>Do not include passwords, tokens or real personal information. For an urgent safety concern, contact the facilitator directly—do not wait for a reply here.</p>
+      <p id="support-summary" class="muted" role="status" aria-live="polite">Connect to load exercise support.</p>
+      <form id="support-form" class="form-grid">
+        <label class="form-wide">Related learning objective<select name="objective_id" required disabled><option value="">Select objective</option></select></label>
+        <label class="form-wide">Your question<textarea name="message" rows="3" required maxlength="1024" aria-describedby="support-limits" disabled></textarea></label>
+        <p id="support-limits" class="muted form-wide">Up to 1,024 characters. Wait for a reply before asking another question; up to 10 requests per run. Help is recorded for human evaluator review, not automatically scored.</p>
+        <div class="controls form-wide"><button id="support-send" disabled>Send help request</button><button id="support-refresh" type="button" class="secondary">Refresh replies</button></div>
+      </form>
+      <h2>Your help requests</h2>
+      <div id="support-threads" class="timeline"><p class="empty">No authorized support queue loaded.</p></div>
+    </details>
+
     <section class="layout">
       <div class="stack">
         <article class="panel">

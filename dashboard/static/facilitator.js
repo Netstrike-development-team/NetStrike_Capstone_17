@@ -1,6 +1,7 @@
 "use strict";
 
 import {api, clearNotice, connect, formatElapsed, notify, setStatus, token} from "/static/common.js";
+import {mountSupport} from "/static/support.js";
 
 const notice = document.querySelector("#notice");
 const tokenInput = document.querySelector("#token-input");
@@ -150,6 +151,7 @@ document.querySelector("#connect").addEventListener("click", () => {
   try { connect(tokenInput, refresh); } catch (error) { notify(notice, error.message, "error"); }
 });
 document.querySelector("#refresh").addEventListener("click", refresh);
+mountSupport({staff: true});
 document.querySelectorAll("[data-command]").forEach((button) => button.addEventListener("click", () => command(`/api/facilitator/${button.dataset.command}`)));
 document.querySelector("#advance").addEventListener("click", () => command("/api/facilitator/advance", {elapsed_seconds: Number(document.querySelector("#advance-seconds").value)}));
 document.querySelector("#stop").addEventListener("click", () => command("/api/facilitator/stop", {reason: document.querySelector("#stop-reason").value}));

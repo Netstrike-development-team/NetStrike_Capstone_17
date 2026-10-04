@@ -1,14 +1,50 @@
-# Human support workflow — API foundation
+# Human support workflow — offline consoles and API
 
 The charter permits learners to request hints and requires attributable human
 evaluation of supported performance. These APIs provide that missing recording
 path. They do not fetch an answer key, write learning objectives, automatically
 coach, assign grades or choose a scenario branch.
 
-**This increment is API/backend work plus an offline demo.** The current browser
-consoles have no support form yet. A follow-up can connect them to this contract
-after Anna reviews wording and the learner workflow. No new hosted website,
-external service, license, live VM or Splunk configuration was created.
+The existing offline participant, facilitator and evaluator pages now connect
+to this API. No new hosted website, external service, license, live VM or Splunk
+configuration is required. Anna retains content approval, representative usability
+acceptance and evaluator calibration.
+
+## Using the pages
+
+1. On `/participant`, connect with the assigned participant token, expand **Ask
+   exercise staff for help**, choose the related objective, write a question and
+   send it. The thread is private to that actor and authorized staff. The panel
+   heading shows unanswered requests even when collapsed.
+2. On `/facilitator`, connect with the assigned staff token, expand **Participant
+   help requests**, select an unanswered question, choose clarification/hint/platform
+   issue and the actual affected objectives, then write and send the human reply.
+   There is no automated suggested answer. One saved reply is permanent. Technical
+   operators see platform-issue-only reply choices; evaluators cannot reply.
+3. The participant sees the answer on the next refresh (background polling every
+   five seconds, or **Refresh replies**). Only authorized staff see responder
+   attribution and evidence IDs. On `/evaluator`, **Human assistance** is read-only;
+   staff can use request/reply event IDs in the existing objective review.
+
+For an urgent safety concern, contact the facilitator directly rather than waiting
+for this queue. No passwords, access tokens or real personal information belong in
+messages. Assistance labels do not automatically change grades or scenario branches.
+
+Drafts/retry payloads live only in page memory, not browser storage. Existing portal
+token storage is unchanged. A run change, reconnect or denied authorization clears
+private views/drafts and invalidates older asynchronous responses. Background
+refresh preserves a current draft and selection; a question answered elsewhere
+clears its obsolete reply draft. Transition to platform-only mode clears coaching
+drafts rather than silently relabeling them. A failed read removes the visible
+transcript and disables writes until a fresh authorized view arrives.
+
+An uncertain network/server write shows **Retry same message**, freezes the payload
+and reuses its original run/request/key. It never makes a second question with a
+fresh key. Even if play has since ended, an exact server-confirmed replay can resolve
+an earlier committed message. Double submissions and stale callbacks are ignored.
+Reloading/closing the page loses an uncertain retry: inspect the current transcript
+and coordinate with staff before attempting a new message. A definite 4xx rejection
+requires refreshing/checking permissions, state and limits; it is not a success.
 
 ## Roles and routes
 
@@ -22,8 +58,14 @@ external service, license, live VM or Splunk configuration was created.
 Evaluator is read-only and cannot coach. Simulated-user and identity-capture
 credentials cannot access the workflow. Bearer tokens resolve the actor/role
 server-side; JSON actor/role fields are forbidden. Reads are inert and
-`Cache-Control: no-store`. Unauthenticated reads/writes return 401, disallowed
+`Cache-Control: no-store`. Views also include the authenticated caller's
+`principal_role` and current `run_state` from the same locked snapshot, for UI
+affordances only; server-side authorization remains authoritative.
+Unauthenticated reads/writes return 401, disallowed
 roles 403, invalid fields 422 and stale/conflicting/lifecycle operations 409.
+Support evidence/acknowledgement failures return **503**, not a definite-conflict
+409: a message may already have committed, so the browser keeps its original retry
+payload. Play is safety-stopped; a retry confirms evidence, never resumes play.
 
 ## Request and reply bodies
 
@@ -64,7 +106,7 @@ whitespace-only, and without unsupported control characters. Mutating bodies are
 stream-bounded to 20 KiB before parsing, including chunked bodies. Invalid-body
 errors never echo the submitted prose. Run/request/retry fields are bounded to
 128 characters. HTML is not interpreted; Markdown exports escape human prose.
-Future browser forms must use text rendering, never raw `innerHTML` for messages.
+Browser forms use literal text rendering, never raw HTML for messages.
 
 ## Bounds, retries and lifecycle
 
@@ -122,6 +164,7 @@ spool publication preserves it. VM rollback still requires external export first
 python -m dashboard.support_demo
 python -m dashboard.support_demo --execute
 python -m pytest dashboard/tests/test_support.py dashboard/tests/test_archives.py -q
+node --test dashboard/tests/support_console.test.mjs
 ```
 
 Default preview creates no runtime, evidence or files. Explicit execution creates
@@ -131,6 +174,11 @@ run, resets and rejects a stale-run question. It prints synthetic JSON, starts n
 server, contacts no network and manufactures no evaluator judgments. It is not
 browser usability testing, a complete exercise, Splunk proof or range acceptance.
 
-Aya owns the protocol/API/tests and later browser integration. Anna owns approved
+Client regressions execute the actual JavaScript state machine and DOM bindings
+using dependency-free test doubles, not screenshot or representative-browser QA.
+CI runs them as a required step of the full-play workflow. Node is development
+tooling only; deployed pages use native browser modules and require no Node/npm/CDN.
+
+Aya owns the protocol/API/tests and browser integration. Anna owns approved
 hint/clarification content, participant wording and evaluator calibration (#99/#100).
 Patrick owns deployment, staff-only Splunk handling and live rehearsal (#102/#103/#104).

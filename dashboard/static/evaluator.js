@@ -1,6 +1,7 @@
 "use strict";
 
 import {api, connect, notify, token} from "/static/common.js";
+import {mountSupport} from "/static/support.js";
 
 const notice = document.querySelector("#notice");
 const form = document.querySelector("#judgment");
@@ -107,6 +108,7 @@ document.querySelector("#connect").addEventListener("click", () => {
   catch (error) { notify(notice, error.message, "error"); }
 });
 document.querySelector("#refresh").addEventListener("click", refresh);
+mountSupport({staff: true, observer: true});
 form.elements.objective_id.addEventListener("change", selectObjective);
 form.addEventListener("submit", async (event) => {
   event.preventDefault();

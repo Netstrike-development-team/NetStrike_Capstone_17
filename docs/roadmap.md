@@ -88,8 +88,18 @@ with Latifa.
 
 ## Current priority order
 
-1. Close the completed safe-action contract work after PR #95.
-2. Complete the M1 response package and obtain remaining scheduling details.
-3. Deliver the identity vertical slice.
-4. Prove Splunk ingestion and snapshot restoration early.
-5. Extend the proven path to endpoint/AD, cloud, and impact/recovery.
+Updated October 4: all four scenario stages and application review/evidence
+foundations are implemented locally; #134 and Patrick's #127/#128 are merged.
+This is application progress, not live Cyber Range acceptance.
+
+1. Connect human support to the existing consoles (#135), then surface existing
+   staff readiness/clock/archive workflows without rebuilding the scenario.
+2. Patrick proves offline deployment, identity-slice Splunk ingestion, privacy and
+   snapshot/readiness on the approved range topology.
+3. Anna finalizes content and records representative learner usability/timing and
+   evaluator calibration; Aya integrates approved content and fixes application gaps.
+4. Ashley confirms deployment/rehearsal/delivery dates and unresolved client decisions.
+5. Complete representative full-play/range rehearsals, fix release-blocking defects
+   and package the accepted version. Freeze optional additions before M5.
+
+See [remaining development and the PR estimate](development-remaining-work.md).

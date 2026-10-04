@@ -122,7 +122,7 @@ in SQLite and existing exports, correlated with identity/session/action audit
 events. Live Splunk ingestion must still be verified in Patrick's environment.
 See [the developer demonstration and evidence handoff](../docs/scheduled-mfa-dev-handoff.md).
 
-## Human help requests (API foundation)
+## Human help requests
 
 Participants can ask for help through `/api/participant/support`; staff inspect
 the queue through `/api/facilitator/support` and author replies through
@@ -132,9 +132,11 @@ generated automatically. Run IDs and retry keys prevent stale requests and
 duplicate messages. Support evidence is retained in the staff AAR, review archive
 and existing private event spool.
 
-This PR adds the API and offline demo, **not browser forms**. Anna retains hint
-content and evaluator calibration; the existing consoles do not yet expose this
-workflow. `python -m dashboard.support_demo` is an inert preview;
+The participant console now has a private help form and thread. The facilitator
+console has a human reply queue, and the evaluator page has a read-only transcript.
+Technical operators can explain platform issues only. Anna retains approved hint
+content, usability acceptance and evaluator calibration.
+`python -m dashboard.support_demo` is an inert preview;
 add `--execute` for a memory-only synthetic request/reply/archive/reset demo.
 See [API use, privacy and ownership](../docs/exercise-support.md).
 

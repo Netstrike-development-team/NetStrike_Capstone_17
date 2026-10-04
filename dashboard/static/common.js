@@ -25,7 +25,9 @@ export async function api(path, options = {}) {
   const payload = contentType.includes("json") ? await response.json() : await response.text();
   if (!response.ok) {
     const detail = payload && typeof payload === "object" ? payload.detail : payload;
-    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+    const error = new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+    error.status = response.status;
+    throw error;
   }
   return payload;
 }
