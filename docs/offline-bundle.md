@@ -48,7 +48,9 @@ This installs the locked dependencies and collections without needing Python
 preinstalled or Internet access to a package index. The project source is under
 `source/`. `SHA256SUMS` covers every bundled file; the lock file includes wheel
 hashes for pip's `--require-hashes` check, and `inventory.json` records the
-source trees, Python packages, and collection versions/licenses.
+source trees, Python packages, and collection versions/licenses. Every
+inventory entry also includes its SHA-256, destination VM, and offline install
+method; review explicit UNKNOWN metadata before approving a transfer.
 
 ## CITEF deployment boundary
 
@@ -56,8 +58,9 @@ The bundle contains a portable CPython runtime, wheels for the selected Python
 requirements, the module/dashboard/Ansible configuration source trees and their
 `shared`, `orchestrator`, and `schemas` dependencies, pinned Ansible collection
 archives, and package metadata in `inventory.json`. The inventory records the
-repository commit, runtime version/source, and each package and collection's name,
-version, license, owner, and file path. `requirements.lock` carries pip's wheel
+repository commit, runtime version/source, and each package, source tree, and
+collection's name, version, license, owner, SHA-256, destination VM, offline
+installation method, and file path. `requirements.lock` carries pip's wheel
 hashes; `SHA256SUMS` is the integrity manifest for all bundle files.
 
 It does not include OS packages, VM images, credentials, or licensed products

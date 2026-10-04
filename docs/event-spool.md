@@ -10,6 +10,14 @@ source**. It does not install/configure a forwarder, run a background service,
 contact Splunk, require HEC credentials, or change the portal's event sink.
 No new Python dependency, licence or Internet connection is needed.
 
+CITEF has confirmed that Universal Forwarder and HEC ingestion are permitted
+and that a dedicated exercise index may be created (relayed by Patrick on
+2026-10-04). The planned deployment uses Universal Forwarder for Windows event
+channels and HEC for normalized project events. This spool exporter remains a
+local export only; implementing HEC delivery, provisioning the dedicated
+index, and verifying staff-only access, run correlation, and ingestion health
+are still required before application events are accepted in Splunk.
+
 ## Staff-only boundary
 
 The output is the complete canonical ledger for one exercise across its runs,
