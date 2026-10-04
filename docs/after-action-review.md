@@ -33,13 +33,22 @@ hosted Sites project.
 7. Corrections require the current revision and a reason. New events link to
    prior judgments; previous evaluator, rationale, timestamp and references
    remain available. Conflicting/stale writes fail. Reviews never alter branches.
-8. Download the offline bundle and Markdown AAR before reset. A terminal run
+8. Download the offline bundle and Markdown AAR for a durable copy. Application
+   reset now also preserves a staff-only [frozen review archive](run-review-archives.md).
+   Export outside restored VMs before hypervisor snapshot restoration. A terminal run
    with five ratings is `reviewed`: this means review completeness, not external
    acceptance. Unrated objectives are not zeroes.
 
 Hints, support, valid alternate procedures and platform faults must be reflected
 in the evaluator's rationale and appropriate charter rating. Never enter
 credentials or personal information into free-text fields.
+
+The [human support API](exercise-support.md) now records attributable questions
+and staff replies. JSON AAR includes `support_requests`; Markdown includes a
+Human assistance section with reply kind, objective scope, actor and event IDs.
+Requests alone do not prove assistance was given, and an empty queue does not
+exclude off-platform coaching. No rating is automatically changed by a hint or
+platform label. Browser support forms remain a separate integration step.
 
 ## Mapping and limits
 

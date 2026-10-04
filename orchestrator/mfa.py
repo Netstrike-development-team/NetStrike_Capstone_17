@@ -170,8 +170,10 @@ class ScheduledMfa:
 
         with self._lock:
             if self.pending is not None:
-                self._record(self.pending, "cancelled", "fail_safe_stop")
-                self.pending = None
+                try:
+                    self._record(self.pending, "cancelled", "fail_safe_stop")
+                finally:
+                    self.pending = None
 
     def snapshot(self) -> dict[str, Any]:
         """Return copied operational state and evaluator evidence, never secrets."""

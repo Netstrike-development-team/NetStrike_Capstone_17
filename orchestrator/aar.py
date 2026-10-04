@@ -9,6 +9,7 @@ from copy import deepcopy
 from typing import Any, Mapping
 
 from shared.events import EventValidator, redact_sensitive
+from .support import support_index
 
 VERSION = "1.0.0"
 RATINGS = (
@@ -213,6 +214,7 @@ def validate_bundle(bundle: Mapping[str, Any]) -> None:
         raise ValueError("AAR bundle integrity check failed")
     event_ids = _event_references(bundle)
     references = _submission_references(bundle["submissions"], event_ids)
+    support_index(bundle["events"])
     _validate_judgments(bundle, references)
 
 
@@ -540,6 +542,8 @@ def build_report(bundle: Mapping[str, Any]) -> dict[str, Any]:
             for event in events
         ],
         "submissions": deepcopy(bundle["submissions"]),
+        "support_requests": support_index(events),
+        "support_note": "Human assistance labels are evidence, not automatic objective ratings.",
         "platform_observations": [
             {
                 "objective_id": item["objective_id"],
@@ -636,7 +640,25 @@ def render_markdown(report: Mapping[str, Any]) -> str:
                         f"- Revision {previous['revision']}: {_md(previous['rating'])} by {_md(previous['evaluator_id'])}; {_md(previous['rationale'])}; change reason: {_md(previous['override_reason'])}"
                     ]
                 lines += [""]
-    lines += ["## Corrective actions", ""]
+    lines += ["## Human assistance", "", report["support_note"], ""]
+    for request in report["support_requests"]:
+        lines += [
+            f"- Request {_md(request['request_id'])} by {_md(request['requester_id'])} "
+            f"for {_md(request['objective_id'])} at {request['elapsed_seconds']} seconds: "
+            + _md(request["question"]),
+        ]
+        reply = request["response"]
+        if reply:
+            lines += [
+                f"  - {_md(reply['kind'])} by {_md(reply['responder_id'])} at "
+                f"{reply['elapsed_seconds']} seconds; event {_md(reply['event_id'])}; "
+                f"scope {_md(', '.join(reply['objective_ids']))}: " + _md(reply["text"]),
+            ]
+        else:
+            lines += ["  - No staff reply recorded; request alone does not prove assistance was given."]
+    if not report["support_requests"]:
+        lines += ["No portal support requests recorded; off-platform assistance is not excluded."]
+    lines += ["", "## Corrective actions", ""]
     for action in report["improvement_actions"]:
         lines += [
             f"- {action['objective_id']}: {_md(action['description'])} — owner {_md(action['owner'])}, priority {_md(action['priority'])}, target {_md(action['target_date'])}"

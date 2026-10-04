@@ -96,6 +96,8 @@ def application_readiness(service) -> dict:
             run.impact and controller.items["PRE-03"].status == ItemStatus.DELIVERED
         )
         checks = [
+            _probe("delivery_clock", lambda: service.clock.snapshot()["status"]
+                   in {"healthy", "unmonitored"}),
             _probe(
                 "pre_play_state",
                 lambda: controller.state == RunState.READY

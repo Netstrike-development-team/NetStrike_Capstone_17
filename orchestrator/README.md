@@ -22,7 +22,12 @@ The controller does not execute arbitrary commands and does not contain Splunk c
 
 The development side owns the scenario definition, controller behavior, safe action-handler interface, validated events, and exports. The environment/testing owner can ingest those events using a monitored JSONL file, Universal Forwarder, or HEC and can derive participant/evaluator searches from the same contract.
 
-Splunk Enterprise installation, the dedicated index, role/access configuration, Universal Forwarder and HEC setup, Sysmon/add-ons, data-volume validation, and their Ansible automation remain environment work. Nothing in this package requires an Internet-connected exercise VM.
+Splunk Enterprise installation, index and role/access configuration, HEC
+setup, data-volume validation, and live ingestion remain environment work.
+Ansible roles now configure Windows/Linux forwarders and Sysmon on the
+proposed images, but they have not been tested against CITEF VMs. Normalized
+portal-event forwarding is not yet implemented. Nothing in this package
+requires an Internet-connected exercise VM.
 
 The CSV is for portability and facilitator review. JSONL remains the canonical source because it preserves nested safety, provenance, and event-specific evidence fields.
 

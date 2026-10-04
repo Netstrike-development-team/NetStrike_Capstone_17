@@ -12,7 +12,7 @@ from typing import Annotated, Any, Iterable
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response, status
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, ValidationError
 
 from orchestrator.controller import ControllerError
 from orchestrator.aar import RATINGS, render_markdown
@@ -45,6 +45,7 @@ FACILITATOR_ROLES = frozenset({"facilitator", "technical_operator"})
 IDENTITY_CAPTURE_ROLES = frozenset({"identity_capture_service"})
 MAX_IDENTITY_CAPTURE_BYTES = 16 * 1024
 MAX_SSO_REQUEST_BYTES = 4 * 1024
+MAX_SUPPORT_BYTES = 20 * 1024
 
 
 class StrictInput(BaseModel):
@@ -69,6 +70,35 @@ class Dp1Input(StrictInput):
     affected_identity: str = Field(min_length=1, max_length=256)
     classification: str = Field(min_length=1, max_length=256)
     evidence: list[EvidenceInput] = Field(min_length=1, max_length=20)
+
+
+class SupportRequestInput(StrictInput):
+    run_id: str = Field(min_length=1, max_length=128)
+    idempotency_key: str = Field(min_length=1, max_length=128)
+    objective_id: str = Field(pattern="^LO[1-5]$")
+    message: str = Field(min_length=1, max_length=1024, pattern=r"\S")
+
+
+class SupportReplyInput(StrictInput):
+    run_id: str = Field(min_length=1, max_length=128)
+    request_id: str = Field(min_length=1, max_length=128)
+    idempotency_key: str = Field(min_length=1, max_length=128)
+    kind: str = Field(pattern="^(hint|clarification|platform_issue)$")
+    message: str = Field(min_length=1, max_length=1024, pattern=r"\S")
+    objective_ids: list[Annotated[str, Field(pattern="^LO[1-5]$")]] = Field(min_length=1, max_length=5)
+
+
+async def support_input(request: Request, model):
+    """Bound streamed JSON before parsing; errors never echo private free text."""
+    body = bytearray()
+    async for chunk in request.stream():
+        if len(body) + len(chunk) > MAX_SUPPORT_BYTES:
+            raise HTTPException(status_code=413, detail="support payload is too large")
+        body.extend(chunk)
+    try:
+        return model.model_validate_json(bytes(body))
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail="invalid support payload fields") from exc
 
 
 class CloudAssessmentInput(StrictInput):
@@ -121,6 +151,11 @@ class ResetInput(StrictInput):
     new_run_id: str | None = Field(default=None, min_length=1, max_length=128)
 
 
+class ArchiveInput(StrictInput):
+    run_id: str = Field(min_length=1, max_length=128)
+    expected_bundle_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
 class MfaDecisionInput(StrictInput):
     challenge_id: str = Field(min_length=1, max_length=128)
     decision: str = Field(pattern="^(approve|deny)$")
@@ -171,20 +206,43 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(_app):
-        async def drive_clock() -> None:
-            while True:
-                await asyncio.sleep(1)
-                service.scheduler.tick()
+        service.clock.attach()
+        shutdown = asyncio.Event()
 
-        clock_task = asyncio.create_task(drive_clock())
+        async def drive_clock() -> None:
+            try:
+                while not shutdown.is_set():
+                    try:
+                        await asyncio.wait_for(shutdown.wait(), timeout=1)
+                        break
+                    except asyncio.TimeoutError:
+                        pass
+                    # Synchronous handlers must not block the ASGI loop. Drain an
+                    # in-flight worker even on cancellation; never orphan old-run work.
+                    work = asyncio.create_task(asyncio.to_thread(service.clock.tick))
+                    try:
+                        await asyncio.shield(work)
+                    except asyncio.CancelledError:
+                        await work
+                        raise
+            except (Exception, asyncio.CancelledError):
+                await asyncio.to_thread(service.clock.fault, "driver_failed")
+                raise
+
+        clock_task = asyncio.create_task(drive_clock(), name="netstrike-exercise-clock")
         try:
             yield
         finally:
-            clock_task.cancel()
+            shutdown.set()
             try:
-                await clock_task
-            except asyncio.CancelledError:
-                pass
+                try:
+                    await asyncio.shield(clock_task)
+                except asyncio.CancelledError:
+                    await clock_task
+                    raise
+            finally:
+                # Driver work has finished before any shutdown safety transition.
+                await asyncio.to_thread(service.clock.detach)
 
     app = FastAPI(
         title="Operation Silent Spider Portal API",
@@ -235,6 +293,7 @@ def create_app(
     simulated_user = authorize(frozenset({"simulated_user"}))
     mfa_facilitator = authorize(frozenset({"facilitator"}))
     evaluator = authorize(frozenset({"evaluator", "facilitator"}))
+    support_observer = authorize(frozenset({"evaluator", "facilitator", "technical_operator"}))
 
     def execute(operation):
         try:
@@ -430,6 +489,30 @@ def create_app(
     ) -> list[dict[str, Any]]:
         return service.participant_directory()
 
+    @app.get("/api/participant/support")
+    def participant_support(response: Response, principal: PortalPrincipal = Depends(participant)):
+        response.headers["Cache-Control"] = "no-store"
+        return execute(lambda: service.support.view(principal))
+
+    @app.post("/api/participant/support")
+    async def request_support(request: Request, principal: PortalPrincipal = Depends(participant)):
+        payload = await support_input(request, SupportRequestInput)
+        return await asyncio.to_thread(
+            execute, lambda: service.support.request(principal, **payload.model_dump())
+        )
+
+    @app.get("/api/facilitator/support")
+    def staff_support(response: Response, principal: PortalPrincipal = Depends(support_observer)):
+        response.headers["Cache-Control"] = "no-store"
+        return execute(lambda: service.support.view(principal, staff=True))
+
+    @app.post("/api/facilitator/support/replies")
+    async def reply_support(request: Request, principal: PortalPrincipal = Depends(facilitator)):
+        payload = await support_input(request, SupportReplyInput)
+        return await asyncio.to_thread(
+            execute, lambda: service.support.respond(principal, **payload.model_dump())
+        )
+
     @app.post("/api/participant/actions")
     def participant_action(
         request: ActionInput,
@@ -550,6 +633,47 @@ def create_app(
     def learner_feedback(_principal: PortalPrincipal = Depends(participant)):
         return execute(service.participant_feedback)
 
+    @app.post("/api/evaluator/archives")
+    def capture_archive(request: ArchiveInput, principal: PortalPrincipal = Depends(evaluator)):
+        return execute(lambda: service.capture_review_archive(principal, **request.model_dump()))
+
+    @app.get("/api/evaluator/archives")
+    def list_archives(response: Response, _principal: PortalPrincipal = Depends(evaluator),
+                      after_sequence: int = Query(default=0, ge=0),
+                      limit: int = Query(default=50, ge=1, le=100)):
+        response.headers["Cache-Control"] = "no-store"
+        return execute(lambda: service.review_archives(after_sequence=after_sequence, limit=limit))
+
+    def archived(identifier: str) -> dict:
+        snapshot = execute(lambda: service.review_archive(identifier))
+        if snapshot is None:
+            raise HTTPException(status_code=404, detail="review archive not found")
+        return snapshot
+
+    @app.get("/api/evaluator/archives/{identifier}/bundle.json")
+    def archived_bundle(identifier: str, response: Response,
+                        _principal: PortalPrincipal = Depends(evaluator)):
+        response.headers["Cache-Control"] = "no-store"
+        return archived(identifier)["bundle"]
+
+    @app.get("/api/evaluator/archives/{identifier}/report")
+    def archived_report(identifier: str, response: Response,
+                        _principal: PortalPrincipal = Depends(evaluator)):
+        response.headers["Cache-Control"] = "no-store"
+        return archived(identifier)["report"]
+
+    @app.get("/api/evaluator/archives/{identifier}/aar.md")
+    def archived_markdown(identifier: str, _principal: PortalPrincipal = Depends(evaluator)):
+        return Response(render_markdown(archived(identifier)["report"]), media_type="text/markdown",
+                        headers={"Cache-Control": "no-store", "Content-Disposition":
+                                 'attachment; filename="archived-after-action-review.md"'})
+
+    @app.get("/api/evaluator/archives/{identifier}/events.jsonl")
+    def archived_events(identifier: str, _principal: PortalPrincipal = Depends(evaluator)):
+        return Response(render_jsonl(archived(identifier)["bundle"]["events"]),
+                        media_type="application/x-ndjson", headers={"Cache-Control": "no-store",
+                        "Content-Disposition": 'attachment; filename="archived-events.jsonl"'})
+
     @app.get("/api/participant/recovery")
     def impact_view(_principal: PortalPrincipal = Depends(participant)):
         return execute(service.impact_view)
@@ -594,53 +718,43 @@ def create_app(
         response.headers["Cache-Control"] = "no-store"
         return service.readiness()
 
+    @app.get("/api/facilitator/clock")
+    def clock_health(response: Response, _principal: PortalPrincipal = Depends(facilitator)):
+        response.headers["Cache-Control"] = "no-store"
+        return service.clock.snapshot()
+
     @app.post("/api/facilitator/pause")
     def pause(
         _principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
-        return execute(lambda: (service.scheduler.pause(), service.facilitator_state())[1])
+        return execute(lambda: service.control_run("pause"))
 
     @app.post("/api/facilitator/resume")
     def resume(
         _principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
-        return execute(lambda: (service.scheduler.resume(), service.facilitator_state())[1])
+        return execute(lambda: service.control_run("resume"))
 
     @app.post("/api/facilitator/advance")
     def advance(
         request: AdvanceInput,
         _principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
-        return execute(
-            lambda: (
-                service.scheduler.advance_to(request.elapsed_seconds),
-                service.facilitator_state(),
-            )[1]
-        )
+        return execute(lambda: service.control_run("advance", request.elapsed_seconds))
 
     @app.post("/api/facilitator/deliver")
     def deliver(
         request: ItemInput,
         _principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
-        return execute(
-            lambda: (
-                service.run.controller.deliver(request.item_id),
-                service.facilitator_state(),
-            )[1]
-        )
+        return execute(lambda: service.control_run("deliver", request.item_id))
 
     @app.post("/api/facilitator/skip")
     def skip(
         request: SkipInput,
         _principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
-        return execute(
-            lambda: (
-                service.run.controller.skip(request.item_id, request.reason),
-                service.facilitator_state(),
-            )[1]
-        )
+        return execute(lambda: service.control_run("skip", request.item_id, request.reason))
 
     @app.post("/api/facilitator/checkpoints/dp2")
     def resolve_dp2(
@@ -649,7 +763,7 @@ def create_app(
         return execute(
             lambda: {
                 "evaluation": PortalService.evaluation_dict(
-                    service.run.resolve_dp2()
+                    service.resolve_dp2()
                 ),
                 "state": service.facilitator_state(),
             }
@@ -658,14 +772,9 @@ def create_app(
     @app.post("/api/facilitator/stop")
     def stop(
         request: StopInput,
-        _principal: PortalPrincipal = Depends(facilitator),
+        principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
-        return execute(
-            lambda: (
-                service.run.fail_safe_stop(request.reason),
-                service.facilitator_state(),
-            )[1]
-        )
+        return execute(lambda: service.stop_run(request.reason, principal))
 
     @app.post("/api/facilitator/checkpoints/dp3")
     def resolve_dp3(_principal: PortalPrincipal = Depends(facilitator)):
@@ -677,10 +786,10 @@ def create_app(
     @app.post("/api/facilitator/reset")
     def reset(
         request: ResetInput,
-        _principal: PortalPrincipal = Depends(facilitator),
+        principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
         return execute(
-            lambda: service.reset_run(new_run_id=request.new_run_id)
+            lambda: service.reset_run(new_run_id=request.new_run_id, principal=principal)
         )
 
     @app.post("/api/facilitator/checkpoints/dp4")

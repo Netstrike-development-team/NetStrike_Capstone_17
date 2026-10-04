@@ -155,10 +155,15 @@ def _source() -> dict:
     paths = [
         "scripts/rehearsal.py",
         "dashboard/service.py",
+        "dashboard/clock.py",
+        "dashboard/support.py",
+        "dashboard/app.py",
         "dashboard/readiness.py",
+        "dashboard/archive.py",
         "dashboard/store.py",
         "dashboard/evidence.py",
         "orchestrator/aar.py",
+        "orchestrator/support.py",
         "orchestrator/controller.py",
         "orchestrator/identity_slice.py",
         "orchestrator/cloud.py",
@@ -614,7 +619,18 @@ class Driver:
         self.stop()
         terminal = self.run.controller.state.value
         checkpoint_results = dict(self.run.controller.checkpoint_results)
+        before_reset = self.service.aar_bundle()
         state = self.service.reset_run(new_run_id=f"{self.run_id}-reset")
+        archived = self.service.review_archive(state["reset"]["review_archive_id"])
+        self.check(
+            "reset:review_archive_preserves_exact_bundle",
+            archived["bundle"] == before_reset,
+        )
+        self.check(
+            "reset:review_archive_provisional",
+            archived["report"]["status"],
+            "provisional",
+        )
         self.check(
             "reset:old_decoys_restored", old_fixture.inspect()["baseline_verified"]
         )

@@ -121,6 +121,40 @@ Canonical delivered/approved/denied/expired/blocked/cancelled events are retaine
 in SQLite and existing exports, correlated with identity/session/action audit
 events. Live Splunk ingestion must still be verified in Patrick's environment.
 See [the developer demonstration and evidence handoff](../docs/scheduled-mfa-dev-handoff.md).
+
+## Human help requests (API foundation)
+
+Participants can ask for help through `/api/participant/support`; staff inspect
+the queue through `/api/facilitator/support` and author replies through
+`/api/facilitator/support/replies`. Learners see only their own threads. Replies
+are labeled hint, clarification or platform issue; no answers or grades are
+generated automatically. Run IDs and retry keys prevent stale requests and
+duplicate messages. Support evidence is retained in the staff AAR, review archive
+and existing private event spool.
+
+This PR adds the API and offline demo, **not browser forms**. Anna retains hint
+content and evaluator calibration; the existing consoles do not yet expose this
+workflow. `python -m dashboard.support_demo` is an inert preview;
+add `--execute` for a memory-only synthetic request/reply/archive/reset demo.
+See [API use, privacy and ownership](../docs/exercise-support.md).
+
+## Staff run-review archives
+
+Staff review snapshots are now retained before application reset and can be
+downloaded afterward using authenticated archive APIs. They remain read-only
+and do not survive a VM rollback unless exported externally. See
+[run-review archive usage and capture boundaries](../docs/run-review-archives.md).
+
+## Canonical event publication
+
+`python -m dashboard.event_spool` offers an inert preview or explicit, private
+incremental JSONL publication from the SQLite ledger for a staff-only monitored
+file input. It preserves old/new run evidence without changing the portal event
+sink or claiming Splunk acknowledgement. Patrick owns UF/Splunk configuration
+and deployment; see [usage, integrity and the handoff](../docs/event-spool.md).
+An offline partial-play demonstration is available with
+`python -m dashboard.event_spool_demo` (preview by default).
+
 ## Application readiness
 
 Staff can inspect `GET /api/facilitator/readiness`. Prepare and Start now audit
@@ -128,6 +162,21 @@ and enforce local pre-play baselines, required handlers and successful setup;
 Start-only clients safely prepare first. This does not certify Splunk, VM
 snapshots or participant admission. See
 [guarded-start usage and failure handling](../docs/application-readiness.md).
+
+## Supervised exercise clock
+
+The ASGI lifespan supervises the existing one-second scheduler driver. Staff can
+inspect `GET /api/facilitator/clock` (also included in staff state); technical
+health is not exposed in participant state. A failed tick, invalid monotonic
+clock or heartbeat older than 30 seconds latches a safety stop before further
+timed/interactive delivery. Shutdown drains in-flight ticks and stops active
+play rather than declaring completion. Direct local CLI/service rehearsals stay
+deterministic and are explicitly `unmonitored`.
+
+Run one application process/ASGI worker per exercise, not multiple workers sharing
+SQLite. A fault requires evidence preservation and successful archive/reset;
+restarting a driver cannot clear the fault on the same live service/run.
+See [clock health, recovery and Patrick's handoff](../docs/exercise-clock.md).
 
 # Optional identity + mock-cloud exercise
 

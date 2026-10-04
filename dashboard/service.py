@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import secrets
 import sqlite3
+import time
+import uuid
+from functools import wraps
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 from orchestrator.aar import build_bundle, build_report, validate_judgment, participant_feedback
 from orchestrator.checkpoints import (
@@ -25,6 +28,27 @@ from .identity_audit import IdentityAuditRecorder
 from .sso import SsoExperience, SsoExperienceConfig, SsoExperienceError
 from .store import PortalStore
 from .readiness import application_readiness
+from .clock import ClockSupervisor
+from .support import SupportWorkflow
+
+
+def runtime_mutation(method):
+    """Use one lock order (run then scheduler/adapter) and guard clock health."""
+    @wraps(method)
+    def guarded(self, *args, **kwargs):
+        with self.run.state_lock:
+            self.clock.require_healthy()
+            return method(self, *args, **kwargs)
+    return guarded
+
+
+def run_snapshot(method):
+    """Prevent a snapshot from crossing a concurrent tick or reset boundary."""
+    @wraps(method)
+    def locked(self, *args, **kwargs):
+        with self.run.state_lock:
+            return method(self, *args, **kwargs)
+    return locked
 
 
 class PortalService:  # pylint: disable=too-many-public-methods
@@ -41,6 +65,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
         profile_path: Path | str | None = None,
         impact_root: Path | str | None = None,
         identity_audit_key: bytes | None = None,
+        monotonic: Callable[[], float] = time.monotonic,
     ) -> None:
         self.store = store
         options: dict[str, Any] = {
@@ -54,7 +79,8 @@ class PortalService:  # pylint: disable=too-many-public-methods
         if impact_root is not None:
             options["impact_root"] = impact_root
         self.run = IdentitySliceRun(**options)
-        self.scheduler = ScenarioScheduler(self.run.controller)
+        self.scheduler = ScenarioScheduler(self.run.controller, monotonic=monotonic)
+        self.clock = ClockSupervisor(self, monotonic)
         self.identity_audit = IdentityAuditRecorder(
             store,
             audit_key=identity_audit_key or secrets.token_bytes(32),
@@ -67,6 +93,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
                 "simcorp-sso", payload
             ),
         )
+        self.support = SupportWorkflow(self)
 
     def readiness(self) -> dict[str, Any]:
         """Local pre-play inspection is not VM/Splunk readiness or admission approval."""
@@ -105,6 +132,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
             blockers = report["blockers"] or ["preparation_incomplete"]
             raise ControllerError("Local readiness blocked: " + ", ".join(blockers))
 
+    @runtime_mutation
     def prepare_run(self, principal: PortalPrincipal) -> dict[str, Any]:
         """Audit and gate preparation; failed setup requires repair/reset, not start."""
         with self.run.state_lock:
@@ -113,6 +141,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
             self._check_readiness(principal, "start")
             return self.facilitator_state()
 
+    @runtime_mutation
     def start_run(self, principal: PortalPrincipal) -> dict[str, Any]:
         """Recheck just before start, preparing first for existing Start-only clients."""
         with self.run.state_lock:
@@ -122,6 +151,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
             self.scheduler.start()
             return self.facilitator_state()
 
+    @run_snapshot
     def participant_state(self) -> dict[str, Any]:
         """Return only participant-visible injects and non-sensitive run metadata."""
 
@@ -179,12 +209,14 @@ class PortalService:  # pylint: disable=too-many-public-methods
                 "next_sequence": page[-1]["sequence"] if page else after_sequence,
             }
 
+    @run_snapshot
     def facilitator_state(self) -> dict[str, Any]:
         """Return controller state, all events, submissions, and verifier state."""
 
         snapshot = self.run.controller.snapshot()
         return {
             "controller": snapshot,
+            "clock": self.clock.snapshot(),
             "msel": [
                 {
                     "item_id": item.item_id,
@@ -215,6 +247,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
             "impact": self.run.impact.staff_state() if self.run.impact else {"enabled": False},
         }
 
+    @runtime_mutation
     def capture_identity_interaction(
         self,
         source_service: str,
@@ -258,6 +291,73 @@ class PortalService:  # pylint: disable=too-many-public-methods
     def aar_report(self) -> dict[str, Any]:
         """Machine observations do not replace attributable human judgments."""
         return build_report(self.aar_bundle())
+
+    def capture_review_archive(
+        self, principal: PortalPrincipal, *, run_id: str, expected_bundle_sha256: str,
+    ) -> dict[str, Any]:
+        """Guard against stale run/hash inputs and replay exact captures without effects."""
+        if principal.role not in {"facilitator", "evaluator"}:
+            raise ControllerError("review archive capture requires a review role")
+        with self.run.state_lock:
+            if run_id != self.run.run_id:
+                raise ValueError("run changed; refresh before archiving")
+            if self.run.controller.state.value not in {"stopped", "completed"}:
+                raise ValueError("review archive requires stopped or completed play")
+            existing = self.store.review_archive_by_hash(
+                self.run.definition.exercise_id, run_id, expected_bundle_sha256,
+            )
+            if existing:
+                return {"status": "already_captured", "metadata": existing["metadata"]}
+            bundle = self.aar_bundle()
+            if expected_bundle_sha256 != bundle["content_sha256"]:
+                raise ValueError("review changed; refresh before archiving")
+            return {"status": "captured", "metadata": self._capture_review(
+                bundle, entity("facilitator", principal.actor_id, role=principal.role), "staff_capture",
+            )}
+
+    def _capture_review(self, bundle: dict, actor: dict, reason: str) -> dict:
+        """Atomically freeze a terminal snapshot plus its audit, before runtime reset."""
+        identifier = str(uuid.uuid4())
+        last_sequence = bundle["events"][-1]["sequence"] if bundle["events"] else 0
+        if (self.run.sequencer.sequence != last_sequence
+                or [event["sequence"] for event in bundle["events"]]
+                != list(range(1, len(bundle["events"]) + 1))):
+            raise ValueError("review archive requires consistent live ledger sequencing")
+        builder = EventBuilder(
+            EventContext(exercise_id=self.run.definition.exercise_id, run_id=self.run.run_id,
+                         source_kind="facilitator", source_component="review-archive",
+                         producer_version="1.0.0"),
+            sequence_factory=self.run.sequencer.next,
+        )
+        try:
+            event = builder.build(
+                event_type="evaluation.archive.created", phase="post_exercise",
+                actor=actor, action="evaluation.archive.capture", target=entity("review_archive", identifier),
+                outcome_status="success", visibility="evaluator",
+                message="Terminal review snapshot captured; later reset/cleanup events are outside its boundary",
+                dry_run=False, safety_controls=("staff-only", "immutable-snapshot", "no-branch-mutation"),
+                data={"archive_id": identifier, "bundle_sha256": bundle["content_sha256"],
+                      "last_sequence": last_sequence, "capture_reason": reason},
+            )
+            return self.store.append_review_archive(bundle, event)
+        except (ValueError, sqlite3.Error, OSError) as exc:
+            # A failed transaction can cancel its reservation only after confirming
+            # the old ledger is unchanged. Never rewind over persisted evidence.
+            try:
+                current = self.store.events(self.run.definition.exercise_id, self.run.run_id)
+                if current == bundle["events"]:
+                    self.run.sequencer.reset(last_sequence)
+            except (ValueError, sqlite3.Error, OSError):
+                pass  # Unreadable persistence remains fail-closed until repaired.
+            raise ControllerError("review archive capture failed; no reset performed") from exc
+
+    def review_archives(self, *, after_sequence: int = 0, limit: int = 50) -> dict:
+        return self.store.review_archives(
+            self.run.definition.exercise_id, after_sequence=after_sequence, limit=limit,
+        )
+
+    def review_archive(self, identifier: str) -> dict | None:
+        return self.store.review_archive(self.run.definition.exercise_id, identifier)
 
     def judge_objective(
         self, principal: PortalPrincipal, payload: dict, *, run_id: str
@@ -388,6 +488,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
                 raise ValueError("selected scenario has no cloud stage")
             return self.run.cloud.view()
 
+    @runtime_mutation
     def submit_cloud_assessment(self, principal: PortalPrincipal, **payload) -> dict[str, Any]:
         """Retain the learner's assessment without returning hidden grading logic."""
         with self.run.state_lock:
@@ -404,6 +505,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
                 "run_id": self.run.run_id,
             }
 
+    @runtime_mutation
     def resolve_cloud(self):
         """Resolve cloud grading and its branch under the shared mutation lock."""
         with self.run.state_lock:
@@ -417,11 +519,13 @@ class PortalService:  # pylint: disable=too-many-public-methods
     def impact_view(self):
         return self.require_impact().view()
 
+    @runtime_mutation
     def recover_fixture(self, principal, **payload):
         return self.require_impact().recover(
             actor=entity("participant", principal.actor_id, role=principal.role), **payload,
         )
 
+    @runtime_mutation
     def resolve_impact(self):
         return self.require_impact().resolve()
 
@@ -466,6 +570,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
                                  "Approve only if you initiated it.")
         return state
 
+    @runtime_mutation
     def sso_sign_in(self, username: Any, credential: Any) -> dict[str, Any]:
         """Submit one contained synthetic sign-in attempt."""
 
@@ -477,6 +582,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
             self.run.mfa.advance(self.run.controller.elapsed_seconds)
             return self.sso_state()
 
+    @runtime_mutation
     def sso_decide_mfa(self, challenge_id: Any, decision: Any) -> dict[str, Any]:
         """Resolve the current synthetic MFA challenge."""
 
@@ -493,6 +599,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
                 "SSO changes are unavailable while exercise is paused or stopped"
             )
 
+    @runtime_mutation
     def decide_scheduled_mfa(
         self, principal: PortalPrincipal, challenge_id: Any, decision: Any,
     ) -> dict[str, Any]:
@@ -505,6 +612,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
         )
         return self.sso_state()
 
+    @runtime_mutation
     def sso_review_sessions(self) -> dict[str, Any]:
         """Show configured suspicious sessions after approved sign-in."""
 
@@ -512,21 +620,33 @@ class PortalService:  # pylint: disable=too-many-public-methods
             self._require_sso_active()
             return self.sso.review_sessions()
 
-    def reset_run(self, *, new_run_id: str | None = None) -> dict[str, Any]:
+    def reset_run(self, *, new_run_id: str | None = None,
+                  principal: PortalPrincipal | None = None) -> dict[str, Any]:
         """Reset runtime state and remove the prior run's transient audit view."""
 
         with self.run.state_lock:
-            return self._reset_run(new_run_id=new_run_id)
+            if principal and principal.role not in {"facilitator", "technical_operator"}:
+                raise ControllerError("reset requires an exercise-control role")
+            return self._reset_run(new_run_id=new_run_id, principal=principal)
 
-    def _reset_run(self, *, new_run_id: str | None = None) -> dict[str, Any]:
+    def _reset_run(self, *, new_run_id: str | None = None,
+                   principal: PortalPrincipal | None = None) -> dict[str, Any]:
         """Hold the same mutation boundary through SSO and audit cleanup."""
 
         exercise_id = self.run.definition.exercise_id
         prior_run_id = self.run.run_id
+        if self.run.controller.state.value not in {"stopped", "completed"}:
+            raise ControllerError("run must be stopped or completed before reset")
+        new_run_id = new_run_id or str(uuid.uuid4())
         if new_run_id and (
             new_run_id == prior_run_id or self.store.events(exercise_id, new_run_id)
         ):
             raise SsoExperienceError("reset requires a new, unused run id")
+        if self.run.impact:
+            self.run.impact.validate_next_run(new_run_id)
+        actor = (entity("facilitator", principal.actor_id, role=principal.role) if principal
+                 else entity("system", "application-reset", role="system"))
+        archive = self._capture_review(self.aar_bundle(), actor, "application_reset")
         self.run.reset(new_run_id=new_run_id)
         self.scheduler.reset()
         self.sso.reset()
@@ -536,6 +656,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
         state = self.facilitator_state()
         state["reset"] = {
             "prior_run_id": prior_run_id,
+            "review_archive_id": archive["archive_id"],
             "identity_audit_records_deleted": deleted,
             "identity_audit_baseline_verified": True,
             "sso_baseline_verified": not self.sso.baseline_mismatches(),
@@ -560,10 +681,42 @@ class PortalService:  # pylint: disable=too-many-public-methods
             "sso_baseline_verified", "profile_baseline_verified", "scheduled_mfa_baseline_verified",
         )):
             raise RuntimeError("SSO/profile/MFA reset did not reach a clean baseline")
+        self.clock.reset()
+        state["clock"] = self.clock.snapshot()
         return state
+
+    @runtime_mutation
+    def control_run(self, operation: str, *args) -> dict[str, Any]:
+        """Staff routes use the same guarded mutation boundary as participant actions."""
+        controls = {
+            "pause": self.scheduler.pause,
+            "resume": self.scheduler.resume,
+            "advance": self.scheduler.advance_to,
+            "deliver": self.run.controller.deliver,
+            "skip": self.run.controller.skip,
+        }
+        if operation not in controls:
+            raise ControllerError("unsupported exercise control")
+        controls[operation](*args)
+        return self.facilitator_state()
+
+    @runtime_mutation
+    def resolve_dp2(self):
+        """Serialize checkpoint resolution with delivery and reset."""
+        return self.run.resolve_dp2()
+
+    @run_snapshot
+    def stop_run(self, reason: str, principal: PortalPrincipal) -> dict[str, Any]:
+        """Emergency stop remains available during a latched clock fault."""
+        if principal.role not in {"facilitator", "technical_operator"}:
+            raise ControllerError("stop requires an exercise-control role")
+        self.run.fail_safe_stop(reason, operator=entity("facilitator", principal.actor_id,
+                                                       role=principal.role))
+        return self.facilitator_state()
 
     # Action fields remain explicit so the service cannot trust client actor data.
     # pylint: disable=too-many-arguments
+    @runtime_mutation
     def submit_action(
         self,
         principal: PortalPrincipal,
@@ -588,6 +741,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
             dry_run=dry_run,
         )
 
+    @runtime_mutation
     def submit_dp1(
         self,
         principal: PortalPrincipal,
