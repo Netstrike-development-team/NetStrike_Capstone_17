@@ -1,4 +1,6 @@
+import io
 import hashlib
+import json
 import subprocess
 import sys
 import tarfile
@@ -8,7 +10,10 @@ from tarfile import TarInfo
 
 import pytest
 
+from scripts import offline_bundle
 from scripts.offline_bundle import (
+    _copy_ansible_collection_archives,
+    _copy_source_directories,
     _configured_destination,
     _configured_runtime_url,
     _extract_archive,
@@ -70,6 +75,58 @@ def test_inventory_uses_lock_and_bundle_checksums_without_repeating_metadata(tmp
     assert f"--hash=sha256:{hashlib.sha256(wheel.read_bytes()).hexdigest()}" in lock
     assert "wheelhouse/demo-1.0-py3-none-any.whl" in checksums
     assert "requirements.lock" in checksums
+
+
+def test_copies_module_dashboard_and_ansible_source(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    repo = tmp_path / "repo"
+    for directory in offline_bundle.SOURCE_DIRECTORIES:
+        source = repo / directory
+        source.mkdir(parents=True)
+        (source / "example.txt").write_text(directory, encoding="utf-8")
+        (source / "__pycache__").mkdir()
+        (source / "__pycache__" / "ignored.pyc").write_bytes(b"cache")
+    monkeypatch.setattr(offline_bundle, "REPO_ROOT", repo)
+
+    entries = _copy_source_directories(tmp_path / "bundle")
+
+    assert [entry["name"] for entry in entries] == list(offline_bundle.SOURCE_DIRECTORIES)
+    for directory in offline_bundle.SOURCE_DIRECTORIES:
+        assert (tmp_path / "bundle" / "source" / directory / "example.txt").read_text() == directory
+        assert not list((tmp_path / "bundle" / "source" / directory).rglob("*.pyc"))
+
+
+def test_copies_ansible_collections_and_records_manifest_metadata(tmp_path: Path):
+    archive_path = tmp_path / "ansible.windows-3.8.0.tar.gz"
+    manifest = {
+        "collection_info": {
+            "namespace": "ansible",
+            "name": "windows",
+            "version": "3.8.0",
+            "authors": ["Ansible Project"],
+            "license": ["GPL-3.0-or-later"],
+        }
+    }
+    with tarfile.open(archive_path, "w:gz") as archive:
+        payload = json.dumps(manifest).encode()
+        member = TarInfo("MANIFEST.json")
+        member.size = len(payload)
+        archive.addfile(member, io.BytesIO(payload))
+
+    inventory = _copy_ansible_collection_archives([str(archive_path)], tmp_path / "bundle")
+
+    assert inventory == [
+        {
+            "name": "ansible.windows",
+            "version": "3.8.0",
+            "source": "Ansible Galaxy",
+            "license": "GPL-3.0-or-later",
+            "owner": "Ansible Project",
+            "file": "ansible/collections/ansible.windows-3.8.0.tar.gz",
+        }
+    ]
+    assert (
+        tmp_path / "bundle" / inventory[0]["file"]
+    ).read_bytes() == archive_path.read_bytes()
 
 
 def test_workflow_configuration_is_required(monkeypatch: pytest.MonkeyPatch):
