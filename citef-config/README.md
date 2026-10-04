@@ -188,19 +188,19 @@ The example and test addresses are not CITEF assignments.
 
 The manually triggered `Build offline bundle` workflow publishes a
 hash-verified Python runtime and wheelhouse for the requirements listed in the
-workflow. It does not publish project source, the complete controller
-requirements, Ansible, or Ansible collections. A source archive assembled
-from a reviewed checkout of the matching repository revision, along with any
-missing locked controller dependencies, must be staged and verified
-separately before deployment; the current workflow is not a complete CITEF
-release bundle. See the
-[Python bundle guide](../docs/offline-bundle.md) for its exact contents and
-installation steps. Stage the runtime bundle, verified source archive,
-collections, and approved Universal Forwarder, Sysmon, Splunk receiver CA,
-controller TLS certificate, and controller TLS CA under the directory named
-by `offline_artifacts.directory`. The example manifest's artifact paths are
-deliberately blank and must be replaced with the staged relative paths and
-SHA-256 digests.
+workflow, the matching project source trees, and pinned Ansible collection
+archives. Its generated `inventory.json` records each runtime/package/source/
+collection's version, source, license, owner, SHA-256, destination, and offline
+installation method; review any UNKNOWN license/owner values before release.
+This is a reproducible build artifact, not by itself a complete CITEF transfer
+release: approved Universal Forwarder and Sysmon installers, receiver CA,
+controller TLS certificate and CA, and any other separately staged artifacts
+must be added to the deployment manifest and verified. See the
+[offline bundle guide](../docs/offline-bundle.md) for contents and installation
+steps. Stage the generated bundle plus approved external artifacts under the
+directory named by `offline_artifacts.directory`. The example manifest's
+artifact paths must be replaced with the staged relative paths and SHA-256
+digests.
 
 Download the pinned Ansible collections and dependencies on a connected
 staging machine, transfer the tarballs through the approved offline path, and
@@ -250,12 +250,18 @@ manifest, images, transfer artifacts, TLS materials, secrets, and CITEF
 approvals have been populated and independently reviewed. Live provisioning
 and restore-cycle acceptance still require the actual range.
 
-The Splunk Universal Forwarder roles currently collect Windows security,
-PowerShell, and Sysmon logs plus Linux syslog/auth logs. The portal's structured
+The selected telemetry versions are Splunk Universal Forwarder 10.0.1 and
+Sysmon 15.22. CITEF permits Universal Forwarder and HTTP Event Collector (HEC)
+ingestion and allows a dedicated `netstrike` index with one-day retention
+(permissions relayed 2026-10-04). Separate participant access for investigating
+permitted simulation telemetry from facilitator access for managing the
+simulation and Splunk configuration. The planned split is Universal Forwarder
+for Windows event-channel logs and HEC for normalized project events. The portal's structured
 exercise-event ledger remains in its local SQLite database; normalized
 application-event forwarding to Splunk is not implemented yet. Do not declare
-an application-event Splunk source ready until that integration and its
-run-correlated query are added and tested.
+an application-event Splunk source ready until HEC/index configuration,
+participant/facilitator access controls, and its run-correlated query are added
+and tested.
 
 ## Post-restore readiness
 

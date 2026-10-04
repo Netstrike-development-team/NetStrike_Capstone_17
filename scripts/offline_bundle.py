@@ -73,14 +73,18 @@ def _wheel_inventory(wheel: Path) -> dict:
         ),
         metadata.get("Home-page", "Python package index (pip configuration)"),
     )
-    license_name = metadata.get("License-Expression") or metadata.get("License") or UNKNOWN
-    owner = metadata.get("Author") or metadata.get("Maintainer") or UNKNOWN
+    license_name = (
+        metadata.get("License-Expression") or metadata.get("License") or UNKNOWN
+    ).strip() or UNKNOWN
+    owner = (
+        metadata.get("Author") or metadata.get("Maintainer") or UNKNOWN
+    ).strip() or UNKNOWN
     return {
         "name": metadata.get("Name", UNKNOWN),
         "version": metadata.get("Version", UNKNOWN),
         "source": source,
-        "license": license_name.strip(),
-        "owner": owner.strip(),
+        "license": license_name,
+        "owner": owner,
         "file": f"wheelhouse/{wheel.name}",
     }
 
@@ -90,6 +94,16 @@ def _sha256(path: Path) -> str:
     with path.open("rb") as source:
         for chunk in iter(lambda: source.read(1024 * 1024), b""):
             digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _directory_sha256(directory: Path) -> str:
+    digest = hashlib.sha256()
+    for path in sorted(item for item in directory.rglob("*") if item.is_file()):
+        relative = path.relative_to(directory).as_posix()
+        digest.update(relative.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(bytes.fromhex(_sha256(path)))
     return digest.hexdigest()
 
 
@@ -186,13 +200,32 @@ def _runtime_version_from_environment() -> str:
     return version
 
 
-def _write_lock_and_inventory(wheels: list[Path], wheelhouse: Path) -> list[dict]:
+def _write_lock_and_inventory(
+    wheels: list[Path],
+    wheelhouse: Path,
+    destination_vm: str = "CTRL01",
+    bundle_root: Path | None = None,
+) -> list[dict]:
     by_name: dict[str, tuple[dict, str]] = {}
     for wheel in sorted(wheels):
         artifact = _wheel_inventory(wheel)
+        if bundle_root is not None:
+            artifact["file"] = (
+                wheelhouse.relative_to(bundle_root) / wheel.name
+            ).as_posix()
         normalized_name = re.sub(r"[-_.]+", "-", artifact["name"]).lower()
         prior = by_name.get(normalized_name)
         wheel_hash = _sha256(wheel)
+        artifact.update(
+            {
+                "sha256": wheel_hash,
+                "destination_vm": destination_vm,
+                "offline_install_method": (
+                    "Install from the bundled wheelhouse with pip --no-index, "
+                    "--find-links, and --require-hashes."
+                ),
+            }
+        )
         if prior and (
             prior[0]["version"] != artifact["version"] or prior[1] != wheel_hash
         ):
@@ -213,7 +246,9 @@ def _write_lock_and_inventory(wheels: list[Path], wheelhouse: Path) -> list[dict
     )
 
 
-def _copy_source_directories(bundle: Path) -> list[dict[str, str]]:
+def _copy_source_directories(
+    bundle: Path, revision: str = "UNKNOWN (not a release build)", destination_vm: str = "CTRL01"
+) -> list[dict[str, str]]:
     source_root = bundle / "source"
     source_root.mkdir(parents=True)
     copied = []
@@ -227,11 +262,47 @@ def _copy_source_directories(bundle: Path) -> list[dict[str, str]]:
             destination,
             ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc"),
         )
-        copied.append({"name": name, "path": destination.relative_to(bundle).as_posix()})
+        copied.append(
+            {
+                "name": name,
+                "version": revision,
+                "source": "https://github.com/Netstrike-development-team/NetStrike_Capstone_17",
+                "license": "UNKNOWN (repository license/provenance review required)",
+                "owner": "Netstrike-development-team",
+                "sha256": _directory_sha256(destination),
+                "destination_vm": destination_vm,
+                "offline_install_method": (
+                    "Copy the bundled source tree into the matching immutable application release; "
+                    "no package-manager or network fetch is required."
+                ),
+                "path": destination.relative_to(bundle).as_posix(),
+            }
+        )
     return copied
 
 
-def _copy_ansible_collection_archives(archives: list[str], bundle: Path) -> list[dict]:
+def _runtime_inventory(
+    runtime_archive: Path, source: str, version: str, destination_vm: str
+) -> dict[str, str]:
+    return {
+        "name": "CPython portable runtime",
+        "version": version,
+        "source": source,
+        "license": "Python Software Foundation License; review the upstream distribution terms",
+        "owner": "Astral Software (python-build-standalone)",
+        "sha256": _sha256(runtime_archive),
+        "destination_vm": destination_vm,
+        "offline_install_method": (
+            "Extract the bundled runtime archive into the deployment's runtime directory; "
+            "no network access is required."
+        ),
+        "file": runtime_archive.relative_to(runtime_archive.parents[1]).as_posix(),
+    }
+
+
+def _copy_ansible_collection_archives(
+    archives: list[str], bundle: Path, destination_vm: str = "CTRL01"
+) -> list[dict]:
     collection_dir = bundle / "ansible" / "collections"
     collection_dir.mkdir(parents=True)
     inventory = []
@@ -273,17 +344,25 @@ def _copy_ansible_collection_archives(archives: list[str], bundle: Path) -> list
             isinstance(license_name, str) for license_name in licenses
         ):
             licenses = []
+        licenses = [license_name.strip() for license_name in licenses if license_name.strip()]
         authors = collection.get("authors", [])
+        owner = (
+            ", ".join(author.strip() for author in authors if author.strip())
+            if isinstance(authors, list) and all(isinstance(author, str) for author in authors)
+            else UNKNOWN
+        )
         inventory.append(
             {
                 "name": identity,
                 "version": version,
                 "source": "Ansible Galaxy",
                 "license": ", ".join(licenses) or UNKNOWN,
-                "owner": (
-                    ", ".join(authors)
-                    if isinstance(authors, list) and all(isinstance(author, str) for author in authors)
-                    else str(authors or UNKNOWN)
+                "owner": owner or UNKNOWN,
+                "sha256": _sha256(destination),
+                "destination_vm": destination_vm,
+                "offline_install_method": (
+                    "Install the bundled collection archive with ansible-galaxy collection "
+                    "install --offline and a local collections path."
                 ),
                 "file": destination.relative_to(bundle).as_posix(),
             }
@@ -358,21 +437,21 @@ def build_bundle(args: argparse.Namespace) -> None:
         wheels = sorted(wheelhouse.glob("*.whl"))
         if not wheels:
             raise ValueError("pip produced no wheels; refusing to create an empty bundle")
-        artifacts = _write_lock_and_inventory(wheels, wheelhouse)
-        source_artifacts = _copy_source_directories(bundle)
+        artifacts = _write_lock_and_inventory(wheels, wheelhouse, destination, bundle)
+        source_artifacts = _copy_source_directories(bundle, revision, destination)
         ansible_collections = _copy_ansible_collection_archives(
-            args.ansible_collection_archive, bundle
+            args.ansible_collection_archive, bundle, destination
         )
 
         manifest = {
             "repository_revision": revision,
             "destination_vm": destination,
-            "python_runtime": {
-                "version": runtime_version,
-                "source": runtime_url or "Source URL not provided",
-                "license": "Python Software Foundation License; review the upstream distribution terms",
-                "file": bundled_runtime.relative_to(bundle).as_posix(),
-            },
+            "python_runtime": _runtime_inventory(
+                bundled_runtime,
+                runtime_url or "Source URL not provided",
+                runtime_version,
+                destination,
+            ),
             "requirements_inputs": [
                 path.relative_to(REPO_ROOT).as_posix() for path in requirement_files
             ],
@@ -427,6 +506,48 @@ def _verify_checksums(root: Path) -> None:
         raise ValueError("checksum list does not cover exactly the bundle files")
 
 
+def _verify_inventory_artifacts(bundle: Path, inventory: dict) -> None:
+    destination = _validate_destination(inventory["destination_vm"])
+    artifacts = [inventory["python_runtime"]]
+    artifacts.extend(inventory.get("artifacts", []))
+    artifacts.extend(inventory.get("source_artifacts", []))
+    artifacts.extend(inventory.get("ansible_collections", []))
+    required_fields = (
+        "name",
+        "version",
+        "source",
+        "license",
+        "owner",
+        "sha256",
+        "destination_vm",
+        "offline_install_method",
+    )
+    for artifact in artifacts:
+        for field in required_fields:
+            if not isinstance(artifact.get(field), str) or not artifact[field].strip():
+                raise ValueError(f"offline inventory has a missing {field} field")
+        if artifact["destination_vm"] != destination:
+            raise ValueError(f"offline inventory destination mismatch: {artifact['name']}")
+        if not re.fullmatch(r"[0-9a-f]{64}", artifact["sha256"]):
+            raise ValueError(f"invalid inventory SHA-256: {artifact['name']}")
+
+        path_field = "path" if "path" in artifact else "file"
+        if not isinstance(artifact.get(path_field), str) or not artifact[path_field]:
+            raise ValueError(f"offline inventory has no {path_field}: {artifact['name']}")
+        relative_path = _safe_relative_path(artifact[path_field])
+        path = bundle.joinpath(*relative_path.parts)
+        if path_field == "path":
+            if not path.is_dir():
+                raise ValueError(f"missing inventory source tree: {artifact['name']}")
+            actual_hash = _directory_sha256(path)
+        else:
+            if not path.is_file():
+                raise ValueError(f"missing inventory file: {artifact['name']}")
+            actual_hash = _sha256(path)
+        if actual_hash != artifact["sha256"]:
+            raise ValueError(f"inventory SHA-256 mismatch: {artifact['name']}")
+
+
 def verify_bundle(args: argparse.Namespace) -> None:
     archive_path = Path(args.archive).resolve()
     if not archive_path.is_file():
@@ -439,6 +560,7 @@ def verify_bundle(args: argparse.Namespace) -> None:
             return
 
         inventory = json.loads((bundle / "inventory.json").read_text(encoding="utf-8"))
+        _verify_inventory_artifacts(bundle, inventory)
         destination = _validate_destination(inventory["destination_vm"])
         destination_dir = bundle / "destinations" / destination
         runtime = inventory["python_runtime"]

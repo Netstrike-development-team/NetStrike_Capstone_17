@@ -54,7 +54,7 @@ decision owner. A blank row means the decision remains pending.
 | Learning objectives | Five objectives: triage, timeline, identity/endpoint containment, mock-cloud containment, recovery/communication | Approved | Cyber Range, 2026-09-24 | Details may be tuned during rehearsal |
 | Decision model | Four deterministic checkpoints with contained/adverse variants | Approved | Cyber Range, 2026-09-24 | — |
 | Simulation control | MSEL-driven automation with manual facilitator fallback | Approved | Cyber Range, 2026-09-24 | — |
-| SIEM | Cyber Range-provided Splunk; the project supplies sources, field mappings, searches, and dashboards | Approved with follow-up | Cyber Range, 2026-09-24; version and capacity confirmed 2026-10-02 | Splunk Enterprise 10.0.1; maximum 10 GB ingestion per day and 300 GB disk size |
+| SIEM | Cyber Range-provided Splunk under its educational license; the project supplies sources, field mappings, searches, and dashboards | Approved with follow-up | Cyber Range, 2026-09-24; product/version, license, and capacity confirmed 2026-10-02; ingestion/index/access permissions relayed by Patrick 2026-10-04 | Splunk Enterprise 10.0.1; maximum 10 GB ingestion per day and 300 GB disk size. HEC and Universal Forwarder ingestion are permitted; create dedicated index `netstrike` with one-day retention. Separate participant and facilitator access: participant investigates permitted simulation telemetry; facilitator manages the simulation and Splunk configuration. RBAC implementation and end-to-end validation remain |
 | Cloud | Stateful Python mock only; no public-cloud account | Approved | Cyber Range, 2026-09-24 | — |
 | Impact | Marker/move simulation on disposable fixtures; no encryption | Approved | Cyber Range, 2026-09-24 | — |
 | Reset approach | Cyber Range snapshot restore followed by readiness validation | Approved with change | Cyber Range, 2026-09-24 | No 20-minute Ansible reset target is required |
@@ -148,15 +148,16 @@ access.
 | Question | CITEF answer | Evidence/owner |
 |---|---|---|
 | Splunk product, edition, and exact version | Splunk Enterprise 10.0.1 | Cyber Range confirmation, 2026-10-02 |
-| License and capacity constraints | See the Splunk decision above; confirm administration, retention, and source allocation | Cyber Range/Patrick |
+| License and capacity constraints | Cyber Range educational license; maximum 10 GB ingestion per day and 300 GB disk, confirmed 2026-10-02. Confirm administration, retention, and source allocation | Cyber Range/Patrick |
 | VM owner and Splunk administrator | Pending | — |
-| Allowed ingestion methods: HEC, Universal Forwarder, syslog, file monitor | Pending | — |
-| Available indexes and whether a dedicated index is permitted | Pending | — |
-| Required naming convention for index, source, sourcetype, and host | Pending | — |
+| Allowed ingestion methods | HTTP Event Collector (HEC) and Universal Forwarder are permitted; syslog/file-monitor approval not established | Patrick relayed CITEF permission, 2026-10-04 |
+| Available indexes and whether a dedicated index is permitted | Dedicated index `netstrike` may be created | Patrick relayed CITEF permission, 2026-10-04; creation/configuration pending |
+| Index name and retention | Dedicated index `netstrike`, one-day retention | Patrick relayed CITEF decision, 2026-10-04; apply and verify during deployment |
+| Required naming convention for source, sourcetype, and host | Pending | — |
 | Installed or permitted add-ons, especially Windows/Sysmon | Pending | — |
-| Data retention and cleanup policy | Pending | — |
-| Participant role/search permissions and export limits | Pending | — |
-| Facilitator-only index or role separation | Pending | — |
+| Data retention and cleanup policy | `netstrike` retention is one day; broader cleanup procedure pending | Patrick relayed CITEF decision, 2026-10-04 |
+| Participant role/search permissions and export limits | Separate participant and facilitator access; participant can investigate permitted exercise telemetry but cannot manage the simulation; facilitator manages simulation and Splunk configuration | Patrick relayed CITEF access decision, 2026-10-04; exact Splunk roles, search restrictions, and export limits to configure and test |
+| Facilitator management privileges | Facilitator manages simulation; participant is restricted to the investigation surface and authorized telemetry | Patrick relayed CITEF access decision, 2026-10-04; implement least-privilege RBAC and verify denial cases |
 | Saved-search/dashboard deployment process | Pending | — |
 | Ingestion latency target and health-monitoring method | Pending | — |
 | Whether previous-run data may remain if isolated by `run_id` | Pending | — |
@@ -165,11 +166,18 @@ The project will not build a competing SIEM. It will provide normalized event
 producers, Splunk field mappings, health queries, learner views, solution-guide
 searches, and export validation.
 
-Track the exact approved Splunk product/version, Universal Forwarder
-compatibility, ingestion method, and any licensed artifact transfer in the
+The selected Windows telemetry stack is Splunk Universal Forwarder 10.0.1 and
+Sysmon 15.22. Use Universal Forwarder for Windows event-channel collection;
+HEC is an approved ingestion option for project events. Send to index
+`netstrike` with one-day retention. Participant access is for permitted
+simulation investigation; facilitator access includes simulation management.
+The CITEF permission does not by itself configure HEC, create the index, or
+prove event delivery.
+Track the selected Splunk product/version, artifact hashes, and configuration
+in the
 [offline tool bundle inventory](07-offline-tool-bundle-inventory.md). Do not
-stage or transfer Splunk or Sysmon installers until CITEF approves the exact
-artifact and transfer method.
+stage or transfer licensed installers until their applicable license and
+transfer terms have been checked.
 
 ### Windows, Active Directory, and endpoint telemetry
 
@@ -221,8 +229,8 @@ delivery baseline.
 | Early access to CITEF VMs | Use local containers/processes and synthetic event fixtures for the vertical slice | Development only; CITEF rehearsal remains mandatory | Pending |
 | VM snapshots | Stop delivery, escalate to Zian/Julien, and restore or recreate an approved clean snapshot before admitting participants | Delivery is delayed; readiness must still pass | Approved operating rule |
 | Splunk during early development | Validate JSONL events and searches against fixtures; avoid building a new dashboard/SIEM | Development only; Splunk acceptance remains mandatory | Pending |
-| Dedicated Splunk index | Isolate all content by mandatory `exercise_id` and `run_id` with CITEF-approved retention | More careful role/search filtering required | Pending |
-| Splunk add-ons | Send normalized JSON through HEC or a monitored file with project-owned field mappings | Less native parsing; objectives unchanged | Pending |
+| Dedicated Splunk index | Create index `netstrike`, retain data for one day, and isolate content by mandatory `exercise_id` and `run_id`; separate participant investigation from facilitator management | RBAC must prevent participant access to facilitator-only simulation data/actions | Permitted by CITEF (relayed 2026-10-04); configuration pending |
+| Splunk ingestion | Use Universal Forwarder for Windows event channels and HEC as the permitted project-event ingestion path; syslog/file-monitor permission is not established | Configure field mappings and test source health without exceeding the approved capacity | HEC and Universal Forwarder permitted by CITEF (relayed 2026-10-04); implementation/testing pending |
 | Participant AD privileges | Route allowlisted actions through the participant portal and action adapter | Learners demonstrate decisions through the exercise control instead of unrestricted admin access | Pending |
 | Endpoint isolation tooling | Simulate isolation in the network/action adapter while preserving observable state | Must be clearly disclosed as simulated | Pending |
 | Full Windows/AD telemetry | Generate deterministic surrogate events from the controlled adapter, labelled as simulated | Reduces platform realism; evaluator must not claim native coverage | Pending |
