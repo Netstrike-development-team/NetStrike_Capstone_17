@@ -163,29 +163,34 @@ config deployment workflow.
 
 ## Offline installation test record
 
-**Status:** The workflow and dependency installation succeeded on a personal
-machine with Internet access disconnected. The clean target-VM test has not been
-run, so no target-VM or deployment-readiness result is claimed.
+**Status (2026-10-04):** Patrick reports that the application successfully ran
+in an air-gapped Linux VM. This is a useful Linux application smoke-test result,
+not full target-VM/deployment acceptance: the exact VM image, bundle revision
+and digest, test commands/results, and evidence location have not yet been
+recorded here. Windows/Sysmon, full provisioning/readiness, and end-to-end
+Splunk acceptance remain outstanding. Replication steps for the application
+smoke test are in the [offline bundle guide](../offline-bundle.md#3-run-the-application-smoke-test-on-an-isolated-linux-vm).
 
 Complete this record for each target OS/VM role. Preserve logs that contain no
 secrets and link them from the approved project evidence location.
 
 | Field | Result |
 |---|---|
-| Test date / operator | Personal-machine run; date and operator details not recorded |
-| Clean VM image, OS/version, and role | Not applicable to the personal-machine run; clean target VM pending |
-| Internet disabled and verified by | Personal machine was disconnected from the Internet during the run; verification method not recorded |
-| Bundle release/version and SHA-256 | Pending |
-| Python version/architecture and locked requirements checksum | Pending; versions and checksum used in the personal-machine run not recorded |
+| Test date / operator | Linux application smoke test reported by Patrick, 2026-10-04; exact time/operator record pending |
+| Clean VM image, OS/version, and role | Application successfully ran in an air-gapped Linux VM; exact image/version/architecture and clean-snapshot status pending |
+| Internet disabled and verified by | Air-gapped VM reported; enforcement mechanism and verification evidence pending |
+| Bundle release/version and SHA-256 | Application success reported; exact workflow run, repository revision, and bundle SHA-256 pending |
+| Python version/architecture and locked requirements checksum | Application success reported; exact installed version, architecture, and lock checksum pending |
 | `ansible-core` version and `ansible.windows` collection manifest checksum | Pending |
 | Splunk version / Universal Forwarder version / Sysmon version (if applicable) | Splunk Enterprise 10.0.1; selected Universal Forwarder 10.0.1 and Sysmon 15.22; record exact installer hashes and verify compatibility/ingestion on target VMs |
 | Windows Security and PowerShell audit policy revision | Pending |
-| Installation commands and local artifact source | Dependency installation completed successfully while offline on a personal machine; exact commands and artifact source not recorded |
-| Package/config checksum verification | Pending |
-| Portal external-request audit | Pending |
+| Installation commands and local artifact source | Application ran in air-gapped Linux VM; exact commands/artifact source not recorded yet. See linked offline-bundle application smoke-test procedure |
+| Package/config checksum verification | Bundle checksum and lock verification result pending |
+| Portal external-request audit | Air-gapped run reported; browser/host egress verification details pending |
+| Linux application smoke checks | Application startup succeeded, as reported by Patrick; health/UI status codes, local readiness scope, role-boundary responses, and audit-write result pending |
 | Snapshot restore and Ansible readiness-check result | Pending |
 | Splunk event sources, HEC/Universal Forwarder ingestion validation, `netstrike` index creation/one-day retention, participant/facilitator RBAC checks, and 10 GB/day usage measurement | Pending |
-| Result, failures, and remediation | Personal-machine workflow and dependency installation succeeded offline; target-VM result pending |
+| Result, failures, and remediation | Linux application success reported; full deployment and Windows/Sysmon/Splunk acceptance results pending |
 | Evidence/log location | Pending |
 
 ### Test procedure
