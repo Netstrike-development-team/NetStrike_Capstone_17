@@ -252,13 +252,16 @@ and restore-cycle acceptance still require the actual range.
 
 The selected telemetry versions are Splunk Universal Forwarder 10.0.1 and
 Sysmon 15.22. CITEF permits Universal Forwarder and HTTP Event Collector (HEC)
-ingestion and allows a dedicated exercise index (permissions relayed
-2026-10-04). The planned split is Universal Forwarder for Windows event-channel
-logs and HEC for normalized project events. The portal's structured
+ingestion and allows a dedicated `netstrike` index with one-day retention
+(permissions relayed 2026-10-04). Separate participant access for investigating
+permitted simulation telemetry from facilitator access for managing the
+simulation and Splunk configuration. The planned split is Universal Forwarder
+for Windows event-channel logs and HEC for normalized project events. The portal's structured
 exercise-event ledger remains in its local SQLite database; normalized
 application-event forwarding to Splunk is not implemented yet. Do not declare
-an application-event Splunk source ready until HEC/index configuration and its
-run-correlated query are added and tested.
+an application-event Splunk source ready until HEC/index configuration,
+participant/facilitator access controls, and its run-correlated query are added
+and tested.
 
 ## Post-restore readiness
 

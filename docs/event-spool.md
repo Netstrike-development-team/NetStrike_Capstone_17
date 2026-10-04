@@ -11,21 +11,27 @@ contact Splunk, require HEC credentials, or change the portal's event sink.
 No new Python dependency, licence or Internet connection is needed.
 
 CITEF has confirmed that Universal Forwarder and HEC ingestion are permitted
-and that a dedicated exercise index may be created (relayed by Patrick on
-2026-10-04). The planned deployment uses Universal Forwarder for Windows event
-channels and HEC for normalized project events. This spool exporter remains a
-local export only; implementing HEC delivery, provisioning the dedicated
-index, and verifying staff-only access, run correlation, and ingestion health
-are still required before application events are accepted in Splunk.
+and that a dedicated `netstrike` exercise index with one-day retention may be
+created (relayed by Patrick on 2026-10-04). Access is to be separated:
+participants investigate permitted simulation telemetry; facilitators manage
+the simulation. The planned deployment uses Universal Forwarder for Windows
+event channels and HEC for normalized project events. This spool exporter
+remains a local export only; implementing HEC delivery, provisioning the
+index/retention, and verifying role separation, run correlation, and ingestion
+health are still required before application events are accepted in Splunk.
 
 ## Staff-only boundary
 
 The output is the complete canonical ledger for one exercise across its runs,
-including `participant`, `facilitator` and `evaluator` visibility. **All files
-and any receiving Splunk index must be staff-only.** A visibility field is not
-access control. These raw events can contain branch answers, checkpoint results,
-human review history and submissions. Never put them in a participant-searchable
-index, share the spool through the portal, or expose its directory over HTTP.
+including `participant`, `facilitator` and `evaluator` visibility. **The spool
+files and unfiltered canonical ledger must remain facilitator-only.** A
+visibility field is not access control. These raw events can contain branch
+answers, checkpoint results, human review history and submissions. Never share
+the spool through the portal or expose its directory over HTTP. If events are
+forwarded into the participant-accessible `netstrike` index, enforce and test
+Splunk role/search restrictions or filter the feed so participants see only
+permitted investigation telemetry and cannot retrieve facilitator/evaluator
+content or management data.
 
 Known sensitive keys must already be redacted; invalid/unredacted input is
 refused, not silently rewritten. Arbitrary prose cannot be sanitized by key
@@ -146,10 +152,14 @@ Patrick owns the following deployment decisions and live verification:
   Do not ingest HEAD/manifests, `.pending-*`/`.head-*`, the SQLite database, or
   unrelated exports. Disable symlink following. Use `monitor`, not the destructive
   Splunk `batch` input, so the exporter can continue verifying retained files.
-- Choose a distinct raw-JSON sourcetype and a staff-only index/role policy. Parse
-  one JSON object per line; keep nested fields, original `timestamp` as event time
-  and `event_id`/`exercise_id`/`run_id`/`sequence`/`source.component` searchable.
-  Configure adequate event truncation/line-breaking for up to 256 KiB lines.
+- Use the `netstrike` index with one-day retention and a distinct raw-JSON
+  sourcetype. Parse one JSON object per line; keep nested fields, original
+  `timestamp` as event time and `event_id`/`exercise_id`/`run_id`/`sequence`/
+  `source.component` searchable. Configure adequate event truncation/line-breaking
+  for up to 256 KiB lines. Because participants will have access to permitted
+  simulation telemetry in this index, do not forward the unfiltered canonical
+  spool unless Splunk RBAC is configured and tested to prevent participant
+  searches from returning facilitator/evaluator-only content.
 - Immutable batches can share the beginning of their JSON content. Review file
   identity/CRC handling so distinct paths are not mistaken for the same file;
   changing a monitored path or resetting forwarder checkpoints can re-index it.

@@ -23,7 +23,7 @@ and the [CITEF configuration guide](../../citef-config/README.md).
 
 | Item | Current status | Evidence required to close |
 |---|---|---|
-| Splunk Enterprise and capacity | CITEF-provided Splunk Enterprise 10.0.1 under the Cyber Range educational license; maximum 10 GB ingestion per day and 300 GB disk | Confirmed 2026-10-02; use the existing range instance. CITEF also permits HEC and Universal Forwarder ingestion and creation of a dedicated index (relayed 2026-10-04). Index naming, retention, source allocation, and readiness test remain |
+| Splunk Enterprise and capacity | CITEF-provided Splunk Enterprise 10.0.1 under the Cyber Range educational license; maximum 10 GB ingestion per day and 300 GB disk | Confirmed 2026-10-02. CITEF permits HEC and Universal Forwarder ingestion and a dedicated `netstrike` index with one-day retention; participant investigation and facilitator simulation-management access must be separated (relayed 2026-10-04). Source allocation, RBAC configuration, and readiness test remain |
 | Windows telemetry and forwarding | Selected Splunk Universal Forwarder 10.0.1 and Sysmon 15.22 | Versions selected for use; CITEF permits HEC/UF and a dedicated index. Record exact installer hashes and applicable license/transfer terms, configure the local collection/index path, and verify against the target Windows images and Splunk receiver |
 | Controller, portal, and state | Python 3.11, FastAPI, SQLite; the bundle includes the declared dashboard, validator, controller, shared, and module wheels | Build inventory records exact wheel/runtime versions, metadata, checksums, CTRL01 destination, and offline install method; resolve any UNKNOWN license/owner metadata before release |
 | Ansible and remote configuration | `ansible-core` with `ansible.windows`; SSH/WinRM and PowerShell | Pin Ansible and collection versions; stage all wheels and collection archives; test against selected Linux and Windows images |
@@ -120,8 +120,9 @@ part of the approved Splunk-based MVP.
 | Splunk Universal Forwarder | **10.0.1 selected** to match Splunk Enterprise 10.0.1 ([Splunk download](https://www.splunk.com/en_us/download/universal-forwarder.html)) | Splunk distribution / Splunk Inc. | Splunk software license; check applicable transfer/use terms for the exact package | Pending: record SHA-256 of the staged Windows MSI | Windows endpoints | Stage MSI locally; verify Authenticode and SHA-256; install/configure offline with Ansible; collect Windows event channels |
 | Sysmon binary | **15.22 selected** ([Microsoft Sysmon](https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon)) | Microsoft Sysinternals / Microsoft | Microsoft Sysinternals terms; check applicable transfer/use terms for the exact package | Pending: record SHA-256 of the staged signed executable | Windows endpoints | Stage locally; verify Authenticode and SHA-256; install offline with reviewed XML config |
 | Sysmon XML configuration | Project revision to be fixed at release; current file `citef-config/files/sysmon-config.xml` | Project-authored; review rule provenance | Project-owned content; repository licensing/provenance review required | Generate from exact reviewed release file | Windows endpoints | Bundle with source/configuration, verify SHA-256, and apply locally |
-| Splunk HEC inputs and project event mapping | HEC is permitted; exact configuration/revision pending | Project-owned Splunk inputs, field mappings, searches, dashboards | Project repository license/content provenance to be confirmed | Generate SHA-256 from exact reviewed release files | Dedicated exercise index on existing Splunk instance (index name pending) | Configure HEC and project field mappings locally; send normalized project events via HEC and validate correlation/health |
-| Dedicated exercise index | Creation permitted; exact index name, retention, and access configuration pending | Cyber Range Splunk administrator / project configuration | Covered by the range-provided Splunk service; confirm local configuration process | Record configuration revision/hash | Existing `SPLUNK01` | Create/configure on the existing Splunk service; isolate exercise data by `exercise_id` and `run_id` |
+| Splunk HEC inputs and project event mapping | HEC permitted; exact configuration/revision pending | Project-owned Splunk inputs, field mappings, searches, dashboards | Project repository license/content provenance to be confirmed | Generate SHA-256 from exact reviewed release files | `netstrike` index on existing Splunk instance | Configure HEC and project field mappings locally; send normalized project events via HEC and validate correlation/health |
+| Dedicated exercise index | `netstrike`, one-day retention; creation permitted | Cyber Range Splunk administrator / project configuration | Covered by the range-provided Splunk service; confirm local configuration process | Record configuration revision/hash | Existing `SPLUNK01` | Create/configure locally; isolate exercise data by `exercise_id` and `run_id`; verify one-day retention |
+| Splunk access control | Participant investigates permitted simulation telemetry; facilitator manages simulation and Splunk configuration | Cyber Range Splunk administrator / project roles | Covered by range-provided Splunk service; implement least-privilege roles | Record role/search-filter configuration revision and test evidence | `netstrike` index and facilitator management interfaces | Configure separate participant and facilitator roles; verify participant cannot access facilitator-only data or management actions and facilitator can manage the simulation |
 | Complete CITEF transfer release and manifest | Runtime/source/dependency/collection bundle is CI-built; approved external artifacts and target acceptance remain | Project team | Repository and third-party provenance review required | Per-build manifest/hash; external artifacts pending approval/acquisition | `CTRL01` plus relevant Windows targets | Stage CI bundle and approved installers/configuration, TLS materials, playbooks, fixtures, and manifest; verify each locally before install |
 | Event/action schemas and exercise configuration | Repository revision; no release artifact yet | Project repository / project team | Repository license and included-content provenance to be confirmed | Generate at release | `CTRL01` and relevant target VMs | Copy with the versioned application bundle; no package-manager or network fetch should be required |
 
@@ -183,7 +184,7 @@ secrets and link them from the approved project evidence location.
 | Package/config checksum verification | Pending |
 | Portal external-request audit | Pending |
 | Snapshot restore and Ansible readiness-check result | Pending |
-| Splunk event sources, HEC/Universal Forwarder ingestion validation, dedicated-index checks, and 10 GB/day usage measurement | Pending |
+| Splunk event sources, HEC/Universal Forwarder ingestion validation, `netstrike` index creation/one-day retention, participant/facilitator RBAC checks, and 10 GB/day usage measurement | Pending |
 | Result, failures, and remediation | Personal-machine workflow and dependency installation succeeded offline; target-VM result pending |
 | Evidence/log location | Pending |
 
@@ -203,8 +204,8 @@ secrets and link them from the approved project evidence location.
 5. Restore clean VM snapshots and verify readiness checks. Exercise a
    representative Windows and project-event telemetry flow to Splunk, using the
    Universal Forwarder for Windows events and HEC for normalized project events
-   in the dedicated exercise index. Verify run correlation, event freshness,
-   index access, and daily ingestion usage.
+   in `netstrike`. Verify run correlation, event freshness, one-day retention,
+   participant-versus-facilitator access separation, and daily ingestion usage.
 6. Inspect installer output, service logs, host/network logs, and browser network
    activity for missing artifacts or attempted Internet access. Record every
    failure; do not silently retry from an online source.
