@@ -176,7 +176,6 @@ export function mountSupport({staff = false, observer = false, sessionOptions = 
   const title = document.querySelector("#support-title");
   const button = document.querySelector("#support-send");
   let rendered = "";
-  let platformPolicy = false;
   const session = new SupportSession({...sessionOptions, staff, observer,
     cleared: () => { form?.reset(); rendered = ""; list.replaceChildren(); },
     changed: () => {
@@ -204,15 +203,14 @@ export function mountSupport({staff = false, observer = false, sessionOptions = 
           select.dataset.requests = ids;
         }
         const platformOnly = snapshot?.principal_role === "technical_operator" || snapshot?.run_state === "stopped";
-        if (platformOnly && !platformPolicy && !session.operation) {
+        if (platformOnly && form.elements.kind.value !== "platform_issue" && !session.operation) {
           // Never silently relabel an existing coaching draft as a platform explanation.
           const request = select.value;
           form.reset();
           select.value = request;
         }
-        platformPolicy = platformOnly;
         for (const option of form.elements.kind.options) option.disabled = platformOnly && option.value !== "platform_issue";
-        if (platformOnly) form.elements.kind.value = "platform_issue";
+        if (platformOnly && !session.operation) form.elements.kind.value = "platform_issue";
       }
       const mayWrite = session.canWrite(staff ? form.elements.kind.value : undefined);
       const retry = Boolean(session.operation);

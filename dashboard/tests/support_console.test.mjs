@@ -354,3 +354,25 @@ test("mounted participant retry bypasses disabled fields and uses the exact firs
     assert.match(m.nodes["#support-summary"].textContent, /no duplicate/);
   } finally { m.cleanup(); }
 });
+test("a stopped-run rejected coaching retry cannot silently become a platform reply", async () => {
+  const m = mounted(true);
+  const stopped = snapshot({principal_role: "facilitator", run_state: "stopped", requests: [question({requester_id: "learner", requester_role: "soc_analyst"})]});
+  try {
+    await flush();
+    m.form.elements.request_id.value = "question-a";
+    m.form.elements.message.value = "Coaching draft";
+    m.checkboxes[1].checked = true;
+    m.responses.push(Object.assign(new Error("audit failure"), {status: 503}));
+    await m.form.events.submit({preventDefault() {}});
+    m.responses.push(stopped);
+    await m.session.refresh();
+    assert.equal(m.form.elements.kind.value, "clarification");
+    assert.equal(m.form.elements.message.value, "Coaching draft");
+    m.responses.push(Object.assign(new Error("not committed; coaching stopped"), {status: 409}), stopped);
+    await m.form.events.submit({preventDefault() {}});
+    assert.equal(JSON.parse(m.calls[3].init.body).kind, "clarification");
+    assert.equal(m.form.elements.kind.value, "platform_issue");
+    assert.equal(m.form.elements.message.value, "");
+    assert.equal(m.session.operation, null);
+  } finally { m.cleanup(); }
+});
