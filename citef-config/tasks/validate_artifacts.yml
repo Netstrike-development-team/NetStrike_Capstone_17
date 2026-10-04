@@ -1,0 +1,74 @@
+---
+- name: Validate artifact manifest entries
+  ansible.builtin.assert:
+    that:
+      - item.file is string
+      - item.file | length > 0
+      - item.sha256 is string
+      - item.sha256 is match('^[A-Fa-f0-9]{64}$')
+      - "'..' not in item.file"
+      - not item.file.startswith('/')
+    fail_msg: "An offline artifact filename or SHA-256 is missing or unsafe."
+  loop:
+    - "{{ offline_artifacts.universal_forwarder.linux_deb }}"
+    - "{{ offline_artifacts.universal_forwarder.windows_msi }}"
+    - "{{ offline_artifacts.universal_forwarder.receiver_ca }}"
+    - "{{ offline_artifacts.sysmon.executable }}"
+    - "{{ offline_artifacts.sysmon.config }}"
+    - "{{ offline_artifacts.controller_source }}"
+    - "{{ offline_artifacts.python_runtime.archive }}"
+    - "{{ offline_artifacts.python_runtime.requirements_lock }}"
+    - "{{ controller.tls_certificate }}"
+    - "{{ controller.tls_ca }}"
+  loop_control:
+    label: "{{ item.file | default('missing filename') }}"
+
+- name: Verify offline artifact files and hashes on the Ansible control host
+  ansible.builtin.stat:
+    path: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ item.file }}"
+    checksum_algorithm: sha256
+  loop:
+    - "{{ offline_artifacts.universal_forwarder.linux_deb }}"
+    - "{{ offline_artifacts.universal_forwarder.windows_msi }}"
+    - "{{ offline_artifacts.universal_forwarder.receiver_ca }}"
+    - "{{ offline_artifacts.sysmon.executable }}"
+    - "{{ offline_artifacts.sysmon.config }}"
+    - "{{ offline_artifacts.controller_source }}"
+    - "{{ offline_artifacts.python_runtime.archive }}"
+    - "{{ offline_artifacts.python_runtime.requirements_lock }}"
+    - "{{ controller.tls_certificate }}"
+    - "{{ controller.tls_ca }}"
+  register: staged_artifacts
+  delegate_to: localhost
+  loop_control:
+    label: "{{ item.file }}"
+
+- name: Fail before provisioning when an artifact is absent or changed
+  ansible.builtin.assert:
+    that:
+      - item.stat.exists
+      - item.stat.isreg
+      - item.stat.checksum | lower == item.item.sha256 | lower
+    fail_msg: "Offline artifact {{ item.item.file }} is missing or does not match its approved SHA-256."
+  loop: "{{ staged_artifacts.results }}"
+  loop_control:
+    label: "{{ item.item.file }}"
+
+- name: Require Splunk Enterprise receiver configuration for TLS forwarding
+  ansible.builtin.assert:
+    that:
+      - splunk.version == "10.0.1"
+      - splunk.forwarder_receiver.host | length > 0
+      - splunk.forwarder_receiver.port | int == 9997
+      - splunk.windows_index | length > 0
+      - splunk.linux_index | length > 0
+      - offline_artifacts.universal_forwarder.version | length > 0
+      - offline_artifacts.sysmon.version | length > 0
+    fail_msg: "Complete the Splunk/forwarder versions, receiver, and index settings before provisioning."
+
+- name: Verify the offline Python wheelhouse manifest
+  ansible.builtin.command:
+    argv: [sha256sum, -c, SHA256SUMS]
+    chdir: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ offline_artifacts.python_runtime.archive.file | dirname | dirname }}"
+  changed_when: false
+  delegate_to: localhost

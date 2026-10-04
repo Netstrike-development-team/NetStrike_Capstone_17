@@ -75,14 +75,8 @@ This package follows the objective-led, operations-based exercise approach in th
 
 The Cyber Range has accepted the audience, objectives, safety rules, blue-team
 scope, VM flexibility, Splunk availability, and snapshot restoration approach.
-The remaining confirmations are:
-
-- the final logical-asset-to-VM mapping;
-- the exact Splunk version, interpretation of the 10 GB limit, inputs, indexes,
-  forwarders, roles, and permitted add-ons;
-- the reviewed offline software bundle and required evaluation-license terms;
-  and
-- deployment, rehearsal, and delivery dates coordinated with Latifa.
+Remaining confirmations include the VM mapping, Splunk configuration and
+permissions, the complete offline bundle and license terms, and delivery dates.
 
 Use [06-citef-requirements-and-approval.md](06-citef-requirements-and-approval.md)
 to collect these decisions, record exceptions, re-estimate the backlog, and

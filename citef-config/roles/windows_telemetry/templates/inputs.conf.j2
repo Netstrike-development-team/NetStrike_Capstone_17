@@ -1,0 +1,14 @@
+[WinEventLog://Security]
+disabled = 0
+index = {{ splunk.windows_index }}
+renderXml = 1
+
+[WinEventLog://Microsoft-Windows-PowerShell/Operational]
+disabled = 0
+index = {{ splunk.windows_index }}
+renderXml = 1
+
+[WinEventLog://Microsoft-Windows-Sysmon/Operational]
+disabled = 0
+index = {{ splunk.windows_index }}
+renderXml = 1

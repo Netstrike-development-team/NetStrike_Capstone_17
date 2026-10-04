@@ -1,0 +1,288 @@
+---
+- name: Validate approved CITEF targets and local readiness
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/../environment.json"
+  tasks:
+    - name: Require a unique run ID for telemetry probes
+      ansible.builtin.assert:
+        that:
+          - exercise_run_id is defined
+          - exercise_run_id | length > 0
+        fail_msg: "Pass a new exercise_run_id; readiness never reuses a prior run."
+
+    - name: Validate the complete environment manifest before connecting
+      ansible.builtin.command:
+        argv:
+          - python3
+          - "{{ playbook_dir }}/../validate_environment.py"
+          - validate
+          - --config
+          - "{{ playbook_dir }}/../environment.json"
+      changed_when: false
+
+    - name: Require runtime-only readiness credentials
+      ansible.builtin.assert:
+        that:
+          - lookup('ansible.builtin.env', 'NETSTRIKE_READINESS_TOKEN') | length > 0
+          - lookup('ansible.builtin.env', 'SPLUNK_TOKEN') | length > 0
+        fail_msg: "NETSTRIKE_READINESS_TOKEN and SPLUNK_TOKEN must be injected at runtime."
+      no_log: true
+
+- name: Verify approved hosts, services, DNS, and clock state
+  hosts: all
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/../environment.json"
+  tasks:
+    - name: Wait for the approved SSH or WinRM endpoint
+      ansible.builtin.wait_for_connection:
+        timeout: 30
+        sleep: 2
+
+    - name: Gather target facts after connection succeeds
+      ansible.builtin.setup:
+
+    - name: Confirm the target operating system matches the approved inventory
+      ansible.builtin.assert:
+        that:
+          - >-
+            (expected_os_family == 'linux' and ansible_facts.system | lower == 'linux')
+            or
+            (expected_os_family == 'windows' and ansible_facts.system | lower == 'win32nt')
+        fail_msg: "{{ logical_name }} is not running its approved OS family."
+
+    - name: Confirm the connected machine has the approved host name
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.hostname | lower == logical_name | lower
+        fail_msg: "Connected target does not identify itself as {{ logical_name }}."
+
+    - name: Read the control-host clock immediately before comparison
+      ansible.builtin.command:
+        argv: [date, -u, +%s]
+      delegate_to: localhost
+      register: control_epoch_current
+      changed_when: false
+
+    - name: Check target clock against the control host
+      ansible.builtin.assert:
+        that:
+          - >-
+            (((ansible_facts.date_time.epoch | int) -
+            (control_epoch_current.stdout | int)) | abs)
+            <= (network.max_clock_skew_seconds | int)
+        fail_msg: "{{ logical_name }} exceeds the approved clock-skew limit."
+
+    - name: Resolve every approved host from Linux targets
+      ansible.builtin.command:
+        argv: [getent, ahostsv4, "{{ item.dns_name }}"]
+      loop: "{{ assets }}"
+      register: linux_dns_results
+      changed_when: false
+      when: expected_os_family == 'linux'
+
+    - name: Verify resolved host addresses on Linux targets
+      ansible.builtin.assert:
+        that:
+          - item.item.address in item.stdout
+        fail_msg: "{{ item.item.dns_name }} did not resolve to its approved address."
+      loop: "{{ linux_dns_results.results | default([]) }}"
+      when: expected_os_family == 'linux'
+
+    - name: Resolve every approved host from Windows targets
+      ansible.windows.win_shell: >-
+        (Resolve-DnsName -Name '{{ item.dns_name }}' -Type A -ErrorAction Stop |
+        Select-Object -ExpandProperty IPAddress) -join ','
+      loop: "{{ assets }}"
+      register: windows_dns_results
+      changed_when: false
+      when: expected_os_family == 'windows'
+
+    - name: Verify resolved host addresses on Windows targets
+      ansible.builtin.assert:
+        that:
+          - item.item.address in item.stdout
+        fail_msg: "{{ item.item.dns_name }} did not resolve to its approved address."
+      loop: "{{ windows_dns_results.results | default([]) }}"
+      when: expected_os_family == 'windows'
+
+    - name: Require each configured Linux service to be running
+      ansible.builtin.command:
+        argv: [systemctl, is-active, "{{ item }}"]
+      loop: "{{ required_services.split(',') }}"
+      register: linux_service_results
+      changed_when: false
+      failed_when: linux_service_results.rc != 0
+      when: expected_os_family == 'linux'
+
+    - name: Read Windows service state
+      ansible.windows.win_service_info:
+        name: "{{ item }}"
+      loop: "{{ required_services.split(',') }}"
+      register: windows_service_results
+      when: expected_os_family == 'windows'
+
+    - name: Require each configured Windows service to be running
+      ansible.builtin.assert:
+        that:
+          - item.services | length == 1
+          - item.services[0].state == 'started'
+        fail_msg: "{{ logical_name }} required service check failed."
+      loop: "{{ windows_service_results.results | default([]) }}"
+      when: expected_os_family == 'windows'
+
+    - name: Confirm Linux time reports synchronization
+      ansible.builtin.command:
+        argv: [timedatectl, show, --property=NTPSynchronized, --value]
+      register: linux_time_state
+      changed_when: false
+      when: expected_os_family == 'linux'
+
+    - name: Require Linux clocks to be synchronized
+      ansible.builtin.assert:
+        that:
+          - linux_time_state.stdout | trim == 'yes'
+      when: expected_os_family == 'linux'
+
+- name: Compare the Active Directory baseline with the approved manifest
+  hosts: domain_controllers
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/../environment.json"
+  tasks:
+    - name: Verify domain and baseline users, enablement, and memberships
+      ansible.windows.win_powershell:
+        parameters:
+          expected_domain: "{{ identity_baseline.domain_dns_name }}"
+          search_base_dn: "{{ identity_baseline.search_base_dn }}"
+          expected_users: "{{ identity_baseline.users | to_json }}"
+        script: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module ActiveDirectory
+          $domain = (Get-ADDomain).DNSRoot
+          if ($domain -ine $Ansible.Params.expected_domain) {
+            throw "Active Directory domain does not match the baseline."
+          }
+          $users = ConvertFrom-Json -InputObject $Ansible.Params.expected_users
+          $expectedNames = @($users | ForEach-Object { $_.sam_account_name } | Sort-Object -Unique)
+          $actualNames = @(
+            Get-ADUser -SearchBase $Ansible.Params.search_base_dn -Filter * |
+              Select-Object -ExpandProperty SamAccountName |
+              Sort-Object -Unique
+          )
+          if (Compare-Object -ReferenceObject $expectedNames -DifferenceObject $actualNames) {
+            throw "The exercise identity set differs from the approved baseline."
+          }
+          foreach ($expected in $users) {
+            $actual = Get-ADUser -Identity $expected.sam_account_name -Properties Enabled
+            if ([bool]$actual.Enabled -ne [bool]$expected.enabled) {
+              throw "Baseline enabled state differs for $($expected.sam_account_name)."
+            }
+            $actualGroups = @(
+              Get-ADPrincipalGroupMembership -Identity $actual |
+                Select-Object -ExpandProperty Name |
+                Sort-Object -Unique
+            )
+            $expectedGroups = @($expected.member_of | Sort-Object -Unique)
+            if (Compare-Object -ReferenceObject $expectedGroups -DifferenceObject $actualGroups) {
+              throw "Baseline group membership differs for $($expected.sam_account_name)."
+            }
+          }
+          $Ansible.Changed = $false
+          $Ansible.Result = @{ checked_users = $users.Count; domain = $domain }
+
+- name: Verify the clean fixture baseline
+  hosts: file_store
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/../environment.json"
+  tasks:
+    - name: Calculate fixture hashes without modifying files
+      ansible.builtin.stat:
+        path: "{{ item.path }}"
+        checksum_algorithm: sha256
+      loop: "{{ fixtures }}"
+      register: fixture_results
+
+    - name: Require every fixture to match its clean baseline hash
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - item.stat.isreg
+          - item.stat.checksum | lower == item.item.sha256 | lower
+        fail_msg: "Fixture baseline mismatch at {{ item.item.path }}; restore the clean snapshot."
+      loop: "{{ fixture_results.results }}"
+
+- name: Verify controller, Splunk telemetry, and staff safety gates
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/../environment.json"
+  tasks:
+    - name: Inspect local application readiness without starting the exercise
+      ansible.builtin.uri:
+        url: "{{ controller.readiness_url }}"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ lookup('ansible.builtin.env', 'NETSTRIKE_READINESS_TOKEN') }}"
+        return_content: true
+        status_code: 200
+        validate_certs: true
+        ca_path: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ controller.tls_ca.file }}"
+      register: local_readiness
+      no_log: true
+
+    - name: Require the application baseline and event ledger to be ready
+      ansible.builtin.assert:
+        that:
+          - local_readiness.json.scope == 'local_application_only'
+          - local_readiness.json.ready_to_start | bool
+          - not (local_readiness.json.external_readiness_verified | bool)
+        fail_msg: "Local application readiness failed; external readiness remains separately checked."
+      no_log: true
+
+    - name: Search for a fresh test event from every required source
+      ansible.builtin.uri:
+        url: "{{ splunk.rest_url }}/services/search/jobs/export"
+        method: POST
+        headers:
+          Authorization: "Splunk {{ lookup('ansible.builtin.env', 'SPLUNK_TOKEN') }}"
+        body_format: form-urlencoded
+        body:
+          search: "{{ item.probe_query | replace('{run_id}', exercise_run_id) }}"
+          output_mode: json
+          exec_mode: blocking
+          earliest_time: "-15m"
+          latest_time: now
+        return_content: true
+        status_code: 200
+        validate_certs: true
+        timeout: 60
+      loop: "{{ splunk.required_sources }}"
+      loop_control:
+        label: "{{ item.id }}"
+      register: telemetry_results
+      no_log: true
+
+    - name: Require the expected run-correlated telemetry event from each source
+      ansible.builtin.assert:
+        that:
+          - item.status == 200
+          - item.item.expected_event_id in item.content
+        fail_msg: "Required telemetry probe did not return its expected event."
+      loop: "{{ telemetry_results.results }}"
+      loop_control:
+        label: "{{ item.item.id }}"
+      no_log: true
+
+    - name: Confirm the emergency-stop operator and egress controls were verified
+      ansible.builtin.assert:
+        that:
+          - network.internet_egress == 'deny'
+          - network.egress_verified_by | length > 0
+          - controller.emergency_stop.verified | bool
+          - controller.emergency_stop.operator | length > 0
+          - controller.emergency_stop.contact_channel | length > 0
+        fail_msg: "Cyber Range egress or emergency-stop operator verification is missing."

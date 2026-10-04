@@ -1,0 +1,89 @@
+---
+- name: Stage the approved Linux Universal Forwarder package
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ offline_artifacts.universal_forwarder.linux_deb.file }}"
+    dest: "/var/tmp/{{ offline_artifacts.universal_forwarder.linux_deb.file | basename }}"
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Verify the staged Linux Universal Forwarder package
+  ansible.builtin.stat:
+    path: "/var/tmp/{{ offline_artifacts.universal_forwarder.linux_deb.file | basename }}"
+    checksum_algorithm: sha256
+  register: linux_uf_package
+
+- name: Require the Linux forwarder package hash to match the approved artifact
+  ansible.builtin.assert:
+    that:
+      - linux_uf_package.stat.checksum | lower == offline_artifacts.universal_forwarder.linux_deb.sha256 | lower
+    fail_msg: "Staged Linux Universal Forwarder package failed SHA-256 verification."
+
+- name: Install Universal Forwarder from the staged local package
+  ansible.builtin.apt:
+    deb: "/var/tmp/{{ offline_artifacts.universal_forwarder.linux_deb.file | basename }}"
+    state: present
+    update_cache: false
+
+- name: Create local forwarder configuration directory
+  ansible.builtin.file:
+    path: /opt/splunkforwarder/etc/system/local
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Create local forwarder CA directory
+  ansible.builtin.file:
+    path: /opt/splunkforwarder/etc/auth/netstrike
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Stage the approved Splunk receiver CA
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ offline_artifacts.universal_forwarder.receiver_ca.file }}"
+    dest: /opt/splunkforwarder/etc/auth/netstrike/receiver-ca.pem
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Verify the staged Linux receiver CA
+  ansible.builtin.stat:
+    path: /opt/splunkforwarder/etc/auth/netstrike/receiver-ca.pem
+    checksum_algorithm: sha256
+  register: linux_ca
+
+- name: Require the Linux receiver CA hash to match the approved artifact
+  ansible.builtin.assert:
+    that:
+      - linux_ca.stat.checksum | lower == offline_artifacts.universal_forwarder.receiver_ca.sha256 | lower
+    fail_msg: "Staged receiver CA failed SHA-256 verification."
+
+- name: Configure TLS Splunk receiver output
+  ansible.builtin.template:
+    src: outputs.conf.j2
+    dest: /opt/splunkforwarder/etc/system/local/outputs.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Linux Universal Forwarder
+
+- name: Configure Linux system log collection
+  ansible.builtin.template:
+    src: inputs.conf.j2
+    dest: /opt/splunkforwarder/etc/system/local/inputs.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Linux Universal Forwarder
+
+- name: Enable and start the Linux Universal Forwarder
+  ansible.builtin.service:
+    name: SplunkForwarder
+    enabled: true
+    state: started
+
+- name: Apply forwarder configuration changes
+  ansible.builtin.meta: flush_handlers

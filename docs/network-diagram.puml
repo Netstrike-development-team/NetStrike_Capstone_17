@@ -1,0 +1,39 @@
+@startuml
+title NetStrike CITEF example environment
+left to right direction
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+skinparam shadowing false
+actor "Participant / facilitator\nbrowser" as Browser
+cloud "Internet" as Internet
+node "Ansible control host\nlocation not specified" as Ansible
+package "Cyber Range - exercise network\n10.77.0.0/24 | simcorp.test" as Exercise {
+  node "DC01\n10.77.0.10\nWindows Server 2025 LTSC\nAD DS, DNS, NTP\nSplunk Forwarder, Sysmon" as DC
+  node "CTRL01\n10.77.0.11\nUbuntu Server 26.04 LTS\nController / portal :8443\nIDP01, HELPDESK01,\nCLOUD01, FILE01\nSplunk Forwarder" as CTRL
+  node "FIN-WS01\n10.77.0.20\nWindows 11 26H2\nWinRM, Splunk Forwarder,\nSysmon" as WS
+  node "SPLUNK01\n10.77.0.30\nCyber Range Linux host\nSplunk Enterprise 10.0.1\nReceiver :9997" as SPLUNK
+}
+cloud "Management network\n10.77.1.0/24\nNo asset addresses specified" as Management
+Browser --> CTRL : HTTPS :8443
+Ansible --> DC : WinRM :5986
+Ansible --> WS : WinRM :5986
+Ansible --> CTRL : SSH :22
+Ansible --> SPLUNK : SSH :22
+CTRL --> DC : DNS :53\nNTP :123
+WS --> DC : DNS :53\nNTP :123
+SPLUNK --> DC : DNS :53\nNTP :123
+CTRL --> SPLUNK : Splunk Forwarder :9997
+DC --> SPLUNK : Splunk Forwarder :9997
+WS --> SPLUNK : Splunk Forwarder :9997
+Exercise ..> Internet : Egress denied
+note bottom of Management
+  The example defines this CIDR but does not assign
+  addresses or interfaces to any hosts.
+end note
+note bottom
+  Based on citef-config/environment.example.json.
+  Logical connections are shown; firewall rules, routes,
+  browser source addresses, and Ansible host placement
+  are not specified by the example manifest.
+end note
+@enduml

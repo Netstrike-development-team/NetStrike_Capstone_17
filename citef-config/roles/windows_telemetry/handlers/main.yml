@@ -1,0 +1,5 @@
+---
+- name: Restart Windows Universal Forwarder
+  ansible.windows.win_service:
+    name: SplunkForwarder
+    state: restarted
