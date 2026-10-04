@@ -316,6 +316,22 @@ def create_app(
                 status_code=status.HTTP_409_CONFLICT, detail=str(exc)
             ) from exc
 
+    def scoped_control(request: Request, operation):
+        """Optional legacy-compatible run header; check and operate under one lock."""
+        supplied = request.headers.getlist("X-Exercise-Run-ID")
+        if len(supplied) > 1:
+            raise HTTPException(status_code=422, detail="ambiguous exercise run header")
+        expected_run = supplied[0] if supplied else None
+        if expected_run is not None and (
+            not 1 <= len(expected_run) <= 128 or expected_run.strip() != expected_run
+            or any(ord(char) < 32 for char in expected_run)
+        ):
+            raise HTTPException(status_code=422, detail="invalid exercise run header")
+        with service.run.state_lock:
+            if expected_run is not None and expected_run != service.run.run_id:
+                raise HTTPException(status_code=409, detail="run changed; refresh before controlling or exporting")
+            return execute(operation)
+
     def authorize_sso_request(request: Request) -> None:
         try:
             sso_origins.authorize(request)
@@ -466,10 +482,11 @@ def create_app(
 
     @app.post("/api/facilitator/mfa/decision")
     def facilitator_mfa_decision(
+        request: Request,
         decision: MfaDecisionInput,
         principal: PortalPrincipal = Depends(mfa_facilitator),
     ) -> dict[str, Any]:
-        return execute(lambda: service.decide_scheduled_mfa(
+        return scoped_control(request, lambda: service.decide_scheduled_mfa(
             principal, decision.challenge_id, decision.decision,
         ))
 
@@ -600,9 +617,11 @@ def create_app(
 
     @app.get("/api/facilitator/state")
     def facilitator_state(
-        _principal: PortalPrincipal = Depends(facilitator),
+        response: Response,
+        principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
-        return service.facilitator_state()
+        response.headers["Cache-Control"] = "no-store"
+        return {**service.facilitator_state(), "principal_role": principal.role}
 
     @app.get("/api/evaluator/report")
     def aar_report(_principal: PortalPrincipal = Depends(evaluator)):
@@ -709,15 +728,17 @@ def create_app(
 
     @app.post("/api/facilitator/prepare")
     def prepare(
+        request: Request,
         principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
-        return execute(lambda: service.prepare_run(principal))
+        return scoped_control(request, lambda: service.prepare_run(principal))
 
     @app.post("/api/facilitator/start")
     def start(
+        request: Request,
         principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
-        return execute(lambda: service.start_run(principal))
+        return scoped_control(request, lambda: service.start_run(principal))
 
     @app.get("/api/facilitator/readiness")
     def readiness(response: Response, _principal: PortalPrincipal = Depends(facilitator)) -> dict[str, Any]:
@@ -731,42 +752,48 @@ def create_app(
 
     @app.post("/api/facilitator/pause")
     def pause(
+        request: Request,
         _principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
-        return execute(lambda: service.control_run("pause"))
+        return scoped_control(request, lambda: service.control_run("pause"))
 
     @app.post("/api/facilitator/resume")
     def resume(
+        request: Request,
         _principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
-        return execute(lambda: service.control_run("resume"))
+        return scoped_control(request, lambda: service.control_run("resume"))
 
     @app.post("/api/facilitator/advance")
     def advance(
         request: AdvanceInput,
+        http_request: Request,
         _principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
-        return execute(lambda: service.control_run("advance", request.elapsed_seconds))
+        return scoped_control(http_request, lambda: service.control_run("advance", request.elapsed_seconds))
 
     @app.post("/api/facilitator/deliver")
     def deliver(
         request: ItemInput,
+        http_request: Request,
         _principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
-        return execute(lambda: service.control_run("deliver", request.item_id))
+        return scoped_control(http_request, lambda: service.control_run("deliver", request.item_id))
 
     @app.post("/api/facilitator/skip")
     def skip(
         request: SkipInput,
+        http_request: Request,
         _principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
-        return execute(lambda: service.control_run("skip", request.item_id, request.reason))
+        return scoped_control(http_request, lambda: service.control_run("skip", request.item_id, request.reason))
 
     @app.post("/api/facilitator/checkpoints/dp2")
     def resolve_dp2(
+        request: Request,
         _principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
-        return execute(
+        return scoped_control(request,
             lambda: {
                 "evaluation": PortalService.evaluation_dict(
                     service.resolve_dp2()
@@ -778,13 +805,14 @@ def create_app(
     @app.post("/api/facilitator/stop")
     def stop(
         request: StopInput,
+        http_request: Request,
         principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
-        return execute(lambda: service.stop_run(request.reason, principal))
+        return scoped_control(http_request, lambda: service.stop_run(request.reason, principal))
 
     @app.post("/api/facilitator/checkpoints/dp3")
-    def resolve_dp3(_principal: PortalPrincipal = Depends(facilitator)):
-        return execute(lambda: {
+    def resolve_dp3(request: Request, _principal: PortalPrincipal = Depends(facilitator)):
+        return scoped_control(request, lambda: {
             "evaluation": PortalService.evaluation_dict(service.resolve_cloud()),
             "state": service.facilitator_state(),
         })
@@ -792,22 +820,23 @@ def create_app(
     @app.post("/api/facilitator/reset")
     def reset(
         request: ResetInput,
+        http_request: Request,
         principal: PortalPrincipal = Depends(facilitator),
     ) -> dict[str, Any]:
-        return execute(
+        return scoped_control(http_request,
             lambda: service.reset_run(new_run_id=request.new_run_id, principal=principal)
         )
 
     @app.post("/api/facilitator/checkpoints/dp4")
-    def resolve_dp4(_principal: PortalPrincipal = Depends(facilitator)):
-        return execute(lambda: {
+    def resolve_dp4(request: Request, _principal: PortalPrincipal = Depends(facilitator)):
+        return scoped_control(request, lambda: {
             "evaluation": PortalService.evaluation_dict(service.resolve_impact()),
             "state": service.facilitator_state(),
         })
 
     @app.post("/api/facilitator/impact/rollback")
-    def rollback_impact(principal: PortalPrincipal = Depends(facilitator)):
-        return execute(lambda: service.rollback_impact(principal))
+    def rollback_impact(request: Request, principal: PortalPrincipal = Depends(facilitator)):
+        return scoped_control(request, lambda: service.rollback_impact(principal))
 
     def current_events() -> list[dict[str, Any]]:
         return service.store.events(
@@ -816,25 +845,25 @@ def create_app(
 
     @app.get("/api/facilitator/exports/events.jsonl")
     def export_events_jsonl(
+        request: Request,
         _principal: PortalPrincipal = Depends(facilitator),
     ) -> Response:
-        filename = f"{service.run.run_id}-events.jsonl"
-        return Response(
-            content=render_jsonl(current_events()),
-            media_type="application/x-ndjson",
-            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-        )
+        return scoped_control(request, lambda: Response(
+            content=render_jsonl(current_events()), media_type="application/x-ndjson",
+            headers={"Cache-Control": "no-store", "Content-Disposition":
+                     f'attachment; filename="{service.run.run_id}-events.jsonl"'},
+        ))
 
     @app.get("/api/facilitator/exports/events.csv")
     def export_events_csv(
+        request: Request,
         _principal: PortalPrincipal = Depends(facilitator),
     ) -> Response:
-        filename = f"{service.run.run_id}-events.csv"
-        return Response(
-            content=render_csv(current_events()),
-            media_type="text/csv",
-            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-        )
+        return scoped_control(request, lambda: Response(
+            content=render_csv(current_events()), media_type="text/csv",
+            headers={"Cache-Control": "no-store", "Content-Disposition":
+                     f'attachment; filename="{service.run.run_id}-events.csv"'},
+        ))
 
     return app
 

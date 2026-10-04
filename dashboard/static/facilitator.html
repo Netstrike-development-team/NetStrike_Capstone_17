@@ -21,18 +21,23 @@
     <div id="notice" class="notice" role="status" aria-live="polite"></div>
 
     <nav class="evidence-link" aria-label="Exercise review">
-      <div><strong>After-action review</strong><span>Review the five learning objectives and export a portable run bundle.</span></div>
+      <div><strong>After-action review and saved archives</strong><span>Review the current run or download read-only captures from earlier runs.</span></div>
       <a class="button secondary" href="/evaluator" target="_blank" rel="noopener">Open evaluator review</a>
     </nav>
 
-    <section class="panel">
+    <section class="ops-grid" aria-label="Local application operations">
+      <article class="panel ops-panel"><h2>Local application readiness</h2><div id="local-readiness"><p class="empty">Connect to inspect local checks.</p></div></article>
+      <article class="panel ops-panel"><h2>Automatic delivery health</h2><div id="clock-health"><p class="empty">Connect to inspect the supervised clock.</p></div></article>
+    </section>
+
+    <section class="panel space-top">
       <div class="panel-header"><div><h2>Run controls</h2><p>Reviewed lifecycle operations only.</p></div><button id="refresh" class="secondary small">Refresh</button></div>
       <div class="controls"><button data-command="prepare">Prepare</button><button data-command="start">Start</button><button data-command="pause" class="warn">Pause</button><button data-command="resume" class="secondary">Resume</button><button id="resolve-dp2" class="secondary">Resolve DP2</button><button id="resolve-dp3" class="secondary" hidden>Resolve DP3</button><button id="resolve-dp4" class="secondary" hidden>Resolve DP4</button><button id="rollback-impact" class="secondary" hidden>Roll back marker impact</button><button id="download-jsonl" class="secondary">Download JSONL</button><button id="download-csv" class="secondary">Download CSV</button></div>
       <div class="form-grid controls-top">
-        <div><label>Advance to elapsed seconds<input id="advance-seconds" type="number" min="0" max="10800" value="300"></label><button id="advance" class="small button-top">Advance clock</button></div>
-        <div><label>Emergency-stop reason<input id="stop-reason" placeholder="Required safety or platform reason"></label><button id="stop" class="danger small button-top">Emergency stop</button></div>
+        <div class="form-wide"><label>Emergency-stop reason<input id="stop-reason" maxlength="512" placeholder="Required safety or platform reason"></label><button id="stop" class="danger small button-top" disabled>Emergency stop</button><p class="muted">Stop remains available during clock faults or another control request. If the application cannot be reached, contact the range operator directly.</p></div>
         <div class="form-wide"><label>New run ID after stop<input id="new-run-id" placeholder="Optional; generated when blank"></label><button id="reset" class="secondary small button-top">Reset application state</button></div>
       </div>
+      <details class="controls-top"><summary>Manual rehearsal time advance</summary><p>Normal play advances automatically on the server. This rehearsal control skips unplayed time; it does not prove timing or learner performance.</p><label>Advance to elapsed seconds<input id="advance-seconds" type="number" min="0" max="10800" value="300"></label><button id="advance" class="secondary small button-top" disabled>Advance rehearsal clock</button></details>
     </section>
 
     <section class="layout space-top">

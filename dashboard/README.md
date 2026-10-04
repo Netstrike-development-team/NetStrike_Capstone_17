@@ -6,6 +6,11 @@ timeline and load safe feedback after all five objectives are reviewed at end
 of play. See [the review workflow](../docs/after-action-review.md) for roles,
 offline report generation and calibration limits.
 
+Staff can inspect local readiness and clock health directly on `/facilitator`,
+and preview/capture/browse/download historical reviews on `/evaluator` without
+altering current ratings. See [offline staff operations](../docs/staff-operations.md)
+for guarded controls, uncertain outcomes and export-before-VM-restore limits.
+
 This FastAPI service exposes the identity vertical slice without trusting actor, role, run, or exercise identifiers supplied by a browser.
 
 - Participant endpoints show only participant-visible injects, accept allowlisted safe actions, and score the DP1 submission.

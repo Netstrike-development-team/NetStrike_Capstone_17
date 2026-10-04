@@ -158,6 +158,8 @@ def _source() -> dict:
         "dashboard/clock.py",
         "dashboard/support.py",
         "dashboard/static/support.js",
+        "dashboard/static/staff-operations.js",
+        "dashboard/static/review-archives.js",
         "dashboard/static/common.js",
         "dashboard/static/participant.html",
         "dashboard/static/participant.js",

@@ -7,6 +7,10 @@ or a new learning objective.
 
 ## Staff inspection
 
+`/facilitator` displays the diagnostic status and gates ordinary controls without
+hiding emergency stop. See [staff operations](staff-operations.md) for UI behavior
+and the limits of a stop request when a process/handler cannot respond.
+
 `GET /api/facilitator/clock` requires a configured facilitator or
 technical-operator bearer token. It returns `Cache-Control: no-store`. The same
 object is included as `clock` in facilitator state. The public `/health` is
