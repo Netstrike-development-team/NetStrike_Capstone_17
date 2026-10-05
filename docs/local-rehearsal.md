@@ -63,6 +63,19 @@ optional: an exported source tree can run without repository metadata. The hashe
 describe the source actually used; a dirty checkout is not claimed to match its
 commit. These are modification checks, not signatures or proof of authorship.
 
+For milestone/CI verification against the checkout that produced the package:
+
+```sh
+python scripts/rehearsal.py --verify /tmp/silent-spider-rehearsal --require-current-source
+```
+
+This optional guard requires a matching clean Git commit and exactly matching
+recorded source fingerprints. Produce the package from committed clean source
+and place the output outside the repository. Dirty/unknown Git status or changed
+source fails. Ordinary `--verify` remains portable for historical packages or
+exported source without Git. A source match does not turn subset coverage or
+developer results into live exercise acceptance.
+
 Each case retains:
 
 - `events.jsonl`: the canonical original-run event ledger;
@@ -84,9 +97,12 @@ answer/evaluation information: do not distribute them as participant materials.
 
 ## CI and responsibility boundary
 
-The `Local full-play rehearsal` workflow runs regression tests, executes all
+The `Local full-play rehearsal` workflow runs on main/dev PRs and pushes (or a
+manual dispatch), runs all core Python and offline Node regression tests, executes all
 24 cases, verifies the exported package independently and uploads the evidence
-with a 14-day retention period. Failures fail the job; evidence upload still runs.
+with a 14-day retention period. It requires matching clean checkout provenance.
+Failures fail the job; evidence upload still runs. See the
+[milestone checklist](milestone-release-checklist.md) for final-source evidence.
 This adds a CI check, not a change to repository branch-protection rules.
 
 The same strict workflow executes all dependency-free `dashboard/tests/*.test.mjs`

@@ -1,16 +1,16 @@
 # Remaining development and PR estimate — 5 October 2026
 
 This is a planning estimate, not a list of confirmed defects or a promise of an
-exact PR count. Baseline: #144 merged; Patrick's #127/#128/#139/#140 also merged. The
+exact PR count. Baseline: #146 merged; Patrick's #127/#128/#139/#140 also merged. The
 application already supports all four checkpoint branches, mock-cloud and safe
 impact/recovery, submissions, human review/AAR, run archives, supervised timing,
 private event-spool export, local readiness, human support and staff operations.
 
-**Aya: approximately 3–6 planned development PRs, including the current evaluator
-review increment (#145), plus 3–6 rehearsal-driven fix PRs: budget 6–12 in total.** Smaller fixes
+**Aya: approximately 2–5 planned development PRs, including current milestone
+checks (#147), plus 3–6 rehearsal-driven fix PRs: budget 5–11 in total.** Smaller fixes
 can be combined; a significant integration defect can require several PRs. This
-is not a plan for new major features. The allowance is unchanged after finding a
-scoped current-review gap while closing #143. Freeze optional features before the
+is not a plan for new major features. The planned allowance drops by one after
+merging evaluator review #146; #147 is part of release/handoff work. Freeze optional features before the
 final Cyber Range delivery window.
 
 | Remaining work package | Planning allowance | Exit evidence / boundary |
@@ -20,8 +20,8 @@ final Cyber Range delivery window.
 | Load Anna's final exercise content and reconcile screens/instructions | 1 PR | Approved injects, wording and objective labels match the 2h50 session. Aya integrates; Anna authors and signs off. |
 | Application/deployment contract integration | Startup contract delivered in #142; #141 closed; allow 0–1 evidence-driven follow-up | Read-only deployment-input preflight/fail-before-write startup is implemented. Patrick still proves the deployed application/readiness/private spool; Aya fixes evidenced application gaps, not Patrick's Ansible/Splunk backlog. |
 | Cross-role full-play workflow and integration checks | Delivered in #144; #143 closed | Learner run-pinning closes an observed reset gap; representative HTTP roles compose checkpoints, recovery, terminal stop/completion, private archives, reset and fresh actions. Existing 24-case service tests stay unchanged; local checks do not replace real learner/range rehearsals. |
-| Reliable current human review workflow | 1 PR; current #145 | Preserve same-revision drafts; current downloads pin both run and report snapshot, and unconfirmed saves require inspection. Anna's rubric/calibration and Patrick's real acceptance remain separate. |
-| Application release/handoff consolidation | 1–2 PRs | Versioned configuration, operational limitations and support instructions agree with the tested source and release package. Ashley coordinates sign-off. |
+| Reliable current human review workflow | Delivered in #146; #145 closed | Same-revision drafts preserved; downloads pin run/report snapshot; unconfirmed saves require inspection. Anna's rubric/calibration and Patrick's real acceptance remain separate. |
+| Application release/handoff consolidation | 1–2 PRs; current #147 | Strict main/dev application checks and source-matched rehearsal evidence; milestone checklist distinguishes prototype from accepted v1.0. Final package/configuration/support agreement depends on owner evidence. Ashley coordinates sign-off. |
 
 Several packages can share a PR. The allowances describe reviewable increments,
 not seven independently mandatory new products. Restart/resume of an in-flight
@@ -44,7 +44,7 @@ materials, timing/usability and calibration (#98–#100). Ashley owns schedule,
 client decisions, risk/board and final acceptance coordination (#96/#97). Aya
 owns application integration and code fixes found by that work.
 
-For **all team repository work**, a rough allowance is **12–20 further PRs**,
+For **all team repository work**, a rough allowance is **11–19 further PRs**,
 including Aya's work and possible environment/content/release updates. Non-code
 deliverables can instead be linked directly to issues; they do not need artificial
 PRs. This wider estimate has lower confidence until deployment and the first

@@ -89,17 +89,20 @@ with Latifa.
 ## Current priority order
 
 Updated October 5: all four scenario stages and application review/evidence/staff
-foundations are implemented locally; #144 and Patrick's #127/#128/#139/#140 are merged.
+foundations are implemented locally; #146 and Patrick's #127/#128/#139/#140 are merged.
 This is application progress, not live Cyber Range acceptance.
 
 1. Human support and staff operations are connected (#136/#138; #135/#137 closed).
    Startup-input validation is delivered (#142; #141 closed), as are learner
-   reset boundaries/cross-role HTTP checks (#144; #143 closed). Current #145
-   finishes draft/revision-safe evaluator review and snapshot-pinned exports;
+   reset boundaries/cross-role HTTP checks (#144; #143 closed). Evaluator draft/
+   revision-safe review and snapshot-pinned exports are delivered (#146; #145 closed).
+   Current #147 extends strict main/dev milestone checks and source-matched verification;
    no rubric/default scenario change or takeover of environment work. See
    [application deployment inputs](application-deployment-contract.md) and
    [learner reset safety](participant-run-safety.md) and
    [current evaluator workflow](evaluator-review-workflow.md).
+   [Milestone promotion](milestone-release-checklist.md) is independent of continued
+   feature development; a tested prototype is not final range acceptance.
 2. Patrick proves offline deployment, identity-slice Splunk ingestion, privacy and
    snapshot/readiness on the approved range topology.
 3. Anna finalizes content and records representative learner usability/timing and
