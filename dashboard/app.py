@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated, Any, Iterable
@@ -31,6 +30,7 @@ from .origin import OriginAllowlist, OriginDeniedError
 from .service import PortalService
 from .sso import SsoBoundaryError, SsoExperienceError
 from .store import PortalStore
+from .configuration import PortalConfiguration
 
 
 PARTICIPANT_ROLES = frozenset(
@@ -871,39 +871,16 @@ def create_app(
 def create_default_app() -> FastAPI:
     """Create the production app from runtime-injected offline configuration."""
 
-    database_path = Path(
-        os.getenv("NETSTRIKE_PORTAL_DATABASE", "output/netstrike-portal.sqlite3")
-    )
-    run_id = os.getenv("NETSTRIKE_RUN_ID")
-    audit_key = os.getenv("NETSTRIKE_IDENTITY_AUDIT_KEY")
-    if not audit_key or len(audit_key.encode("utf-8")) < 32:
-        raise ValueError(
-            "NETSTRIKE_IDENTITY_AUDIT_KEY must contain at least 32 bytes"
-        )
-    raw_origins = os.getenv("NETSTRIKE_SSO_ALLOWED_ORIGINS")
-    if not raw_origins:
-        raise ValueError("NETSTRIKE_SSO_ALLOWED_ORIGINS must be configured")
+    configuration = PortalConfiguration.from_environment()
+    store = PortalStore(configuration.database)
     try:
-        allowed_origins = json.loads(raw_origins)
-    except json.JSONDecodeError as exc:
-        raise ValueError(
-            "NETSTRIKE_SSO_ALLOWED_ORIGINS must be a JSON array"
-        ) from exc
-    if not isinstance(allowed_origins, list) or not all(
-        isinstance(item, str) for item in allowed_origins
-    ):
-        raise ValueError("NETSTRIKE_SSO_ALLOWED_ORIGINS must be a JSON array")
-    store = PortalStore(database_path)
-    service = PortalService(
-        store,
-        run_id=run_id,
-        profile_path=os.getenv("NETSTRIKE_PROFILE_FIXTURE"),
-        scenario_path=os.getenv("NETSTRIKE_SCENARIO_PATH"),
-        impact_root=os.getenv("NETSTRIKE_IMPACT_ROOT"),
-        identity_audit_key=audit_key.encode("utf-8"),
-    )
-    return create_app(
-        service,
-        TokenAuthenticator.from_environment(),
-        sso_allowed_origins=allowed_origins,
-    )
+        service = PortalService(
+            store, run_id=configuration.run_id, profile_path=configuration.profile_path,
+            scenario_path=configuration.scenario_path, impact_root=configuration.impact_root,
+            identity_audit_key=configuration.audit_key,
+        )
+        return create_app(service, configuration.authenticator,
+                          sso_allowed_origins=configuration.origins)
+    except Exception:
+        store.close()  # Never delete partially constructed state or retained evidence.
+        raise
