@@ -107,7 +107,7 @@ must be staged outside Git and their hashes added to the deployment manifest.
 Do not infer that Wazuh, Elastic, or another SIEM in legacy documentation is
 part of the approved Splunk-based MVP.
 
-| Name | Version | Source / owner | License | SHA-256 | Destination VM | Offline installation method |
+| Name | Version | Source / owner | License | Checksum / integrity reference | Destination VM | Offline installation method |
 |---|---|---|---|---|---|---|
 | `ansible-core` | Exact version resolved per bundle build | PyPI / Ansible project | From wheel metadata; review UNKNOWN | Per-wheel `inventory.json` and `SHA256SUMS` | `CTRL01` | Install from local wheelhouse using the generated hash-pinned lock |
 | `ansible.windows` collection | 3.8.0 (`citef-config/requirements.yml`) | Ansible Galaxy / Ansible community | From collection manifest; review UNKNOWN | Per-archive `inventory.json` and `SHA256SUMS` | `CTRL01` Ansible controller | Install the bundled collection archive with `ansible-galaxy collection install --offline` |
@@ -117,8 +117,8 @@ part of the approved Splunk-based MVP.
 | Windows Security event logging | OS-provided; audit policy not configured | Microsoft / Windows image | Windows image license terms | N/A; record configuration revision/hash | Windows endpoints | Configure and validate the audit policy offline with Ansible/PowerShell |
 | PowerShell logging | OS-provided; policy not configured | Microsoft / Windows image | Windows image license terms | N/A; record configuration revision/hash | Windows endpoints | Configure required logging policy offline with Ansible/PowerShell |
 | Splunk Enterprise | 10.0.1; range version and 10 GB/day ingestion / 300 GB disk limits confirmed 2026-10-02 | Cyber Range-provided instance | Cyber Range educational license, confirmed; no Splunk installer is in the project bundle | N/A for transfer (record receiver identity/config separately) | Existing `SPLUNK01` | Configure the range-provided service; no offline installer transfer planned |
-| Splunk Universal Forwarder | **10.0.1 selected** to match Splunk Enterprise 10.0.1 ([Splunk download](https://www.splunk.com/en_us/download/universal-forwarder.html)) | Splunk distribution / Splunk Inc. | Splunk software license; check applicable transfer/use terms for the exact package | Pending: record SHA-256 of the staged Windows MSI | Windows endpoints | Stage MSI locally; verify Authenticode and SHA-256; install/configure offline with Ansible; collect Windows event channels |
-| Sysmon binary | **15.22 selected** ([Microsoft Sysmon](https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon)) | Microsoft Sysinternals / Microsoft | Microsoft Sysinternals terms; check applicable transfer/use terms for the exact package | Pending: record SHA-256 of the staged signed executable | Windows endpoints | Stage locally; verify Authenticode and SHA-256; install offline with reviewed XML config |
+| Splunk Universal Forwarder | **10.0.1 selected** to match Splunk Enterprise 10.0.1 ([Splunk download](https://www.splunk.com/en_us/download/universal-forwarder.html)) | Splunk distribution / Splunk Inc. | Splunk software license; check applicable transfer/use terms for the exact package | Windows x64 MSI SHA-512: `246e0ce374c89fe0f5ba52e95ccb1c7cdeb8bedebc04b244708beb270b0b5cb268407e7db0a9937354aeb074ecd9725122c35f078c0b1e0347b26661f40ccd96`; Linux amd64 DEB SHA-512: `ab289083aa191c94c4e38a18826962069de8cc53b10dd60e7630e724773d12db5f0a742bfaf3d4c3c5375beb81983e307c1c8c87024b491b183571d5af7a800b` | Windows endpoints and Linux forwarder host(s), if used | Stage the matching installer locally; verify its SHA-512; install/configure offline with Ansible; collect Windows event channels |
+| Sysmon distribution archive | **15.22 selected** ([Microsoft Sysmon](https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon)) | Microsoft Sysinternals / Microsoft | Microsoft Sysinternals terms; check applicable transfer/use terms for the exact package | ZIP archive SHA-256 (contains executable and EULA): `00ecf1b46aec99299d3ae0bca79dc621458bd014b20b509d7c5c8e8c8611aa54`; verify against the exact staged archive | Windows endpoints | Stage the archive locally; verify archive SHA-256 and executable Authenticode signature; install offline with reviewed XML config |
 | Sysmon XML configuration | Project revision to be fixed at release; current file `citef-config/files/sysmon-config.xml` | Project-authored; review rule provenance | Project-owned content; repository licensing/provenance review required | Generate from exact reviewed release file | Windows endpoints | Bundle with source/configuration, verify SHA-256, and apply locally |
 | Splunk HEC inputs and project event mapping | HEC permitted; exact configuration/revision pending | Project-owned Splunk inputs, field mappings, searches, dashboards | Project repository license/content provenance to be confirmed | Generate SHA-256 from exact reviewed release files | `netstrike` index on existing Splunk instance | Configure HEC and project field mappings locally; send normalized project events via HEC and validate correlation/health |
 | Dedicated exercise index | `netstrike`, one-day retention; creation permitted | Cyber Range Splunk administrator / project configuration | Covered by the range-provided Splunk service; confirm local configuration process | Record configuration revision/hash | Existing `SPLUNK01` | Create/configure locally; isolate exercise data by `exercise_id` and `run_id`; verify one-day retention |
@@ -163,34 +163,37 @@ config deployment workflow.
 
 ## Offline installation test record
 
-**Status (2026-10-04):** Patrick reports that the application successfully ran
-in an air-gapped Linux VM. This is a useful Linux application smoke-test result,
-not full target-VM/deployment acceptance: the exact VM image, bundle revision
-and digest, test commands/results, and evidence location have not yet been
-recorded here. Windows/Sysmon, full provisioning/readiness, and end-to-end
-Splunk acceptance remain outstanding. Replication steps for the application
-smoke test are in the [offline bundle guide](../offline-bundle.md#3-run-the-application-smoke-test-on-an-isolated-linux-vm).
+**Status (2026-10-04):** The dashboard was installed and ran successfully on
+Ubuntu Server 26.04.1 with the Ethernet interface manually disabled. Installation
+and checksum checks passed, and the dashboard's dependencies were successfully
+installed in the air-gapped environment. This confirms the Linux application
+smoke-test path, not full target-VM/deployment acceptance: the exact bundle
+workflow run, repository revision and digest, architecture, and clean-snapshot
+status are not recorded here. Windows/Sysmon, full provisioning/readiness, and
+end-to-end Splunk acceptance remain outstanding. Replication steps for the
+application smoke test are in the
+[offline bundle guide](../offline-bundle.md#3-run-the-application-smoke-test-on-an-isolated-linux-vm).
 
 Complete this record for each target OS/VM role. Preserve logs that contain no
 secrets and link them from the approved project evidence location.
 
 | Field | Result |
 |---|---|
-| Test date / operator | Linux application smoke test reported by Patrick, 2026-10-04; exact time/operator record pending |
-| Clean VM image, OS/version, and role | Application successfully ran in an air-gapped Linux VM; exact image/version/architecture and clean-snapshot status pending |
-| Internet disabled and verified by | Air-gapped VM reported; enforcement mechanism and verification evidence pending |
-| Bundle release/version and SHA-256 | Application success reported; exact workflow run, repository revision, and bundle SHA-256 pending |
-| Python version/architecture and locked requirements checksum | Application success reported; exact installed version, architecture, and lock checksum pending |
+| Test date / operator | Patrick's Linux application smoke test, 2026-10-04 |
+| Clean VM image, OS/version, and role | Ubuntu Server 26.04.1; Linux controller/portal smoke test; architecture and clean-snapshot status pending |
+| Internet disabled and verified by | Ethernet interface manually disabled; dashboard ran without network access |
+| Bundle release/version and SHA-256 | Installation and checksum checks passed; exact workflow run, repository revision, and bundle SHA-256 pending |
+| Python version/architecture and locked requirements checksum | Dependencies installed successfully from the offline bundle; exact installed Python version, architecture, and lock checksum pending |
 | `ansible-core` version and `ansible.windows` collection manifest checksum | Pending |
 | Splunk version / Universal Forwarder version / Sysmon version (if applicable) | Splunk Enterprise 10.0.1; selected Universal Forwarder 10.0.1 and Sysmon 15.22; record exact installer hashes and verify compatibility/ingestion on target VMs |
 | Windows Security and PowerShell audit policy revision | Pending |
-| Installation commands and local artifact source | Application ran in air-gapped Linux VM; exact commands/artifact source not recorded yet. See linked offline-bundle application smoke-test procedure |
-| Package/config checksum verification | Bundle checksum and lock verification result pending |
-| Portal external-request audit | Air-gapped run reported; browser/host egress verification details pending |
-| Linux application smoke checks | Application startup succeeded, as reported by Patrick; health/UI status codes, local readiness scope, role-boundary responses, and audit-write result pending |
+| Installation commands and local artifact source | Offline installation succeeded on Ubuntu Server 26.04.1; see linked offline-bundle application smoke-test procedure |
+| Package/config checksum verification | Checksum checks passed; exact bundle/run and lock checksum not recorded |
+| Portal external-request audit | Dashboard ran with the Ethernet interface disabled and required dependencies installed offline; browser/host outbound-request audit not recorded |
+| Linux application smoke checks | Dashboard ran successfully; health/UI status codes, local readiness scope, role-boundary responses, and audit-write result pending |
 | Snapshot restore and Ansible readiness-check result | Pending |
 | Splunk event sources, HEC/Universal Forwarder ingestion validation, `netstrike` index creation/one-day retention, participant/facilitator RBAC checks, and 10 GB/day usage measurement | Pending |
-| Result, failures, and remediation | Linux application success reported; full deployment and Windows/Sysmon/Splunk acceptance results pending |
+| Result, failures, and remediation | Linux dashboard installation and run succeeded offline; full deployment and Windows/Sysmon/Splunk acceptance results pending |
 | Evidence/log location | Pending |
 
 ### Test procedure
