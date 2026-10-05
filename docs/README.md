@@ -12,7 +12,7 @@ operational guidance, a contract, a planning snapshot, or only a placeholder.
 | [Exercise design package](exercise-design/README.md) | Accepted exercise scope, design documents, and outstanding approval gates |
 | [Architecture](architecture.md) | MVP components, boundaries, and out-of-scope work |
 | [Roadmap and ownership](roadmap.md) | Delivery milestones, schedule, team roles, and working rhythm |
-| [Remaining development estimate](development-remaining-work.md) | Planning estimate dated October 4, 2026; not a live issue count or delivery commitment |
+| [Remaining development estimate](development-remaining-work.md) | Planning estimate dated October 5, 2026; not a live issue count or delivery commitment |
 | [Integration review](patrick-integration-review-2026-10-03.md) | Historical October 3 review of proposed deployment PRs and risks; not current deployment or acceptance status |
 | [Repository README](../README.md) | Project overview, current state, repository structure, and development workflow |
 
@@ -45,6 +45,7 @@ index](exercise-design/README.md).
 | [Human support workflow](exercise-support.md) | Private learner requests, staff replies, roles, and API lifecycle |
 | [Run-review archives](run-review-archives.md) | Capture and retrieval of frozen run-review snapshots across application reset |
 | [Offline staff operations](staff-operations.md) | Staff readiness/clock controls and saved-review UI workflows, role and restore limits |
+| [Learner reset safety](participant-run-safety.md) | Run-pinned learner actions/submissions, stale-page and delayed-response boundaries |
 | [After-action review](after-action-review.md) | Human objective review, submissions, and offline AAR generation |
 
 ## Developer demos and rehearsal

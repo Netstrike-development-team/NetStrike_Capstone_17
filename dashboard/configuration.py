@@ -27,6 +27,7 @@ ROLES = frozenset({"incident_lead", "soc_analyst", "identity_responder", "endpoi
                    "simulated_user", "identity_capture_service"})
 IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 ASSETS = ("participant.html", "facilitator.html", "evaluator.html", "sso.html", "evidence.html",
+          "participant-session.js",
           "participant.js", "facilitator.js", "evaluator.js", "sso.js", "evidence.js",
           "common.js", "support.js", "staff-operations.js", "review-archives.js", "styles.css")
 
