@@ -47,6 +47,7 @@ index](exercise-design/README.md).
 | [Offline staff operations](staff-operations.md) | Staff readiness/clock controls and saved-review UI workflows, role and restore limits |
 | [Learner reset safety](participant-run-safety.md) | Run-pinned learner actions/submissions, stale-page and delayed-response boundaries |
 | [After-action review](after-action-review.md) | Human objective review, submissions, and offline AAR generation |
+| [Current evaluator workflow](evaluator-review-workflow.md) | Draft preservation, revision-safe saves and run/snapshot-pinned raw exports |
 
 ## Developer demos and rehearsal
 

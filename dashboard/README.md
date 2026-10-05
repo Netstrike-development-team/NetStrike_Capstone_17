@@ -6,6 +6,11 @@ timeline and load safe feedback after all five objectives are reviewed at end
 of play. See [the review workflow](../docs/after-action-review.md) for roles,
 offline report generation and calibration limits.
 
+Current evaluator review preserves same-revision drafts and pins downloads to the
+inspected run/report snapshot. Unconfirmed judgments require inspection, not
+automatic retries. See [current evaluator workflow](../docs/evaluator-review-workflow.md)
+for reset/credential boundaries and export compatibility.
+
 Staff can inspect local readiness and clock health directly on `/facilitator`,
 and preview/capture/browse/download historical reviews on `/evaluator` without
 altering current ratings. See [offline staff operations](../docs/staff-operations.md)

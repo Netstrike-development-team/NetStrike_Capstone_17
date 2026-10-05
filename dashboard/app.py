@@ -9,12 +9,12 @@ from pathlib import Path
 from typing import Annotated, Any, Iterable
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response, status
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, ValidationError
 
 from orchestrator.controller import ControllerError
-from orchestrator.aar import RATINGS, render_markdown
+from orchestrator.aar import RATINGS, build_report, render_markdown
 from orchestrator.evidence import render_csv, render_jsonl
 from shared.actions import ActionContractError, ActionExecutionError, ActionValidationError
 
@@ -267,6 +267,8 @@ def create_app(
         response.headers["Referrer-Policy"] = "no-referrer"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
+        if request.url.path.startswith("/api/evaluator/"):
+            response.headers["Cache-Control"] = "no-store"
         return response
 
     def authorize(allowed_roles: frozenset[str]):
@@ -630,8 +632,8 @@ def create_app(
         return {**service.facilitator_state(), "principal_role": principal.role}
 
     @app.get("/api/evaluator/report")
-    def aar_report(_principal: PortalPrincipal = Depends(evaluator)):
-        return execute(service.aar_report)
+    def aar_report(request: Request, _principal: PortalPrincipal = Depends(evaluator)):
+        return scoped_control(request, service.aar_report)
 
     @app.post("/api/evaluator/judgments")
     def objective_judgment(
@@ -646,19 +648,33 @@ def create_app(
             )
         )
 
+    def review_export(request: Request, *, markdown: bool):
+        """Check optional snapshot identity and serialize within the run lock."""
+        supplied = request.headers.getlist("X-Review-Bundle-SHA256")
+        if len(supplied) > 1:
+            raise HTTPException(status_code=422, detail="ambiguous review snapshot header")
+        expected = supplied[0] if supplied else None
+        if expected is not None and (
+            len(expected) != 64 or any(char not in "0123456789abcdef" for char in expected)
+        ):
+            raise HTTPException(status_code=422, detail="invalid review snapshot header")
+        bundle = service.aar_bundle()
+        if expected is not None and expected != bundle["content_sha256"]:
+            raise HTTPException(status_code=409, detail="review changed; refresh before exporting")
+        headers = {"Cache-Control": "no-store"}
+        if markdown:
+            headers["Content-Disposition"] = 'attachment; filename="after-action-review.md"'
+            return Response(render_markdown(build_report(bundle)), media_type="text/markdown",
+                            headers=headers)
+        return JSONResponse(bundle, headers=headers)
+
     @app.get("/api/evaluator/exports/bundle.json")
-    def aar_bundle(_principal: PortalPrincipal = Depends(evaluator)):
-        return execute(service.aar_bundle)
+    def aar_bundle(request: Request, _principal: PortalPrincipal = Depends(evaluator)):
+        return scoped_control(request, lambda: review_export(request, markdown=False))
 
     @app.get("/api/evaluator/exports/aar.md")
-    def aar_markdown(_principal: PortalPrincipal = Depends(evaluator)):
-        return Response(
-            execute(lambda: render_markdown(service.aar_report())),
-            media_type="text/markdown",
-            headers={
-                "Content-Disposition": 'attachment; filename="after-action-review.md"'
-            },
-        )
+    def aar_markdown(request: Request, _principal: PortalPrincipal = Depends(evaluator)):
+        return scoped_control(request, lambda: review_export(request, markdown=True))
 
     @app.get("/api/participant/feedback")
     def learner_feedback(_principal: PortalPrincipal = Depends(participant)):

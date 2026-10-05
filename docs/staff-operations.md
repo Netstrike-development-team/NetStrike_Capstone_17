@@ -82,6 +82,11 @@ page protection unless they send it. Support replies and archive capture retain
 their existing explicit run/body contracts. Historical archive reads deliberately
 address immutable IDs, not the new current run.
 
+Current evaluator report/exports also accept the run header; bundle/AAR downloads
+add the inspected bundle hash. [Current review workflow](evaluator-review-workflow.md)
+documents draft/revision handling and export conflicts. It is separate from
+explicit archive capture and immutable historical reads.
+
 The participant console also sends this header for its six response/submission
 POST paths. See [learner reset safety](participant-run-safety.md); staff should
 expect learners to refresh and investigate the new run after reset, not reuse

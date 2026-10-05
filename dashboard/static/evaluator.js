@@ -1,13 +1,29 @@
 "use strict";
 
-import {api, connect, notify, token} from "/static/common.js";
+import {clearNotice, connect, notify} from "/static/common.js";
 import {mountSupport} from "/static/support.js";
 import {mountArchives} from "/static/review-archives.js";
+import {EvaluatorReview, revision} from "/static/evaluator-review.js";
+import {saveText} from "/static/staff-operations.js";
 
 const notice = document.querySelector("#notice");
 const form = document.querySelector("#judgment");
 let report = null;
-let generation = 0;
+const review = new EvaluatorReview({cleared: (reason) => {
+  clear();
+  clearNotice(notice);
+  if (reason === "run") notify(notice, "Run changed. Previous-run review drafts were cleared. Inspect the new report.");
+}, changed: updateControls});
+
+function updateControls() {
+  document.querySelector("#save").disabled = !review.canSave(form.elements.objective_id.value);
+  for (const selector of ["#bundle", "#aar"]) document.querySelector(selector).disabled = !review.canExport();
+  for (const field of form.querySelectorAll("input, select, textarea")) {
+    field.disabled = review.busy || review.inspectRequired || !review.report
+      || !["completed", "stopped"].includes(review.report.run_state);
+  }
+  if (!review.report && report) document.querySelector("#review-summary").textContent = "Current review unavailable. Draft retained; refresh before saving or exporting.";
+}
 
 function text(tag, value) {
   const element = document.createElement(tag);
@@ -35,6 +51,7 @@ function selectObjective() {
     for (const name of ["rating", "rationale", "platform_reason"]) form.elements[name].value = item.judgment[name];
     form.elements.evidence_ids.value = item.judgment.evidence_ids.join("\n");
   }
+  updateControls();
 }
 
 function render() {
@@ -78,33 +95,38 @@ function render() {
     card.append(text("code", event.event_id), text("p", `#${event.sequence} · ${event.event_type} · ${event.timestamp}`), text("p", event.message));
     evidence.append(card);
   }
-  document.querySelector("#save").disabled = !["completed", "stopped"].includes(report.run_state);
-  document.querySelector("#bundle").disabled = false;
-  document.querySelector("#aar").disabled = false;
+  updateControls();
 }
 
 async function refresh() {
-  const requestGeneration = ++generation;
-  const credential = token();
-  if (!credential) { clear(); return; }
   try {
-    const payload = await api("/api/evaluator/report");
-    if (requestGeneration !== generation || token() !== credential) return;
-    const priorRun = report?.run_id;
+    const payload = await review.refresh();
+    if (!payload) return;
+    const selected = form.elements.objective_id.value;
+    const previousRevision = revision(report, selected);
+    const nextRevision = revision(payload, selected);
+    const preserve = report?.run_id === payload.run_id && previousRevision !== null
+      && previousRevision === nextRevision;
     report = payload;
-    form.reset();
     render();
-    if (priorRun && priorRun !== report.run_id) notify(notice, "Run changed. Review form cleared.");
+    if (preserve) {
+      form.elements.objective_id.value = selected;
+    } else {
+      form.reset();
+      if (nextRevision !== null) {
+        form.elements.objective_id.value = selected;
+        selectObjective();
+        notify(notice, "Saved objective revision changed. Stale draft cleared; inspect the recorded judgment before editing.");
+      }
+    }
+    updateControls();
   } catch (error) {
-    if (requestGeneration !== generation || token() !== credential) return;
-    clear();
+    updateControls();
     notify(notice, error.message, "error");
   }
 }
 
 document.querySelector("#connect").addEventListener("click", () => {
-  generation += 1;
-  clear();
   try { connect(document.querySelector("#token-input"), refresh); }
   catch (error) { notify(notice, error.message, "error"); }
 });
@@ -114,52 +136,36 @@ mountArchives();
 form.elements.objective_id.addEventListener("change", selectObjective);
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (!report) return;
-  const item = report.objectives.find((objective) => objective.objective_id === form.elements.objective_id.value);
-  if (!item) return;
-  const credential = token();
-  const requestGeneration = generation;
+  const objectiveId = form.elements.objective_id.value;
+  if (!review.canSave(objectiveId)) return;
   const data = new FormData(form);
-  const payload = {run_id: report.run_id, objective_id: item.objective_id,
-    expected_revision: item.judgment?.revision || 0,
-    rating: data.get("rating"), rationale: data.get("rationale"),
+  const payload = {rating: data.get("rating"), rationale: data.get("rationale"),
     evidence_ids: data.get("evidence_ids").split("\n").map((id) => id.trim()).filter(Boolean),
     override_reason: data.get("override_reason"), platform_reason: data.get("platform_reason"),
     improvement_actions: data.get("description").trim() ? [{description: data.get("description"),
       owner: data.get("owner"), priority: data.get("priority"), target_date: data.get("target_date")}] : []};
-  document.querySelector("#save").disabled = true;
   try {
-    await api("/api/evaluator/judgments", {method: "POST", body: JSON.stringify(payload)});
-    if (token() !== credential || generation !== requestGeneration) return;
+    const receipt = await review.submit(objectiveId, payload);
+    if (!receipt) return;
+    form.reset();
     notify(notice, "Judgment recorded. Previous revisions remain in the audit trail.");
     await refresh();
   } catch (error) {
-    if (token() !== credential || generation !== requestGeneration) return;
     notify(notice, error.message, "error");
-    document.querySelector("#save").disabled = false;
+    updateControls();
   }
 });
 
-for (const [selector, path, name, type] of [
-  ["#bundle", "/api/evaluator/exports/bundle.json", "run-review-bundle.json", "application/json"],
-  ["#aar", "/api/evaluator/exports/aar.md", "after-action-review.md", "text/markdown"],
+for (const [selector, kind] of [
+  ["#bundle", "bundle"], ["#aar", "aar"],
 ]) document.querySelector(selector).addEventListener("click", async () => {
-  const credential = token();
-  const requestGeneration = generation;
   try {
-    const payload = await api(path, {rawText: true, cache: "no-store"});
-    if (token() !== credential || generation !== requestGeneration) return;
-    const url = URL.createObjectURL(new Blob([payload], {type}));
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = name;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    const download = await review.download(kind);
+    if (download) saveText(download.payload, download.filename, download.type);
   } catch (error) {
-    if (token() === credential && generation === requestGeneration) notify(notice, error.message, "error");
+    notify(notice, error.message, "error");
   }
 });
 
+updateControls();
 refresh();
