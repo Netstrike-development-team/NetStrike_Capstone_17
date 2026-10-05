@@ -88,13 +88,14 @@ with Latifa.
 
 ## Current priority order
 
-Updated October 4: all four scenario stages and application review/evidence
-foundations are implemented locally; #136 and Patrick's #127/#128 are merged.
+Updated October 5: all four scenario stages and application review/evidence/staff
+foundations are implemented locally; #138 and Patrick's #127/#128/#139/#140 are merged.
 This is application progress, not live Cyber Range acceptance.
 
-1. Human support is connected (#136; #135 closed). Review the staff readiness,
-   clock safety and saved-review workflow increment (#137), without rebuilding
-   the scenario. See [staff operations](staff-operations.md).
+1. Human support and staff operations are connected (#136/#138; #135/#137 closed).
+   Review #141's deployment-input/fail-before-write startup increment; no default
+   scenario change or takeover of environment work. See
+   [application deployment inputs](application-deployment-contract.md).
 2. Patrick proves offline deployment, identity-slice Splunk ingestion, privacy and
    snapshot/readiness on the approved range topology.
 3. Anna finalizes content and records representative learner usability/timing and

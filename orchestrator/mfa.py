@@ -13,6 +13,26 @@ from .controller import AutomationResult, ControllerError
 from .scenario import ScenarioItem
 
 
+def validate_mfa_configuration(configuration, state):
+    """Inspect reviewed configuration against synthetic baseline; no event/write."""
+    required = {"seed", "identity_id", "session_id", "factor_id", "timeout_seconds"}
+    if not isinstance(configuration, Mapping) or set(configuration) != required:
+        raise ValueError("scheduled MFA configuration fields are invalid")
+    for name in required - {"timeout_seconds"}:
+        if not isinstance(configuration[name], str) or not configuration[name].strip():
+            raise ValueError("scheduled MFA identifiers must be non-empty strings")
+    timeout = configuration["timeout_seconds"]
+    if not isinstance(timeout, int) or isinstance(timeout, bool) or not 1 <= timeout <= 300:
+        raise ValueError("scheduled MFA timeout must be between 1 and 300 seconds")
+    identity = state.identities.get(configuration["identity_id"], {})
+    if not identity.get("synthetic"):
+        raise ValueError("scheduled MFA requires a baseline synthetic identity")
+    for collection, key in ((state.sessions, "session_id"), (state.factors, "factor_id")):
+        if collection.get(configuration[key], {}).get("identity_id") != configuration["identity_id"]:
+            raise ValueError("scheduled MFA references must belong to its identity")
+    return dict(configuration)
+
+
 class ScheduledMfa:
     """Explicit human decisions; never push notifications or issue real tokens."""
 
@@ -25,16 +45,8 @@ class ScheduledMfa:
         sequence_factory: Callable[[], int], clock: Callable[[], datetime],
         state_lock: Any,
     ) -> None:
-        required = {"seed", "identity_id", "session_id", "factor_id", "timeout_seconds"}
-        if not isinstance(configuration, Mapping) or set(configuration) != required:
-            raise ValueError("scheduled MFA configuration fields are invalid")
-        for name in required - {"timeout_seconds"}:
-            if not isinstance(configuration[name], str) or not configuration[name].strip():
-                raise ValueError("scheduled MFA identifiers must be non-empty strings")
-        timeout = configuration["timeout_seconds"]
-        if not isinstance(timeout, int) or isinstance(timeout, bool) or not 1 <= timeout <= 300:
-            raise ValueError("scheduled MFA timeout must be between 1 and 300 seconds")
-        self.config = dict(configuration)
+        state = identity_state()
+        self.config = validate_mfa_configuration(configuration, state)
         self.run_id = run_id
         self.identity_state = identity_state
         self.run_state = run_state
@@ -43,14 +55,7 @@ class ScheduledMfa:
         self.history: list[dict[str, Any]] = []
         self.pending: dict[str, Any] | None = None
         self._lock = state_lock
-        state = identity_state()
         identity = state.identities.get(self.config["identity_id"], {})
-        if not identity.get("synthetic"):
-            raise ValueError("scheduled MFA requires a baseline synthetic identity")
-        for collection, key in ((state.sessions, "session_id"), (state.factors, "factor_id")):
-            owner = collection.get(self.config[key], {}).get("identity_id")
-            if owner != self.config["identity_id"]:
-                raise ValueError("scheduled MFA references must belong to its identity")
         self.credential_version = identity["credential_version"]
         self.events = EventBuilder(
             EventContext(exercise_id=exercise_id, run_id=run_id,

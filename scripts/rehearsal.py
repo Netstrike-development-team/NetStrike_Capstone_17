@@ -155,6 +155,9 @@ def _source() -> dict:
     paths = [
         "scripts/rehearsal.py",
         "dashboard/service.py",
+        "dashboard/configuration.py",
+        "dashboard/preflight.py",
+        "dashboard/__init__.py",
         "dashboard/clock.py",
         "dashboard/support.py",
         "dashboard/static/support.js",

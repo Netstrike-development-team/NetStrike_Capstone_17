@@ -39,6 +39,14 @@ python -m uvicorn dashboard.app:create_default_app --factory --host 0.0.0.0 --po
 Tokens are injected on `CTRL01`; they must not be committed, logged, or included in exported evidence.
 The audit key is also injected at runtime and must remain stable for the duration of a run.
 
+Before startup, run `python -B -m dashboard.preflight --expect-scope identity`
+under the intended environment/working directory. This validates application
+inputs without creating SQLite or decoys; it does not certify runtime/range
+readiness. Select the expectation matching the approved scenario, without
+implicitly enabling full play. The production factory also validates before
+construction. See [the deployment-input contract](../docs/application-deployment-contract.md)
+for safe blockers, optional expected-scope guard and remaining owner checks.
+
 ## Profile initialization
 
 At startup the portal validates the committed synthetic OSINT fixture. A
