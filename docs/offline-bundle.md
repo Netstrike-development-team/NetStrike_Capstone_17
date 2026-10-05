@@ -58,6 +58,14 @@ method; review explicit UNKNOWN metadata before approving a transfer.
 
 ## 3. Run the application smoke test on an isolated Linux VM
 
+Before installing or starting source, optionally run the
+[read-only application source checker](offline-release-source-check.md) against
+the expected commit and inventory SHA-256 recorded from trusted staging. It uses
+only the bundled Python standard library and checks all six source trees without
+Git, dependencies, credentials or a live process. This supplements, not replaces,
+the whole-bundle checksums/install verification below. It requires a pristine
+extraction; source caches/extra files are not silently ignored.
+
 This smoke test starts the bundled portal with test-only credentials, a fresh
 SQLite database, and a unique run ID. It checks application startup and local
 HTTP/UI behavior only; it does not configure Splunk or establish full range

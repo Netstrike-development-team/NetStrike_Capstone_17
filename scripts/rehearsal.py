@@ -157,6 +157,7 @@ def _source() -> dict:
         "dashboard/service.py",
         "dashboard/configuration.py",
         "dashboard/preflight.py",
+        "dashboard/release_check.py",
         "dashboard/__init__.py",
         "dashboard/clock.py",
         "dashboard/support.py",

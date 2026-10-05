@@ -61,6 +61,7 @@ Promotion PR and tested merge commit / strict Actions run URL:
 Teammate reviewer:
 Offline build workflow run URL and inventory repository revision:
 Downloaded bundle SHA-256 and approved preserved artifact location:
+Inventory SHA-256 recorded from trusted staging / selected-source check JSON:
 Patrick: VM image/architecture, disconnected install/smoke result, defects:
 Anna: participant-flow/content check, unresolved usability/calibration limits:
 Ashley: dates/decision links and acceptance status (pending is not accepted):
@@ -77,6 +78,11 @@ Do not assume a bundle built from the default branch includes the current dev
 application. Record the downloaded
 archive SHA-256 separately from the bundle's internal `SHA256SUMS`; neither is
 a signature. Retain approved artifacts before the 14-day CI retention expires.
+
+Use the [read-only offline source checker](offline-release-source-check.md) before
+starting the extracted source to compare the saved expected revision/inventory
+digest with the selected six source trees. This does not verify whole-bundle
+installation or code already loaded by a process.
 
 Do not create an accepted-release tag or promise client readiness while final
 owner checks are pending. After promotion, continue feature PRs into dev.

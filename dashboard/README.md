@@ -1,5 +1,10 @@
 # Participant and facilitator portal API
 
+For source-bundle handoff before startup, use the standard-library-only
+[offline release-source checker](../docs/offline-release-source-check.md). It
+compares a selected pristine extraction against separately saved revision and
+inventory checksum values, not runtime readiness or a running process.
+
 Objective review and portable AAR exports are available at `/evaluator` for
 configured evaluator/facilitator roles. Participants can submit their intrusion
 timeline and load safe feedback after all five objectives are reviewed at end

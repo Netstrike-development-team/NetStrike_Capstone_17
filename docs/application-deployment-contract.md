@@ -10,6 +10,12 @@ records are progress, not evidence supplied by this new application check. See
 
 ## Check inputs before starting the service
 
+For selected extracted-bundle source consistency, the separate
+[offline release-source checker](offline-release-source-check.md) compares a saved
+expected commit/inventory digest and all six source trees without runtime inputs.
+Configuration preflight below remains configuration-only; neither helper verifies
+an already running process, the whole installation or range acceptance.
+
 From the matching reviewed source tree and installed existing portal dependencies,
 with **the same injected environment, working directory and service identity**
 intended for startup:
