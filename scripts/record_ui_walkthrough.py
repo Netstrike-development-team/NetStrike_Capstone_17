@@ -18,6 +18,7 @@ import sys
 import tempfile
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import wave
 from pathlib import Path
@@ -117,6 +118,39 @@ def subtitle_time(seconds):
     return f"{hours:02}:{minutes:02}:{seconds:02},{milliseconds:03}"
 
 
+def local_request_url(base, path):
+    """Bearer/payload requests are confined to the task-owned IPv4 HTTP listener."""
+    try:
+        if (not isinstance(base, str) or not isinstance(path, str)
+                or any(ord(char) <= 32 or ord(char) >= 127 for char in base + path)
+                or "\\" in base + path):
+            raise ValueError
+        origin, route = urllib.parse.urlsplit(base), urllib.parse.urlsplit(path)
+        if any((
+            origin.scheme != "http", origin.hostname != "127.0.0.1",
+            origin.username is not None, origin.password is not None,
+            origin.port is None or not 1 <= origin.port <= 65535,
+            origin.path, origin.query, origin.fragment,
+            not path.startswith("/"), path.startswith("//"),
+            route.scheme, route.netloc, route.fragment,
+        )):
+            raise ValueError
+    except (ValueError, TypeError):
+        raise ValueError(
+            "Recording requests require an explicit IPv4 loopback HTTP origin and local path"
+        ) from None
+    return base + path
+
+
+class NoRecordingRedirects(urllib.request.HTTPRedirectHandler):
+    """Never forward recorder authorization or request bodies to a redirect target."""
+
+    # The standard-library redirect callback requires this exact signature.
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
 class Walkthrough:  # pylint: disable=too-many-instance-attributes
     """One actual application, one isolated browser page and a verified run ledger."""
 
@@ -151,8 +185,9 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
         self.events_count = None
 
     def request(self, path, *, role="facilitator", payload=None):
+        """Send one authorized local request without redirects or proxy forwarding."""
         request = urllib.request.Request(
-            self.base + path,
+            local_request_url(self.base, path),
             headers={
                 "Authorization": "Bearer " + self.roles[role],
                 "Content-Type": "application/json",
@@ -160,7 +195,11 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
             data=json.dumps(payload).encode() if payload is not None else None,
             method="POST" if payload is not None else "GET",
         )
-        with urllib.request.urlopen(request, timeout=20) as response:
+        # No environment proxy and no redirect; only the validated local origin.
+        opener = urllib.request.build_opener(
+            urllib.request.ProxyHandler({}), NoRecordingRedirects()
+        )
+        with opener.open(request, timeout=20) as response:
             return json.load(response)
 
     def control(self, command, payload=None):

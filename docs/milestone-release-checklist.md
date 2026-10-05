@@ -24,6 +24,11 @@ It strictly runs all core Python suites (including package tooling and topology
 validation), dependency-free Node interactions, all 24 local developer cases and
 an independent export verification. Failures are not ignored.
 
+The separate [maintained application security gate](application-security-gate.md)
+blocks medium/high Bandit findings and scan errors in application/tooling code
+and the five maintained profile/action adapters. Legacy reports remain
+informational, not evidence those entry points passed.
+
 The final verification uses `--require-current-source`: the package must record
 the current clean Git commit and exactly match the recorded application/source
 fingerprint map. Missing Git metadata, dirty or unknown status, changed commits
@@ -42,7 +47,9 @@ This workflow is a check, **not branch protection**. At the 5 October inspection
 neither main nor dev had branch protection. A repository administrator should
 require review and the strict check if available under the repository's settings;
 until then, reviewers must enforce the checklist manually. This increment does
-not change repository settings or the existing best-effort module/security jobs.
+not change repository settings or the existing best-effort module jobs.
+The security job now has strict maintained-code scans alongside the informational
+legacy-module report; require its `bandit` check as well.
 
 ## Promotion PR record
 

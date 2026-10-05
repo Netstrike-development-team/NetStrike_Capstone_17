@@ -154,6 +154,9 @@ def _source() -> dict:
     """Record revision when Git is available, plus exact relevant source hashes."""
     paths = [
         "scripts/rehearsal.py",
+        "scripts/check_security_report.py",
+        "scripts/record_ui_walkthrough.py",
+        ".github/workflows/backend-security-ci.yml",
         "dashboard/service.py",
         "dashboard/configuration.py",
         "dashboard/preflight.py",
