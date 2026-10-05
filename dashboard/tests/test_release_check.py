@@ -237,6 +237,18 @@ def test_special_file_is_rejected_without_blocking(bundle):
     assert inspect(bundle)["blockers"] == ["source_dashboard"]
 
 
+def test_special_file_is_rejected_before_opening_it(bundle, monkeypatch):
+    path = bundle / "source/dashboard/pipe"
+    os.mkfifo(path)
+
+    def forbidden(*_args, **_kwargs):
+        pytest.fail("special files must be refused before opening them")
+
+    monkeypatch.setattr(os, "open", forbidden)
+    with pytest.raises(ValueError, match="unsafe"):
+        release_check._read_regular(path, 1024)
+
+
 @pytest.mark.parametrize("limit,value", [
     ("MAX_INVENTORY_BYTES", 8), ("MAX_FILE_BYTES", 1), ("MAX_TREE_BYTES", 1),
     ("MAX_TREE_ENTRIES", 1), ("MAX_DEPTH", 0),

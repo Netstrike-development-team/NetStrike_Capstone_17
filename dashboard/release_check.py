@@ -44,15 +44,20 @@ def _directory(path):
 
 def _read_regular(path, maximum):
     """Do not follow final links or block on special files; bound memory and reads."""
+    expected = path.lstat()
+    if (not stat.S_ISREG(expected.st_mode) or expected.st_nlink != 1
+            or expected.st_size > maximum):
+        raise ValueError("unsafe or oversized file")
     descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     with os.fdopen(descriptor, "rb") as handle:
         before = os.fstat(handle.fileno())
+        fields = ("st_dev", "st_ino", "st_size", "st_mtime_ns", "st_ctime_ns")
         if (not stat.S_ISREG(before.st_mode) or before.st_nlink != 1
-                or before.st_size > maximum):
+                or before.st_size > maximum
+                or any(getattr(expected, field) != getattr(before, field) for field in fields)):
             raise ValueError("unsafe or oversized file")
         content = handle.read(maximum + 1)
         after = os.fstat(handle.fileno())
-        fields = ("st_dev", "st_ino", "st_size", "st_mtime_ns", "st_ctime_ns")
         if (len(content) > maximum or len(content) != before.st_size
                 or any(getattr(before, field) != getattr(after, field) for field in fields)):
             raise ValueError("file changed or exceeded limit")
