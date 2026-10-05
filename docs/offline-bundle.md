@@ -10,6 +10,10 @@ live in [exercise-design/07-offline-tool-bundle-inventory.md](exercise-design/07
 
 1. Open the repository's **Actions** tab.
 2. Select **Build offline bundle**, then **Run workflow**.
+   Explicitly select the branch/revision you intend to test; a default-main build
+   does not necessarily include current dev changes. Record the workflow run and
+   confirm its source revision in `inventory.json`. For milestone promotion, use
+   the [release checklist](milestone-release-checklist.md).
 3. Wait for the bundle build and offline-install verification to pass.
 4. Download the `netstrike-offline-bundle-CTRL01-<run-id>` artifact.
 

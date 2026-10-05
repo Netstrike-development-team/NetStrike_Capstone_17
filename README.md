@@ -93,4 +93,5 @@ See:
 - Feature branches and pull requests target `dev`.
 - CI and at least one teammate review are required before merge.
 - `main` is reserved for tested milestone/release snapshots.
+- Follow the [milestone promotion checklist](docs/milestone-release-checklist.md); prototype promotion is not Cyber Range v1.0 acceptance.
 - Cyber Range-specific secrets and licensed installers are never committed.

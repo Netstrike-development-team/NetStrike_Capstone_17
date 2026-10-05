@@ -390,3 +390,127 @@ def test_ci_executes_and_independently_verifies_without_ignoring_failure():
     assert "if: always()" in workflow
     assert "|| true" not in workflow
     assert "continue-on-error" not in workflow
+
+
+def source_for_package(root):
+    source = json.loads((root / "manifest.json").read_text())["source"]
+    source["git_revision"] = "a" * 40
+    source["working_tree_dirty"] = False
+    return source
+
+
+def set_package_source(root, source):
+    path = root / "manifest.json"
+    manifest = json.loads(path.read_text())
+    manifest["source"] = source
+    path.write_text(json.dumps(manifest))
+
+
+def test_current_source_verification_is_read_only(full_package, tmp_path, monkeypatch):
+    root = copy_case(full_package, tmp_path)
+    source = source_for_package(root)
+    set_package_source(root, source)
+    before = {path: path.read_bytes() for path in root.rglob("*") if path.is_file()}
+    monkeypatch.setattr(rehearsal, "_source", lambda: deepcopy(source))
+    report = rehearsal.verify_package(root, require_current_source=True)
+    assert report["verified"] is True
+    assert report["full_suite"] is False  # Source match is not a full-coverage claim.
+    assert before == {path: path.read_bytes() for path in root.rglob("*") if path.is_file()}
+
+
+@pytest.mark.parametrize("side", ["package", "checkout"])
+@pytest.mark.parametrize("change", ["revision", "unknown", "dirty", "unknown-dirty", "hash", "missing", "extra"])
+def test_current_source_rejects_mismatched_or_uncertain_provenance(
+    full_package, tmp_path, monkeypatch, side, change
+):
+    root = copy_case(full_package, tmp_path)
+    source = source_for_package(root)
+    current = deepcopy(source)
+    altered = source if side == "package" else current
+    if change == "revision":
+        altered["git_revision"] = "b" * 40
+    elif change == "unknown":
+        altered["git_revision"] = None
+    elif change == "dirty":
+        altered["working_tree_dirty"] = True
+    elif change == "unknown-dirty":
+        altered["working_tree_dirty"] = None
+    elif change == "hash":
+        altered["files_sha256"]["dashboard/app.py"] = "f" * 64
+    elif change == "missing":
+        del altered["files_sha256"]["dashboard/app.py"]
+    else:
+        altered["files_sha256"]["unrecorded.py"] = "f" * 64
+    set_package_source(root, source)
+    monkeypatch.setattr(rehearsal, "_source", lambda: current)
+    with pytest.raises(ValueError, match="current clean Git checkout"):
+        rehearsal.verify_package(root, require_current_source=True)
+
+
+@pytest.mark.parametrize("revision,dirty", [(None, None), ("a" * 40, True)])
+def test_matching_but_unreleasable_sources_are_rejected(
+    full_package, tmp_path, monkeypatch, revision, dirty
+):
+    root = copy_case(full_package, tmp_path)
+    source = source_for_package(root)
+    source.update(git_revision=revision, working_tree_dirty=dirty)
+    set_package_source(root, source)
+    monkeypatch.setattr(rehearsal, "_source", lambda: source)
+    with pytest.raises(ValueError, match="current clean Git checkout"):
+        rehearsal.verify_package(root, require_current_source=True)
+
+
+def test_historical_verification_does_not_require_current_checkout(
+    full_package, tmp_path, monkeypatch
+):
+    root = copy_case(full_package, tmp_path)
+    source = source_for_package(root)
+    source.update(git_revision=None, working_tree_dirty=None)
+    set_package_source(root, source)
+
+    def must_not_query_checkout():
+        pytest.fail("portable verification must not query current source/Git")
+
+    monkeypatch.setattr(rehearsal, "_source", must_not_query_checkout)
+    assert rehearsal.verify_package(root)["verified"] is True
+
+
+def test_source_match_does_not_bypass_artifact_checks(full_package, tmp_path, monkeypatch):
+    root = copy_case(full_package, tmp_path)
+    source = source_for_package(root)
+    set_package_source(root, source)
+    monkeypatch.setattr(rehearsal, "_source", lambda: source)
+    (root / "path-pass-pass-pass-pass" / "events.jsonl").write_text("tampered\n")
+    with pytest.raises(ValueError, match="checksum mismatch"):
+        rehearsal.verify_package(root, require_current_source=True)
+
+
+def test_current_source_cli_passes_and_fails_closed(
+    full_package, tmp_path, monkeypatch, capsys
+):
+    root = copy_case(full_package, tmp_path)
+    source = source_for_package(root)
+    set_package_source(root, source)
+    monkeypatch.setattr(rehearsal, "_source", lambda: source)
+    options = ["--verify", str(root), "--require-current-source"]
+    assert rehearsal.main(options) == 0
+    assert json.loads(capsys.readouterr().out)["verified"] is True
+    current = deepcopy(source)
+    current["working_tree_dirty"] = True
+    monkeypatch.setattr(rehearsal, "_source", lambda: current)
+    assert rehearsal.main(options) == 1
+    output = capsys.readouterr()
+    assert not output.out
+    assert "current clean Git checkout" in output.err
+
+
+@pytest.mark.parametrize("options", [[], ["--execute"], ["--case", "path-pass-pass-pass-pass"]])
+def test_current_source_flag_requires_verify_without_actions(options, monkeypatch):
+    def must_not_run(*_args, **_kwargs):
+        pytest.fail("invalid verification flags must not execute or query source")
+
+    monkeypatch.setattr(rehearsal, "run_suite", must_not_run)
+    monkeypatch.setattr(rehearsal, "_source", must_not_run)
+    with pytest.raises(SystemExit) as error:
+        rehearsal.main(["--require-current-source", *options])
+    assert error.value.code == 2
