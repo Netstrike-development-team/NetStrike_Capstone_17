@@ -171,6 +171,7 @@ def _source() -> dict:
         "dashboard/static/facilitator.js",
         "dashboard/static/evaluator.html",
         "dashboard/static/evaluator.js",
+        "dashboard/static/evaluator-review.js",
         "dashboard/static/styles.css",
         "dashboard/app.py",
         "dashboard/readiness.py",
