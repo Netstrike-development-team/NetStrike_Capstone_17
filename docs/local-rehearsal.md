@@ -89,6 +89,12 @@ The `Local full-play rehearsal` workflow runs regression tests, executes all
 with a 14-day retention period. Failures fail the job; evidence upload still runs.
 This adds a CI check, not a change to repository branch-protection rules.
 
+The same strict workflow executes all dependency-free `dashboard/tests/*.test.mjs`
+client regressions and the [learner run-boundary HTTP checks](participant-run-safety.md).
+Those tests compose real API roles through full-play recovery and reset; the
+24-case evidence runner still targets the underlying in-process services. Neither
+is a browser video or actual range rehearsal.
+
 Aya owns this developer regression harness. Anna owns participant experience,
 human rubric/hint calibration and content approval. Patrick owns actual Splunk
 ingestion, VM/environment validation and representative/range rehearsal evidence.

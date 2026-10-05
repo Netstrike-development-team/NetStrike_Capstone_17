@@ -59,6 +59,16 @@ profile count/catalog fingerprint in **Profile readiness**. Reset verifies the
 pinned profile baseline as well as SSO/MFA state. See
 [the profile input contract](../docs/synthetic-profile-contract-v1.md).
 
+## Learner reset safety
+
+The participant console now pins containment, DP1, timeline, cloud assessment and
+recovery requests to the inspected run. Old-page requests cannot affect a newer
+run when they send `X-Exercise-Run-ID`. The browser clears old drafts/targets on
+observed reset, ignores obsolete responses and never automatically repeats an
+unconfirmed mutation. Legacy clients omitting the optional header remain compatible
+but lack this stale-client guard. See [learner run boundaries](../docs/participant-run-safety.md)
+for the API list, limitations and cross-role regression checks.
+
 ## Synthetic identity capture
 
 Only a token configured with the `identity_capture_service` role may call

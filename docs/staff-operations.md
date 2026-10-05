@@ -82,6 +82,11 @@ page protection unless they send it. Support replies and archive capture retain
 their existing explicit run/body contracts. Historical archive reads deliberately
 address immutable IDs, not the new current run.
 
+The participant console also sends this header for its six response/submission
+POST paths. See [learner reset safety](participant-run-safety.md); staff should
+expect learners to refresh and investigate the new run after reset, not reuse
+old form drafts. This does not alter the separate help/SSO/service contracts.
+
 ## Verification and owner handoff
 
 Dependency-free Node tests execute real client models/render/mount bindings with

@@ -329,7 +329,9 @@ def create_app(
             raise HTTPException(status_code=422, detail="invalid exercise run header")
         with service.run.state_lock:
             if expected_run is not None and expected_run != service.run.run_id:
-                raise HTTPException(status_code=409, detail="run changed; refresh before controlling or exporting")
+                raise HTTPException(
+                    status_code=409, detail="run changed; refresh before acting or exporting"
+                )
             return execute(operation)
 
     def authorize_sso_request(request: Request) -> None:
@@ -538,18 +540,19 @@ def create_app(
 
     @app.post("/api/participant/actions")
     def participant_action(
-        request: ActionInput,
+        payload: ActionInput,
+        request: Request,
         principal: PortalPrincipal = Depends(participant),
     ) -> dict[str, Any]:
-        result = execute(
+        result = scoped_control(request,
             lambda: service.submit_action(
                 principal,
-                action_id=request.action_id,
-                target_type=request.target_type,
-                target_id=request.target_id,
-                idempotency_key=request.idempotency_key,
-                parameters=request.parameters,
-                dry_run=request.dry_run,
+                action_id=payload.action_id,
+                target_type=payload.target_type,
+                target_id=payload.target_id,
+                idempotency_key=payload.idempotency_key,
+                parameters=payload.parameters,
+                dry_run=payload.dry_run,
             )
         )
         if not result["successful"]:
@@ -558,29 +561,31 @@ def create_app(
 
     @app.post("/api/participant/checkpoints/dp1")
     def submit_dp1(
-        request: Dp1Input,
+        payload: Dp1Input,
+        request: Request,
         principal: PortalPrincipal = Depends(participant),
     ) -> dict[str, Any]:
-        return execute(
+        return scoped_control(request,
             lambda: service.submit_dp1(
                 principal,
-                affected_identity=request.affected_identity,
-                classification=request.classification,
+                affected_identity=payload.affected_identity,
+                classification=payload.classification,
                 evidence=tuple(
-                    (item.reference_id, item.source) for item in request.evidence
+                    (item.reference_id, item.source) for item in payload.evidence
                 ),
             )
         )
 
     @app.post("/api/participant/timeline")
     def submit_timeline(
-        request: TimelineInput,
+        payload: TimelineInput,
+        request: Request,
         principal: PortalPrincipal = Depends(participant),
     ):
-        return execute(
+        return scoped_control(request,
             lambda: service.submit_timeline(
                 principal,
-                **request.model_dump(mode="json"),
+                **payload.model_dump(mode="json"),
             )
         )
 
@@ -608,11 +613,12 @@ def create_app(
 
     @app.post("/api/participant/cloud/assessment")
     def cloud_assessment(
-        request: CloudAssessmentInput,
+        payload: CloudAssessmentInput,
+        request: Request,
         principal: PortalPrincipal = Depends(participant),
     ):
-        return execute(lambda: service.submit_cloud_assessment(
-            principal, **request.model_dump(),
+        return scoped_control(request, lambda: service.submit_cloud_assessment(
+            principal, **payload.model_dump(),
         ))
 
     @app.get("/api/facilitator/state")
@@ -705,20 +711,26 @@ def create_app(
 
     @app.post("/api/participant/recovery/action")
     def recover_fixture(
-        request: RecoveryActionInput,
+        payload: RecoveryActionInput,
+        request: Request,
         principal: PortalPrincipal = Depends(participant),
     ):
-        result = execute(lambda: service.recover_fixture(principal, **request.model_dump()))
+        result = scoped_control(
+            request, lambda: service.recover_fixture(principal, **payload.model_dump())
+        )
         if not result["successful"]:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=result)
         return result
 
     @app.post("/api/participant/recovery/brief")
     def recovery_brief(
-        request: RecoveryBriefInput,
+        payload: RecoveryBriefInput,
+        request: Request,
         principal: PortalPrincipal = Depends(participant),
     ):
-        return execute(lambda: service.submit_recovery_brief(principal, request.model_dump()))
+        return scoped_control(
+            request, lambda: service.submit_recovery_brief(principal, payload.model_dump())
+        )
 
     @app.get("/api/facilitator/identity-audit")
     def identity_audit(

@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: '22'
       - name: Test offline console interactions (no npm dependencies)
-        run: node --test dashboard/tests/support_console.test.mjs dashboard/tests/staff_operations.test.mjs
+        run: node --test dashboard/tests/*.test.mjs
       - name: Install local service and test dependencies
         run: python -m pip install -r dashboard/requirements.txt pytest
       - name: Test rehearsal and offline report tooling
