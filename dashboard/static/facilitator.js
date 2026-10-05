@@ -1,11 +1,20 @@
 "use strict";
 
-import {api, clearNotice, connect, formatElapsed, notify, setStatus, token} from "/static/common.js";
+import {clearNotice, connect, formatElapsed, notify, setStatus, token} from "/static/common.js";
 import {mountSupport} from "/static/support.js";
+import {StaffOperations, renderOperations, saveText} from "/static/staff-operations.js";
 
 const notice = document.querySelector("#notice");
 const tokenInput = document.querySelector("#token-input");
 let pendingMfa = null;
+const operations = new StaffOperations({
+  changed: () => { renderState(operations.state); updateControls(); },
+  cleared: (reason) => {
+    pendingMfa = null;
+    for (const selector of ["#stop-reason", "#new-run-id"]) document.querySelector(selector).value = "";
+    if (reason === "credentials") clearNotice(notice);
+  },
+});
 
 function renderMsel(items) {
   const body = document.querySelector("#msel-body");
@@ -94,10 +103,19 @@ function renderSubmissions(submissions) {
   }
 }
 
-async function refresh() {
-  if (!token()) return;
-  try {
-    const state = await api("/api/facilitator/state");
+function renderState(state) {
+    renderOperations(state);
+    if (!state) {
+      setStatus(document.querySelector("#run-state"), "unavailable");
+      document.querySelector("#elapsed").textContent = "—";
+      document.querySelector("#event-count").textContent = "—";
+      document.querySelector("#run-id").textContent = "—";
+      for (const selector of ["#msel-body", "#event-log", "#submissions", "#checks", "#cloud-checks", "#impact-checks", "#recovery-checks"]) document.querySelector(selector).replaceChildren();
+      document.querySelector("#profile-summary").textContent = "No authorized snapshot.";
+      document.querySelector("#mfa-summary").textContent = "No authorized snapshot.";
+      pendingMfa = null;
+      return;
+    }
     setStatus(document.querySelector("#run-state"), state.controller.state);
     document.querySelector("#elapsed").textContent = formatElapsed(state.controller.elapsed_seconds);
     document.querySelector("#event-count").textContent = state.events.length;
@@ -130,24 +148,44 @@ async function refresh() {
     for (const id of ["#mfa-deny", "#mfa-approve"]) {
       document.querySelector(id).disabled = !pendingMfa || state.controller.state !== "running";
     }
-  } catch (error) {
-    notify(notice, error.message, "error");
-  }
 }
 
+function updateControls() {
+  for (const button of document.querySelectorAll("button[data-command]")) {
+    button.disabled = !operations.can(button.dataset.command, {item_id: button.dataset.item});
+  }
+  for (const [id, action] of [["#advance", "advance"], ["#stop", "stop"], ["#reset", "reset"],
+    ["#resolve-dp2", "checkpoints/dp2"], ["#resolve-dp3", "checkpoints/dp3"], ["#resolve-dp4", "checkpoints/dp4"],
+    ["#rollback-impact", "impact/rollback"], ["#mfa-deny", "mfa/decision"], ["#mfa-approve", "mfa/decision"]]) {
+    document.querySelector(id).disabled = !operations.can(action);
+  }
+  for (const selector of ["#download-jsonl", "#download-csv"]) document.querySelector(selector).disabled = !operations.state;
+}
+
+async function refresh() { await operations.refresh(); }
+
 async function command(path, body) {
+  const action = path.replace("/api/facilitator/", "");
+  if (!operations.can(action, body)) { notify(notice, "Refresh the run and check its state before using this control.", "error"); return; }
+  if (action === "start" && !window.confirm("Start play only after the external range checks and facilitator admission decision are complete. Local readiness is not range approval. Continue?")) return;
+  if (action === "reset" && !window.confirm(`Reset application run ${operations.runId}? A terminal review is archived first, but ratings must be finished before reset. Export evidence outside the VM before snapshot restoration. This is not a VM restore.`)) return;
+  if (action === "stop" && !body?.reason.trim()) { notify(notice, "Enter a safety or platform reason for the stop.", "error"); return; }
+  const credential = token();
+  const epoch = operations.epoch;
   clearNotice(notice);
   try {
-    await api(path, {method: "POST", body: body === undefined ? undefined : JSON.stringify(body)});
-    notify(notice, "Control action completed and recorded.");
+    const result = await operations.command(action, body);
+    if (!operations.current(credential, epoch) || !result) return;
+    notify(notice, result.reset ? `Application reset completed. Prior run ${result.reset.prior_run_id} saved as archive ${result.reset.review_archive_id}. Use evaluator archives to download it; VM restoration still requires external export.` : "Control action completed and recorded.");
     await refresh();
   } catch (error) {
-    notify(notice, error.message, "error");
+    if (token() === credential) { notify(notice, error.message, "error"); await refresh(); }
   }
 }
 
 document.querySelector("#connect").addEventListener("click", () => {
   clearNotice(notice);
+  operations.invalidate("credentials");
   try { connect(tokenInput, refresh); } catch (error) { notify(notice, error.message, "error"); }
 });
 document.querySelector("#refresh").addEventListener("click", refresh);
@@ -174,20 +212,17 @@ document.querySelector("#msel-body").addEventListener("click", (event) => {
 });
 
 async function download(format) {
+  const credential = token();
+  const epoch = operations.epoch;
   try {
-    const response = await fetch(`/api/facilitator/exports/events.${format}`, {headers: {Authorization: `Bearer ${token()}`}});
-    if (!response.ok) throw new Error("Evidence export failed.");
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${document.querySelector("#run-id").textContent}-events.${format}`;
-    link.click();
-    URL.revokeObjectURL(url);
-  } catch (error) { notify(notice, error.message, "error"); }
+    const result = await operations.exportEvents(format);
+    if (result) saveText(result.payload, `${result.runId}-events.${format}`, format === "csv" ? "text/csv" : "application/x-ndjson");
+  } catch (error) { if (operations.current(credential, epoch)) notify(notice, "Evidence export failed. Refresh the current run before retrying.", "error"); }
 }
 document.querySelector("#download-jsonl").addEventListener("click", () => download("jsonl"));
 document.querySelector("#download-csv").addEventListener("click", () => download("csv"));
 
-if (token()) refresh();
-setInterval(refresh, 5000);
+renderState(null); updateControls();
+refresh();
+const interval = setInterval(refresh, 5000);
+window.addEventListener("pagehide", () => { clearInterval(interval); operations.invalidate("credentials"); });

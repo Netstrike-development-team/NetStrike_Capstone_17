@@ -1,21 +1,21 @@
 # Remaining development and PR estimate — 4 October 2026
 
 This is a planning estimate, not a list of confirmed defects or a promise of an
-exact PR count. Baseline: #134 merged; Patrick's #127/#128 also merged. The
+exact PR count. Baseline: #136 merged; Patrick's #127/#128 also merged. The
 application already supports all four checkpoint branches, mock-cloud and safe
 impact/recovery, submissions, human review/AAR, run archives, supervised timing,
 private event-spool export, local readiness and human support APIs.
 
-**Aya: approximately 6–9 planned development PRs, including the current help-form
-increment, plus 3–6 rehearsal-driven fix PRs: budget 9–15 in total.** Smaller fixes
+**Aya: approximately 5–8 planned development PRs, including the current staff-page
+increment, plus 3–6 rehearsal-driven fix PRs: budget 8–14 in total.** Smaller fixes
 can be combined; a significant integration defect can require several PRs. This
-is not nine to fifteen new major features. Freeze optional features before the
+is not eight to fourteen new major features. Freeze optional features before the
 final Cyber Range delivery window.
 
 | Remaining work package | Planning allowance | Exit evidence / boundary |
 | --- | --- | --- |
-| Connect private support requests/replies and evaluator transcript to the existing consoles | 1 PR, current #135 | Client-state/API regressions and owner handoff; Anna validates usability/content. |
-| Surface existing readiness, supervised-clock and archive operations in staff workflows | 1–2 PRs | Staff can operate the existing backend without ad hoc commands; current-run guards and clear fault/export handling. Review existing screens before adding controls. |
+| Connect private support requests/replies and evaluator transcript to the existing consoles | Delivered in #136; #135 closed | Client-state/API regressions and owner handoff; Anna still validates usability/content. |
+| Surface existing readiness, supervised-clock and archive operations in staff workflows | 1 PR, current #137 work package | Staff diagnostics, run-scoped commands/exports and saved review workflows integrated into existing offline pages; review/merge and owner acceptance remain. |
 | Load Anna's final exercise content and reconcile screens/instructions | 1 PR | Approved injects, wording and objective labels match the 2h50 session. Aya integrates; Anna authors and signs off. |
 | Application/deployment contract integration | 1–2 PRs | Patrick can configure the current full-play application, readiness and private spool from the offline deployment. Fix application contract gaps, not Patrick's entire Ansible/Splunk backlog. |
 | Cross-role full-play workflow and integration checks | 1 PR | Representative learner/staff paths, safe stop, exports and restore boundaries work together. Reuse existing tests; do not rebuild working stages. |
@@ -29,8 +29,8 @@ requires stop, evidence preservation and the documented restore procedure.
 
 ## Why open issues are not a feature count
 
-There were 27 open issues at the baseline read, including merged #133 awaiting
-tracker reconciliation. Many are overlapping epics (#27/#33/#34/#35) or acceptance
+There were 27 open issues at the earlier #134 planning read, including merged #133
+awaiting tracker reconciliation. Many are overlapping epics (#27/#33/#34/#35) or acceptance
 wrappers (#80–#86). Identity, cloud, recovery and AAR issues deliberately remain
 open until representative learners and the actual range supply acceptance evidence.
 Their open status does not mean those stages still need to be built from scratch.

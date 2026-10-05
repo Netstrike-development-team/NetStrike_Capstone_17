@@ -2,6 +2,7 @@
 
 import {api, connect, notify, token} from "/static/common.js";
 import {mountSupport} from "/static/support.js";
+import {mountArchives} from "/static/review-archives.js";
 
 const notice = document.querySelector("#notice");
 const form = document.querySelector("#judgment");
@@ -109,6 +110,7 @@ document.querySelector("#connect").addEventListener("click", () => {
 });
 document.querySelector("#refresh").addEventListener("click", refresh);
 mountSupport({staff: true, observer: true});
+mountArchives();
 form.elements.objective_id.addEventListener("change", selectObjective);
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -145,9 +147,9 @@ for (const [selector, path, name, type] of [
   const credential = token();
   const requestGeneration = generation;
   try {
-    const payload = await api(path);
+    const payload = await api(path, {rawText: true, cache: "no-store"});
     if (token() !== credential || generation !== requestGeneration) return;
-    const url = URL.createObjectURL(new Blob([typeof payload === "string" ? payload : JSON.stringify(payload, null, 2)], {type}));
+    const url = URL.createObjectURL(new Blob([payload], {type}));
     const link = document.createElement("a");
     link.href = url;
     link.download = name;

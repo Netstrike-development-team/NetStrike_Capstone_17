@@ -192,6 +192,12 @@ th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spa
 }
 /* Explicitly preserve native hidden behavior on display:grid action cards. */
 [hidden] { display: none !important; }
+.ops-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.ops-panel, .archive-panel { font-size: 1rem; overflow-wrap: anywhere; }
+.ops-panel h3 { font-size: 1.125rem; }
+.ops-warning { padding: 0.75rem; border-left: 3px solid var(--amber); background: rgba(255, 200, 102, 0.08); }
+.ops-blocker { color: var(--amber); }
+@media (max-width: 860px) { .ops-grid { grid-template-columns: 1fr; } }
 .support-panel { font-size: 1rem; }
 .support-panel summary { font-size: 1.125rem; cursor: pointer; }
 .support-panel h2 { margin: 1.25rem 0 0.75rem; }

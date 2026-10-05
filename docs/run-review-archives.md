@@ -12,6 +12,11 @@ licence or Internet connection is required.
 
 ## Capture and retrieve
 
+The `/evaluator` **Saved run reviews** section provides terminal capture preview,
+explicit capture, paginated history, separate read-only reports and raw downloads.
+Unconfirmed capture retains the exact run/hash for retry, not a silently refreshed
+hash. See [staff operations](staff-operations.md) for the complete browser workflow.
+
 The existing facilitator Reset endpoint automatically captures stopped/completed
 play before any reset mutation or transient-audit cleanup. Its response adds
 `reset.review_archive_id`. Capture failure blocks reset without deleting old
