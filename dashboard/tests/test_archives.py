@@ -7,6 +7,7 @@ import sqlite3
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -309,7 +310,12 @@ def test_downloads_reproduce_the_frozen_bundle_and_are_read_only(portal, monkeyp
     assert "Private staff analysis" not in json.dumps(service.review_archives())
 
 
-def test_archives_survive_database_reopen_without_runtime_resume(tmp_path):
+def test_archives_survive_database_reopen_without_runtime_resume(tmp_path, monkeypatch):
+    # Module CI and installed consumers need not run from the repository root.
+    monkeypatch.chdir(tmp_path)
+    cloud_scenario = (
+        Path(__file__).resolve().parents[2] / "orchestrator/scenarios/cloud-slice.v1.json"
+    )
     path = tmp_path / "portal.sqlite3"
     store = PortalStore(path)
     service = PortalService(store, run_id="before-restart")
@@ -325,7 +331,7 @@ def test_archives_survive_database_reopen_without_runtime_resume(tmp_path):
     fresh = PortalService(
         reopened,
         run_id="after-restart",
-        scenario_path="orchestrator/scenarios/cloud-slice.v1.json",
+        scenario_path=str(cloud_scenario),
     )
     try:
         assert fresh.review_archive(identifier) == frozen

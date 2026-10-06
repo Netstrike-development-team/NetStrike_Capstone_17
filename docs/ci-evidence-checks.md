@@ -72,6 +72,12 @@ PyYAML validator and CI coverage dependencies are reused; no application runtime
 dependency is added. Tests inspect matrix identity, report paths, conditions,
 permissions, pins, runtime versions and no-tests boundaries.
 
+The first strict dashboard run exposed a previously masked archive test failure:
+its cloud fixture path assumed the repository-root working directory. The test
+now resolves the fixture from its own file and deliberately runs from a disposable
+non-repository directory, while retaining all persistence/no-resume assertions.
+No application scenario-path semantics or archive behavior changed.
+
 The full core/Node/24-case regression workflow remains strict. Source fingerprints
 now include all four workflow files. Workflow tests alone do not prove hosted
 actions executed; actual run URLs/results must be retained. A skipped **step**
