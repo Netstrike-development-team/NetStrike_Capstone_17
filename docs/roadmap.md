@@ -89,7 +89,7 @@ with Latifa.
 ## Current priority order
 
 Updated October 5: all four scenario stages and application review/evidence/staff
-foundations are implemented locally; #150 and Patrick's #127/#128/#139/#140 are merged.
+foundations are implemented locally; #152 and Patrick's #127/#128/#139/#140 are merged.
 This is application progress, not live Cyber Range acceptance.
 
 1. Human support and staff operations are connected (#136/#138; #135/#137 closed).
@@ -107,8 +107,11 @@ This is application progress, not live Cyber Range acceptance.
    feature development; a tested prototype is not final range acceptance.
    [Selected offline source consistency](offline-release-source-check.md) is not
    whole-bundle installation, running-process or VM/Splunk proof.
-   Current #151 adds a [strict maintained-code security gate](application-security-gate.md)
-   and contains recorder HTTP requests, closing an observed security-check gap.
+   #152 adds a [strict maintained-code security gate](application-security-gate.md)
+   and contains recorder HTTP requests (#151 closed). Its explicit outage exception
+   now has passing post-merge CI; #153 remains open for retrospective teammate review.
+   Current #154 fixes confirmed [module test/coverage CI defects](ci-evidence-checks.md)
+   and deprecated action runtimes, without changing exercise/environment scope.
 2. Patrick proves offline deployment, identity-slice Splunk ingestion, privacy and
    snapshot/readiness on the approved range topology.
    On October 5 he reported an offline dashboard/dependency/Ansible smoke success;

@@ -67,6 +67,7 @@ index](exercise-design/README.md).
 | [Offline application source check](offline-release-source-check.md) | Read-only selected-source comparison against a separately recorded commit/inventory digest, without Git or runtime dependencies |
 | [Milestone promotion checklist](milestone-release-checklist.md) | Strict main/dev checks, source-matched evidence and prototype versus accepted-release gates |
 | [Application security gate](application-security-gate.md) | Blocking maintained-code scans, informational legacy boundary and recorder loopback request controls |
+| [CI test and coverage evidence](ci-evidence-checks.md) | Strict module test outcomes, retained coverage, no-tests boundaries and pinned Node-24 actions/CI image |
 | [CITEF requirements and approval](exercise-design/06-citef-requirements-and-approval.md) | Environment questionnaire, decision log, fallbacks, and approval records |
 | [CITEF topology and readiness](../citef-config/README.md) | Proposed infrastructure, manifest, provisioning, post-restore readiness, and acceptance; proposed, not deployment approval |
 | [Offline tool-bundle inventory](exercise-design/07-offline-tool-bundle-inventory.md) | Software inputs, approvals, and artifact handling |
