@@ -175,18 +175,18 @@
           "required": ["version", "linux_deb", "windows_msi", "receiver_ca"],
           "properties": {
             "version": {"type": "string", "minLength": 1},
-            "linux_deb": {"$ref": "#/$defs/artifact"},
-            "windows_msi": {"$ref": "#/$defs/artifact"},
+            "linux_deb": {"$ref": "#/$defs/universalForwarderArtifact"},
+            "windows_msi": {"$ref": "#/$defs/universalForwarderArtifact"},
             "receiver_ca": {"$ref": "#/$defs/artifact"}
           }
         },
         "sysmon": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["version", "executable", "config"],
+          "required": ["version", "archive", "config"],
           "properties": {
             "version": {"type": "string", "minLength": 1},
-            "executable": {"$ref": "#/$defs/artifact"},
+            "archive": {"$ref": "#/$defs/artifact"},
             "config": {"$ref": "#/$defs/artifact"}
           }
         }
@@ -273,6 +273,16 @@
       "properties": {
         "file": {"type": "string", "minLength": 1},
         "sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"}
+      }
+    },
+    "universalForwarderArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "sha256", "sha512"],
+      "properties": {
+        "file": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
+        "sha512": {"type": "string", "pattern": "^[A-Fa-f0-9]{128}$"}
       }
     }
   }

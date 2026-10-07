@@ -80,13 +80,21 @@
     },
     "universal_forwarder": {
       "version": "",
-      "linux_deb": {"file": "", "sha256": ""},
-      "windows_msi": {"file": "", "sha256": ""},
+      "linux_deb": {
+        "file": "",
+        "sha256": "",
+        "sha512": "ab289083aa191c94c4e38a18826962069de8cc53b10dd60e7630e724773d12db5f0a742bfaf3d4c3c5375beb81983e307c1c8c87024b491b183571d5af7a800b"
+      },
+      "windows_msi": {
+        "file": "windows/splunkforwarder-10.0.1-c486717c322b-windows-x64.msi",
+        "sha256": "",
+        "sha512": "246e0ce374c89fe0f5ba52e95ccb1c7cdeb8bedebc04b244708beb270b0b5cb268407e7db0a9937354aeb074ecd9725122c35f078c0b1e0347b26661f40ccd96"
+      },
       "receiver_ca": {"file": "", "sha256": ""}
     },
     "sysmon": {
       "version": "",
-      "executable": {"file": "", "sha256": ""},
+      "archive": {"file": "sysmon/Sysmon.zip", "sha256": ""},
       "config": {"file": "sysmon-config.xml", "sha256": ""}
     }
   },
