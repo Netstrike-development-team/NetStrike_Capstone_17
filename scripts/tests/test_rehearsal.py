@@ -59,6 +59,27 @@ def test_default_preview_does_not_start_services_write_or_query_git(
     assert list(tmp_path.iterdir()) == before
 
 
+@pytest.mark.parametrize("name", list(rehearsal.cases()))
+def test_raw_telemetry_comparison_handles_each_real_rehearsal_export(
+    full_package, tmp_path, name
+):
+    from dashboard.telemetry_check import compare, TelemetryCheckError
+
+    expected = full_package / name / "events.jsonl"
+    values = [json.loads(line) for line in expected.read_text().splitlines()]
+    observed = tmp_path / "receiver-export.jsonl"
+    observed.write_text("".join(json.dumps(value) + "\n" for value in reversed(values)))
+    scope = {"exercise_id": values[0]["exercise_id"], "run_id": values[0]["run_id"]}
+    matched = compare(expected, observed, **scope)
+    assert matched["supplied_files_match"]
+    assert matched["expected_events"] == len(values)
+    assert not matched["live_splunk_verified"]
+    observed.write_text("".join(json.dumps(value) + "\n" for value in values[:-1]))
+    assert compare(expected, observed, **scope)["missing_events"] == 1
+    with pytest.raises(TelemetryCheckError, match="outside"):
+        compare(expected, full_package / name / "reset-events.jsonl", **scope)
+
+
 def test_explicit_execution_requires_new_output(tmp_path):
     with pytest.raises(SystemExit) as error:
         rehearsal.main(["--execute"])

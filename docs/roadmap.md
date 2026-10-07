@@ -88,8 +88,8 @@ with Latifa.
 
 ## Current priority order
 
-Updated October 5: all four scenario stages and application review/evidence/staff
-foundations are implemented locally; #152 and Patrick's #127/#128/#139/#140 are merged.
+Updated October 7: all four scenario stages and application review/evidence/staff
+foundations are implemented locally; #152/#155 and Patrick's #156 are merged.
 This is application progress, not live Cyber Range acceptance.
 
 1. Human support and staff operations are connected (#136/#138; #135/#137 closed).
@@ -110,13 +110,19 @@ This is application progress, not live Cyber Range acceptance.
    #152 adds a [strict maintained-code security gate](application-security-gate.md)
    and contains recorder HTTP requests (#151 closed). Its explicit outage exception
    now has passing post-merge CI; #153 remains open for retrospective teammate review.
-   Current #154 fixes confirmed [module test/coverage CI defects](ci-evidence-checks.md)
+   Merged #155 closes #154's [module test/coverage CI defects](ci-evidence-checks.md)
    and deprecated action runtimes, without changing exercise/environment scope.
+   #157 adds a [saved raw telemetry comparison](application-telemetry-comparison.md)
+   to support Patrick's actual application-event ingestion checks; no live transport
+   or readiness claim is added.
 2. Patrick proves offline deployment, identity-slice Splunk ingestion, privacy and
    snapshot/readiness on the approved range topology.
-   On October 5 he reported an offline dashboard/dependency/Ansible smoke success;
-   the exact tested commit/bundle remains to be recorded. Windows/Sysmon/Splunk
-   validation is planned for the following days, not yet proven.
+   His October 7 #101 record identifies the offline dashboard bundle/source
+   (`5553a3fce81b4f59981460259a8f933b9d4d4b69`), reports successful Ansible
+   provisioning, and includes Windows Sysmon-to-Splunk evidence. #101 is closed.
+   #102–#104 remain open for canonical application evidence, RBAC/retention,
+   snapshot/readiness and representative rehearsals. The older tested source
+   is not blanket verification of subsequent dev changes.
 3. Anna finalizes content and records representative learner usability/timing and
    evaluator calibration; Aya integrates approved content and fixes application gaps.
 4. Ashley confirms deployment/rehearsal/delivery dates and unresolved client decisions.
