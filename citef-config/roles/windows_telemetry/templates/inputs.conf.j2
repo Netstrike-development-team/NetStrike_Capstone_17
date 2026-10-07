@@ -2,13 +2,22 @@
 disabled = 0
 index = {{ splunk.windows_index }}
 renderXml = 1
+start_from = oldest
+current_only = 1
+checkpointInterval = 5
 
 [WinEventLog://Microsoft-Windows-PowerShell/Operational]
 disabled = 0
 index = {{ splunk.windows_index }}
 renderXml = 1
+start_from = oldest
+current_only = 1
+checkpointInterval = 5
 
 [WinEventLog://Microsoft-Windows-Sysmon/Operational]
 disabled = 0
 index = {{ splunk.windows_index }}
 renderXml = 1
+start_from = oldest
+current_only = 1
+checkpointInterval = 5

@@ -79,6 +79,46 @@ def test_inventory_records_acceptance_fields_and_bundle_checksums(tmp_path: Path
     assert "requirements.lock" in checksums
 
 
+def test_wheel_inventory_uses_license_classifiers_and_author_emails(tmp_path: Path):
+    wheel = tmp_path / "demo-1.0-py3-none-any.whl"
+    with zipfile.ZipFile(wheel, "w") as archive:
+        archive.writestr(
+            "demo-1.0.dist-info/METADATA",
+            "Metadata-Version: 2.1\n"
+            "Name: demo\n"
+            "Version: 1.0\n"
+            "Classifier: License :: OSI Approved :: MIT License\n"
+            "Author-email: =?utf-8?q?Jos=C3=A9_Example?= <jose@example.com>\n",
+        )
+
+    artifact = offline_bundle._wheel_inventory(wheel)
+
+    assert artifact["license"] == "MIT"
+    assert artifact["owner"] == "José Example"
+
+
+def test_wheel_inventory_identifies_bsd_variant_from_license_file(tmp_path: Path):
+    wheel = tmp_path / "demo-1.0-py3-none-any.whl"
+    with zipfile.ZipFile(wheel, "w") as archive:
+        archive.writestr(
+            "demo-1.0.dist-info/METADATA",
+            "Metadata-Version: 2.1\n"
+            "Name: demo\n"
+            "Version: 1.0\n"
+            "Classifier: License :: OSI Approved :: BSD License\n",
+        )
+        archive.writestr(
+            "demo-1.0.dist-info/licenses/LICENSE.txt",
+            "Redistribution and use in source and binary forms are permitted.\n"
+            "Neither the name of the copyright holder nor the names of its "
+            "contributors may be used to endorse products.\n",
+        )
+
+    artifact = offline_bundle._wheel_inventory(wheel)
+
+    assert artifact["license"] == "BSD-3-Clause"
+
+
 def test_copies_module_dashboard_and_ansible_source(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     repo = tmp_path / "repo"
     for directory in offline_bundle.SOURCE_DIRECTORIES:
@@ -100,7 +140,7 @@ def test_copies_module_dashboard_and_ansible_source(tmp_path: Path, monkeypatch:
         assert entry["sha256"] == offline_bundle._directory_sha256(source_tree)
         assert entry["destination_vm"] == "CTRL01"
         assert entry["offline_install_method"]
-        assert entry["license"].startswith("UNKNOWN")
+        assert entry["license"] == "Not separately declared for bundled project source"
         assert entry["owner"] == "Netstrike-development-team"
 
 
@@ -207,6 +247,32 @@ def test_copies_ansible_collections_and_records_manifest_metadata(tmp_path: Path
     assert (
         tmp_path / "bundle" / inventory[0]["file"]
     ).read_bytes() == archive_path.read_bytes()
+
+
+def test_collection_license_falls_back_to_copying_file(tmp_path: Path):
+    archive_path = tmp_path / "microsoft.ad-1.12.1.tar.gz"
+    manifest = {
+        "collection_info": {
+            "namespace": "microsoft",
+            "name": "ad",
+            "version": "1.12.1",
+            "authors": ["Ansible Project"],
+        }
+    }
+    with tarfile.open(archive_path, "w:gz") as archive:
+        payload = json.dumps(manifest).encode()
+        member = TarInfo("MANIFEST.json")
+        member.size = len(payload)
+        archive.addfile(member, io.BytesIO(payload))
+        copying = b"GNU GENERAL PUBLIC LICENSE\nVersion 3, 29 June 2007\n"
+        member = TarInfo("COPYING")
+        member.size = len(copying)
+        archive.addfile(member, io.BytesIO(copying))
+
+    inventory = _copy_ansible_collection_archives([str(archive_path)], tmp_path / "bundle")
+
+    assert inventory[0]["license"] == "GNU GPL v3 (COPYING file; manifest license field absent)"
+    assert inventory[0]["owner"] == "Ansible Project"
 
 
 def test_workflow_configuration_is_required(monkeypatch: pytest.MonkeyPatch):

@@ -202,6 +202,22 @@ directory named by `offline_artifacts.directory`. The example manifest's
 artifact paths must be replaced with the staged relative paths and SHA-256
 digests.
 
+For example, place the licensed Sysmon ZIP at
+`offline-bundles/CITEF-RELEASE/sysmon/Sysmon.zip`. The checked-in
+`offline-bundles/CITEF-RELEASE/sysmon/.gitkeep` marks this staging location;
+the ZIP and other licensed artifacts remain ignored by Git. Set
+`offline_artifacts.sysmon.archive.file` to `sysmon/Sysmon.zip` and populate its
+approved SHA-256 in the local `environment.json`. Ansible resolves artifact
+paths relative to `offline_artifacts.directory`, verifies the archive hash,
+then extracts and signature-checks `Sysmon64.exe` before installation.
+
+Place the Windows Universal Forwarder MSI at
+`offline-bundles/CITEF-RELEASE/windows/splunkforwarder-10.0.1-c486717c322b-windows-x64.msi`.
+The checked-in `offline-bundles/CITEF-RELEASE/windows/.gitkeep` marks its
+staging location; the licensed MSI remains ignored by Git. The example manifest
+uses this relative path, and Ansible verifies its SHA-256, published SHA-512,
+and Authenticode signature before installing it.
+
 Download the pinned Ansible collections and dependencies on a connected
 staging machine, transfer the tarballs through the approved offline path, and
 install them on the Ansible control host without Galaxy access:

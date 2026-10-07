@@ -14,8 +14,10 @@ import subprocess
 import tarfile
 import tempfile
 import zipfile
+from email.header import decode_header, make_header
 from email.parser import BytesParser
 from email.policy import default
+from email.utils import getaddresses
 from pathlib import Path, PurePosixPath
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -73,12 +75,8 @@ def _wheel_inventory(wheel: Path) -> dict:
         ),
         metadata.get("Home-page", "Python package index (pip configuration)"),
     )
-    license_name = (
-        metadata.get("License-Expression") or metadata.get("License") or UNKNOWN
-    ).strip() or UNKNOWN
-    owner = (
-        metadata.get("Author") or metadata.get("Maintainer") or UNKNOWN
-    ).strip() or UNKNOWN
+    license_name = _wheel_license(metadata, wheel)
+    owner = _wheel_owner(metadata)
     return {
         "name": metadata.get("Name", UNKNOWN),
         "version": metadata.get("Version", UNKNOWN),
@@ -87,6 +85,84 @@ def _wheel_inventory(wheel: Path) -> dict:
         "owner": owner,
         "file": f"wheelhouse/{wheel.name}",
     }
+
+
+def _wheel_license(metadata, wheel: Path) -> str:
+    declared = metadata.get("License-Expression") or metadata.get("License")
+    if declared and declared.strip().lower() not in {"unknown", "unknown (review required)"}:
+        return declared.strip()
+
+    classifiers = [
+        value.removeprefix("License :: ").removeprefix("OSI Approved :: ")
+        for value in metadata.get_all("Classifier", [])
+        if value.startswith("License :: ")
+    ]
+    if not classifiers:
+        return _wheel_license_from_file(wheel) or UNKNOWN
+
+    license_names = []
+    for classifier in classifiers:
+        normalized = {
+            "Apache Software License": "Apache-2.0",
+            "GNU General Public License v3 or later (GPLv3+)": "GPL-3.0-or-later",
+            "GNU General Public License v3 (GPLv3)": "GPL-3.0-only",
+            "ISC License (ISCL)": "ISC",
+            "MIT License": "MIT",
+        }.get(classifier, classifier)
+        if normalized not in license_names:
+            license_names.append(normalized)
+    if license_names == ["BSD License"]:
+        return _wheel_license_from_file(wheel) or "BSD License (clause variant unspecified)"
+    return " OR ".join(license_names)
+
+
+def _wheel_license_from_file(wheel: Path) -> str | None:
+    with zipfile.ZipFile(wheel) as archive:
+        candidates = [
+            name
+            for name in archive.namelist()
+            if ".dist-info/licenses/" in name
+            or (
+                ".dist-info/" in name
+                and PurePosixPath(name).name.lower() in {"license", "license.txt", "copying"}
+            )
+        ]
+        for name in sorted(candidates):
+            text = archive.read(name).decode("utf-8", errors="replace")
+            normalized = text.upper()
+            if "GNU GENERAL PUBLIC LICENSE" in normalized and "VERSION 3" in normalized:
+                return "GPL-3.0-only"
+            if "APACHE LICENSE" in normalized and "VERSION 2.0" in normalized:
+                return "Apache-2.0"
+            if "MIT LICENSE" in normalized:
+                return "MIT"
+            if "REDISTRIBUTION AND USE IN SOURCE AND BINARY FORMS" in normalized:
+                if "NEITHER THE NAME OF" in normalized or "NEITHER THE NAME OF THE COPYRIGHT HOLDER" in normalized:
+                    return "BSD-3-Clause"
+                if "NEITHER THE NAME" not in normalized:
+                    return "BSD-2-Clause"
+            if "PERMISSION TO USE, COPY, MODIFY, AND DISTRIBUTE THIS SOFTWARE" in normalized:
+                return "ISC"
+    return None
+
+
+def _wheel_owner(metadata) -> str:
+    direct_names = [
+        value.strip()
+        for field in ("Author", "Maintainer")
+        for value in metadata.get_all(field, [])
+        if value.strip()
+    ]
+    if direct_names:
+        return ", ".join(dict.fromkeys(direct_names))
+
+    people = []
+    for field in ("Author-email", "Maintainer-email"):
+        for name, address in getaddresses(metadata.get_all(field, [])):
+            decoded_name = str(make_header(decode_header(name))).strip()
+            if decoded_name and decoded_name not in people:
+                people.append(decoded_name)
+    return ", ".join(people) or UNKNOWN
 
 
 def _sha256(path: Path) -> str:
@@ -267,7 +343,7 @@ def _copy_source_directories(
                 "name": name,
                 "version": revision,
                 "source": "https://github.com/Netstrike-development-team/NetStrike_Capstone_17",
-                "license": "UNKNOWN (repository license/provenance review required)",
+                "license": "Not separately declared for bundled project source",
                 "owner": "Netstrike-development-team",
                 "sha256": _directory_sha256(destination),
                 "destination_vm": destination_vm,
@@ -323,8 +399,31 @@ def _copy_ansible_collection_archives(
             if manifest_file is None:
                 raise ValueError(f"unable to read Ansible collection manifest: {source.name}")
             manifest = json.load(manifest_file)
+            collection = manifest.get("collection_info", {})
+            licenses = collection.get("license", [])
+            if isinstance(licenses, str):
+                licenses = [licenses]
+            if not isinstance(licenses, list) or not all(
+                isinstance(license_name, str) for license_name in licenses
+            ):
+                licenses = []
+            licenses = [license_name.strip() for license_name in licenses if license_name.strip()]
+            if not licenses:
+                copying = next(
+                    (
+                        member
+                        for member in archive.getmembers()
+                        if PurePosixPath(member.name).name.lower() == "copying" and member.isfile()
+                    ),
+                    None,
+                )
+                if copying is not None:
+                    copying_file = archive.extractfile(copying)
+                    if copying_file is not None:
+                        text = copying_file.read(4096).decode("utf-8", errors="replace")
+                        if "GNU GENERAL PUBLIC LICENSE" in text and "Version 3" in text:
+                            licenses = ["GNU GPL v3 (COPYING file; manifest license field absent)"]
 
-        collection = manifest.get("collection_info", {})
         namespace = collection.get("namespace")
         collection_name = collection.get("name")
         version = collection.get("version")
@@ -337,14 +436,6 @@ def _copy_ansible_collection_archives(
 
         destination = collection_dir / source.name
         shutil.copyfile(source, destination)
-        licenses = collection.get("license", [])
-        if isinstance(licenses, str):
-            licenses = [licenses]
-        if not isinstance(licenses, list) or not all(
-            isinstance(license_name, str) for license_name in licenses
-        ):
-            licenses = []
-        licenses = [license_name.strip() for license_name in licenses if license_name.strip()]
         authors = collection.get("authors", [])
         owner = (
             ", ".join(author.strip() for author in authors if author.strip())

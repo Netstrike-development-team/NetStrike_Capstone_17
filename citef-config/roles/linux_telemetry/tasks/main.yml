@@ -19,6 +19,18 @@
       - linux_uf_package.stat.checksum | lower == offline_artifacts.universal_forwarder.linux_deb.sha256 | lower
     fail_msg: "Staged Linux Universal Forwarder package failed SHA-256 verification."
 
+- name: Verify staged Linux Universal Forwarder vendor SHA-512
+  ansible.builtin.stat:
+    path: "/var/tmp/{{ offline_artifacts.universal_forwarder.linux_deb.file | basename }}"
+    checksum_algorithm: sha512
+  register: linux_uf_sha512
+
+- name: Require the Linux forwarder vendor SHA-512 to match
+  ansible.builtin.assert:
+    that:
+      - linux_uf_sha512.stat.checksum | lower == offline_artifacts.universal_forwarder.linux_deb.sha512 | lower
+    fail_msg: "Staged Linux Universal Forwarder package failed SHA-512 verification."
+
 - name: Install Universal Forwarder from the staged local package
   ansible.builtin.apt:
     deb: "/var/tmp/{{ offline_artifacts.universal_forwarder.linux_deb.file | basename }}"

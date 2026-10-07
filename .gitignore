@@ -44,7 +44,15 @@ logs/
 modules/*/output/
 
 # Generated offline dependency bundles (may contain licensed artifacts)
-offline-bundles/
+offline-bundles/*
+!offline-bundles/CITEF-RELEASE/
+offline-bundles/CITEF-RELEASE/*
+!offline-bundles/CITEF-RELEASE/sysmon/
+offline-bundles/CITEF-RELEASE/sysmon/*
+!offline-bundles/CITEF-RELEASE/sysmon/.gitkeep
+!offline-bundles/CITEF-RELEASE/windows/
+offline-bundles/CITEF-RELEASE/windows/*
+!offline-bundles/CITEF-RELEASE/windows/.gitkeep
 
 # Python
 __pycache__/

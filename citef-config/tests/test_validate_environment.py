@@ -72,13 +72,17 @@ def valid_manifest():
             },
             "universal_forwarder": {
                 "version": "10.0.1",
-                "linux_deb": {"file": "forwarder.deb", "sha256": "a" * 64},
-                "windows_msi": {"file": "forwarder.msi", "sha256": "b" * 64},
+                "linux_deb": {"file": "forwarder.deb", "sha256": "a" * 64, "sha512": "a" * 128},
+                "windows_msi": {
+                    "file": "windows/splunkforwarder-10.0.1-c486717c322b-windows-x64.msi",
+                    "sha256": "b" * 64,
+                    "sha512": "b" * 128,
+                },
                 "receiver_ca": {"file": "receiver-ca.pem", "sha256": "c" * 64},
             },
             "sysmon": {
                 "version": "test",
-                "executable": {"file": "Sysmon64.exe", "sha256": "d" * 64},
+                "archive": {"file": "sysmon/Sysmon.zip", "sha256": "d" * 64},
                 "config": {"file": "sysmon-config.xml", "sha256": "e" * 64},
             },
         },
@@ -201,6 +205,24 @@ class ValidateEnvironmentTests(unittest.TestCase):
         manifest = valid_manifest()
         manifest["offline_artifacts"]["controller_source"]["sha256"] = "not-a-hash"
         with self.assertRaisesRegex(validate_environment.ManifestError, "sha256"):
+            validate_environment.validate_manifest(manifest)
+
+    def test_schema_rejects_invalid_forwarder_sha512(self):
+        manifest = valid_manifest()
+        manifest["offline_artifacts"]["universal_forwarder"]["windows_msi"]["sha512"] = "not-a-hash"
+        with self.assertRaisesRegex(validate_environment.ManifestError, "sha512"):
+            validate_environment.validate_manifest(manifest)
+
+    def test_sysmon_archive_must_use_licensed_staging_directory(self):
+        manifest = valid_manifest()
+        manifest["offline_artifacts"]["sysmon"]["archive"]["file"] = "Sysmon.zip"
+        with self.assertRaisesRegex(validate_environment.ManifestError, "must be sysmon/Sysmon.zip"):
+            validate_environment.validate_manifest(manifest)
+
+    def test_windows_forwarder_msi_must_use_licensed_staging_directory(self):
+        manifest = valid_manifest()
+        manifest["offline_artifacts"]["universal_forwarder"]["windows_msi"]["file"] = "forwarder.msi"
+        with self.assertRaisesRegex(validate_environment.ManifestError, "must be the Windows MSI"):
             validate_environment.validate_manifest(manifest)
 
     def test_inventory_generation_revalidates_manifest(self):
