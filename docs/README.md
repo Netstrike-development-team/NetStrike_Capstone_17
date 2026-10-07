@@ -60,6 +60,7 @@ index](exercise-design/README.md).
 | Document | What it covers |
 |---|---|
 | [Offline bundle build and install](offline-bundle.md) | Building, verifying, installing, and smoke-testing the Python bundle |
+| [Splunk Sysmon ingestion](splunk-sysmon-ingest.md) | Configure the Splunk receiver and test Windows Sysmon forwarding |
 | [CITEF requirements and approval](exercise-design/06-citef-requirements-and-approval.md) | Environment questionnaire, decision log, fallbacks, and approval records |
 | [CITEF topology and readiness](../citef-config/README.md) | Proposed infrastructure, manifest, provisioning, post-restore readiness, and acceptance; proposed, not deployment approval |
 | [Offline tool-bundle inventory](exercise-design/07-offline-tool-bundle-inventory.md) | Software inputs, approvals, and artifact handling |
