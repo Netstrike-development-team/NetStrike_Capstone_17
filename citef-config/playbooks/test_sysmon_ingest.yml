@@ -1,0 +1,111 @@
+---
+- name: Validate the Sysmon ingestion test inputs
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/../environment.json"
+  tasks:
+    - name: Require a unique path-safe test run identifier
+      ansible.builtin.assert:
+        that:
+          - exercise_run_id is defined
+          - exercise_run_id is match('^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$')
+        fail_msg: "Pass a unique exercise_run_id containing 8-64 safe characters."
+
+    - name: Require the Splunk API token at runtime
+      ansible.builtin.assert:
+        that:
+          - lookup('ansible.builtin.env', 'SPLUNK_TOKEN') | length > 0
+        fail_msg: "Inject SPLUNK_TOKEN through the approved secret mechanism."
+      no_log: true
+
+- name: Generate a harmless Sysmon process event on Windows endpoints
+  hosts: windows_hosts
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/../environment.json"
+  tasks:
+    - name: Generate a harmless command-line marker and verify local Sysmon event
+      ansible.windows.win_powershell:
+        parameters:
+          probe_marker: "NetStrikeSysmonTest-{{ exercise_run_id }}-{{ logical_name }}"
+        script: |
+          $ErrorActionPreference = 'Stop'
+          $marker = $Ansible.Params.probe_marker
+          Start-Process -FilePath $env:ComSpec `
+            -ArgumentList @('/d', '/c', "echo $marker") `
+            -Wait -NoNewWindow -ErrorAction Stop | Out-Null
+
+          $deadline = (Get-Date).AddSeconds(30)
+          do {
+            $event = Get-WinEvent -FilterHashtable @{
+              LogName = 'Microsoft-Windows-Sysmon/Operational'
+              Id = 1
+              StartTime = (Get-Date).AddMinutes(-2)
+            } -MaxEvents 100 -ErrorAction SilentlyContinue |
+              Where-Object { $_.Message -like "*$marker*" } |
+              Select-Object -First 1
+            if ($event) {
+              $Ansible.Result = @{
+                event_id = $event.Id
+                record_id = $event.RecordId
+                probe_marker = $marker
+              }
+              $Ansible.Changed = $true
+              return
+            }
+            Start-Sleep -Seconds 2
+          } while ((Get-Date) -lt $deadline)
+          throw "Sysmon did not record the generated process marker locally."
+
+- name: Verify each test event arrived in the configured Splunk index
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/../environment.json"
+  tasks:
+    - name: Search Splunk for each host's unique Sysmon process event
+      ansible.builtin.uri:
+        url: "{{ splunk.rest_url }}/services/search/jobs/export"
+        method: POST
+        headers:
+          Authorization: "Splunk {{ lookup('ansible.builtin.env', 'SPLUNK_TOKEN') }}"
+        body_format: form-urlencoded
+        body:
+          search: >-
+            search index={{ splunk.windows_index }}
+            host="{{ hostvars[item].logical_name }}"
+            source="*Microsoft-Windows-Sysmon/Operational"
+            "NetStrikeSysmonTest-{{ exercise_run_id }}-{{ hostvars[item].logical_name }}"
+          output_mode: json
+          exec_mode: blocking
+          earliest_time: "-15m"
+          latest_time: now
+        return_content: true
+        status_code: 200
+        validate_certs: true
+        ca_path: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ offline_artifacts.universal_forwarder.receiver_ca.file }}"
+        timeout: 60
+      loop: "{{ groups['windows_hosts'] }}"
+      loop_control:
+        label: "{{ hostvars[item].logical_name }}"
+      register: sysmon_splunk_search
+      retries: 12
+      delay: 5
+      until: >-
+        sysmon_splunk_search.status == 200 and
+        ("NetStrikeSysmonTest-" ~ exercise_run_id ~ "-" ~ hostvars[item].logical_name)
+        in sysmon_splunk_search.content
+      no_log: true
+
+    - name: Require every Windows Sysmon probe to be present in Splunk results
+      ansible.builtin.assert:
+        that:
+          - item.status == 200
+          - >-
+            ("NetStrikeSysmonTest-" ~ exercise_run_id ~ "-" ~ hostvars[item.item].logical_name)
+            in item.content
+        fail_msg: "Sysmon test event from {{ hostvars[item.item].logical_name }} was not found in Splunk."
+      loop: "{{ sysmon_splunk_search.results }}"
+      loop_control:
+        label: "{{ hostvars[item.item].logical_name }}"

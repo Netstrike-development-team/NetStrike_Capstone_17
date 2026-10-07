@@ -250,6 +250,15 @@ def _validate_cross_fields(manifest: dict) -> None:
 
     artifacts = manifest["offline_artifacts"]
     _safe_relative_path(artifacts["directory"], "offline_artifacts.directory")
+    _require(
+        artifacts["sysmon"]["archive"]["file"] == "sysmon/Sysmon.zip",
+        "offline_artifacts.sysmon.archive.file must be sysmon/Sysmon.zip under the licensed artifact staging directory",
+    )
+    _require(
+        artifacts["universal_forwarder"]["windows_msi"]["file"]
+        == "windows/splunkforwarder-10.0.1-c486717c322b-windows-x64.msi",
+        "offline_artifacts.universal_forwarder.windows_msi.file must be the Windows MSI under the licensed artifact staging directory",
+    )
     artifact_specs = [
         (artifacts["controller_source"], "offline_artifacts.controller_source.file"),
         (artifacts["python_runtime"]["archive"], "offline_artifacts.python_runtime.archive.file"),
@@ -257,7 +266,7 @@ def _validate_cross_fields(manifest: dict) -> None:
         (artifacts["universal_forwarder"]["linux_deb"], "offline_artifacts.universal_forwarder.linux_deb.file"),
         (artifacts["universal_forwarder"]["windows_msi"], "offline_artifacts.universal_forwarder.windows_msi.file"),
         (artifacts["universal_forwarder"]["receiver_ca"], "offline_artifacts.universal_forwarder.receiver_ca.file"),
-        (artifacts["sysmon"]["executable"], "offline_artifacts.sysmon.executable.file"),
+        (artifacts["sysmon"]["archive"], "offline_artifacts.sysmon.archive.file"),
         (artifacts["sysmon"]["config"], "offline_artifacts.sysmon.config.file"),
     ]
     controller = manifest["controller"]

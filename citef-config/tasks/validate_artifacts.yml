@@ -13,7 +13,7 @@
     - "{{ offline_artifacts.universal_forwarder.linux_deb }}"
     - "{{ offline_artifacts.universal_forwarder.windows_msi }}"
     - "{{ offline_artifacts.universal_forwarder.receiver_ca }}"
-    - "{{ offline_artifacts.sysmon.executable }}"
+    - "{{ offline_artifacts.sysmon.archive }}"
     - "{{ offline_artifacts.sysmon.config }}"
     - "{{ offline_artifacts.controller_source }}"
     - "{{ offline_artifacts.python_runtime.archive }}"
@@ -23,6 +23,24 @@
   loop_control:
     label: "{{ item.file | default('missing filename') }}"
 
+- name: Require Sysmon ZIP in the licensed artifact staging directory
+  ansible.builtin.assert:
+    that:
+      - offline_artifacts.sysmon.archive.file == "sysmon/Sysmon.zip"
+    fail_msg: >-
+      Place the licensed Sysmon archive at
+      {{ offline_artifacts.directory }}/sysmon/Sysmon.zip and set its approved
+      SHA-256 in environment.json.
+
+- name: Require Windows Universal Forwarder MSI in its licensed artifact directory
+  ansible.builtin.assert:
+    that:
+      - offline_artifacts.universal_forwarder.windows_msi.file == "windows/splunkforwarder-10.0.1-c486717c322b-windows-x64.msi"
+    fail_msg: >-
+      Place the licensed Windows Universal Forwarder MSI at
+      {{ offline_artifacts.directory }}/windows/splunkforwarder-10.0.1-c486717c322b-windows-x64.msi
+      and set its approved SHA-256 and SHA-512 in environment.json.
+
 - name: Verify offline artifact files and hashes on the Ansible control host
   ansible.builtin.stat:
     path: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ item.file }}"
@@ -31,7 +49,7 @@
     - "{{ offline_artifacts.universal_forwarder.linux_deb }}"
     - "{{ offline_artifacts.universal_forwarder.windows_msi }}"
     - "{{ offline_artifacts.universal_forwarder.receiver_ca }}"
-    - "{{ offline_artifacts.sysmon.executable }}"
+    - "{{ offline_artifacts.sysmon.archive }}"
     - "{{ offline_artifacts.sysmon.config }}"
     - "{{ offline_artifacts.controller_source }}"
     - "{{ offline_artifacts.python_runtime.archive }}"
@@ -51,6 +69,28 @@
       - item.stat.checksum | lower == item.item.sha256 | lower
     fail_msg: "Offline artifact {{ item.item.file }} is missing or does not match its approved SHA-256."
   loop: "{{ staged_artifacts.results }}"
+  loop_control:
+    label: "{{ item.item.file }}"
+
+- name: Verify published Universal Forwarder SHA-512 checksums on the control host
+  ansible.builtin.stat:
+    path: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ item.file }}"
+    checksum_algorithm: sha512
+  loop:
+    - "{{ offline_artifacts.universal_forwarder.linux_deb }}"
+    - "{{ offline_artifacts.universal_forwarder.windows_msi }}"
+  register: staged_forwarder_sha512
+  delegate_to: localhost
+  loop_control:
+    label: "{{ item.file }}"
+
+- name: Require Universal Forwarder SHA-512 checksums to match
+  ansible.builtin.assert:
+    that:
+      - item.stat.exists
+      - item.stat.checksum | lower == item.item.sha512 | lower
+    fail_msg: "Universal Forwarder package {{ item.item.file }} failed SHA-512 verification."
+  loop: "{{ staged_forwarder_sha512.results }}"
   loop_control:
     label: "{{ item.item.file }}"
 
