@@ -1,10 +1,25 @@
 # Participant and facilitator portal API
 
+For source-bundle handoff before startup, use the standard-library-only
+[offline release-source checker](../docs/offline-release-source-check.md). It
+compares a selected pristine extraction against separately saved revision and
+inventory checksum values, not runtime readiness or a running process.
+
 Objective review and portable AAR exports are available at `/evaluator` for
 configured evaluator/facilitator roles. Participants can submit their intrusion
 timeline and load safe feedback after all five objectives are reviewed at end
 of play. See [the review workflow](../docs/after-action-review.md) for roles,
 offline report generation and calibration limits.
+
+Current evaluator review preserves same-revision drafts and pins downloads to the
+inspected run/report snapshot. Unconfirmed judgments require inspection, not
+automatic retries. See [current evaluator workflow](../docs/evaluator-review-workflow.md)
+for reset/credential boundaries and export compatibility.
+
+Staff can inspect local readiness and clock health directly on `/facilitator`,
+and preview/capture/browse/download historical reviews on `/evaluator` without
+altering current ratings. See [offline staff operations](../docs/staff-operations.md)
+for guarded controls, uncertain outcomes and export-before-VM-restore limits.
 
 This FastAPI service exposes the identity vertical slice without trusting actor, role, run, or exercise identifiers supplied by a browser.
 
@@ -34,6 +49,14 @@ python -m uvicorn dashboard.app:create_default_app --factory --host 0.0.0.0 --po
 Tokens are injected on `CTRL01`; they must not be committed, logged, or included in exported evidence.
 The audit key is also injected at runtime and must remain stable for the duration of a run.
 
+Before startup, run `python -B -m dashboard.preflight --expect-scope identity`
+under the intended environment/working directory. This validates application
+inputs without creating SQLite or decoys; it does not certify runtime/range
+readiness. Select the expectation matching the approved scenario, without
+implicitly enabling full play. The production factory also validates before
+construction. See [the deployment-input contract](../docs/application-deployment-contract.md)
+for safe blockers, optional expected-scope guard and remaining owner checks.
+
 ## Profile initialization
 
 At startup the portal validates the committed synthetic OSINT fixture. A
@@ -45,6 +68,16 @@ does not expose target bindings or attack rankings. Facilitators inspect the
 profile count/catalog fingerprint in **Profile readiness**. Reset verifies the
 pinned profile baseline as well as SSO/MFA state. See
 [the profile input contract](../docs/synthetic-profile-contract-v1.md).
+
+## Learner reset safety
+
+The participant console now pins containment, DP1, timeline, cloud assessment and
+recovery requests to the inspected run. Old-page requests cannot affect a newer
+run when they send `X-Exercise-Run-ID`. The browser clears old drafts/targets on
+observed reset, ignores obsolete responses and never automatically repeats an
+unconfirmed mutation. Legacy clients omitting the optional header remain compatible
+but lack this stale-client guard. See [learner run boundaries](../docs/participant-run-safety.md)
+for the API list, limitations and cross-role regression checks.
 
 ## Synthetic identity capture
 

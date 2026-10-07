@@ -1,11 +1,28 @@
 "use strict";
 
-import {api, clearNotice, connect, formatElapsed, idempotency, notify, setStatus, token} from "/static/common.js";
+import {clearNotice, connect, formatElapsed, idempotency, notify, setStatus, token} from "/static/common.js";
 import {mountSupport} from "/static/support.js";
+import {ParticipantSession} from "/static/participant-session.js";
 
 const notice = document.querySelector("#notice");
 const tokenInput = document.querySelector("#token-input");
-let lastRunId = null;
+const session = new ParticipantSession({cleared: (reason) => {
+  clearNotice(notice);
+  if (reason === "run") notify(notice, "Exercise changed. Previous-run drafts were cleared. Inspect the new evidence before acting.", "error");
+  for (const id of ["#dp1-form", "#intrusion-timeline", "#recovery-actions", "#recovery-brief", "#cloud-form"]) {
+    document.querySelector(id).reset();
+  }
+  for (const input of document.querySelectorAll("#actions input")) input.value = "";
+  for (const id of ["#feedback", "#injects", "#directory", "#recovery-state", "#recovery-audit", "#cloud-state", "#cloud-audit"]) {
+    document.querySelector(id).replaceChildren();
+  }
+  for (const id of ["#cloud-summary", "#recovery-summary"]) document.querySelector(id).textContent = "Refresh evidence for the current exercise.";
+  document.querySelector("#run-id").textContent = "—";
+  document.querySelector("#elapsed").textContent = "00:00:00";
+  document.querySelector("#inject-count").textContent = "0";
+  setStatus(document.querySelector("#run-state"), "disconnected");
+  for (const id of ["#feedback-panel", "#cloud-panel", "#recovery-panel"]) document.querySelector(id).hidden = true;
+}});
 
 function renderInjects(injects) {
   const container = document.querySelector("#injects");
@@ -32,20 +49,9 @@ function renderInjects(injects) {
 }
 
 async function refresh() {
-  if (!token()) return;
   try {
-    const state = await api("/api/participant/state");
-    if (lastRunId && lastRunId !== state.run_id) {
-      document.querySelector("#feedback").replaceChildren();
-      document.querySelector("#intrusion-timeline").reset();
-      document.querySelector("#recovery-actions").reset();
-      document.querySelector("#recovery-brief").reset();
-      document.querySelector("#cloud-form").reset();
-      for (const id of ["#recovery-state", "#recovery-audit", "#cloud-state", "#cloud-audit"]) {
-        document.querySelector(id).replaceChildren();
-      }
-    }
-    lastRunId = state.run_id;
+    const state = await session.refresh();
+    if (!state) return;
     setStatus(document.querySelector("#run-state"), state.state);
     document.querySelector("#elapsed").textContent = formatElapsed(state.elapsed_seconds);
     document.querySelector("#inject-count").textContent = state.injects.length;
@@ -114,27 +120,27 @@ for (let index = 0; index < 6; index += 1) addTimelineEntry();
 document.querySelector("#add-timeline-entry").addEventListener("click", addTimelineEntry);
 document.querySelector("#intrusion-timeline").addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (!lastRunId) { notify(notice, "Connect to the current exercise first.", "error"); return; }
+  if (!session.runId) { notify(notice, "Connect to the current exercise first.", "error"); return; }
   const credential = token();
-  const runId = lastRunId;
+  const runId = session.runId;
   const entries = Array.from(document.querySelector("#timeline-entries").children, (row) =>
     Object.fromEntries(Array.from(row.querySelectorAll("[data-field]"), (field) => [field.dataset.field, field.value.trim()])));
   try {
-    const receipt = await api("/api/participant/timeline", {method: "POST", body: JSON.stringify({run_id: runId, entries})});
-    if (token() !== credential || lastRunId !== runId) return;
+    const receipt = await session.write("/api/participant/timeline", {body: JSON.stringify({run_id: runId, entries})});
+    if (!receipt || token() !== credential || session.runId !== runId) return;
     notify(notice, `Timeline recorded as submission:${receipt.submission_id} for evaluator review.`);
   } catch (error) {
-    if (token() === credential && lastRunId === runId) notify(notice, error.message, "error");
+    if (token() === credential && session.runId === runId) notify(notice, error.message, "error");
   }
 });
 document.querySelector("#load-feedback").addEventListener("click", async () => {
   const credential = token();
-  const runId = lastRunId;
+  const runId = session.runId;
   const container = document.querySelector("#feedback");
   container.replaceChildren();
   try {
-    const result = await api("/api/participant/feedback");
-    if (token() !== credential || lastRunId !== runId || result.run_id !== runId) return;
+    const result = await session.read("/api/participant/feedback");
+    if (!result || token() !== credential || session.runId !== runId) return;
     for (const item of result.objectives) {
       const card = document.createElement("article");
       card.className = "inject";
@@ -146,14 +152,15 @@ document.querySelector("#load-feedback").addEventListener("click", async () => {
       container.append(card);
     }
   } catch (error) {
-    if (token() === credential && lastRunId === runId) notify(notice, error.message, "error");
+    if (token() === credential && session.runId === runId) notify(notice, error.message, "error");
   }
 });
 document.querySelector("#load-directory").addEventListener("click", async () => {
   const button = document.querySelector("#load-directory");
   button.disabled = true;
   try {
-    const profiles = await api("/api/participant/directory");
+    const profiles = await session.read("/api/participant/directory", {runScoped: false});
+    if (!profiles) return;
     const container = document.querySelector("#directory");
     container.replaceChildren();
     for (const profile of profiles) {
@@ -179,7 +186,8 @@ document.querySelector("#load-directory").addEventListener("click", async () => 
 
 document.querySelector("#load-cloud").addEventListener("click", async () => {
   try {
-    const cloud = await api("/api/participant/cloud");
+    const cloud = await session.read("/api/participant/cloud");
+    if (!cloud) return;
     const count = Object.keys(cloud.state.objects).length;
     document.querySelector("#cloud-summary").textContent = `${count} synthetic objects · ${cloud.audit.length} audit events · Run ${cloud.run_id}`;
     document.querySelector("#cloud-state").textContent = JSON.stringify(cloud.state, null, 2);
@@ -206,7 +214,7 @@ document.querySelector("#cloud-form").addEventListener("submit", async (event) =
   event.preventDefault();
   const form = new FormData(event.currentTarget);
   try {
-    await api("/api/participant/cloud/assessment", {
+    const receipt = await session.write("/api/participant/cloud/assessment", {
       method: "POST",
       body: JSON.stringify({
         principal_id: form.get("principal_id").trim(),
@@ -215,6 +223,7 @@ document.querySelector("#cloud-form").addEventListener("submit", async (event) =
         evidence_ids: form.get("evidence_ids").split(/\r?\n/).map((value) => value.trim()).filter(Boolean),
       }),
     });
+    if (!receipt) return;
     notify(notice, "Cloud assessment recorded. Continue validating containment.");
   } catch (error) { notify(notice, error.message, "error"); }
 });
@@ -227,7 +236,7 @@ document.querySelector("#actions").addEventListener("click", async (event) => {
   try {
     const target = button.parentElement.querySelector("input").value.trim();
     if (!target) throw new Error("Enter the evidence-supported target ID first.");
-    const result = await api("/api/participant/actions", {
+    const result = await session.write("/api/participant/actions", {
       method: "POST",
       body: JSON.stringify({
         action_id: button.dataset.action,
@@ -236,6 +245,7 @@ document.querySelector("#actions").addEventListener("click", async (event) => {
         idempotency_key: idempotency(button.dataset.action),
       }),
     });
+    if (!result) return;
     notify(notice, result.message || "Action completed and recorded.");
   } catch (error) {
     notify(notice, error.message, "error");
@@ -246,7 +256,8 @@ document.querySelector("#actions").addEventListener("click", async (event) => {
 
 document.querySelector("#load-recovery").addEventListener("click", async () => {
   try {
-    const state = await api("/api/participant/recovery");
+    const state = await session.read("/api/participant/recovery");
+    if (!state) return;
     document.querySelector("#recovery-summary").textContent = `${state.fixture.available_originals}/5 originals available · ${state.fixture.marker_count} harmless markers · Originals unchanged: ${state.fixture.originals_unchanged} · Run ${state.run_id}`;
     document.querySelector("#recovery-state").textContent = JSON.stringify({fixture: state.fixture, endpoint: state.endpoint}, null, 2);
     const container = document.querySelector("#recovery-audit");
@@ -273,7 +284,7 @@ document.querySelector("#recovery-actions").addEventListener("click", async (eve
   if (!form.reportValidity()) return;
   button.disabled = true;
   try {
-    const result = await api("/api/participant/recovery/action", {
+    const result = await session.write("/api/participant/recovery/action", {
       method: "POST", body: JSON.stringify({
         action_id: button.dataset.recovery,
         fixture_id: new FormData(form).get("fixture_id").trim(),
@@ -281,6 +292,7 @@ document.querySelector("#recovery-actions").addEventListener("click", async (eve
         dry_run: document.querySelector("#recovery-preview").checked,
       }),
     });
+    if (!result) return;
     notify(notice, result.status === "dry_run" ? "Preview passed. No files changed and no health validation was recorded." : "Action recorded. Refresh evidence to inspect the result.");
   } catch (error) { notify(notice, error.message, "error"); }
   finally { button.disabled = false; }
@@ -291,7 +303,7 @@ document.querySelector("#recovery-brief").addEventListener("submit", async (even
   const form = new FormData(event.currentTarget);
   const lines = (key) => form.get(key).split(/\r?\n/).map((value) => value.trim()).filter(Boolean);
   try {
-    await api("/api/participant/recovery/brief", {
+    const receipt = await session.write("/api/participant/recovery/brief", {
       method: "POST", body: JSON.stringify({
         confirmed_scope: form.get("confirmed_scope").trim(),
         confirmed_cloud_records: Number(form.get("confirmed_cloud_records")),
@@ -301,6 +313,7 @@ document.querySelector("#recovery-brief").addEventListener("submit", async (even
         recommendations: lines("recommendations"), evidence_ids: lines("evidence_ids"),
       }),
     });
+    if (!receipt) return;
     notify(notice, "Incident brief recorded for evaluator review.");
   } catch (error) { notify(notice, error.message, "error"); }
 });
@@ -312,7 +325,7 @@ document.querySelector("#dp1-form").addEventListener("submit", async (event) => 
   const references = form.getAll("reference");
   const sources = form.getAll("source");
   try {
-    const result = await api("/api/participant/checkpoints/dp1", {
+    const result = await session.write("/api/participant/checkpoints/dp1", {
       method: "POST",
       body: JSON.stringify({
         affected_identity: form.get("identity"),
@@ -320,6 +333,7 @@ document.querySelector("#dp1-form").addEventListener("submit", async (event) => 
         evidence: references.map((reference, index) => ({reference_id: reference, source: sources[index]})),
       }),
     });
+    if (!result) return;
     notify(notice, result.passed ? "Assessment accepted. Continue containment." : result.reason, result.passed ? "success" : "error");
   } catch (error) {
     notify(notice, error.message, "error");

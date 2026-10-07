@@ -19,7 +19,17 @@
       <p>System observations are not final ratings. Review evidence quality, hints, timing and platform faults. Never enter credentials or personal information.</p>
       <div class="controls"><button id="bundle" class="secondary" disabled>Download offline bundle</button><button id="aar" class="secondary" disabled>Download after-action report</button></div>
       <p class="muted">The report keeps the charter’s suggested weighting but does not invent a numeric grade before calibration.</p>
+      <p class="muted">Downloads match the inspected run and report snapshot. Refresh after changes. Export staff-only files outside restored VMs before reset.</p>
     </section>
+    <details class="panel archive-panel space-top">
+      <summary>Saved run reviews · Staff only</summary>
+      <p>Finish current ratings before reset. Preview a stopped/completed run, then capture its reviewed evidence. Historical captures are read-only and never populate the current judgment form.</p>
+      <p class="ops-warning">Export approved evidence outside the VMs before snapshot restoration. Application archives can be erased by VM rollback; they are not backups or Cyber Range acceptance.</p>
+      <p id="archive-summary" role="status" aria-live="polite">No authorized archives loaded.</p>
+      <div class="controls"><button id="archive-prepare" type="button">Load current capture preview</button><button id="archive-capture" type="button" disabled>Capture reviewed run</button><button id="archive-refresh" type="button" class="secondary">Reload archive list</button><button id="archive-next" type="button" class="secondary" disabled>Next page</button></div>
+      <div id="archive-list" class="timeline space-top"><p class="empty">No authorized archive list loaded.</p></div>
+      <div id="saved-review" class="timeline space-top"></div>
+    </details>
     <section class="layout space-top">
       <article class="panel">
         <h2>Objective ratings</h2>
@@ -29,6 +39,7 @@
         <article class="panel">
           <h2>Record a judgment</h2>
           <p>Corrections append a new revision. They never change the exercise branch.</p>
+          <p class="muted">Refreshing preserves a draft only while this objective’s saved revision is unchanged. If a save is not confirmed, refresh and inspect the recorded judgment before submitting again.</p>
           <form id="judgment" class="form-grid">
             <label class="form-wide">Learning objective<select name="objective_id" required><option value="">Select objective</option></select></label>
             <label class="form-wide">Rating<select name="rating" required><option value="">Select rating</option><option value="performed">Performed</option><option value="performed_with_support">Performed with support</option><option value="partially_performed">Partially performed</option><option value="not_performed">Not performed</option><option value="not_observed">Not observed</option></select></label>

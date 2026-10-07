@@ -86,7 +86,10 @@ class ImpactStage:  # pylint: disable=too-many-instance-attributes
         if parameters:
             raise ValueError("reviewed impact steps accept no parameters")
 
-    def _approved_root(self, value):
+    @staticmethod
+    def inspect_root(value):
+        """Inspect root ownership/structure without provisioning marker or decoys."""
+        module = importlib.import_module("modules.07-ransomware-sim.impact_actions")
         root = Path(value)
         if not root.is_absolute() or root.is_symlink() or not root.is_dir():
             raise ValueError("impact root must be an existing absolute real directory")
@@ -102,16 +105,22 @@ class ImpactStage:  # pylint: disable=too-many-instance-attributes
         else:
             if any(root.iterdir()):
                 raise ValueError("new impact root must be empty; unrelated files are not permitted")
-            with marker.open("xb") as marker_file:
-                marker_file.write(ROOT_CONTENT)
         for child in root.iterdir():
             if child.name == ROOT_MARKER:
                 continue
-            if (not self.module.RUN_ID_PATTERN.fullmatch(child.name)
+            if (not module.RUN_ID_PATTERN.fullmatch(child.name)
                     or child.is_symlink() or not child.is_dir()
                     or {entry.name for entry in child.iterdir()}
                     != {"live", "known-good", "staging"}):
                 raise ValueError("impact root contains an unapproved entry")
+        return root
+
+    def _approved_root(self, value):
+        root = self.inspect_root(value)
+        marker = root / ROOT_MARKER
+        if not marker.exists():
+            with marker.open("xb") as marker_file:
+                marker_file.write(ROOT_CONTENT)
         return root
 
     def _adapter(self, registry, component, *, reset_control=False):

@@ -48,7 +48,10 @@ and staff replies. JSON AAR includes `support_requests`; Markdown includes a
 Human assistance section with reply kind, objective scope, actor and event IDs.
 Requests alone do not prove assistance was given, and an empty queue does not
 exclude off-platform coaching. No rating is automatically changed by a hint or
-platform label. Browser support forms remain a separate integration step.
+platform label. Participant/staff support forms and the evaluator's read-only
+assistance panel are integrated; calibration and off-platform assistance review
+remain human tasks. See [current evaluator workflow](evaluator-review-workflow.md)
+for draft handling, uncertain save inspection and run/snapshot-pinned exports.
 
 ## Mapping and limits
 
@@ -123,6 +126,11 @@ Judgment input: `run_id`, `objective_id`, `rating`, `rationale`, `evidence_ids`,
 Actor/role come only from authentication. Each action has `description`, `owner`,
 `priority` (`high/medium/low`) and `target_date`. Run and revision checks prevent
 stale reviews crossing reset.
+
+Current report/bundle/AAR reads support optional `X-Exercise-Run-ID`; exports also
+support optional `X-Review-Bundle-SHA256`. The browser sends both export guards.
+Legacy unscoped reads remain supported but do not bind a viewed run/snapshot.
+See [the operational contract](evaluator-review-workflow.md).
 
 ## Remaining #84 acceptance
 

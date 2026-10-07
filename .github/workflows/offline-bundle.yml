@@ -14,14 +14,16 @@ permissions:
 jobs:
   build:
     name: Build and verify bundle
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Check out the committed source revision
-        uses: actions/checkout@v4
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6, Node 24
+        with:
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6, Node 24
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -90,7 +92,7 @@ jobs:
         run: python scripts/offline_bundle.py verify "offline-bundles/netstrike-${DESTINATION}-${RUN_ID}.tar.gz"
 
       - name: Upload offline bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6, Node 24
         with:
           name: netstrike-offline-bundle-${{ env.DESTINATION }}-${{ github.run_id }}
           path: offline-bundles/netstrike-${{ env.DESTINATION }}-${{ github.run_id }}.tar.gz

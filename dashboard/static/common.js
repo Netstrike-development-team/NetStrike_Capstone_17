@@ -15,14 +15,15 @@ export function connect(input, onConnected) {
 }
 
 export async function api(path, options = {}) {
+  const {rawText = false, ...fetchOptions} = options;
   const headers = new Headers(options.headers || {});
   if (token()) headers.set("Authorization", `Bearer ${token()}`);
   if (options.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
-  const response = await fetch(path, {...options, headers});
+  const response = await fetch(path, {...fetchOptions, headers});
   const contentType = response.headers.get("content-type") || "";
-  const payload = contentType.includes("json") ? await response.json() : await response.text();
+  const payload = !rawText && contentType.includes("json") ? await response.json() : await response.text();
   if (!response.ok) {
     const detail = payload && typeof payload === "object" ? payload.detail : payload;
     const error = new Error(typeof detail === "string" ? detail : JSON.stringify(detail));

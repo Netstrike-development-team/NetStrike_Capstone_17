@@ -7,6 +7,13 @@ It is **not** a Cyber Range readiness certificate or permission to admit learner
 
 ## Staff workflow
 
+Before starting the process, [deployment-input preflight](application-deployment-contract.md)
+can catch invalid configuration without opening SQLite/provisioning decoys. It is
+not this runtime readiness gate and cannot inspect the deployed environment.
+
+The `/facilitator` page displays these checks beside clock health. See
+[the staff page workflow](staff-operations.md); external checks stay unverified.
+
 1. Obtain the deployment's facilitator or technical-operator bearer credential.
 2. Inspect `GET /api/facilitator/readiness`. This is read-only and not cached.
 3. Use the existing Prepare control. Preparation is audited and allowed only if

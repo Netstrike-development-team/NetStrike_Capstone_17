@@ -2,38 +2,42 @@ name: Local full-play rehearsal
 
 on:
   pull_request:
-    branches: [dev]
+    branches: [dev, main]
   push:
-    branches: [dev]
+    branches: [dev, main]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   full-play-rehearsal:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6, Node 24
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6, Node 24
         with:
           python-version: '3.11'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6, Node 24
         with:
           node-version: '22'
-      - name: Test offline support-console interactions (no npm dependencies)
-        run: node --test dashboard/tests/support_console.test.mjs
+          package-manager-cache: false
+      - name: Test offline console interactions (no npm dependencies)
+        run: node --test dashboard/tests/*.test.mjs
       - name: Install local service and test dependencies
-        run: python -m pip install -r dashboard/requirements.txt pytest
-      - name: Test rehearsal and offline report tooling
-        run: python -m pytest scripts/tests/test_rehearsal.py scripts/tests/test_generate_aar.py dashboard/tests orchestrator/tests -q
+        run: python -m pip install -r dashboard/requirements.txt -r citef-config/requirements-validator.txt pytest coverage
+      - name: Test all core application and packaging regressions (strict)
+        run: python -m pytest shared/tests dashboard/tests orchestrator/tests scripts/tests citef-config/tests -q
       - name: Run all local checkpoint combinations and fault/control cases
         run: python scripts/rehearsal.py --execute --output "$RUNNER_TEMP/local-rehearsal-evidence"
       - name: Independently verify exported evidence offline
-        run: python scripts/rehearsal.py --verify "$RUNNER_TEMP/local-rehearsal-evidence"
+        run: python scripts/rehearsal.py --verify "$RUNNER_TEMP/local-rehearsal-evidence" --require-current-source
       - name: Retain synthetic developer evidence (not range sign-off)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6, Node 24
         with:
           name: local-full-play-rehearsal-${{ github.sha }}
           path: ${{ runner.temp }}/local-rehearsal-evidence/

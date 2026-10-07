@@ -12,7 +12,7 @@ operational guidance, a contract, a planning snapshot, or only a placeholder.
 | [Exercise design package](exercise-design/README.md) | Accepted exercise scope, design documents, and outstanding approval gates |
 | [Architecture](architecture.md) | MVP components, boundaries, and out-of-scope work |
 | [Roadmap and ownership](roadmap.md) | Delivery milestones, schedule, team roles, and working rhythm |
-| [Remaining development estimate](development-remaining-work.md) | Planning estimate dated October 4, 2026; not a live issue count or delivery commitment |
+| [Remaining development estimate](development-remaining-work.md) | Planning estimate dated October 5, 2026; not a live issue count or delivery commitment |
 | [Integration review](patrick-integration-review-2026-10-03.md) | Historical October 3 review of proposed deployment PRs and risks; not current deployment or acceptance status |
 | [Repository README](../README.md) | Project overview, current state, repository structure, and development workflow |
 
@@ -40,10 +40,14 @@ index](exercise-design/README.md).
 | [Synthetic profile contract v1](synthetic-profile-contract-v1.md) | Maintained synthetic identity input, validation, and runtime configuration |
 | [Application-event spool](event-spool.md) | Local export of the canonical event ledger and the separate Splunk/visibility acceptance work |
 | [Application readiness](application-readiness.md) | Local preflight, guarded preparation/start, and the boundary from range approval |
+| [Application deployment inputs](application-deployment-contract.md) | Offline read-only configuration inspection before startup side effects; not runtime/range readiness |
 | [Supervised exercise clock](exercise-clock.md) | Staff clock inspection, supervision, failure behavior, and recovery |
 | [Human support workflow](exercise-support.md) | Private learner requests, staff replies, roles, and API lifecycle |
 | [Run-review archives](run-review-archives.md) | Capture and retrieval of frozen run-review snapshots across application reset |
+| [Offline staff operations](staff-operations.md) | Staff readiness/clock controls and saved-review UI workflows, role and restore limits |
+| [Learner reset safety](participant-run-safety.md) | Run-pinned learner actions/submissions, stale-page and delayed-response boundaries |
 | [After-action review](after-action-review.md) | Human objective review, submissions, and offline AAR generation |
+| [Current evaluator workflow](evaluator-review-workflow.md) | Draft preservation, revision-safe saves and run/snapshot-pinned raw exports |
 
 ## Developer demos and rehearsal
 
@@ -61,6 +65,10 @@ index](exercise-design/README.md).
 |---|---|
 | [Offline bundle build and install](offline-bundle.md) | Building, verifying, installing, and smoke-testing the Python bundle |
 | [Splunk Sysmon ingestion](splunk-sysmon-ingest.md) | Configure the Splunk receiver and test Windows Sysmon forwarding |
+| [Offline application source check](offline-release-source-check.md) | Read-only selected-source comparison against a separately recorded commit/inventory digest, without Git or runtime dependencies |
+| [Milestone promotion checklist](milestone-release-checklist.md) | Strict main/dev checks, source-matched evidence and prototype versus accepted-release gates |
+| [Application security gate](application-security-gate.md) | Blocking maintained-code scans, informational legacy boundary and recorder loopback request controls |
+| [CI test and coverage evidence](ci-evidence-checks.md) | Strict module test outcomes, retained coverage, no-tests boundaries and pinned Node-24 actions/CI image |
 | [CITEF requirements and approval](exercise-design/06-citef-requirements-and-approval.md) | Environment questionnaire, decision log, fallbacks, and approval records |
 | [CITEF topology and readiness](../citef-config/README.md) | Proposed infrastructure, manifest, provisioning, post-restore readiness, and acceptance; proposed, not deployment approval |
 | [Offline tool-bundle inventory](exercise-design/07-offline-tool-bundle-inventory.md) | Software inputs, approvals, and artifact handling |

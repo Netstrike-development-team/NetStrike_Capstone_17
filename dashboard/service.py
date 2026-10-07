@@ -217,6 +217,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
         return {
             "controller": snapshot,
             "clock": self.clock.snapshot(),
+            "readiness": self.readiness(),
             "msel": [
                 {
                     "item_id": item.item_id,
@@ -683,6 +684,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
             raise RuntimeError("SSO/profile/MFA reset did not reach a clean baseline")
         self.clock.reset()
         state["clock"] = self.clock.snapshot()
+        state["readiness"] = self.readiness()
         return state
 
     @runtime_mutation

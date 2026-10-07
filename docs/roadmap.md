@@ -88,14 +88,35 @@ with Latifa.
 
 ## Current priority order
 
-Updated October 4: all four scenario stages and application review/evidence
-foundations are implemented locally; #134 and Patrick's #127/#128 are merged.
+Updated October 5: all four scenario stages and application review/evidence/staff
+foundations are implemented locally; #152 and Patrick's #127/#128/#139/#140 are merged.
 This is application progress, not live Cyber Range acceptance.
 
-1. Connect human support to the existing consoles (#135), then surface existing
-   staff readiness/clock/archive workflows without rebuilding the scenario.
+1. Human support and staff operations are connected (#136/#138; #135/#137 closed).
+   Startup-input validation is delivered (#142; #141 closed), as are learner
+   reset boundaries/cross-role HTTP checks (#144; #143 closed). Evaluator draft/
+   revision-safe review and snapshot-pinned exports are delivered (#146; #145 closed).
+   Strict main/dev milestone checks and source-matched verification are delivered
+   (#148; #147 closed). #150 delivers a dependency-free extracted-source
+   handoff check against separately saved revision/inventory digest (#149 closed);
+   no rubric/default scenario change or takeover of environment work. See
+   [application deployment inputs](application-deployment-contract.md) and
+   [learner reset safety](participant-run-safety.md) and
+   [current evaluator workflow](evaluator-review-workflow.md).
+   [Milestone promotion](milestone-release-checklist.md) is independent of continued
+   feature development; a tested prototype is not final range acceptance.
+   [Selected offline source consistency](offline-release-source-check.md) is not
+   whole-bundle installation, running-process or VM/Splunk proof.
+   #152 adds a [strict maintained-code security gate](application-security-gate.md)
+   and contains recorder HTTP requests (#151 closed). Its explicit outage exception
+   now has passing post-merge CI; #153 remains open for retrospective teammate review.
+   Current #154 fixes confirmed [module test/coverage CI defects](ci-evidence-checks.md)
+   and deprecated action runtimes, without changing exercise/environment scope.
 2. Patrick proves offline deployment, identity-slice Splunk ingestion, privacy and
    snapshot/readiness on the approved range topology.
+   On October 5 he reported an offline dashboard/dependency/Ansible smoke success;
+   the exact tested commit/bundle remains to be recorded. Windows/Sysmon/Splunk
+   validation is planned for the following days, not yet proven.
 3. Anna finalizes content and records representative learner usability/timing and
    evaluator calibration; Aya integrates approved content and fixes application gaps.
 4. Ashley confirms deployment/rehearsal/delivery dates and unresolved client decisions.

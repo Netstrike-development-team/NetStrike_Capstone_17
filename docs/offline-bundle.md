@@ -10,6 +10,10 @@ live in [exercise-design/07-offline-tool-bundle-inventory.md](exercise-design/07
 
 1. Open the repository's **Actions** tab.
 2. Select **Build offline bundle**, then **Run workflow**.
+   Explicitly select the branch/revision you intend to test; a default-main build
+   does not necessarily include current dev changes. Record the workflow run and
+   confirm its source revision in `inventory.json`. For milestone promotion, use
+   the [release checklist](milestone-release-checklist.md).
 3. Wait for the bundle build and offline-install verification to pass.
 4. Download the `netstrike-offline-bundle-CTRL01-<run-id>` artifact.
 
@@ -33,6 +37,18 @@ tar -xzf netstrike-CTRL01-RUN_ID.tar.gz -C offline-bundle
 cd offline-bundle/netstrike-offline-bundle
 sha256sum -c SHA256SUMS
 tar -xzf runtime/python-runtime.tar.gz
+```
+
+At this point, before installing anything into the bundled source tree, optionally
+run the [application source check](offline-release-source-check.md) against the
+expected commit/inventory digest saved at trusted staging. In particular, the
+collection install below adds files under `source/citef-config/collections` and
+changes the pristine source digest. The source checker is a **pre-install** check;
+it is not a post-install verification of those newly installed collections.
+
+Then install dependencies and collections:
+
+```sh
 python/bin/python3.11 -m pip install \
   --no-index \
   --find-links=destinations/CTRL01/wheelhouse \
@@ -53,6 +69,17 @@ inventory entry also includes its SHA-256, destination VM, and offline install
 method; review explicit UNKNOWN metadata before approving a transfer.
 
 ## 3. Run the application smoke test on an isolated Linux VM
+
+Before installing or starting source, optionally run the
+[read-only application source checker](offline-release-source-check.md) against
+the expected commit and inventory SHA-256 recorded from trusted staging. It uses
+only the bundled Python standard library and checks all six source trees without
+Git, dependencies, credentials or a live process. This supplements, not replaces,
+the whole-bundle checksums/install verification below. It requires a pristine
+extraction; source caches/extra files are not silently ignored.
+If section 2's source-tree collection installation has already been performed,
+use a separate pristine extraction for this optional source check. Do not remove
+installed collections to make the check pass.
 
 This smoke test starts the bundled portal with test-only credentials, a fresh
 SQLite database, and a unique run ID. It checks application startup and local

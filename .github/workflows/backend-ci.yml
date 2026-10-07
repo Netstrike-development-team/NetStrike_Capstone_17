@@ -3,18 +3,26 @@ name: Lint and Test
 on:
   push:
     branches:
-      - '*'
+      - main
+      - dev
   pull_request:
     branches:
-      - '*'
+      - main
+      - dev
+
+permissions:
+  contents: read
 
 jobs:
   event-contract:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6, Node 24
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6, Node 24
         with:
           python-version: '3.11'
 
@@ -29,8 +37,11 @@ jobs:
           coverage report -m
 
   module-checks:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     strategy:
+      fail-fast: false
+      max-parallel: 3
       matrix:
         module:
           - modules/01-osint-profiler
@@ -44,9 +55,11 @@ jobs:
           - dashboard
           - detection
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6, Node 24
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6, Node 24
         with:
           python-version: '3.11'
 
@@ -69,27 +82,60 @@ jobs:
             --disable=missing-module-docstring,missing-class-docstring,missing-function-docstring,import-error \
             --fail-under=7.0
 
-      - name: Run tests (if tests exist) and produce coverage
+      - name: Inspect module tests and report destination
+        id: module-tests
+        env:
+          MODULE_PATH: ${{ matrix.module }}
         run: |
-          set -e
-          module="${{ matrix.module }}"
+          set -euo pipefail
+          module="$MODULE_PATH"
           name="$(basename "$module")"
+          report_root="$RUNNER_TEMP/module-coverage/$name"
+          printf 'name=%s\nreport_root=%s\n' "$name" "$report_root" >> "$GITHUB_OUTPUT"
           if [ -d "$module/tests" ]; then
-            (cd "$module" && coverage run -m pytest tests/ -v) || true
-            (cd "$module" && coverage report -m > "../coverage_report_${name}.txt")
-            (cd "$module" && coverage html -d "../htmlcov_${name}")
+            printf 'has_tests=true\n' >> "$GITHUB_OUTPUT"
           else
-            echo "No tests for $module"
+            printf 'has_tests=false\n' >> "$GITHUB_OUTPUT"
+            echo "No tests for $module; no test-validation or coverage claim."
           fi
 
+      - name: Run module tests and preserve coverage (strict)
+        if: steps.module-tests.outputs.has_tests == 'true'
+        env:
+          MODULE_PATH: ${{ matrix.module }}
+          REPORT_ROOT: ${{ steps.module-tests.outputs.report_root }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$REPORT_ROOT"
+          cd "$MODULE_PATH"
+          export COVERAGE_FILE="$REPORT_ROOT/.coverage"
+          # Collect reports even after a test failure, then preserve every status.
+          set +e
+          python -m coverage run -m pytest tests/ -v
+          test_status=$?
+          python -m coverage report -m > "$REPORT_ROOT/coverage.txt"
+          report_status=$?
+          python -m coverage html -d "$REPORT_ROOT/html"
+          html_status=$?
+          set -e
+          if [ "$test_status" -ne 0 ]; then exit "$test_status"; fi
+          if [ "$report_status" -ne 0 ]; then exit "$report_status"; fi
+          exit "$html_status"
+
       - name: Upload txt coverage report
-        uses: actions/upload-artifact@v4
+        if: always() && steps.module-tests.outputs.has_tests == 'true'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6, Node 24
         with:
-          name: coverage-txt-${{ matrix.module }}   # optional; artifact names can include full path
-          path: coverage_report_*.txt
+          name: coverage-txt-${{ steps.module-tests.outputs.name }}
+          path: ${{ steps.module-tests.outputs.report_root }}/coverage.txt
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Upload HTML coverage report
-        uses: actions/upload-artifact@v4
+        if: always() && steps.module-tests.outputs.has_tests == 'true'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6, Node 24
         with:
-          name: coverage-html-${{ matrix.module }}
-          path: htmlcov_*/
+          name: coverage-html-${{ steps.module-tests.outputs.name }}
+          path: ${{ steps.module-tests.outputs.report_root }}/html/
+          if-no-files-found: error
+          retention-days: 14

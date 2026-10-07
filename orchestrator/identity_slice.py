@@ -590,6 +590,35 @@ class IdentitySliceAutomation:  # pylint: disable=too-many-instance-attributes
         )
 
 
+def load_reviewed_profiles(definition, profile_path):
+    """Validate profile/SSO/MFA bindings without creating an exercise runtime."""
+    configuration = definition.participant_experience.get("profiles")
+    if (not isinstance(configuration, Mapping)
+            or set(configuration) != {"seed", "identity_employee_id", "helpdesk_employee_id"}):
+        raise ProfileInitializationError("scenario requires reviewed profile initialization fields")
+    profiles = ProfileCatalog.load(
+        profile_path, expected_seed=configuration["seed"],
+        identity_employee_id=configuration["identity_employee_id"],
+        helpdesk_employee_id=configuration["helpdesk_employee_id"],
+    )
+    identity = profiles.context()["identity"]
+    if profiles.context()["helpdesk"]["identity_id"] != "tyler":
+        raise ProfileInitializationError("helpdesk profile binding must match the reviewed scenario witness")
+    sso = definition.participant_experience.get("sso")
+    mfa = definition.participant_experience.get("mfa")
+    if not isinstance(sso, Mapping) or not isinstance(mfa, Mapping):
+        raise ProfileInitializationError("profile initialization requires SSO/MFA configuration")
+    sso_identity = sso.get("identity")
+    if not isinstance(sso_identity, Mapping):
+        raise ProfileInitializationError("profile initialization requires an SSO identity mapping")
+    if (identity["identity_id"] != "sarah" or mfa.get("identity_id") != identity["identity_id"]
+            or sso_identity.get("id") != identity["identity_id"]
+            or sso_identity.get("username") != identity["username"]
+            or sso_identity.get("display_name") != identity["display_name"]):
+        raise ProfileInitializationError("profile binding must match the reviewed SSO/MFA identity")
+    return profiles
+
+
 class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
     """Own one correlated controller, simulation, and containment state graph."""
 
@@ -610,41 +639,7 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
         self.definition = load_scenario(scenario_path)
         self.impact_root = impact_root
         self.impact_enabled = any(item.item_id == "DP4" for item in self.definition.items)
-        configuration = self.definition.participant_experience.get("profiles")
-        if (not isinstance(configuration, Mapping)
-                or set(configuration) != {"seed", "identity_employee_id", "helpdesk_employee_id"}):
-            raise ProfileInitializationError(
-                "scenario requires reviewed profile initialization fields"
-            )
-        self.profiles = ProfileCatalog.load(
-            profile_path, expected_seed=configuration["seed"],
-            identity_employee_id=configuration["identity_employee_id"],
-            helpdesk_employee_id=configuration["helpdesk_employee_id"],
-        )
-        identity = self.profiles.context()["identity"]
-        if self.profiles.context()["helpdesk"]["identity_id"] != "tyler":
-            raise ProfileInitializationError(
-                "helpdesk profile binding must match the reviewed scenario witness"
-            )
-        sso = self.definition.participant_experience.get("sso")
-        mfa = self.definition.participant_experience.get("mfa")
-        if not isinstance(sso, Mapping) or not isinstance(mfa, Mapping):
-            raise ProfileInitializationError(
-                "profile initialization requires SSO/MFA configuration"
-            )
-        sso_identity = sso.get("identity")
-        if not isinstance(sso_identity, Mapping):
-            raise ProfileInitializationError(
-                "profile initialization requires an SSO identity mapping"
-            )
-        mfa_identity = mfa.get("identity_id")
-        if (identity["identity_id"] != "sarah" or mfa_identity != identity["identity_id"]
-                or sso_identity.get("id") != identity["identity_id"]
-                or sso_identity.get("username") != identity["username"]
-                or sso_identity.get("display_name") != identity["display_name"]):
-            raise ProfileInitializationError(
-                "profile binding must match the reviewed SSO/MFA identity"
-            )
+        self.profiles = load_reviewed_profiles(self.definition, profile_path)
         self.sequencer = EventSequencer()
         self.state_lock = threading.RLock()
         self.identity_state: Any

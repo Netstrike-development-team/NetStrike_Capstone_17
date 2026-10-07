@@ -154,17 +154,31 @@ def _source() -> dict:
     """Record revision when Git is available, plus exact relevant source hashes."""
     paths = [
         "scripts/rehearsal.py",
+        "scripts/check_security_report.py",
+        "scripts/record_ui_walkthrough.py",
+        ".github/workflows/backend-security-ci.yml",
+        ".github/workflows/backend-ci.yml",
+        ".github/workflows/local-rehearsal-ci.yml",
+        ".github/workflows/offline-bundle.yml",
         "dashboard/service.py",
+        "dashboard/configuration.py",
+        "dashboard/preflight.py",
+        "dashboard/release_check.py",
+        "dashboard/__init__.py",
         "dashboard/clock.py",
         "dashboard/support.py",
         "dashboard/static/support.js",
+        "dashboard/static/staff-operations.js",
+        "dashboard/static/review-archives.js",
         "dashboard/static/common.js",
         "dashboard/static/participant.html",
         "dashboard/static/participant.js",
+        "dashboard/static/participant-session.js",
         "dashboard/static/facilitator.html",
         "dashboard/static/facilitator.js",
         "dashboard/static/evaluator.html",
         "dashboard/static/evaluator.js",
+        "dashboard/static/evaluator-review.js",
         "dashboard/static/styles.css",
         "dashboard/app.py",
         "dashboard/readiness.py",
@@ -952,8 +966,8 @@ def _verify_outcomes(definition, result, bundle, report):
         raise ValueError("reset observations do not support clean readiness")
 
 
-def _verify_provenance(manifest):
-    """Validate provenance shape without comparing against the reviewer's checkout."""
+def _verify_provenance(manifest, *, require_current_source=False):
+    """Validate provenance shape; compare the reviewer's checkout only if requested."""
     source = manifest["source"]
     runtime = manifest["runtime"]
     if (
@@ -982,6 +996,8 @@ def _verify_provenance(manifest):
     ):
         raise ValueError("invalid rehearsal provenance")
     datetime.fromisoformat(manifest["created_at"])
+    if require_current_source:
+        _verify_current_source(source)
 
 
 def _verify_result_shape(result):
@@ -1017,7 +1033,20 @@ def _verify_result_shape(result):
         raise ValueError("malformed case result")
 
 
-def verify_package(directory: Path | str) -> dict:
+def _verify_current_source(source):
+    """Opt-in milestone guard; portable historical verification stays separate."""
+    current = _source()
+    if (
+        source["git_revision"] is None
+        or source["working_tree_dirty"] is not False
+        or current["git_revision"] is None
+        or current["working_tree_dirty"] is not False
+        or source != current
+    ):
+        raise ValueError("rehearsal source must match the current clean Git checkout")
+
+
+def verify_package(directory: Path | str, *, require_current_source: bool = False) -> dict:
     """Read-only independent ledger/AAR verification; live database not required."""
     root = Path(directory)
     if root.is_symlink() or not root.is_dir():
@@ -1041,7 +1070,7 @@ def verify_package(directory: Path | str) -> dict:
         or manifest.get("limitations") != LIMITS
     ):
         raise ValueError("unsupported rehearsal package")
-    _verify_provenance(manifest)
+    _verify_provenance(manifest, require_current_source=require_current_source)
     if (
         not isinstance(manifest["cases"], list)
         or not 1 <= len(manifest["cases"]) <= len(cases())
@@ -1154,14 +1183,24 @@ def main(argv=None) -> int:
         "--case", action="append", dest="case_ids", choices=tuple(cases())
     )
     parser.add_argument("--verify", type=Path)
+    parser.add_argument(
+        "--require-current-source",
+        action="store_true",
+        help="With --verify, require matching clean Git revision and source fingerprints.",
+    )
     arguments = parser.parse_args(argv)
     try:
+        if arguments.require_current_source and not arguments.verify:
+            parser.error("--require-current-source requires --verify")
         if arguments.verify:
             if arguments.execute or arguments.output or arguments.case_ids:
                 parser.error(
                     "--verify cannot be combined with execution/selection options"
                 )
-            print(_json(verify_package(arguments.verify)), end="")
+            report = verify_package(
+                arguments.verify, require_current_source=arguments.require_current_source
+            )
+            print(_json(report), end="")
             return 0
         if not arguments.execute:
             print(_json(plan(arguments.case_ids)), end="")
