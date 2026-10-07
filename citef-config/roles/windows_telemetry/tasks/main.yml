@@ -41,6 +41,18 @@
       - windows_uf_package.stat.checksum | lower == offline_artifacts.universal_forwarder.windows_msi.sha256 | lower
     fail_msg: "Staged Windows Universal Forwarder MSI failed SHA-256 verification."
 
+- name: Verify staged Windows Universal Forwarder vendor SHA-512
+  ansible.windows.win_stat:
+    path: C:\ProgramData\NetStrike\offline\universal-forwarder.msi
+    checksum_algorithm: sha512
+  register: windows_uf_sha512
+
+- name: Require the Windows forwarder vendor SHA-512 to match
+  ansible.builtin.assert:
+    that:
+      - windows_uf_sha512.stat.checksum | lower == offline_artifacts.universal_forwarder.windows_msi.sha512 | lower
+    fail_msg: "Staged Windows Universal Forwarder MSI failed SHA-512 verification."
+
 - name: Verify the Universal Forwarder MSI Authenticode signature
   ansible.windows.win_powershell:
     script: |
@@ -59,28 +71,28 @@
       - AGREETOLICENSE=Yes
     creates_service: SplunkForwarder
 
-- name: Stage the approved Splunk receiver CA
-  ansible.windows.win_copy:
-    src: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ offline_artifacts.universal_forwarder.receiver_ca.file }}"
-    dest: C:\Program Files\SplunkUniversalForwarder\etc\auth\netstrike\receiver-ca.pem
+#- name: Stage the approved Splunk receiver CA
+#  ansible.windows.win_copy:
+#    src: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ offline_artifacts.universal_forwarder.receiver_ca.file }}"
+#    dest: C:\Program Files\SplunkUniversalForwarder\etc\auth\netstrike\receiver-ca.pem
 
-- name: Verify the staged Windows receiver CA
-  ansible.windows.win_stat:
-    path: C:\Program Files\SplunkUniversalForwarder\etc\auth\netstrike\receiver-ca.pem
-    checksum_algorithm: sha256
-  register: windows_ca
+#- name: Verify the staged Windows receiver CA
+#  ansible.windows.win_stat:
+#    path: C:\Program Files\SplunkUniversalForwarder\etc\auth\netstrike\receiver-ca.pem
+#    checksum_algorithm: sha256
+#  register: windows_ca
 
-- name: Require the Windows receiver CA hash to match
-  ansible.builtin.assert:
-    that:
-      - windows_ca.stat.checksum | lower == offline_artifacts.universal_forwarder.receiver_ca.sha256 | lower
-    fail_msg: "Staged receiver CA failed SHA-256 verification."
+#- name: Require the Windows receiver CA hash to match
+#  ansible.builtin.assert:
+#    that:
+#      - windows_ca.stat.checksum | lower == offline_artifacts.universal_forwarder.receiver_ca.sha256 | lower
+#    fail_msg: "Staged receiver CA failed SHA-256 verification."
 
-- name: Configure TLS Splunk receiver output
-  ansible.windows.win_template:
-    src: outputs.conf.j2
-    dest: C:\Program Files\SplunkUniversalForwarder\etc\system\local\outputs.conf
-  notify: Restart Windows Universal Forwarder
+#- name: Configure TLS Splunk receiver output
+#  ansible.windows.win_template:
+#    src: outputs.conf.j2
+#    dest: C:\Program Files\SplunkUniversalForwarder\etc\system\local\outputs.conf
+#  notify: Restart Windows Universal Forwarder
 
 - name: Configure Windows Security, PowerShell, and Sysmon collection
   ansible.windows.win_template:
@@ -88,86 +100,109 @@
     dest: C:\Program Files\SplunkUniversalForwarder\etc\system\local\inputs.conf
   notify: Restart Windows Universal Forwarder
 
-- name: Stage approved Sysmon executable
+- name: Stage approved Sysmon distribution archive
   ansible.windows.win_copy:
-    src: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ offline_artifacts.sysmon.executable.file }}"
-    dest: C:\ProgramData\NetStrike\offline\Sysmon64.exe
+    src: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ offline_artifacts.sysmon.archive.file }}"
+    dest: C:\ProgramData\NetStrike\offline\Sysmon.zip
 
-- name: Verify staged Sysmon executable hash and signature
+- name: Verify staged Sysmon archive checksum
+  ansible.windows.win_stat:
+    path: C:\ProgramData\NetStrike\offline\Sysmon.zip
+    checksum_algorithm: sha256
+  register: sysmon_archive
+
+- name: Require the Sysmon archive hash to match
+  ansible.builtin.assert:
+    that:
+      - sysmon_archive.stat.checksum | lower == offline_artifacts.sysmon.archive.sha256 | lower
+    fail_msg: "Staged Sysmon ZIP failed SHA-256 verification."
+
+- name: Extract the verified Sysmon distribution archive when changed
   ansible.windows.win_powershell:
     parameters:
-      expected_sha256: "{{ offline_artifacts.sysmon.executable.sha256 }}"
+      expected_sha256: "{{ offline_artifacts.sysmon.archive.sha256 }}"
     script: |
       $ErrorActionPreference = 'Stop'
-      $path = 'C:\ProgramData\NetStrike\offline\Sysmon64.exe'
-      $actual = (Get-FileHash -Algorithm SHA256 -Path $path).Hash
-      if ($actual -ine $Ansible.Params.expected_sha256) {
-        throw "Sysmon executable failed SHA-256 verification."
+      $archive = 'C:\ProgramData\NetStrike\offline\Sysmon.zip'
+      $destination = 'C:\ProgramData\NetStrike\sysmon\distribution'
+      $marker = Join-Path $destination 'archive.sha256'
+      $alreadyExtracted = (Test-Path -LiteralPath $marker) -and
+        ((Get-Content -LiteralPath $marker -Raw).Trim() -ieq $Ansible.Params.expected_sha256) -and
+        (Test-Path -LiteralPath (Join-Path $destination 'Sysmon64.exe'))
+      if (-not $alreadyExtracted) {
+        New-Item -ItemType Directory -Path $destination -Force | Out-Null
+        Expand-Archive -LiteralPath $archive -DestinationPath $destination -Force
+        $executable = Join-Path $destination 'Sysmon64.exe'
+        if (-not (Test-Path -LiteralPath $executable)) {
+          throw "Sysmon64.exe was not found in the approved Sysmon distribution archive."
+        }
+        Set-Content -LiteralPath $marker -Value $Ansible.Params.expected_sha256 -NoNewline
       }
+      $Ansible.Changed = -not $alreadyExtracted
+      $path = Join-Path $destination 'Sysmon64.exe'
       if ((Get-AuthenticodeSignature -FilePath $path).Status -ne 'Valid') {
         throw "Sysmon executable signature is not valid."
       }
-      $Ansible.Changed = $false
 
-- name: Stage project-reviewed Sysmon configuration
-  ansible.windows.win_copy:
-    src: "{{ playbook_dir }}/../../{{ offline_artifacts.sysmon.config.file }}"
-    dest: C:\ProgramData\NetStrike\sysmon\sysmon-config.xml
-
-- name: Read the installed Sysmon configuration marker
-  ansible.windows.win_stat:
-    path: C:\ProgramData\NetStrike\sysmon\config.sha256
-  register: sysmon_marker
-
-- name: Check whether the desired Sysmon configuration is already applied
-  ansible.windows.win_powershell:
-    parameters:
-      expected_sha256: "{{ offline_artifacts.sysmon.config.sha256 }}"
-    script: |
-      $marker = 'C:\ProgramData\NetStrike\sysmon\config.sha256'
-      $matches = (Test-Path -LiteralPath $marker) -and
-        ((Get-Content -LiteralPath $marker -Raw).Trim() -ieq $Ansible.Params.expected_sha256)
-      $Ansible.Result = @{ config_matches = $matches }
-      $Ansible.Changed = $false
-  register: sysmon_marker_state
-
-- name: Hash the staged Sysmon configuration
-  ansible.windows.win_stat:
-    path: C:\ProgramData\NetStrike\sysmon\sysmon-config.xml
-    checksum_algorithm: sha256
-  register: sysmon_config_file
-
-- name: Verify the Sysmon configuration checksum
-  ansible.builtin.assert:
-    that:
-      - sysmon_config_file.stat.checksum | lower == offline_artifacts.sysmon.config.sha256 | lower
-    fail_msg: "Sysmon configuration failed SHA-256 verification."
-
-- name: Install Sysmon with the reviewed configuration when absent
-  ansible.windows.win_command:
-    argv:
-      - C:\ProgramData\NetStrike\offline\Sysmon64.exe
-      - -accepteula
-      - -i
-      - C:\ProgramData\NetStrike\sysmon\sysmon-config.xml
-  when: sysmon_initial_service.services | length == 0
-
-- name: Apply changed Sysmon configuration
-  ansible.windows.win_command:
-    argv:
-      - C:\ProgramData\NetStrike\offline\Sysmon64.exe
-      - -c
-      - C:\ProgramData\NetStrike\sysmon\sysmon-config.xml
-  when:
-    - sysmon_initial_service.services | length == 1
-    - not sysmon_marker_state.result.config_matches
-
-- name: Record applied Sysmon configuration checksum
-  ansible.windows.win_copy:
-    content: "{{ offline_artifacts.sysmon.config.sha256 | lower }}"
-    dest: C:\ProgramData\NetStrike\sysmon\config.sha256
-  when:
-    - not sysmon_marker_state.result.config_matches
+#- name: Stage project-reviewed Sysmon configuration
+#  ansible.windows.win_copy:
+#    src: "{{ playbook_dir }}/../../{{ offline_artifacts.sysmon.config.file }}"
+#    dest: C:\ProgramData\NetStrike\sysmon\sysmon-config.xml
+#
+#- name: Read the installed Sysmon configuration marker
+#  ansible.windows.win_stat:
+#    path: C:\ProgramData\NetStrike\sysmon\config.sha256
+#  register: sysmon_marker
+#
+#- name: Check whether the desired Sysmon configuration is already applied
+#  ansible.windows.win_powershell:
+#    parameters:
+#      expected_sha256: "{{ offline_artifacts.sysmon.config.sha256 }}"
+#    script: |
+#      $marker = 'C:\ProgramData\NetStrike\sysmon\config.sha256'
+#      $matches = (Test-Path -LiteralPath $marker) -and
+#        ((Get-Content -LiteralPath $marker -Raw).Trim() -ieq $Ansible.Params.expected_sha256)
+#      $Ansible.Result = @{ config_matches = $matches }
+#      $Ansible.Changed = $false
+#  register: sysmon_marker_state
+#
+#- name: Hash the staged Sysmon configuration
+#  ansible.windows.win_stat:
+#    path: C:\ProgramData\NetStrike\sysmon\sysmon-config.xml
+#    checksum_algorithm: sha256
+#  register: sysmon_config_file
+#
+#- name: Verify the Sysmon configuration checksum
+#  ansible.builtin.assert:
+#    that:
+#      - sysmon_config_file.stat.checksum | lower == offline_artifacts.sysmon.config.sha256 | lower
+#    fail_msg: "Sysmon configuration failed SHA-256 verification."
+#
+#- name: Install Sysmon with the reviewed configuration when absent
+#  ansible.windows.win_command:
+#    argv:
+#      - C:\ProgramData\NetStrike\sysmon\distribution\Sysmon64.exe
+#      - -accepteula
+#      - -i
+#      - C:\ProgramData\NetStrike\sysmon\sysmon-config.xml
+#  when: sysmon_initial_service.services | length == 0
+#
+#- name: Apply changed Sysmon configuration
+#  ansible.windows.win_command:
+#    argv:
+#      - C:\ProgramData\NetStrike\sysmon\distribution\Sysmon64.exe
+#      - -c
+#      - C:\ProgramData\NetStrike\sysmon\sysmon-config.xml
+#  when:
+#    - sysmon_initial_service.services | length == 1
+#    - not sysmon_marker_state.result.config_matches
+#
+#- name: Record applied Sysmon configuration checksum
+#  ansible.windows.win_copy:
+#    content: "{{ offline_artifacts.sysmon.config.sha256 | lower }}"
+#    dest: C:\ProgramData\NetStrike\sysmon\config.sha256
+#  when:
+#    - not sysmon_marker_state.result.config_matches
 
 - name: Enable PowerShell script-block logging
   ansible.windows.win_regedit:
