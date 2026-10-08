@@ -34,6 +34,9 @@ export class StaffOperations {
     this.credential = "";
     this.epoch = 0;
     this.serial = 0;
+    this.activity = 0;
+    this.commandSerial = 0;
+    this.busy = this.stopBusy = false;
     this.invalidate("initial", false);
   }
 
@@ -43,7 +46,7 @@ export class StaffOperations {
     this.state = null;
     this.runId = null;
     this.role = null;
-    this.busy = this.stopBusy = false;
+    // Reconnecting is not cancellation of a request already sent to the server.
     if (notify) { this.cleared(reason); this.changed(); }
   }
 
@@ -56,33 +59,40 @@ export class StaffOperations {
     return credential;
   }
 
-  current(credential, epoch) { return this.readToken() === credential && this.epoch === epoch; }
+  current(credential, epoch) { return this.sync() === credential && this.epoch === epoch; }
 
   async refresh() {
     const credential = this.sync();
     if (!credential) return;
-    const epoch = this.epoch;
-    const serial = ++this.serial;
+    let epoch = this.epoch;
+    const activity = this.activity;
+    let serial = ++this.serial;
     try {
       const state = await this.call("/api/facilitator/state", {cache: "no-store"});
-      if (!this.current(credential, epoch) || serial !== this.serial) return;
+      if (!this.current(credential, epoch) || serial !== this.serial || activity !== this.activity) return;
       if (state.clock.run_id !== state.controller.run_id || state.readiness.run_id !== state.controller.run_id) throw new Error("Inconsistent run snapshot");
-      if (this.runId && state.controller.run_id !== this.runId) this.invalidate("run");
+      if (this.runId && state.controller.run_id !== this.runId) {
+        this.invalidate("run");
+        // This accepted snapshot owns the new context, including render failure.
+        epoch = this.epoch;
+        serial = this.serial;
+      }
       this.runId = state.controller.run_id;
       this.role = state.principal_role;
       this.state = state;
       this.changed();
     } catch (error) {
-      if (!this.current(credential, epoch) || serial !== this.serial) return;
+      if (!this.current(credential, epoch) || serial !== this.serial || activity !== this.activity) return;
       if (error.status === 401 || error.status === 403) this.invalidate("credentials");
       else { this.state = null; this.cleared("unavailable"); this.changed(); }
     }
   }
 
   can(action, body) {
+    this.sync();
     if (action === "stop") return !this.stopBusy && CONTROL_ROLES.has(this.role) && Boolean(this.runId)
       && (!this.state || this.state.controller.state !== "completed");
-    return !this.busy && permitted(this.state, action, body);
+    return !this.busy && !this.stopBusy && permitted(this.state, action, body);
   }
 
   async command(action, body) {
@@ -91,28 +101,32 @@ export class StaffOperations {
     const runId = this.runId;
     const epoch = this.epoch;
     const emergency = action === "stop";
+    const commandSerial = ++this.commandSerial;
+    this.activity += 1;
+    this.serial += 1;
+    this.state = null;
     if (emergency) this.stopBusy = true; else this.busy = true;
     this.changed();
     try {
       const result = await this.call(`/api/facilitator/${action}`, {method: "POST", cache: "no-store",
         headers: {"X-Exercise-Run-ID": runId}, body: body === undefined ? undefined : JSON.stringify(body)});
-      if (!this.current(credential, epoch) || this.runId !== runId) return null;
-      this.serial += 1; // A pre-write GET may not re-enable obsolete controls.
-      this.state = null;
+      if (!this.current(credential, epoch) || this.runId !== runId || commandSerial !== this.commandSerial) return null;
       return result;
     } catch (error) {
-      if (!this.current(credential, epoch) || this.runId !== runId) return null;
-      this.serial += 1;
-      this.state = null;
+      if (!this.current(credential, epoch) || this.runId !== runId || commandSerial !== this.commandSerial) return null;
       this.cleared("unavailable");
       if (error.status === 401 || error.status === 403) this.invalidate("credentials");
       // These controls are not idempotent: inspect, never automatically repeat them.
       throw new Error("Control not confirmed. Refresh and inspect the run before acting again; preserve evidence for faults.");
     } finally {
-      if (this.current(credential, epoch)) {
-        if (emergency) this.stopBusy = false; else this.busy = false;
-        this.changed();
-      }
+      // Release the actual request's slot even if its actor/run is now obsolete.
+      // A GET issued before either overlapping request settles is not authority.
+      this.sync();
+      if (emergency) this.stopBusy = false; else this.busy = false;
+      this.activity += 1;
+      this.serial += 1;
+      this.state = null;
+      this.changed();
     }
   }
 

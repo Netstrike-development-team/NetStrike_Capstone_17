@@ -12,7 +12,7 @@ const operations = new StaffOperations({
   cleared: (reason) => {
     pendingMfa = null;
     for (const selector of ["#stop-reason", "#new-run-id"]) document.querySelector(selector).value = "";
-    if (reason === "credentials") clearNotice(notice);
+    if (["credentials", "run"].includes(reason)) clearNotice(notice);
   },
 });
 
@@ -151,6 +151,11 @@ function renderState(state) {
 }
 
 function updateControls() {
+  document.querySelector("#control-status").textContent = operations.stopBusy
+    ? "Emergency stop awaiting confirmation. Ordinary controls are blocked; inspect the result and use the range emergency procedure if unreachable."
+    : operations.busy ? "Control awaiting confirmation. Emergency stop remains available for the inspected run."
+    : operations.state ? "Authorized snapshot loaded. The server rechecks each control."
+    : "Refresh and inspect before using ordinary controls. Unconfirmed commands are never automatically repeated.";
   for (const button of document.querySelectorAll("button[data-command]")) {
     button.disabled = !operations.can(button.dataset.command, {item_id: button.dataset.item});
   }
@@ -172,14 +177,17 @@ async function command(path, body) {
   if (action === "stop" && !body?.reason.trim()) { notify(notice, "Enter a safety or platform reason for the stop.", "error"); return; }
   const credential = token();
   const epoch = operations.epoch;
+  const runId = operations.runId;
   clearNotice(notice);
   try {
     const result = await operations.command(action, body);
-    if (!operations.current(credential, epoch) || !result) return;
+    if (!operations.current(credential, epoch) || operations.runId !== runId || !result) return;
     notify(notice, result.reset ? `Application reset completed. Prior run ${result.reset.prior_run_id} saved as archive ${result.reset.review_archive_id}. Use evaluator archives to download it; VM restoration still requires external export.` : "Control action completed and recorded.");
     await refresh();
   } catch (error) {
-    if (token() === credential) { notify(notice, error.message, "error"); await refresh(); }
+    if (operations.current(credential, epoch) && operations.runId === runId) {
+      notify(notice, error.message, "error"); await refresh();
+    }
   }
 }
 
@@ -200,15 +208,15 @@ document.querySelector("#resolve-dp4").addEventListener("click", () => command("
 document.querySelector("#rollback-impact").addEventListener("click", () => command("/api/facilitator/impact/rollback"));
 for (const decision of ["approve", "deny"]) {
   document.querySelector(`#mfa-${decision}`).addEventListener("click", () => {
-    if (pendingMfa) command("/api/facilitator/mfa/decision", {challenge_id: pendingMfa.id, decision});
+    if (pendingMfa) return command("/api/facilitator/mfa/decision", {challenge_id: pendingMfa.id, decision});
   });
 }
 
 document.querySelector("#msel-body").addEventListener("click", (event) => {
   const button = event.target.closest("button[data-command]");
   if (!button) return;
-  if (button.dataset.command === "deliver") command("/api/facilitator/deliver", {item_id: button.dataset.item});
-  else command("/api/facilitator/skip", {item_id: button.dataset.item, reason: "Skipped by facilitator from control console"});
+  if (button.dataset.command === "deliver") return command("/api/facilitator/deliver", {item_id: button.dataset.item});
+  return command("/api/facilitator/skip", {item_id: button.dataset.item, reason: "Skipped by facilitator from control console"});
 });
 
 async function download(format) {
