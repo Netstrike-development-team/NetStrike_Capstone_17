@@ -6,7 +6,7 @@ import {ParticipantSession} from "/static/participant-session.js";
 
 const notice = document.querySelector("#notice");
 const tokenInput = document.querySelector("#token-input");
-const session = new ParticipantSession({cleared: (reason) => {
+const session = new ParticipantSession({changed: updateControls, cleared: (reason) => {
   clearNotice(notice);
   if (reason === "run") notify(notice, "Exercise changed. Previous-run drafts were cleared. Inspect the new evidence before acting.", "error");
   for (const id of ["#dp1-form", "#intrusion-timeline", "#recovery-actions", "#recovery-brief", "#cloud-form"]) {
@@ -23,6 +23,39 @@ const session = new ParticipantSession({cleared: (reason) => {
   setStatus(document.querySelector("#run-state"), "disconnected");
   for (const id of ["#feedback-panel", "#cloud-panel", "#recovery-panel"]) document.querySelector(id).hidden = true;
 }});
+
+function updateControls() {
+  const enabled = session.canWrite();
+  for (const button of document.querySelectorAll(
+    "#dp1-form button[type=submit], #intrusion-timeline button[type=submit], #cloud-form button[type=submit], " +
+    "#recovery-brief button[type=submit], #actions button[data-action], #recovery-actions button[data-recovery]"
+  )) button.disabled = !enabled;
+  if (!session.state) setStatus(document.querySelector("#run-state"), session.pendingWrite ? "action-pending" : "inspection-required");
+}
+
+async function write(path, options) {
+  const credential = token();
+  const epoch = session.epoch;
+  const runId = session.runId;
+  const activity = session.activity;
+  let result;
+  let failure;
+  let failureEpoch;
+  try {
+    result = await session.write(path, options);
+  } catch (error) {
+    failure = error;
+    failureEpoch = session.epoch;
+  } finally {
+    // Inspect after settling, never repeat a POST. A rejected overlapping call does not inspect early.
+    if (!session.pendingWrite) await refresh();
+  }
+  if (failure) {
+    if (!session.current(credential, failureEpoch) || session.runId !== runId) return null;
+    throw failure;
+  }
+  return session.current(credential, epoch) && session.runId === runId && session.activity === activity + 2 ? result : null;
+}
 
 function renderInjects(injects) {
   const container = document.querySelector("#injects");
@@ -63,6 +96,8 @@ async function refresh() {
     document.querySelector("#recovery-panel").hidden = !state.impact_enabled;
     for (const card of document.querySelectorAll(".impact-control")) card.hidden = !state.impact_enabled;
   } catch (error) {
+    session.state = null;
+    updateControls();
     notify(notice, error.message, "error");
   }
 }
@@ -70,7 +105,7 @@ async function refresh() {
 document.querySelector("#connect").addEventListener("click", () => {
   clearNotice(notice);
   try {
-    connect(tokenInput, refresh);
+    connect(tokenInput, () => { session.invalidate("credentials"); return refresh(); });
   } catch (error) {
     notify(notice, error.message, "error");
   }
@@ -126,7 +161,7 @@ document.querySelector("#intrusion-timeline").addEventListener("submit", async (
   const entries = Array.from(document.querySelector("#timeline-entries").children, (row) =>
     Object.fromEntries(Array.from(row.querySelectorAll("[data-field]"), (field) => [field.dataset.field, field.value.trim()])));
   try {
-    const receipt = await session.write("/api/participant/timeline", {body: JSON.stringify({run_id: runId, entries})});
+    const receipt = await write("/api/participant/timeline", {body: JSON.stringify({run_id: runId, entries})});
     if (!receipt || token() !== credential || session.runId !== runId) return;
     notify(notice, `Timeline recorded as submission:${receipt.submission_id} for evaluator review.`);
   } catch (error) {
@@ -214,7 +249,7 @@ document.querySelector("#cloud-form").addEventListener("submit", async (event) =
   event.preventDefault();
   const form = new FormData(event.currentTarget);
   try {
-    const receipt = await session.write("/api/participant/cloud/assessment", {
+    const receipt = await write("/api/participant/cloud/assessment", {
       method: "POST",
       body: JSON.stringify({
         principal_id: form.get("principal_id").trim(),
@@ -236,7 +271,7 @@ document.querySelector("#actions").addEventListener("click", async (event) => {
   try {
     const target = button.parentElement.querySelector("input").value.trim();
     if (!target) throw new Error("Enter the evidence-supported target ID first.");
-    const result = await session.write("/api/participant/actions", {
+    const result = await write("/api/participant/actions", {
       method: "POST",
       body: JSON.stringify({
         action_id: button.dataset.action,
@@ -250,7 +285,7 @@ document.querySelector("#actions").addEventListener("click", async (event) => {
   } catch (error) {
     notify(notice, error.message, "error");
   } finally {
-    button.disabled = false;
+    updateControls();
   }
 });
 
@@ -284,7 +319,7 @@ document.querySelector("#recovery-actions").addEventListener("click", async (eve
   if (!form.reportValidity()) return;
   button.disabled = true;
   try {
-    const result = await session.write("/api/participant/recovery/action", {
+    const result = await write("/api/participant/recovery/action", {
       method: "POST", body: JSON.stringify({
         action_id: button.dataset.recovery,
         fixture_id: new FormData(form).get("fixture_id").trim(),
@@ -295,7 +330,7 @@ document.querySelector("#recovery-actions").addEventListener("click", async (eve
     if (!result) return;
     notify(notice, result.status === "dry_run" ? "Preview passed. No files changed and no health validation was recorded." : "Action recorded. Refresh evidence to inspect the result.");
   } catch (error) { notify(notice, error.message, "error"); }
-  finally { button.disabled = false; }
+  finally { updateControls(); }
 });
 
 document.querySelector("#recovery-brief").addEventListener("submit", async (event) => {
@@ -303,7 +338,7 @@ document.querySelector("#recovery-brief").addEventListener("submit", async (even
   const form = new FormData(event.currentTarget);
   const lines = (key) => form.get(key).split(/\r?\n/).map((value) => value.trim()).filter(Boolean);
   try {
-    const receipt = await session.write("/api/participant/recovery/brief", {
+    const receipt = await write("/api/participant/recovery/brief", {
       method: "POST", body: JSON.stringify({
         confirmed_scope: form.get("confirmed_scope").trim(),
         confirmed_cloud_records: Number(form.get("confirmed_cloud_records")),
@@ -325,7 +360,7 @@ document.querySelector("#dp1-form").addEventListener("submit", async (event) => 
   const references = form.getAll("reference");
   const sources = form.getAll("source");
   try {
-    const result = await session.write("/api/participant/checkpoints/dp1", {
+    const result = await write("/api/participant/checkpoints/dp1", {
       method: "POST",
       body: JSON.stringify({
         affected_identity: form.get("identity"),
@@ -340,5 +375,6 @@ document.querySelector("#dp1-form").addEventListener("submit", async (event) => 
   }
 });
 
+updateControls();
 if (token()) refresh();
 setInterval(refresh, 10000);
