@@ -176,6 +176,11 @@ measurement. Missing UF access/configuration/receiver availability must be detec
 in Patrick's environment. After Splunk search confirmation, he can record actual
 acceptance evidence in #102/#104/#86; this exporter does not close those issues.
 
+For a run-scoped, independently saved raw receiver export, use the
+[offline application telemetry comparison](application-telemetry-comparison.md).
+It detects supplied-file loss/duplicates/mutation without contacting Splunk;
+actual search provenance, access, parsing, freshness and retention remain separate.
+
 Relevant official Splunk 10.0 references:
 [inputs.conf](https://help.splunk.com/en/splunk-enterprise/administer/admin-manual/10.0/configuration-file-reference/10.0.0-configuration-file-reference/inputs.conf)
 documents monitoring, filtering, CRC identity and destructive batch inputs;

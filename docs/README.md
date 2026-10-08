@@ -12,7 +12,7 @@ operational guidance, a contract, a planning snapshot, or only a placeholder.
 | [Exercise design package](exercise-design/README.md) | Accepted exercise scope, design documents, and outstanding approval gates |
 | [Architecture](architecture.md) | MVP components, boundaries, and out-of-scope work |
 | [Roadmap and ownership](roadmap.md) | Delivery milestones, schedule, team roles, and working rhythm |
-| [Remaining development estimate](development-remaining-work.md) | Planning estimate dated October 5, 2026; not a live issue count or delivery commitment |
+| [Remaining development estimate](development-remaining-work.md) | Planning estimate updated October 7, 2026; not a live issue count or delivery commitment |
 | [Integration review](patrick-integration-review-2026-10-03.md) | Historical October 3 review of proposed deployment PRs and risks; not current deployment or acceptance status |
 | [Repository README](../README.md) | Project overview, current state, repository structure, and development workflow |
 
@@ -65,6 +65,7 @@ index](exercise-design/README.md).
 |---|---|
 | [Offline bundle build and install](offline-bundle.md) | Building, verifying, installing, and smoke-testing the Python bundle |
 | [Splunk Sysmon ingestion](splunk-sysmon-ingest.md) | Configure the Splunk receiver and test Windows Sysmon forwarding |
+| [Application telemetry comparison](application-telemetry-comparison.md) | Read-only canonical ledger versus saved raw receiver-export comparison; not live ingestion or readiness proof |
 | [Offline application source check](offline-release-source-check.md) | Read-only selected-source comparison against a separately recorded commit/inventory digest, without Git or runtime dependencies |
 | [Milestone promotion checklist](milestone-release-checklist.md) | Strict main/dev checks, source-matched evidence and prototype versus accepted-release gates |
 | [Application security gate](application-security-gate.md) | Blocking maintained-code scans, informational legacy boundary and recorder loopback request controls |
