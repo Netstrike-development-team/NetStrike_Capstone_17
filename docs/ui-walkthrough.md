@@ -19,7 +19,20 @@ are bounded to 100 signals; the browser retains at most 500 recent signals.
   actions, grading/override/control events, raw nested data, server paths,
   objectives and secret fields are never returned by this endpoint.
 - Role and actor ID come from the server token, not request query/body fields.
-- The browser clears evidence on token/run changes and renders with `textContent`.
+- Explicit Connect/reconnect clears evidence, filters, cursor and run/clock
+  metadata immediately, even with an earlier request pending. Observed credential
+  changes during polling/filter interactions do the same; a same-token reconnect
+  starts a fresh request generation. Obsolete reads are cancelled where possible
+  and late success/failure/finally callbacks cannot overwrite or unlock a new view.
+- An observed reset during pagination clears the prior run and fetches the new
+  run from sequence zero. Current auth, transport or malformed-page failures clear
+  evidence and connected metadata instead of showing old facts as a healthy view.
+- Each refresh fetches at most ten 100-signal pages, retaining the latest 500
+  signals. If more pages remain, the summary explicitly says so; subsequent manual
+  refresh or polling continues from the cursor. This is not a complete ledger or
+  a source-freshness/ingestion-health certificate.
+- Same-run healthy polling preserves filters, and evidence is rendered with
+  `textContent`, never interpreted as HTML. Requests bypass browser caching.
 - Read operations append no events and cannot alter simulation state.
 - Existing situation-message and facilitator/export APIs are unchanged.
 
@@ -27,6 +40,25 @@ This development viewer is not an EDR, a SIEM, new alert detection, a replacemen
 for Patrick's Splunk work or live-range acceptance. Response receipts prove an
 action result, not that the whole incident has been contained. Future evaluator
 scoring/report quality remains #84.
+
+### Browser refresh regression checks (#159)
+
+The mounted actual `evidence.js` tests reproduce the former Connect/busy-guard
+defect: changing tokens during a pending refresh left old participant receipts
+visible. They cover immediate clearing, ignored late responses and observed
+token A→B→A changes, same-token reconnect, disconnect, run reset within/at the
+pagination budget, current auth/transport failures, malformed pages, filter
+preservation and the 500-signal limit. Viewer HTML/JS now participate in exact
+local-rehearsal source fingerprints.
+
+These are DOM-double regressions, not a completed real-browser or representative
+learner rehearsal. Anna/Patrick should include a slow evidence request while
+switching accounts, an old tab across reset, and an unavailable endpoint in actual
+usability/deployment checks. No new guarantee of immediate observation of an
+unannounced server reset or a token change outside page interactions/polling is
+made. A transient A→B→A storage change that the page never observes is outside
+this guarantee. The API's server-owned role/actor projection remains unchanged;
+client cancellation is not server authorization or secure deletion from memory.
 
 ## Recording the real application
 

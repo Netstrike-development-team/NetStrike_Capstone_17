@@ -59,6 +59,12 @@ def test_default_preview_does_not_start_services_write_or_query_git(
     assert list(tmp_path.iterdir()) == before
 
 
+def test_participant_evidence_assets_are_in_exact_source_fingerprints():
+    fingerprints = rehearsal._source()["files_sha256"]
+    for name in ("dashboard/static/evidence.js", "dashboard/static/evidence.html"):
+        assert fingerprints[name] == rehearsal._sha(rehearsal.ROOT / name)
+
+
 @pytest.mark.parametrize("name", list(rehearsal.cases()))
 def test_raw_telemetry_comparison_handles_each_real_rehearsal_export(
     full_package, tmp_path, name
