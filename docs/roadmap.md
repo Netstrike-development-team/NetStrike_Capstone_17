@@ -89,7 +89,7 @@ with Latifa.
 ## Current priority order
 
 Updated October 8: all four scenario stages and application review/evidence/staff
-foundations are implemented locally; #152/#155/#158/#160 and Patrick's #156 are merged.
+foundations are implemented locally; #152/#155/#158/#160/#162 and Patrick's #156 are merged.
 This is application progress, not live Cyber Range acceptance.
 
 1. Human support and staff operations are connected (#136/#138; #135/#137 closed).
@@ -117,10 +117,13 @@ This is application progress, not live Cyber Range acceptance.
    or readiness claim is added.
    Merged #160 closed #159, fixing a reproduced pending-read credential boundary in the
    [local evidence viewer](ui-walkthrough.md#browser-refresh-regression-checks-159),
-   with no scenario, server projection or environment changes. Current #161
-   fixes an observed stale-run sign-in and pending SSO action gap with
+   with no scenario, server projection or environment changes. Merged #162
+   closed #161's stale-run sign-in and pending SSO action gap with
    [run-pinned SSO actions](ui-walkthrough.md#synthetic-sign-in-and-mfa-run-safety-161),
-   not a new exercise stage or environment deployment.
+   not a new exercise stage or environment deployment. Current #163 fixes a
+   reproduced double learner submission and obsolete inspection callbacks in
+   the [participant workflow](participant-run-safety.md#pending-submissions-and-inspection-163),
+   with no API, scoring, storyline or Splunk/Ansible change.
 2. Patrick proves offline deployment, identity-slice Splunk ingestion, privacy and
    snapshot/readiness on the approved range topology.
    His October 7 #101 record identifies the offline dashboard bundle/source

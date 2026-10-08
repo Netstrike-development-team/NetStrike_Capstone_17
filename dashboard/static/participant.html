@@ -75,24 +75,24 @@
           <p>Record at least six significant events before the containment checkpoint. Use occurrence times, cite event IDs from the evidence viewer, and distinguish observed facts from inference. Quality is reviewed by staff.</p>
           <form id="intrusion-timeline">
             <div id="timeline-entries" class="stack"></div>
-            <div class="controls space-top"><button id="add-timeline-entry" type="button" class="secondary">Add event</button><button type="submit">Submit timeline</button></div>
+            <div class="controls space-top"><button id="add-timeline-entry" type="button" class="secondary">Add event</button><button type="submit" disabled>Submit timeline</button></div>
           </form>
         </details>
 
         <article class="panel">
           <div class="panel-header"><div><h2>Approved containment actions</h2><p>Every action is role-checked, allowlisted, reversible, and recorded.</p></div></div>
           <div id="actions" class="actions">
-            <div class="action-card"><div><strong>Revoke a session</strong><small>Enter the session ID supported by your evidence.</small></div><input aria-label="Session ID" placeholder="Session ID"><button data-action="identity.session.revoke" data-type="session">Revoke session</button></div>
-            <div class="action-card"><div><strong>Remove an MFA factor</strong><small>Enter the factor ID supported by your evidence.</small></div><input aria-label="MFA factor ID" placeholder="Factor ID"><button data-action="identity.factor.remove" data-type="mfa_factor">Remove factor</button></div>
-            <div class="action-card"><div><strong>Rotate a credential</strong><small>Enter the affected synthetic identity ID.</small></div><input aria-label="Identity ID" placeholder="Identity ID"><button data-action="identity.credential.reset" data-type="identity">Rotate credential</button></div>
-            <div class="action-card"><div><strong>Preserve endpoint evidence</strong><small>Enter the designated evidence artifact ID.</small></div><input aria-label="Evidence artifact ID" placeholder="Artifact ID"><button data-action="evidence.artifact.preserve" data-type="evidence_artifact">Preserve evidence</button></div>
-            <div class="action-card"><div><strong>Isolate a remote path</strong><small>Enter the affected exercise host ID.</small></div><input aria-label="Host ID" placeholder="Host ID"><button data-action="endpoint.host.isolate" data-type="host">Isolate host</button></div>
-            <div class="action-card cloud-action" hidden><div><strong>Preserve cloud evidence</strong><small>Freeze the current bucket state and audit before remediation.</small></div><input aria-label="Cloud evidence bucket ID" placeholder="Bucket ID"><button data-action="cloud.evidence.preserve" data-type="cloud_bucket">Preserve cloud evidence</button></div>
-            <div class="action-card cloud-action" hidden><div><strong>Revoke a cloud key</strong><small>Use the opaque key ID found in the mock audit.</small></div><input aria-label="Cloud key ID" placeholder="Key ID"><button data-action="cloud.key.revoke" data-type="cloud_key">Revoke key</button></div>
-            <div class="action-card cloud-action" hidden><div><strong>Disable a cloud principal</strong><small>Disables the mock service identity and its keys.</small></div><input aria-label="Cloud principal ID" placeholder="Principal ID"><button data-action="cloud.principal.disable" data-type="cloud_principal">Disable principal</button></div>
-            <div class="action-card cloud-action" hidden><div><strong>Restore a bucket policy</strong><small>Restore the approved exercise policy.</small></div><input aria-label="Cloud policy bucket ID" placeholder="Bucket ID"><button data-action="cloud.policy.restore" data-type="cloud_bucket">Restore policy</button></div>
-            <div class="action-card impact-control" hidden><div><strong>Remove directory persistence</strong><small>Use the account ID supported by your evidence.</small></div><input aria-label="Persistence account ID" placeholder="Account ID"><button data-action="ad.persistence.remove" data-type="directory_account">Remove persistence</button></div>
-            <div class="action-card impact-control" hidden><div><strong>Stop the synthetic impact task</strong><small>Use the process ID from the exercise evidence.</small></div><input aria-label="Impact process ID" placeholder="Process ID"><button data-action="endpoint.process.stop" data-type="process">Stop task</button></div>
+            <div class="action-card"><div><strong>Revoke a session</strong><small>Enter the session ID supported by your evidence.</small></div><input aria-label="Session ID" placeholder="Session ID"><button data-action="identity.session.revoke" data-type="session" disabled>Revoke session</button></div>
+            <div class="action-card"><div><strong>Remove an MFA factor</strong><small>Enter the factor ID supported by your evidence.</small></div><input aria-label="MFA factor ID" placeholder="Factor ID"><button data-action="identity.factor.remove" data-type="mfa_factor" disabled>Remove factor</button></div>
+            <div class="action-card"><div><strong>Rotate a credential</strong><small>Enter the affected synthetic identity ID.</small></div><input aria-label="Identity ID" placeholder="Identity ID"><button data-action="identity.credential.reset" data-type="identity" disabled>Rotate credential</button></div>
+            <div class="action-card"><div><strong>Preserve endpoint evidence</strong><small>Enter the designated evidence artifact ID.</small></div><input aria-label="Evidence artifact ID" placeholder="Artifact ID"><button data-action="evidence.artifact.preserve" data-type="evidence_artifact" disabled>Preserve evidence</button></div>
+            <div class="action-card"><div><strong>Isolate a remote path</strong><small>Enter the affected exercise host ID.</small></div><input aria-label="Host ID" placeholder="Host ID"><button data-action="endpoint.host.isolate" data-type="host" disabled>Isolate host</button></div>
+            <div class="action-card cloud-action" hidden><div><strong>Preserve cloud evidence</strong><small>Freeze the current bucket state and audit before remediation.</small></div><input aria-label="Cloud evidence bucket ID" placeholder="Bucket ID"><button data-action="cloud.evidence.preserve" data-type="cloud_bucket" disabled>Preserve cloud evidence</button></div>
+            <div class="action-card cloud-action" hidden><div><strong>Revoke a cloud key</strong><small>Use the opaque key ID found in the mock audit.</small></div><input aria-label="Cloud key ID" placeholder="Key ID"><button data-action="cloud.key.revoke" data-type="cloud_key" disabled>Revoke key</button></div>
+            <div class="action-card cloud-action" hidden><div><strong>Disable a cloud principal</strong><small>Disables the mock service identity and its keys.</small></div><input aria-label="Cloud principal ID" placeholder="Principal ID"><button data-action="cloud.principal.disable" data-type="cloud_principal" disabled>Disable principal</button></div>
+            <div class="action-card cloud-action" hidden><div><strong>Restore a bucket policy</strong><small>Restore the approved exercise policy.</small></div><input aria-label="Cloud policy bucket ID" placeholder="Bucket ID"><button data-action="cloud.policy.restore" data-type="cloud_bucket" disabled>Restore policy</button></div>
+            <div class="action-card impact-control" hidden><div><strong>Remove directory persistence</strong><small>Use the account ID supported by your evidence.</small></div><input aria-label="Persistence account ID" placeholder="Account ID"><button data-action="ad.persistence.remove" data-type="directory_account" disabled>Remove persistence</button></div>
+            <div class="action-card impact-control" hidden><div><strong>Stop the synthetic impact task</strong><small>Use the process ID from the exercise evidence.</small></div><input aria-label="Impact process ID" placeholder="Process ID"><button data-action="endpoint.process.stop" data-type="process" disabled>Stop task</button></div>
           </div>
         </article>
         <details class="panel">
@@ -111,7 +111,7 @@
             <label class="form-wide">Confirmed records accessed<input name="confirmed_count" type="number" min="0" max="25" required></label>
             <label class="form-wide">Evidence conclusion<select name="conclusion" required><option value="">Select conclusion</option><option value="unknown">Insufficient evidence</option><option value="mock_access_only">Mock access confirmed; external transfer not established</option><option value="external_transfer_proven">External transfer proven</option></select></label>
             <label class="form-wide">Cloud audit event IDs (one per line)<textarea name="evidence_ids" rows="3" required></textarea></label>
-            <button class="form-wide" type="submit">Submit cloud assessment</button>
+            <button class="form-wide" type="submit" disabled>Submit cloud assessment</button>
           </form>
         </article>
       </div>
@@ -128,7 +128,7 @@
             <div class="evidence-row"><input name="reference" required placeholder="Event, ticket, or artifact ID"><input name="source" required placeholder="Source"></div>
             <div class="evidence-row"><input name="reference" required placeholder="Event, ticket, or artifact ID"><input name="source" required placeholder="Source"></div>
           </div>
-          <button class="form-wide" type="submit">Submit assessment</button>
+          <button class="form-wide" type="submit" disabled>Submit assessment</button>
         </form>
         </article>
         <article id="recovery-panel" class="panel" hidden>
@@ -139,8 +139,8 @@
           <form id="recovery-actions" class="form-grid">
             <label class="form-wide">Fixture ID from the evidence<input name="fixture_id" required placeholder="Logical fixture ID, never a path"></label>
             <label class="form-wide"><input id="recovery-preview" type="checkbox" checked> Preview only — do not execute</label>
-            <button data-recovery="recovery.fixture.restore" type="button">Restore decoys</button>
-            <button data-recovery="recovery.health.validate" type="button" class="secondary">Validate hashes</button>
+            <button data-recovery="recovery.fixture.restore" type="button" disabled>Restore decoys</button>
+            <button data-recovery="recovery.health.validate" type="button" class="secondary" disabled>Validate hashes</button>
           </form>
           <h3>Final incident brief</h3>
           <p class="muted">Complete recovery and record a real health validation before citing it.</p>
@@ -152,7 +152,7 @@
             <label class="form-wide">Remaining risk and uncertainty<textarea name="remaining_risk" required maxlength="1024" rows="2"></textarea></label>
             <label class="form-wide">Two prioritized follow-up recommendations (one per line)<textarea name="recommendations" required rows="3"></textarea></label>
             <label class="form-wide">Recovery audit event IDs (one per line)<textarea name="evidence_ids" required rows="3"></textarea></label>
-            <button class="form-wide" type="submit">Submit incident brief</button>
+            <button class="form-wide" type="submit" disabled>Submit incident brief</button>
           </form>
         </article>
       </aside>
