@@ -267,7 +267,7 @@ def create_app(
         response.headers["Referrer-Policy"] = "no-referrer"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
-        if request.url.path.startswith("/api/evaluator/"):
+        if request.url.path.startswith(("/api/evaluator/", "/api/sso/")):
             response.headers["Cache-Control"] = "no-store"
         return response
 
@@ -428,9 +428,9 @@ def create_app(
                 detail="sign-in fields are invalid",
             )
         try:
-            return service.sso_sign_in(
+            return scoped_control(request, lambda: service.sso_sign_in(
                 payload.get("username"), payload.get("credential")
-            )
+            ))
         except SsoBoundaryError as exc:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)
@@ -452,9 +452,9 @@ def create_app(
                 detail="MFA decision fields are invalid",
             )
         try:
-            return service.sso_decide_mfa(
+            return scoped_control(request, lambda: service.sso_decide_mfa(
                 payload.get("challenge_id"), payload.get("decision")
-            )
+            ))
         except SsoExperienceError as exc:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT, detail=str(exc)
@@ -464,7 +464,7 @@ def create_app(
     def sso_review_sessions(request: Request) -> dict[str, Any]:
         authorize_sso_request(request)
         try:
-            return service.sso_review_sessions()
+            return scoped_control(request, service.sso_review_sessions)
         except SsoExperienceError as exc:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT, detail=str(exc)
@@ -480,7 +480,7 @@ def create_app(
                                      description="scheduled MFA decision")
         if set(payload) != {"challenge_id", "decision"}:
             raise HTTPException(status_code=422, detail="MFA decision fields are invalid")
-        return execute(lambda: service.decide_scheduled_mfa(
+        return scoped_control(request, lambda: service.decide_scheduled_mfa(
             principal, payload["challenge_id"], payload["decision"],
         ))
 
