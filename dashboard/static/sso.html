@@ -39,7 +39,7 @@
         <input id="credential" name="credential" type="password" autocomplete="off" required maxlength="1024" aria-describedby="credential-help">
         <small id="credential-help">The submitted value is transformed before evidence is stored.</small>
 
-        <button type="submit">Continue</button>
+        <button type="submit" disabled>Continue</button>
       </form>
     </section>
 
@@ -48,7 +48,7 @@
       <p class="eyebrow">Sign-in not completed</p>
       <h1 id="failure-title">Check the exercise details</h1>
       <p id="failure-message" class="lede"></p>
-      <button class="secondary" data-return-sign-in>Try again</button>
+      <button class="secondary" data-return-sign-in disabled>Try again</button>
     </section>
 
     <section id="view-locked" class="sso-card state-card" aria-labelledby="locked-title" hidden>
@@ -68,8 +68,8 @@
       <div class="countdown"><span>Request expires in</span><strong><span id="mfa-seconds">—</span>s</strong></div>
       <p id="mfa-clock-note" class="support-note"></p>
       <div class="button-row">
-        <button id="deny-mfa" class="secondary" type="button">Deny</button>
-        <button id="approve-mfa" type="button">Approve</button>
+        <button id="deny-mfa" class="secondary" type="button" disabled>Deny</button>
+        <button id="approve-mfa" type="button" disabled>Approve</button>
       </div>
     </section>
 
@@ -78,7 +78,7 @@
       <p class="eyebrow">Verification complete</p>
       <h1 id="success-title">Signed in</h1>
       <p id="success-message" class="lede"></p>
-      <button id="review-sessions" type="button">Review active sessions</button>
+      <button id="review-sessions" type="button" disabled>Review active sessions</button>
     </section>
 
     <section id="view-suspicious_session" class="sso-card" aria-labelledby="sessions-title" hidden>

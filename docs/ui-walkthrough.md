@@ -1,5 +1,38 @@
 # Local evidence UI and reproducible client walkthrough
 
+## Synthetic sign-in and MFA run safety (#161)
+
+`/sso` now requires an inspected, valid current-run snapshot before enabling
+sign-in, MFA or session-review actions. Each browser write pins that `run_id`;
+only one write can be pending. The four SSO mutation APIs use the existing
+atomic `X-Exercise-Run-ID` guard: stale headers return 409 before any action or
+audit write; malformed/duplicate headers return 422. Headerless legacy clients
+still work but do not gain stale-run protection. Origin restrictions, reserved
+synthetic identities, body limits and scheduled-MFA bearer roles remain required;
+the run header grants no authority. Session-review responses include the same
+run/clock metadata as sign-in and MFA responses, under the shared run lock.
+
+Reads and responses bypass caching. Current read failures remove the inspected
+challenge and write authority. A failed/uncertain write is never automatically
+repeated; a fresh GET inspects its actual result before another manual action.
+Observed token changes invalidate prior callbacks, even token A→B→A; an in-flight
+write keeps the pending lock until it settles. Old reads, wrong-run write receipts
+and delayed announcements cannot restore stale controls. Pause/stop/completion
+disable writes. Navigation clears transient authority/token; a restored page
+requires inspection again. An observed run change clears old sessions, retry
+view and scheduled-token input. An unobserved reset cannot instantly update a
+browser, so the server guard remains essential. Aborting a browser read does not
+cancel or undo a server mutation. Headerless clients and unobserved transient
+token changes are outside these browser guarantees.
+
+API and mounted actual `sso.js` regressions cover these boundaries. SSO
+implementation/HTML/JS/CSS are included in exact rehearsal source fingerprints.
+These checks are not real-browser, representative-learner or live-range
+acceptance. Anna (#99) and Patrick (#104) should test rapid Approve/Deny,
+delayed responses, token changes, failed reads, an old tab across reset and
+back/forward restoration on the final deployment. This remains a contained,
+vendor-neutral mock—not a real IdP, MFA gateway or EDR.
+
 The participant console now links to `/evidence`: an authenticated, read-only
 view of **actual local synthetic events**, not a Splunk dashboard. It addresses
 the difference between situation messages and attack telemetry: the two initial

@@ -555,10 +555,12 @@ class PortalService:  # pylint: disable=too-many-public-methods
             self.run.definition.exercise_id, self.run.run_id
         )
 
+    @run_snapshot
     def sso_state(self) -> dict[str, Any]:
         """Return the participant-safe current SSO experience state."""
 
         state = self.sso.state()
+        state["run_id"] = self.run.run_id
         scheduled = self.run.mfa.snapshot()
         state["exercise_state"] = scheduled["state"]
         state["scheduled_result"] = (
@@ -619,7 +621,8 @@ class PortalService:  # pylint: disable=too-many-public-methods
 
         with self.run.state_lock:
             self._require_sso_active()
-            return self.sso.review_sessions()
+            self.sso.review_sessions()
+            return self.sso_state()
 
     def reset_run(self, *, new_run_id: str | None = None,
                   principal: PortalPrincipal | None = None) -> dict[str, Any]:
