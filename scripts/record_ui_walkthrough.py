@@ -1,6 +1,7 @@
 """Record a real, disposable localhost exercise walkthrough; no mocked API replies.
 
 Recording-only dependencies: playwright, imageio-ffmpeg; Chrome installed locally.
+Smoke-only mode needs Playwright and managed Chromium, but no media encoder.
 macOS `say` provides optional offline narration. Default invocation is preview only.
 """
 
@@ -8,8 +9,10 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.metadata
 import json
 import os
+import re
 import secrets
 import shutil
 import socket
@@ -154,10 +157,11 @@ class NoRecordingRedirects(urllib.request.HTTPRedirectHandler):
 class Walkthrough:  # pylint: disable=too-many-instance-attributes
     """One actual application, one isolated browser page and a verified run ledger."""
 
-    def __init__(self, output, *, fast=False, narrate=True):
+    def __init__(self, output, *, fast=False, narrate=True, smoke_only=False):
         self.output = output
-        self.fast = fast
-        self.narrate = narrate and not fast
+        self.smoke_only = smoke_only
+        self.fast = fast or smoke_only
+        self.narrate = narrate and not self.fast
         self.roles = {
             role: secrets.token_urlsafe(32)
             for role in (
@@ -229,7 +233,9 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
         if role:
             self.page.locator("#token-input").fill(self.roles[role])
             self.page.locator("#connect").click()
-            expect(self.page.locator("#run-state")).not_to_have_text("disconnected")
+            expect(self.page.locator("#run-state")).to_have_text(
+                re.compile(r"^(ready|running|paused|stopped|completed)$")
+            )
         self.page.wait_for_timeout(250)
 
     def evidence(self, category="all", *, role="soc_analyst", query=""):
@@ -243,6 +249,7 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
         button = self.page.locator(f'button[data-action="{action_id}"]')
         button.locator("..").locator("input").fill(target_id)
         self.resume()
+        self.page.locator("#refresh").click()
         with self.page.expect_response(
             lambda response: response.url.endswith("/api/participant/actions")
         ) as pending:
@@ -304,16 +311,92 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
                     duration = audio.getnframes() / audio.getframerate()
             self.audio.append({"path": path, "duration": duration})
 
-    # Optional recording libraries stay lazy so preview requires no extra packages.
+    def launch_browser(self):
+        """CI uses the pinned package's browser; video retains installed Chrome."""
+        options = {} if self.smoke_only else {"channel": "chrome"}
+        return self.playwright.chromium.launch(headless=True, **options)
+
+    def run_browser(self):
+        """Always close our browser/context, including failed journey assertions."""
+        browser = self.launch_browser()
+        try:
+            self.browser_version = browser.version
+            options = {} if self.smoke_only else {
+                "record_video_dir": str(self.output / "raw"),
+                "record_video_size": {"width": 1600, "height": 820},
+            }
+            context = browser.new_context(
+                viewport={"width": 1600, "height": 820}, accept_downloads=True, **options
+            )
+            try:
+                self.page = context.new_page()
+                self.watch_page(self.page)
+                self.started = time.monotonic()
+                self.perform()
+            finally:
+                context.close()
+            if not self.smoke_only:
+                self.video = self.page.video.path()
+        finally:
+            browser.close()
+
+    def watch_page(self, page):
+        """Include desktop and mobile errors; do not export headers or traces."""
+        page.on("pageerror", lambda error: self.console_errors.append(str(error)))
+        page.on(
+            "response",
+            lambda response: self.requests_failed.append({
+                "path": urllib.parse.urlsplit(response.url).path,
+                "status": response.status,
+            }) if response.url.startswith(self.base + "/") and response.status >= 400 else None,
+        )
+        page.on(
+            "requestfailed",
+            lambda request: self.requests_failed.append({
+                "path": urllib.parse.urlsplit(request.url).path,
+                "status": "transport_failed",
+            }) if request.url.startswith(self.base + "/")
+            and request.failure != "net::ERR_ABORTED" else None,
+        )
+
+    # Optional libraries stay lazy so preview requires no extra packages.
     # pylint: disable=too-many-locals,import-outside-toplevel,consider-using-with
     def record(self):
-        from playwright.sync_api import sync_playwright  # recording-only dependency
-        import imageio_ffmpeg  # recording-only dependency
+        from scripts.rehearsal import _source
 
-        self.ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
-        for name in ("frames", "raw", "narration"):
+        self.source = _source()
+        try:
+            self.execute()
+            assert not self.console_errors, self.console_errors
+            assert not self.requests_failed, self.requests_failed
+            if self.smoke_only:
+                assert self.source == _source(), "source changed during browser smoke"
+                self.smoke_receipt()
+            else:
+                self.assemble()
+        except Exception:
+            # A failure must not leave a success-looking manifest. No raw exception
+            # text, tokens, browser profile, SQLite or network trace in artifacts.
+            (self.output / "failure.json").write_text(json.dumps({
+                "passed": False, "synthetic_only": True,
+                "source": self.source, "completed_chapters": len(self.chapters),
+                "note": "Execution failed; see job output and available frames/server.log.",
+            }, indent=2) + "\n", encoding="utf-8")
+            raise
+
+    # pylint: disable=too-many-locals,import-outside-toplevel,consider-using-with
+    def execute(self):
+        """Provision only fresh task-owned state and bind only explicit loopback."""
+        from playwright.sync_api import sync_playwright  # developer-only dependency
+
+        folders = ("frames",) if self.smoke_only else ("frames", "raw", "narration")
+        for name in folders:
             (self.output / name).mkdir()
-        self.prepare_audio()
+        if not self.smoke_only:
+            import imageio_ffmpeg  # recording-only dependency
+
+            self.ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+            self.prepare_audio()
         with tempfile.TemporaryDirectory(prefix="netstrike-recording-") as temporary:
             task = Path(temporary)
             decoys = task / "decoys"
@@ -323,7 +406,9 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
                 port = listener.getsockname()[1]
             self.base = f"http://127.0.0.1:{port}"
             self.run_id = "ui-walkthrough-" + secrets.token_hex(6)
-            environment = dict(os.environ)
+            # Do not inherit an operator's unrelated deployment inputs.
+            environment = {key: value for key, value in os.environ.items()
+                           if not key.startswith("NETSTRIKE_")}
             environment.update(
                 {
                     "NETSTRIKE_PORTAL_TOKENS": json.dumps(
@@ -378,36 +463,7 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
                         raise RuntimeError("local recording server readiness timed out")
                     with sync_playwright() as playwright:
                         self.playwright = playwright
-                        browser = playwright.chromium.launch(channel="chrome", headless=True)
-                        context = browser.new_context(
-                            viewport={"width": 1600, "height": 820},
-                            record_video_dir=str(self.output / "raw"),
-                            record_video_size={"width": 1600, "height": 820},
-                            accept_downloads=True,
-                        )
-                        self.page = context.new_page()
-                        self.page.on(
-                            "pageerror", lambda error: self.console_errors.append(str(error))
-                        )
-                        self.page.on(
-                            "response",
-                            lambda response: (
-                                self.requests_failed.append(
-                                    {
-                                        "path": response.url.split(self.base)[-1],
-                                        "status": response.status,
-                                    }
-                                )
-                                if response.url.startswith(self.base) and response.status >= 400
-                                else None
-                            ),
-                        )
-                        self.started = time.monotonic()
-                        self.perform()
-                        video = self.page.video
-                        context.close()
-                        self.video = video.path()
-                        browser.close()
+                        self.run_browser()
                 finally:
                     server.terminate()
                     try:
@@ -415,9 +471,32 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
                     except subprocess.TimeoutExpired:
                         server.kill()
                         server.wait(timeout=5)
-        assert not self.console_errors, self.console_errors
-        assert not self.requests_failed, self.requests_failed
-        self.assemble()
+
+    def smoke_receipt(self):
+        """Source-correlated synthetic integration receipt, not range acceptance."""
+        artifacts = [self.output / "events.jsonl", *sorted((self.output / "frames").glob("*.png"))]
+        manifest = {
+            "passed": True, "mode": "browser-smoke", "synthetic_only": True,
+            "mocked_api_responses": False, "splunk_connected": False,
+            "representative_usability_verified": False, "range_acceptance": False,
+            "source": self.source, "python_version": sys.version.split()[0],
+            "playwright_version": importlib.metadata.version("playwright"),
+            "browser": "managed-chromium", "browser_version": self.browser_version,
+            "run_id": self.run_id, "events_validated": self.events_count,
+            "play_completed": True, "decoys_restored": True,
+            "application_reset_verified": True, "mobile_evidence_checked": True,
+            "server_stopped": True, "browser_errors": self.console_errors,
+            "failed_http_responses": self.requests_failed, "chapters": self.chapters,
+            "files_sha256": {
+                str(path.relative_to(self.output)): hashlib.sha256(path.read_bytes()).hexdigest()
+                for path in artifacts
+            },
+        }
+        (self.output / "manifest.json").write_text(
+            json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+        )
+        print(json.dumps({"passed": True, "mode": "browser-smoke",
+                          "chapters": len(self.chapters), "events": self.events_count}), flush=True)
 
     # Keep the reviewed chronological journey together for deterministic replay.
     # pylint: disable=too-many-locals,too-many-statements
@@ -633,6 +712,7 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
             }.items():
                 form.locator(f'[name="{name}"]').fill(value)
             self.resume()
+            self.page.locator("#refresh").click()
             with self.page.expect_response(
                 lambda response: response.url.endswith("/api/participant/recovery/brief")
             ) as pending:
@@ -659,6 +739,7 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
 
         def reset():
             self.page.locator("#new-run-id").fill(self.run_id + "-fresh")
+            self.page.once("dialog", self.confirm_reset)
             with self.page.expect_response(
                 lambda response: response.url.endswith("/api/facilitator/reset")
             ) as pending:
@@ -675,8 +756,18 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
 
         self.scene(17, reset)
 
+    def confirm_reset(self, dialog):
+        """Acknowledge only this disposable run's existing safety confirmation."""
+        if dialog.type != "confirm" or not dialog.message.startswith(
+            f"Reset application run {self.run_id}?"
+        ):
+            dialog.dismiss()
+            raise RuntimeError("unexpected reset confirmation")
+        dialog.accept()
+
     def recovery_action(self, action, expected="executed"):
         self.resume()
+        self.page.locator("#refresh").click()
         with self.page.expect_response(
             lambda response: response.url.endswith("/api/participant/recovery/action")
         ) as pending:
@@ -704,10 +795,11 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
     def mobile_check(self):
         # A separate browser process prevents a secondary mobile viewport from
         # changing the primary headless Chrome compositor's recorded surface.
-        browser = self.playwright.chromium.launch(channel="chrome", headless=True)
+        browser = self.launch_browser()
         try:
             context = browser.new_context(viewport={"width": 390, "height": 844})
             page = context.new_page()
+            self.watch_page(page)
             page.goto(self.base + "/evidence", wait_until="networkidle")
             page.locator("#token-input").fill(self.roles["soc_analyst"])
             with page.expect_response(
@@ -856,6 +948,10 @@ def main():
         "--fast", action="store_true", help="Short silent browser smoke-check recording"
     )
     parser.add_argument("--no-narration", action="store_true")
+    parser.add_argument(
+        "--smoke-only", action="store_true",
+        help="Fast real-browser CI journey using managed Chromium; no video/audio/encoder",
+    )
     args = parser.parse_args()
     if not args.execute:
         print(
@@ -874,7 +970,8 @@ def main():
     if output.exists():
         parser.error("output directory must not already exist")
     output.mkdir(parents=True)
-    Walkthrough(output, fast=args.fast, narrate=not args.no_narration).record()
+    Walkthrough(output, fast=args.fast, narrate=not args.no_narration,
+                smoke_only=args.smoke_only).record()
 
 
 if __name__ == "__main__":

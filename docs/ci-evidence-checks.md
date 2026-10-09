@@ -37,6 +37,12 @@ but do not guarantee hosted-runner availability during an outage.
 
 ## Runner/action maintenance
 
+The full-play workflow also includes a strict `browser-smoke` job (#169). It
+executes the existing 18-step walkthrough in managed Chromium, without video or
+narration, and retains source-correlated screenshots/JSONL/diagnostics for 14 days.
+It does not replace the strict core/DOM/24-case service checks or Anna/Patrick's
+acceptance. See [browser tooling, commands and coverage limits](ui-walkthrough.md#strict-real-browser-smoke-gate-169).
+
 All four workflows use `ubuntu-24.04` and immutable official Node-24-compatible
 v6 action commits verified on October 5:
 

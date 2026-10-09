@@ -89,7 +89,7 @@ with Latifa.
 ## Current priority order
 
 Updated October 9: all four scenario stages and application review/evidence/staff
-foundations are implemented locally; #152/#155/#158/#160/#162/#164/#166 and Patrick's #156 are merged.
+foundations are implemented locally; #152/#155/#158/#160/#162/#164/#166/#168 and Patrick's #156 are merged.
 This is application progress, not live Cyber Range acceptance.
 
 1. Human support and staff operations are connected (#136/#138; #135/#137 closed).
@@ -127,9 +127,13 @@ This is application progress, not live Cyber Range acceptance.
    reproduced facilitator reconnect/stop pending-command gaps with
    [request/inspection boundaries](staff-operations.md#pending-control-and-inspection-boundaries-165);
    Emergency Stop priority and the existing server contract remain intact.
-   Current #167 fixes reproduced overlapping support replies after reconnect and
+   Merged #168 closed #167, fixing reproduced overlapping support replies after reconnect and
    stale queue authority after rejection with [support delivery inspection](exercise-support.md#pending-delivery-and-queue-inspection-167).
    Frozen same-message retries and server role/run/limit rules remain unchanged.
+   Current #169 adds a [strict actual-browser smoke gate](ui-walkthrough.md#strict-real-browser-smoke-gate-169)
+   for the existing walkthrough, with source-correlated screenshots/export and
+   current reset-confirmation handling. It complements DOM/service regressions,
+   not representative usability or live range acceptance; no runtime VM dependency.
 2. Patrick proves offline deployment, identity-slice Splunk ingestion, privacy and
    snapshot/readiness on the approved range topology.
    His October 7 #101 record identifies the offline dashboard bundle/source

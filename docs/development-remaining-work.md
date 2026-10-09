@@ -1,13 +1,13 @@
 # Remaining development and PR estimate — updated 9 October 2026
 
 This is a planning estimate, not a list of confirmed defects or a promise of an
-exact PR count. Baseline: #152/#155/#158/#160/#162/#164/#166 merged; Patrick's #156 also merged. The
+exact PR count. Baseline: #152/#155/#158/#160/#162/#164/#166/#168 merged; Patrick's #156 also merged. The
 application already supports all four checkpoint branches, mock-cloud and safe
 impact/recovery, submissions, human review/AAR, run archives, supervised timing,
 private event-spool export, local readiness, human support and staff operations.
 
 **Aya: approximately one planned approved-content integration PR, plus 3–6
-evidence-driven fix PRs including the current support-delivery defects (#167):
+evidence-driven verification/fix PRs including the current browser CI gap (#169):
 budget 4–7 in total.** This is a rolling allowance, not a fixed countdown. Smaller fixes
 can be combined; a significant integration defect can require several PRs. This
 is not a plan for new major features. Strict milestone checks are merged in #148;
@@ -18,8 +18,11 @@ offline application/receiver comparison for #102, not Splunk deployment. #160 cl
 #159 with an observed delayed-read credential boundary. #162 closed #161's
 stale-run SSO/pending-action gap. #164 closed #163's reproduced duplicate learner
 submissions/obsolete inspection. #166 closed #165's reproduced facilitator reconnect/stop
-pending-command gaps. #167 fixes reproduced overlapping support replies after
-reconnect and stale queue authority after rejection, not a new exercise stage.
+pending-command gaps. #168 closed #167's overlapping support replies after
+reconnect and stale queue authority after rejection. Current #169 makes the
+existing real-browser walkthrough a lightweight strict CI gate, including an
+updated acknowledgement of the application's existing reset safety confirmation;
+it does not add an exercise stage or replace representative acceptance.
 Freeze optional features before the
 final Cyber Range delivery window.
 
@@ -31,7 +34,7 @@ final Cyber Range delivery window.
 | Application/deployment contract integration | Startup contract delivered in #142; #141 closed; allow 0–1 evidence-driven follow-up | Read-only deployment-input preflight/fail-before-write startup is implemented. Patrick still proves the deployed application/readiness/private spool; Aya fixes evidenced application gaps, not Patrick's Ansible/Splunk backlog. |
 | Cross-role full-play workflow and integration checks | Delivered in #144; #143 closed | Learner run-pinning closes an observed reset gap; representative HTTP roles compose checkpoints, recovery, terminal stop/completion, private archives, reset and fresh actions. Existing 24-case service tests stay unchanged; local checks do not replace real learner/range rehearsals. |
 | Reliable current human review workflow | Delivered in #146; #145 closed | Same-revision drafts preserved; downloads pin run/report snapshot; unconfirmed saves require inspection. Anna's rubric/calibration and Patrick's real acceptance remain separate. |
-| Application release/handoff consolidation | Strict full-play gates delivered in #148; offline source checker in #150; security gate in #152; module CI evidence in #155; receiver comparison in #158; evidence-viewer fix in #160; SSO fix in #162; learner pending-action fix in #164; staff command fix in #166; #147/#149/#151/#154/#157/#159/#161/#163/#165 closed. Current support-delivery fix #167; final reconciliation can share an owner-driven fix | Module pytest and coverage now fail correctly and retain reports. Saved-file comparison supports actual #102 ingestion checks but cannot certify a receiver. #153 still needs retrospective teammate review; its post-merge CI passed. Prototype versus v1.0 gates remain separate; final package/configuration/support agreement depends on owner evidence. Ashley coordinates sign-off. |
+| Application release/handoff consolidation | Strict full-play gates delivered in #148; offline source checker in #150; security gate in #152; module CI evidence in #155; receiver comparison in #158; evidence-viewer fix in #160; SSO fix in #162; learner pending-action fix in #164; staff command fix in #166; support delivery fix in #168; #147/#149/#151/#154/#157/#159/#161/#163/#165/#167 closed. Current browser smoke CI #169; final reconciliation can share an owner-driven fix | Module pytest and coverage now fail correctly and retain reports. Saved-file comparison supports actual #102 ingestion checks but cannot certify a receiver. The browser gate complements DOM/service checks, not non-author/range acceptance. #153 still needs retrospective teammate review; its post-merge CI passed. Prototype versus v1.0 gates remain separate; final package/configuration/support agreement depends on owner evidence. Ashley coordinates sign-off. |
 
 Several packages can share a PR. The allowances describe reviewable increments,
 not seven independently mandatory new products. Restart/resume of an in-flight

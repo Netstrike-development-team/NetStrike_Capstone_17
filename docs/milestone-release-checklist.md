@@ -24,6 +24,13 @@ It strictly runs all core Python suites (including package tooling and topology
 validation), dependency-free Node interactions, all 24 local developer cases and
 an independent export verification. Failures are not ignored.
 
+Its additional `browser-smoke` job (#169) must also pass: it runs the existing
+18-step journey through real browser forms/HTTP, export, recovery, mobile evidence
+and reset in managed Chromium. Preserve the source-correlated screenshots/receipt
+alongside other evidence. This is one compressed synthetic developer path, not
+representative usability or a replacement for any owner acceptance requirement.
+See [browser scope and commands](ui-walkthrough.md#strict-real-browser-smoke-gate-169).
+
 The separate [maintained application security gate](application-security-gate.md)
 blocks medium/high Bandit findings and scan errors in application/tooling code
 and the five maintained profile/action adapters. Legacy reports remain
