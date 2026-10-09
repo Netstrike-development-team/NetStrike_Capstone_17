@@ -57,9 +57,11 @@ test("ambiguous network error retries the frozen payload and key despite edits",
   h.responses.push(new Error("network unavailable"));
   assert.equal(await h.session.submit(fields), false);
   assert.ok(h.session.operation);
+  assert.equal(h.session.snapshot, null);
+  await load(h);
   h.responses.push({run_id: "run-a", replayed: true});
   assert.equal(await h.session.submit({objective_id: "LO5", message: "different"}), true);
-  assert.equal(h.calls[1].init.body, h.calls[2].init.body);
+  assert.equal(h.calls[1].init.body, h.calls[3].init.body);
   assert.match(h.session.message, /no duplicate/);
 });
 test("server error keeps retry; definite rejection permits corrected payload", async () => {
@@ -68,6 +70,7 @@ test("server error keeps retry; definite rejection permits corrected payload", a
   h.responses.push(Object.assign(new Error("fault"), {status: 500}));
   await h.session.submit(fields);
   assert.ok(h.session.operation);
+  await load(h);
   h.responses.push(Object.assign(new Error("conflict"), {status: 409}));
   await h.session.submit({});
   assert.equal(h.session.operation, null);
@@ -94,6 +97,8 @@ test("auth change discards old replies, private views, drafts and retry payload"
   pending.resolve({run_id: "run-a"});
   assert.equal(await write, false);
   assert.equal(h.session.operation, null);
+  assert.equal(h.session.snapshot, null);
+  await load(h, snapshot({requests: [question({question: "Other actor"})]}));
   assert.equal(h.session.snapshot.requests[0].question, "Other actor");
 });
 test("out-of-order reads cannot replace a newer private transcript", async () => {
@@ -266,7 +271,8 @@ function mounted(staff) {
     for (const input of checkboxes) input.checked = false;
   };
   form.reportValidity = () => true;
-  form.querySelectorAll = (selector) => selector.includes(":checked") ? checkboxes.filter((input) => input.checked)
+  form.querySelectorAll = (selector) => selector.includes("objective_ids")
+    ? selector.includes(":checked") ? checkboxes.filter((input) => input.checked) : checkboxes
     : [...Object.values(form.elements), ...checkboxes];
   form.reset();
   globalThis.document = {querySelector: (id) => nodes[id] || null, createElement: (tag) => new Node(tag)};
@@ -274,9 +280,10 @@ function mounted(staff) {
   globalThis.window = {addEventListener: (name, callback) => { if (name === "pagehide") teardown = callback; }};
   const responses = [snapshot(staff ? {principal_role: "facilitator", requests: [question({requester_id: "learner", requester_role: "soc_analyst"})]} : {})];
   const calls = [];
-  const session = mountSupport({staff, sessionOptions: {readToken: () => "actor", makeKey: () => "mounted-key",
+  let credential = "actor";
+  const session = mountSupport({staff, sessionOptions: {readToken: () => credential, makeKey: () => "mounted-key",
     call: async (path, init) => { calls.push({path, init}); const value = responses.shift(); if (value instanceof Error) throw value; return await value; }}});
-  return {nodes, form, session, responses, calls, checkboxes,
+  return {nodes, form, session, responses, calls, checkboxes, hide: () => teardown(), credential: (value) => { credential = value; },
     cleanup: () => { teardown(); delete globalThis.document; delete globalThis.window; delete globalThis.Option; }};
 }
 const flush = () => new Promise((resolve) => setImmediate(resolve));
@@ -343,14 +350,16 @@ test("mounted participant retry bypasses disabled fields and uses the exact firs
     await flush();
     m.form.elements.objective_id.value = "LO2";
     m.form.elements.message.value = "Original question";
-    m.responses.push(new Error("network lost"));
+    m.responses.push(new Error("network lost"), snapshot());
     await m.form.events.submit({preventDefault() {}});
     assert.equal(m.form.elements.message.disabled, true);
     assert.equal(m.nodes["#support-send"].textContent, "Retry same message");
     m.form.elements.message.value = "Changed";
     m.responses.push({run_id: "run-a", replayed: true}, snapshot({requests: [question()]}));
     await m.form.events.submit({preventDefault() {}});
-    assert.equal(m.calls[1].init.body, m.calls[2].init.body);
+    const posts = m.calls.filter(({init}) => init.method === "POST");
+    assert.equal(posts.length, 2);
+    assert.equal(posts[0].init.body, posts[1].init.body);
     assert.match(m.nodes["#support-summary"].textContent, /no duplicate/);
   } finally { m.cleanup(); }
 });
@@ -362,7 +371,8 @@ test("a stopped-run rejected coaching retry cannot silently become a platform re
     m.form.elements.request_id.value = "question-a";
     m.form.elements.message.value = "Coaching draft";
     m.checkboxes[1].checked = true;
-    m.responses.push(Object.assign(new Error("audit failure"), {status: 503}));
+    m.responses.push(Object.assign(new Error("audit failure"), {status: 503}),
+      snapshot({principal_role: "facilitator", requests: [question({requester_id: "learner", requester_role: "soc_analyst"})]}));
     await m.form.events.submit({preventDefault() {}});
     m.responses.push(stopped);
     await m.session.refresh();
@@ -370,9 +380,165 @@ test("a stopped-run rejected coaching retry cannot silently become a platform re
     assert.equal(m.form.elements.message.value, "Coaching draft");
     m.responses.push(Object.assign(new Error("not committed; coaching stopped"), {status: 409}), stopped);
     await m.form.events.submit({preventDefault() {}});
-    assert.equal(JSON.parse(m.calls[3].init.body).kind, "clarification");
+    const posts = m.calls.filter(({init}) => init.method === "POST");
+    assert.equal(posts.length, 2);
+    assert.equal(JSON.parse(posts[1].init.body).kind, "clarification");
     assert.equal(m.form.elements.kind.value, "platform_issue");
     assert.equal(m.form.elements.message.value, "");
     assert.equal(m.session.operation, null);
+  } finally { m.cleanup(); }
+});
+
+const staffSnapshot = (overrides = {}) => snapshot({principal_role: "facilitator",
+  requests: [question({requester_id: "learner", requester_role: "soc_analyst"})], ...overrides});
+function draft(m, message = "Original question") {
+  m.form.elements.message.value = message;
+  if (m.form.elements.request_id) {
+    m.form.elements.request_id.value = "question-a"; m.checkboxes[1].checked = true;
+  } else m.form.elements.objective_id.value = "LO2";
+  m.form.events.change();
+}
+const posts = (m) => m.calls.filter(({init}) => init.method === "POST");
+
+test("mounted staff reconnect retains the pending request slot while clearing private drafts", async () => {
+  const m = mounted(true);
+  try {
+    await flush(); draft(m, "Private reply"); const pending = deferred(); m.responses.push(pending.promise);
+    const sending = m.form.events.submit({preventDefault() {}});
+    m.responses.push(staffSnapshot()); m.nodes["#connect"].events.click(); await flush();
+    assert.equal(m.session.busy, true); assert.equal(m.nodes["#support-send"].disabled, true);
+    assert.equal(m.form.elements.message.value, ""); assert.equal(m.session.operation, null);
+    await m.form.events.submit({preventDefault() {}}); assert.equal(posts(m).length, 1);
+    pending.resolve({run_id: "run-a"}); await sending;
+    assert.equal(m.session.busy, false); assert.equal(m.session.snapshot, null);
+    assert.doesNotMatch(m.nodes["#support-summary"].textContent, /Message recorded/);
+    m.responses.push(staffSnapshot()); await m.session.refresh(); draft(m, "New inspected reply");
+    assert.equal(m.nodes["#support-send"].disabled, false);
+  } finally { m.cleanup(); }
+});
+
+test("mounted learner cannot double-submit or trigger another form-driven inspection while sending", async () => {
+  const m = mounted(false);
+  try {
+    await flush(); draft(m); const pending = deferred(); m.responses.push(pending.promise);
+    const sending = m.form.events.submit({preventDefault() {}}); const count = m.calls.length;
+    await m.form.events.submit({preventDefault() {}});
+    assert.equal(m.calls.length, count); assert.equal(posts(m).length, 1);
+    assert.equal(m.nodes["#support-send"].disabled, true);
+    m.responses.push(snapshot({requests: [question()]})); pending.resolve({run_id: "run-a"}); await sending;
+    assert.equal(m.session.busy, false); assert.equal(m.session.snapshot.requests.length, 1);
+    assert.equal(m.nodes["#support-send"].disabled, true);
+  } finally { m.cleanup(); }
+});
+
+test("mounted unknown delivery and unavailable inspection keep the frozen draft but disable retry", async () => {
+  const m = mounted(false);
+  try {
+    await flush(); draft(m); m.responses.push(new Error("Acknowledgement lost"), new Error("Queue unavailable"));
+    await m.form.events.submit({preventDefault() {}});
+    assert.equal(m.session.snapshot, null); assert.equal(m.form.elements.message.value, "Original question");
+    assert.equal(m.form.elements.message.disabled, true); assert.equal(m.nodes["#support-send"].disabled, true);
+    assert.match(m.nodes["#support-summary"].textContent, /Delivery uncertain.*No authorized support queue/);
+    await m.form.events.submit({preventDefault() {}}); assert.equal(posts(m).length, 1);
+    // The attempted retry only inspects; it never sends an uninspected POST.
+    m.responses.push(snapshot()); await m.session.refresh(); assert.equal(m.nodes["#support-send"].disabled, false);
+    m.form.elements.message.value = "Later edit";
+    m.responses.push({run_id: "run-a", replayed: true}, snapshot({requests: [question()]}));
+    await m.form.events.submit({preventDefault() {}});
+    assert.equal(posts(m).length, 2); assert.equal(posts(m)[0].init.body, posts(m)[1].init.body);
+    assert.match(m.nodes["#support-summary"].textContent, /no duplicate/);
+  } finally { m.cleanup(); }
+});
+
+test("mounted staff terminal retry visibly retains original target, kind, text and objective scope", async () => {
+  const m = mounted(true);
+  try {
+    await flush(); draft(m, "Original clarification");
+    m.responses.push(Object.assign(new Error("uncertain audit"), {status: 503}),
+      staffSnapshot({run_state: "stopped", requests: []}));
+    await m.form.events.submit({preventDefault() {}});
+    assert.equal(m.form.elements.kind.value, "clarification"); assert.equal(m.form.elements.kind.disabled, true);
+    assert.equal(m.form.elements.message.value, "Original clarification");
+    assert.equal(m.form.elements.request_id.value, "question-a");
+    assert.ok(m.form.elements.request_id.options.some((option) => /Original request \(retry only\)/.test(option.textContent)));
+    assert.equal(m.checkboxes[1].checked, true); assert.equal(m.nodes["#support-send"].disabled, false);
+    m.responses.push({run_id: "run-a", replayed: true}, staffSnapshot({run_state: "stopped", requests: []}));
+    await m.form.events.submit({preventDefault() {}});
+    assert.equal(posts(m).length, 2); assert.equal(posts(m)[0].init.body, posts(m)[1].init.body);
+    assert.equal(m.session.operation, null);
+  } finally { m.cleanup(); }
+});
+
+test("mounted definite rejection with unavailable inspection cannot enable a new reply", async () => {
+  const m = mounted(true);
+  try {
+    await flush(); draft(m); m.responses.push(Object.assign(new Error("conflict"), {status: 409}), new Error("Unavailable"));
+    await m.form.events.submit({preventDefault() {}});
+    assert.equal(m.session.operation, null); assert.equal(m.session.snapshot, null);
+    assert.equal(m.nodes["#support-send"].disabled, true);
+    assert.match(m.nodes["#support-summary"].textContent, /Message rejected.*No authorized support queue/);
+    assert.equal(posts(m).length, 1);
+  } finally { m.cleanup(); }
+});
+
+test("mounted post-delivery inspection cannot carry an old outcome notice into a new account", async () => {
+  const m = mounted(false);
+  try {
+    await flush(); draft(m); const oldRead = deferred(); m.responses.push({run_id: "run-a"}, oldRead.promise);
+    const sending = m.form.events.submit({preventDefault() {}}); await flush();
+    m.credential("other-actor"); m.responses.push(snapshot({requests: [question({question: "Other actor's thread"})]}));
+    await m.session.refresh(); oldRead.resolve(snapshot()); await sending;
+    assert.doesNotMatch(m.nodes["#support-summary"].textContent, /Message recorded/);
+    assert.match(allText(m.nodes["#support-threads"]), /Other actor's thread/);
+    assert.equal(m.form.elements.message.value, "");
+  } finally { m.cleanup(); }
+});
+
+test("mounted render failure after observed run change removes queue authority and private material", async () => {
+  const m = mounted(true);
+  try {
+    await flush(); draft(m, "Private draft");
+    m.responses.push(staffSnapshot({run_id: "run-b", requests: [null]})); await m.session.refresh();
+    assert.equal(m.session.snapshot, null); assert.equal(m.session.canWrite(), false);
+    assert.equal(m.form.elements.message.value, ""); assert.equal(m.nodes["#support-send"].disabled, true);
+    assert.doesNotMatch(allText(m.nodes["#support-threads"]), /Private/);
+  } finally { m.cleanup(); }
+});
+
+test("mounted new-run inspection discards an uncertain old-run message, never retries it", async () => {
+  const m = mounted(false);
+  try {
+    await flush(); draft(m, "Old-run question"); m.responses.push(new Error("uncertain"), snapshot());
+    await m.form.events.submit({preventDefault() {}}); assert.ok(m.session.operation);
+    m.responses.push(snapshot({run_id: "run-b"})); await m.session.refresh();
+    assert.equal(m.session.operation, null); assert.equal(m.form.elements.message.value, "");
+    assert.equal(posts(m).length, 1); assert.doesNotMatch(m.nodes["#support-summary"].textContent, /Delivery uncertain/);
+  } finally { m.cleanup(); }
+});
+
+test("mounted pagehide clears private context without releasing a real pending message", async () => {
+  const m = mounted(false);
+  try {
+    await flush(); draft(m); const pending = deferred(); m.responses.push(pending.promise);
+    const sending = m.form.events.submit({preventDefault() {}}); m.hide();
+    assert.equal(m.session.busy, true); assert.equal(m.session.operation, null);
+    assert.equal(m.form.elements.message.value, "");
+    pending.resolve({run_id: "run-a"}); await sending;
+    assert.equal(m.session.busy, false); assert.equal(m.session.snapshot, null);
+    assert.equal(posts(m).length, 1);
+  } finally { m.cleanup(); }
+});
+
+test("mounted queue inspection while pending keeps the sending label, not an actionable retry", async () => {
+  const m = mounted(true);
+  try {
+    await flush(); draft(m); const pending = deferred(); m.responses.push(pending.promise);
+    const sending = m.form.events.submit({preventDefault() {}}); m.responses.push(staffSnapshot()); await m.session.refresh();
+    assert.match(m.nodes["#support-summary"].textContent, /Sending and recording/);
+    assert.equal(m.nodes["#support-send"].textContent, "Sending…");
+    assert.equal(m.nodes["#support-send"].disabled, true);
+    m.responses.push(staffSnapshot()); pending.reject(new Error("Unconfirmed")); await sending;
+    assert.equal(m.nodes["#support-send"].textContent, "Retry same message");
+    assert.equal(m.nodes["#support-send"].disabled, false);
   } finally { m.cleanup(); }
 });
