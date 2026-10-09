@@ -38,6 +38,41 @@ responses cannot repopulate another credential's view. A failed read displays
 unavailable health, not a cached healthy certificate. Controls with uncertain
 outcomes are **not automatically retried**: refresh and inspect first.
 
+### Pending control and inspection boundaries (#165)
+
+One ordinary run command can be awaiting its response on this page. Reconnecting
+(including with the same token), observing a new run or hiding the page clears
+private snapshots/drafts, **not** the actual pending-request lock. Emergency Stop
+has its own pending slot: it can be sent while an ordinary command is pending,
+but ordinary commands and another Stop are blocked while Stop awaits confirmation.
+The control-status text distinguishes these states from a fresh inspection.
+
+Starting and settling either command invalidate earlier state reads. Inspection
+while a request is pending may show diagnostics, but cannot authorize ordinary
+controls; another GET after settlement is required. An older ordinary command's
+success/error notice is discarded once a priority Stop has been sent. Observed
+credential/run changes also discard obsolete notices. No control POST is
+automatically repeated after failure, reconnect or inspection.
+If rendering an accepted new-run snapshot fails, ordinary control authority is
+removed rather than leaving a partly rendered new run enabled. The known
+authenticated run remains available only for Emergency Stop and fresh inspection.
+
+This is a per-page request/inspection boundary, not cross-tab exactly-once
+execution or cancellation of a server handler. Emergency Stop still uses the
+same authenticated, run-pinned server operation and lock; if unreachable, use
+the external range emergency procedure. A read issued after an HTTP failure is
+not proof that an unobserved server operation has finished. Inspect outcome and
+preserve evidence; do not infer success from restored buttons. Read-only event
+exports, help requests and historical archives retain their separate contracts.
+
+Anna's representative facilitator test should include double clicking Pause,
+reconnecting while it is pending, sending Stop during a pending ordinary command,
+and confirming that ordinary controls stay blocked until a new inspection after
+settlement. Repeat with a changed token/run and an unconfirmed transport result;
+old private views/notices must not reappear. Automated model/mounted-script DOM
+tests cover these paths, not real browser usability, timing, server cancellation
+or deployed range acceptance. Patrick retains clock/load/snapshot tests.
+
 ## Finish review, capture and reset
 
 1. Stop or complete play. Finish human objective judgments in the existing
