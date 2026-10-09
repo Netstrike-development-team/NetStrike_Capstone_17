@@ -82,6 +82,17 @@ def test_staff_command_assets_are_in_exact_source_fingerprints():
         assert fingerprints[name] == rehearsal._sha(rehearsal.ROOT / name)
 
 
+def test_support_delivery_assets_are_in_exact_source_fingerprints():
+    fingerprints = rehearsal._source()["files_sha256"]
+    for name in (
+        "dashboard/static/support.js",
+        "dashboard/static/participant.html",
+        "dashboard/static/facilitator.html",
+        "dashboard/static/evaluator.html",
+    ):
+        assert fingerprints[name] == rehearsal._sha(rehearsal.ROOT / name)
+
+
 @pytest.mark.parametrize("name", list(rehearsal.cases()))
 def test_raw_telemetry_comparison_handles_each_real_rehearsal_export(
     full_package, tmp_path, name

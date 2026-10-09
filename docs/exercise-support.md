@@ -46,6 +46,36 @@ Reloading/closing the page loses an uncertain retry: inspect the current transcr
 and coordinate with staff before attempting a new message. A definite 4xx rejection
 requires refreshing/checking permissions, state and limits; it is not a success.
 
+### Pending delivery and queue inspection (#167)
+
+The page retains one actual pending help-request/reply slot across reconnects
+(including the same token), observed account/run changes and pagehide. Clearing
+private context does not cancel a request already sent. New private context can
+be inspected while it is pending, but cannot send another message until that
+request settles and a fresh authorized queue is loaded.
+
+Starting and settling a send invalidate older queue reads on **every** outcome,
+not only success. The mounted form performs a GET inspection after a current
+send settles; it never automatically repeats the POST. If inspection is
+unavailable, the transcript is cleared and send/retry stays disabled. The status
+distinguishes unconfirmed delivery from unavailable inspection. An accepted
+new-run snapshot that cannot render also loses queue/write authority.
+
+An uncertain retry keeps the original run, message, objective scope, kind,
+request and idempotency key. Its disabled form shows those frozen values; an
+already-answered target remains labelled **Original request (retry only)**.
+After fresh inspection, an explicit retry can confirm an existing message even
+in terminal play. It cannot silently become a new question, different reply or
+platform explanation. Reconnect/account/run changes clear the private retry body;
+inspect the transcript and coordinate with staff before composing a replacement.
+Obsolete success/error notices cannot cross those boundaries.
+
+These are per-page request/inspection guards, not cross-tab exactly-once or
+server cancellation. A failed HTTP response does not prove the server handler
+has finished. The existing server run/role/limit/idempotency checks remain
+authoritative. This queue is not an emergency-stop channel or proof of independent
+learner performance; human evaluation and the external safety procedure remain.
+
 ## Roles and routes
 
 | Route | Authorized role / projection |
@@ -164,7 +194,7 @@ spool publication preserves it. VM rollback still requires external export first
 python -m dashboard.support_demo
 python -m dashboard.support_demo --execute
 python -m pytest dashboard/tests/test_support.py dashboard/tests/test_archives.py -q
-node --test dashboard/tests/support_console.test.mjs
+node --test dashboard/tests/support_console.test.mjs dashboard/tests/support_delivery_safety.test.mjs
 ```
 
 Default preview creates no runtime, evidence or files. Explicit execution creates

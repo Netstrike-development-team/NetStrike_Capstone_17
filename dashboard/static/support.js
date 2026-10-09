@@ -18,6 +18,8 @@ export class SupportSession {
     this.credential = "";
     this.generation = 0;
     this.readSerial = 0;
+    this.activity = 0;
+    this.busy = false;
     this.reset(false);
   }
 
@@ -27,8 +29,9 @@ export class SupportSession {
     this.snapshot = null;
     this.contextRun = null;
     this.operation = null;
-    this.busy = false;
-    this.message = "Connect to load exercise support.";
+    // Clearing private context does not cancel a request already sent.
+    this.message = this.busy ? "A support request is still awaiting confirmation. Refresh after it settles."
+      : "Connect to load exercise support.";
     if (notify) { this.cleared(); this.changed(); }
   }
 
@@ -42,26 +45,35 @@ export class SupportSession {
   }
 
   current(credential, generation) {
-    return this.readToken() === credential && this.generation === generation;
+    return this.syncCredential() === credential && this.generation === generation;
   }
 
   async refresh() {
     const credential = this.syncCredential();
     if (!credential) return;
-    const generation = this.generation;
-    const serial = ++this.readSerial;
+    let generation = this.generation;
+    let serial = ++this.readSerial;
+    const activity = this.activity;
     try {
       const snapshot = await this.call(this.staff ? "/api/facilitator/support" : "/api/participant/support",
         {cache: "no-store"});
-      if (!this.current(credential, generation) || serial !== this.readSerial) return;
-      if (this.contextRun && this.contextRun !== snapshot.run_id) this.reset();
+      if (!this.current(credential, generation) || serial !== this.readSerial || activity !== this.activity) return;
+      if (!snapshot || typeof snapshot.run_id !== "string" || !snapshot.run_id.trim()
+        || snapshot.run_id !== snapshot.run_id.trim() || snapshot.run_id.length > 128
+        || /[\u0000-\u001f\u007f]/.test(snapshot.run_id) || !Array.isArray(snapshot.requests)) throw new Error("Invalid support snapshot");
+      if (this.contextRun && this.contextRun !== snapshot.run_id) {
+        this.reset();
+        generation = this.generation;
+        serial = this.readSerial;
+      }
       this.contextRun = snapshot.run_id;
       this.snapshot = snapshot;
-      this.message = this.operation ? "Delivery uncertain. Retry sends the exact same message, not a new one."
+      this.message = this.busy ? "Sending and recording the message…"
+        : this.operation ? "Delivery uncertain. Retry sends the exact same message, not a new one."
         : `${snapshot.run_id} · ${snapshot.run_state} · ${snapshot.requests.length} ${this.staff ? "requests" : "your requests"}`;
       this.changed();
     } catch (error) {
-      if (!this.current(credential, generation) || serial !== this.readSerial) return;
+      if (!this.current(credential, generation) || serial !== this.readSerial || activity !== this.activity) return;
       this.snapshot = null;
       this.message = "Support unavailable. Refresh or reconnect before continuing.";
       // Never leave another actor's transcript on screen after authorization failure.
@@ -73,8 +85,9 @@ export class SupportSession {
   }
 
   canWrite(kind = "clarification") {
+    this.syncCredential();
     const state = this.snapshot;
-    if (!state || this.observer) return false;
+    if (this.busy || !state || this.observer) return false;
     if (this.staff) {
       return ["facilitator", "technical_operator"].includes(state.principal_role)
         && (state.principal_role !== "technical_operator" || kind === "platform_issue")
@@ -99,7 +112,10 @@ export class SupportSession {
     }
     const generation = this.generation;
     const operation = this.operation;
+    this.activity += 1;
+    this.readSerial += 1;
     this.busy = true;
+    this.snapshot = null;
     this.message = "Sending and recording the message…";
     this.changed();
     try {
@@ -112,8 +128,6 @@ export class SupportSession {
       this.snapshot = null;
       this.cleared();
       this.message = receipt.replayed ? "Existing message confirmed; no duplicate created." : "Message recorded.";
-      // Invalidate GETs issued before this successful write.
-      this.readSerial += 1;
       return true;
     } catch (error) {
       if (!this.current(credential, generation) || this.contextRun !== operation.run_id) return false;
@@ -128,10 +142,13 @@ export class SupportSession {
       }
       return false;
     } finally {
-      if (this.current(credential, generation)) {
-        this.busy = false;
-        this.changed();
-      }
+      const owned = this.current(credential, generation) && this.contextRun === operation.run_id;
+      this.busy = false;
+      this.activity += 1;
+      this.readSerial += 1;
+      this.snapshot = null;
+      if (!owned) this.message = "Refresh support to inspect the current queue before sending a message.";
+      this.changed();
     }
   }
 }
@@ -190,15 +207,27 @@ export function mountSupport({staff = false, observer = false, sessionOptions = 
         rendered = signature;
       }
       if (!form) return;
+      // Show the frozen retry, not later edits or a cleared/relabeled form.
+      const operation = session.operation;
+      if (operation) {
+        form.elements.message.value = operation.message;
+        if (staff) {
+          form.elements.kind.value = operation.kind;
+          for (const input of form.querySelectorAll('input[name="objective_ids"]')) {
+            input.checked = operation.objective_ids.includes(input.value);
+          }
+        } else form.elements.objective_id.value = operation.objective_id;
+      }
       if (staff) {
         const select = form.elements.request_id;
-        const prior = select.value;
+        const prior = operation?.request_id || select.value;
         const pending = snapshot?.requests.filter((item) => !item.response) || [];
-        const ids = pending.map((item) => item.request_id).join("|");
+        const ids = pending.map((item) => item.request_id).join("|") + (operation ? `|retry:${operation.request_id}` : "");
         if (select.dataset.requests !== ids) {
           select.replaceChildren(new Option("Select an unanswered request", ""));
           for (const item of pending) select.add(new Option(`${item.requester_id} · ${item.objective_id} · ${item.question.slice(0, 65)}`, item.request_id));
-          if (pending.some((item) => item.request_id === prior)) select.value = prior;
+          if (operation && !pending.some((item) => item.request_id === prior)) select.add(new Option(`${prior} · Original request (retry only)`, prior));
+          if (operation || pending.some((item) => item.request_id === prior)) select.value = prior;
           else if (prior && !session.operation) { form.reset(); }
           select.dataset.requests = ids;
         }
@@ -224,6 +253,7 @@ export function mountSupport({staff = false, observer = false, sessionOptions = 
     form.addEventListener("change", () => session.changed());
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
+      if (session.busy) return;
       let fields = {};
       if (!session.operation) {
         if (!form.reportValidity()) return;
@@ -239,15 +269,13 @@ export function mountSupport({staff = false, observer = false, sessionOptions = 
       }
       const generation = session.generation;
       const credential = session.readToken();
-      const succeeded = await session.submit(fields);
+      await session.submit(fields);
       if (!session.current(credential, generation)) return;
       const message = session.message;
-      if (!session.operation) {
-        await session.refresh();
-        if (!session.current(credential, generation)) return;
-        summary.textContent = message;
-      }
-      if (succeeded) summary.textContent = message;
+      await session.refresh();
+      if (!session.current(credential, generation)) return;
+      summary.textContent = session.snapshot ? message
+        : `${message} No authorized support queue is loaded; refresh before sending or retrying.`;
     });
   }
   document.querySelector("#connect").addEventListener("click", () => { session.reset(); session.refresh(); });
