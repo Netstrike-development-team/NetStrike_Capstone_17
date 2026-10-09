@@ -142,3 +142,64 @@ Application reset is distinct from Cyber Range VM snapshot restoration.
 Reference for the recording-only integration:
 [Playwright video lifecycle](https://playwright.dev/python/docs/videos) and
 [installed Chrome channel](https://playwright.dev/python/docs/browsers#google-chrome--microsoft-edge).
+
+## Strict real-browser smoke gate (#169)
+
+The `browser-smoke` job in `Local full-play rehearsal` now runs the **existing
+18-step journey** in actual managed Chromium against a fresh loopback application.
+It complements, rather than replaces, the Node DOM-double regressions and the
+24-case service rehearsal. Browser forms, script loading, actual HTTP, evidence
+filtering, mock-cloud actions, default-preview recovery, five-file restore/hash
+validation, the final brief, JSONL download, populated 390px mobile evidence and
+application reset are exercised without intercepted/mocked API replies. Reset
+explicitly accepts only the known confirmation for this task's disposable run;
+the application's safety confirmation is not removed. Direct facilitator APIs
+advance/pause the clock for a compressed demonstration, not a real 130-minute run.
+
+Run it locally in a development tooling venv, from the repository root:
+
+```bash
+python -m pip install -r dashboard/requirements.txt -r scripts/requirements-browser-smoke.txt
+python -m playwright install chromium
+# On Linux, install browser system dependencies with --with-deps instead.
+python scripts/record_ui_walkthrough.py --execute --smoke-only --output /absolute/new/browser-smoke-folder
+```
+
+Without `--execute`, even `--smoke-only` stays preview-only. Existing output
+directories are rejected. Smoke mode implies fast/silent operation, uses the
+pinned Playwright package's managed browser instead of installed Chrome, and
+does not import `imageio-ffmpeg`, run narration/encoding or create video. The
+Playwright browser installer may also fetch its bundled media helper; no media
+processing is performed. Regular video and `--fast` video commands above retain
+installed Chrome and their recording dependencies.
+
+CI uses Ubuntu 24.04 / Python 3.11, read-only repository permissions, a ten-minute
+bound, no ignored failures and 14-day `browser-smoke-<checkout SHA>` artifacts.
+Developer tooling downloads happen on the CI/development host, **not** in the
+air-gapped scenario VMs; application/runtime dependencies and Patrick's offline
+bundle are unchanged. Installation follows the
+[official Playwright CI instructions](https://playwright.dev/python/docs/ci).
+
+Artifacts contain chapter screenshots, mobile evidence screenshot, schema-checked
+canonical `events.jsonl`, server diagnostics and a successful `manifest.json`.
+The receipt includes the checked-out Git revision/dirty state, the full existing
+rehearsal source inventory (plus browser tooling/test inputs), Python/Playwright/
+browser versions and artifact hashes. Source is checked before and after play;
+a changed source fails. Hosted PR checkout may be a synthetic merge commit, not
+the feature head: use the actual recorded revision. A hash records consistency,
+not authenticity or independent acceptance. Failure keeps available diagnostics
+and `failure.json`, never a success manifest. There is no token, SQLite, browser
+profile, network trace, video or narration export in smoke mode. Task-owned browser,
+server, database and decoys are cleaned up on ordinary success/failure. Forced
+runner termination is outside Python's cleanup guarantee.
+
+Page errors, local HTTP errors and failed local requests fail the check. Chromium's
+`net::ERR_ABORTED` is excluded because navigation and the application's deliberate
+obsolete-read cancellation can cause it; journey assertions must still complete.
+Screenshots are diagnostic, **not** pixel-diff/layout-completeness certification.
+This single adverse path does not cover every branch, delayed-response race or
+browser engine. Private support/evaluator/archive interactions remain covered by
+their focused application/DOM tests, not this browser journey. It does not certify
+representative usability, accessibility, authored hints/rubric, realistic timing,
+Splunk ingestion/RBAC, Windows/AD, load, VM snapshot restoration or client acceptance.
+Anna's #99 and Patrick's #104 remain open; main promotion gates are unchanged.

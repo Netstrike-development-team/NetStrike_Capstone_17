@@ -156,6 +156,8 @@ def _source() -> dict:
         "scripts/rehearsal.py",
         "scripts/check_security_report.py",
         "scripts/record_ui_walkthrough.py",
+        "scripts/requirements-browser-smoke.txt",
+        "scripts/tests/test_ui_walkthrough_cli.py",
         ".github/workflows/backend-security-ci.yml",
         ".github/workflows/backend-ci.yml",
         ".github/workflows/local-rehearsal-ci.yml",
