@@ -40,6 +40,9 @@ but do not guarantee hosted-runner availability during an outage.
 The full-play workflow also includes a strict `browser-smoke` job (#169). It
 executes the existing 18-step walkthrough in managed Chromium, without video or
 narration, and retains source-correlated screenshots/JSONL/diagnostics for 14 days.
+It also runs a separate 14-step help/review/archive journey (#171) in a new disposable
+app, retaining both outputs in the same artifact. Either step failing fails the job;
+the normal check count remains fourteen.
 It does not replace the strict core/DOM/24-case service checks or Anna/Patrick's
 acceptance. See [browser tooling, commands and coverage limits](ui-walkthrough.md#strict-real-browser-smoke-gate-169).
 

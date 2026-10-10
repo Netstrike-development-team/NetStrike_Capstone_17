@@ -27,12 +27,16 @@ jobs:
         run: python -m playwright install --with-deps chromium
       - name: Exercise actual browser forms, evidence, recovery, export and reset (strict)
         run: python scripts/record_ui_walkthrough.py --execute --smoke-only --output "$RUNNER_TEMP/browser-smoke-evidence"
+      - name: Exercise private help, evaluator review and immutable archives (strict)
+        run: python scripts/staff_browser_smoke.py --execute --output "$RUNNER_TEMP/staff-browser-smoke-evidence"
       - name: Retain synthetic browser diagnostics (not usability or range sign-off)
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6, Node 24
         with:
           name: browser-smoke-${{ github.sha }}
-          path: ${{ runner.temp }}/browser-smoke-evidence/
+          path: |
+            ${{ runner.temp }}/browser-smoke-evidence/
+            ${{ runner.temp }}/staff-browser-smoke-evidence/
           if-no-files-found: warn
           retention-days: 14
 

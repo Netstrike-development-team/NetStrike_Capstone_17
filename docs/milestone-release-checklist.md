@@ -26,8 +26,9 @@ an independent export verification. Failures are not ignored.
 
 Its additional `browser-smoke` job (#169) must also pass: it runs the existing
 18-step journey through real browser forms/HTTP, export, recovery, mobile evidence
-and reset in managed Chromium. Preserve the source-correlated screenshots/receipt
-alongside other evidence. This is one compressed synthetic developer path, not
+and reset in managed Chromium, plus the separate 14-step help/evaluator/archive
+journey (#171). Preserve both source-correlated screenshots/receipts alongside
+other evidence. These are compressed synthetic developer paths, not
 representative usability or a replacement for any owner acceptance requirement.
 See [browser scope and commands](ui-walkthrough.md#strict-real-browser-smoke-gate-169).
 

@@ -198,8 +198,54 @@ Page errors, local HTTP errors and failed local requests fail the check. Chromiu
 obsolete-read cancellation can cause it; journey assertions must still complete.
 Screenshots are diagnostic, **not** pixel-diff/layout-completeness certification.
 This single adverse path does not cover every branch, delayed-response race or
-browser engine. Private support/evaluator/archive interactions remain covered by
-their focused application/DOM tests, not this browser journey. It does not certify
+browser engine. Private support/evaluator/archive interactions are covered by
+the separate staff journey below, not the scenario walkthrough. Neither certifies
 representative usability, accessibility, authored hints/rubric, realistic timing,
 Splunk ingestion/RBAC, Windows/AD, load, VM snapshot restoration or client acceptance.
 Anna's #99 and Patrick's #104 remain open; main promotion gates are unchanged.
+
+## Help, evaluator and archive browser journey (#171)
+
+The same strict `browser-smoke` job also executes a separate **14-step staff
+journey**, reusing the loopback/managed-Chromium harness with its own fresh database,
+tokens and decoys. Same development dependencies as above; no media tooling:
+
+```bash
+python scripts/staff_browser_smoke.py  # inert preview; needs no site packages
+python scripts/staff_browser_smoke.py --execute --output /absolute/new/staff-smoke-folder
+```
+
+It checks actual Start/Pause/Stop buttons and run headers, two participants' private
+questions, facilitator clarification, literal HTML-like reply text, platform-only
+operator response after stop and read-only evaluator assistance. Then it tests a
+synthetic `not_observed` judgment/correction, completed same-revision draft refresh,
+run/snapshot-pinned current bundle/AAR downloads, capture/show/archive downloads,
+reset, empty current review/help and byte-identical historical files after reset.
+Historical review never populates the current judgment form.
+
+All replies/review prose identify **synthetic automation fixtures**, not approved
+coaching or actual learner evaluation/calibration. Play deliberately stops early;
+only one objective has two `not_observed` revisions. The report stays provisional
+with no numeric grade; five baseline decoys stay unchanged. This journey does not
+claim full-play completion, decoy restoration or mobile validation.
+
+Bundles are validated, role/actor/correlation checked and their reports rebuilt
+offline; downloaded Markdown must match. Canonical archived JSONL is checked
+against its bundle and schema/run/IDs/sequence. Its frozen ledger **predates the
+capture audit and reset**, not all later administrative activity. Bundle/AAR/JSONL
+downloads for the same archive ID must stay byte-identical after reset.
+
+The combined 14-day CI artifact now contains `browser-smoke-evidence/` and
+`staff-browser-smoke-evidence/`, each with its own manifest/screenshots/events.
+Staff output also includes current/archive/after-reset downloads. Receipts name
+`journey_id`, only that journey's completed assertions, exact source/tooling identity
+and all exported artifact hashes. Both scripts/tests are source-fingerprinted.
+Either step failing fails the job. Existing timeout/cleanup rules remain; no new
+CI job, paid service or application VM runtime dependency. Start confirmation here
+acknowledges a disposable developer fixture, not external range admission.
+
+Focused API/DOM tests still cover other races/failure paths. This is not every
+branch, browser engine, multi-tab conflict, accessibility or representative
+usability proof. Anna #99/#100 retains content/guides/calibration and non-author
+testing; Patrick #104 retains deployed role/privacy, Splunk/Windows/load, realistic
+timing and clean-snapshot rehearsals. No client acceptance or main promotion.

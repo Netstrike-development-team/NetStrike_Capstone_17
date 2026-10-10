@@ -257,6 +257,7 @@ def test_smoke_receipt_carries_source_artifact_hashes_and_limits(tmp_path, monke
     recorder.browser_version = "test-browser"
     recorder.events_count = 123
     recorder.run_id = "synthetic-test"
+    recorder.completed_checks = {"play_completed": True}
     monkeypatch.setattr(recording.importlib.metadata, "version", lambda _: "test-package")
     recorder.smoke_receipt()
     text = (tmp_path / "manifest.json").read_text()
