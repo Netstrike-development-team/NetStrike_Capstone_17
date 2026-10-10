@@ -157,6 +157,12 @@ class NoRecordingRedirects(urllib.request.HTTPRedirectHandler):
 class Walkthrough:  # pylint: disable=too-many-instance-attributes
     """One actual application, one isolated browser page and a verified run ledger."""
 
+    scenes = SCENES
+    journey_id = "full-play"
+    smoke_default = False
+    role_names = ("facilitator", "soc_analyst", "identity_responder",
+                  "endpoint_responder", "cloud_responder", "simulated_user")
+
     def __init__(self, output, *, fast=False, narrate=True, smoke_only=False):
         self.output = output
         self.smoke_only = smoke_only
@@ -164,15 +170,10 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
         self.narrate = narrate and not self.fast
         self.roles = {
             role: secrets.token_urlsafe(32)
-            for role in (
-                "facilitator",
-                "soc_analyst",
-                "identity_responder",
-                "endpoint_responder",
-                "cloud_responder",
-                "simulated_user",
-            )
+            for role in self.role_names
         }
+        self.completed_checks = {}
+        self.evidence_files = []
         self.chapters = []
         self.audio = []
         self.console_errors = []
@@ -233,9 +234,13 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
         if role:
             self.page.locator("#token-input").fill(self.roles[role])
             self.page.locator("#connect").click()
-            expect(self.page.locator("#run-state")).to_have_text(
-                re.compile(r"^(ready|running|paused|stopped|completed)$")
-            )
+            if path == "/evaluator":
+                expect(self.page.locator("#review-summary")).to_contain_text("objectives reviewed")
+                expect(self.page.locator("#objectives > article")).to_have_count(5)
+            else:
+                expect(self.page.locator("#run-state")).to_have_text(
+                    re.compile(r"^(ready|running|paused|stopped|completed)$")
+                )
         self.page.wait_for_timeout(250)
 
     def evidence(self, category="all", *, role="soc_analyst", query=""):
@@ -261,7 +266,7 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
         self.page.wait_for_timeout(400)
 
     def scene(self, index, operation):
-        title, narration = SCENES[index]
+        title, narration = self.scenes[index]
         start = time.monotonic() - self.started
         operation()
         self.page.wait_for_timeout(400)
@@ -272,7 +277,7 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
             self.page.wait_for_timeout(remaining * 1000)
         end = time.monotonic() - self.started
         self.chapters.append({"title": title, "start": start, "end": end, "narration": narration})
-        print(f"{index + 1:02}/{len(SCENES)} {title}", flush=True)
+        print(f"{index + 1:02}/{len(self.scenes)} {title}", flush=True)
 
     def prepare_audio(self):
         for index, (_title, narration) in enumerate(SCENES):
@@ -378,7 +383,7 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
             # A failure must not leave a success-looking manifest. No raw exception
             # text, tokens, browser profile, SQLite or network trace in artifacts.
             (self.output / "failure.json").write_text(json.dumps({
-                "passed": False, "synthetic_only": True,
+                "passed": False, "synthetic_only": True, "journey_id": self.journey_id,
                 "source": self.source, "completed_chapters": len(self.chapters),
                 "note": "Execution failed; see job output and available frames/server.log.",
             }, indent=2) + "\n", encoding="utf-8")
@@ -474,17 +479,19 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
 
     def smoke_receipt(self):
         """Source-correlated synthetic integration receipt, not range acceptance."""
-        artifacts = [self.output / "events.jsonl", *sorted((self.output / "frames").glob("*.png"))]
+        assert self.completed_checks, "journey assertions did not complete"
+        artifacts = [self.output / "events.jsonl", *sorted((self.output / "frames").glob("*.png")),
+                     *(self.output / name for name in self.evidence_files)]
         manifest = {
-            "passed": True, "mode": "browser-smoke", "synthetic_only": True,
+            "passed": True, "mode": "browser-smoke", "journey_id": self.journey_id,
+            "synthetic_only": True,
             "mocked_api_responses": False, "splunk_connected": False,
             "representative_usability_verified": False, "range_acceptance": False,
             "source": self.source, "python_version": sys.version.split()[0],
             "playwright_version": importlib.metadata.version("playwright"),
             "browser": "managed-chromium", "browser_version": self.browser_version,
             "run_id": self.run_id, "events_validated": self.events_count,
-            "play_completed": True, "decoys_restored": True,
-            "application_reset_verified": True, "mobile_evidence_checked": True,
+            **self.completed_checks,
             "server_stopped": True, "browser_errors": self.console_errors,
             "failed_http_responses": self.requests_failed, "chapters": self.chapters,
             "files_sha256": {
@@ -755,6 +762,10 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
             assert self.page.locator(".signal-card").count() == 0
 
         self.scene(17, reset)
+        self.completed_checks = {
+            "play_completed": True, "decoys_restored": True,
+            "application_reset_verified": True, "mobile_evidence_checked": True,
+        }
 
     def confirm_reset(self, dialog):
         """Acknowledge only this disposable run's existing safety confirmation."""
@@ -936,8 +947,9 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
         )
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+def main(argv=None, *, walkthrough_type=Walkthrough):
+    """Shared inert-by-default CLI; specialized journeys cannot enable video."""
+    parser = argparse.ArgumentParser(description=walkthrough_type.__doc__)
     parser.add_argument(
         "--execute", action="store_true", help="Run a disposable scenario and record actual UI"
     )
@@ -949,17 +961,18 @@ def main():
     )
     parser.add_argument("--no-narration", action="store_true")
     parser.add_argument(
-        "--smoke-only", action="store_true",
+        "--smoke-only", action="store_true", default=walkthrough_type.smoke_default,
         help="Fast real-browser CI journey using managed Chromium; no video/audio/encoder",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if not args.execute:
         print(
             json.dumps(
                 {
                     "preview_only": True,
                     "writes_performed": False,
-                    "chapters": [title for title, _ in SCENES],
+                    "journey_id": walkthrough_type.journey_id,
+                    "chapters": [title for title, _ in walkthrough_type.scenes],
                 }
             )
         )
@@ -970,8 +983,8 @@ def main():
     if output.exists():
         parser.error("output directory must not already exist")
     output.mkdir(parents=True)
-    Walkthrough(output, fast=args.fast, narrate=not args.no_narration,
-                smoke_only=args.smoke_only).record()
+    walkthrough_type(output, fast=args.fast, narrate=not args.no_narration,
+                     smoke_only=args.smoke_only).record()
 
 
 if __name__ == "__main__":
