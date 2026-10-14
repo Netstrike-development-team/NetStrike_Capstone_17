@@ -17,7 +17,7 @@
       "connection": "ssh",
       "port": 22,
       "logical_assets": ["CTRL01", "IDP01", "HELPDESK01", "CLOUD01", "FILE01"],
-      "required_services": ["ssh", "systemd-resolved", "systemd-timesyncd", "SplunkForwarder", "netstrike-portal.service"]
+      "required_services": ["ssh", "systemd-resolved", "chrony", "SplunkForwarder", "netstrike-portal.service"]
     },
     {
       "name": "DC01",

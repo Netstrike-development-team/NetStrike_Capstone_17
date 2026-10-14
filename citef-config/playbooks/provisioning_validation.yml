@@ -136,7 +136,7 @@
 
     - name: Confirm Linux selected an approved internal time source
       ansible.builtin.command:
-        argv: [timedatectl, timesync-status]
+        argv: [chronyc, sources]
       register: linux_time_source
       changed_when: false
       when:

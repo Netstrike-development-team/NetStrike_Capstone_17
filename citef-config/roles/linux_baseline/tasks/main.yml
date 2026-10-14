@@ -18,6 +18,16 @@
     fail_msg: "CTRL01 must use the pinned Ubuntu Server 26.04 LTS baseline."
   when: logical_name == "CTRL01"
 
+- name: Ensure systemd drop-in directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - /etc/systemd/resolved.conf.d
+
 - name: Configure internal DNS and exercise search domain
   ansible.builtin.template:
     src: systemd-resolved.conf.j2
@@ -30,12 +40,12 @@
 
 - name: Configure DC01 as the only NTP source
   ansible.builtin.template:
-    src: systemd-timesyncd.conf.j2
-    dest: /etc/systemd/timesyncd.conf.d/60-netstrike.conf
+    src: chrony.conf.j2
+    dest: /etc/chrony/chrony.conf
     owner: root
     group: root
     mode: "0644"
-  notify: Restart systemd-timesyncd
+  notify: Restart chrony
   when: windows_server_available | default(false) | bool
 
 - name: Ensure systemd-resolved is enabled
@@ -51,9 +61,9 @@
     state: link
     force: true
 
-- name: Ensure systemd-timesyncd is enabled
+- name: Ensure chrony is enabled
   ansible.builtin.service:
-    name: systemd-timesyncd
+    name: chrony
     enabled: true
     state: started
 
@@ -78,7 +88,7 @@
     label: "{{ item.item.name }}"
   when: windows_server_available | default(false) | bool
 
-- name: Require systemd-timesyncd to report synchronized time
+- name: Require chrony to report synchronized time
   ansible.builtin.command:
     argv: [timedatectl, show, --property=NTPSynchronized, --value]
   register: time_sync_state
@@ -88,9 +98,9 @@
   until: time_sync_state.stdout | trim == "yes"
   when: windows_server_available | default(false) | bool
 
-- name: Confirm systemd-timesyncd selected the approved internal source
+- name: Confirm chrony selected the approved internal source
   ansible.builtin.command:
-    argv: [timedatectl, timesync-status]
+    argv: [chronyc, sources]
   register: time_sync_status
   changed_when: false
   failed_when: >-
