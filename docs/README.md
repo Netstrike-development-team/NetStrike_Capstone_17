@@ -30,6 +30,7 @@ index](exercise-design/README.md).
 | [05 — Guide outlines](exercise-design/05-guide-outlines.md) | Participant, facilitator, evaluator, solution, and AAR guide structures |
 | [06 — CITEF requirements and approval](exercise-design/06-citef-requirements-and-approval.md) | Environment questionnaire, decisions, fallbacks, backlog, and approval record |
 | [07 — Offline tool-bundle inventory](exercise-design/07-offline-tool-bundle-inventory.md) | Software/artifact inputs, licensing gates, deployment decisions, and test record |
+| [Briefing and participant reference drafts](Script/README.md) | Revised opening/15-minute script, learner-safe templates, and owner checklist; pending content, deployment and non-author approval |
 
 ## Contracts and application behavior
 
