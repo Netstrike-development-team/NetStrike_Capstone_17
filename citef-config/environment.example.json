@@ -69,7 +69,7 @@
     "universal_forwarder": {
       "version": "10.0.1",
       "linux_deb": {
-        "file": "",
+        "file": "linux/splunkforwarder-10.0.1-c486717c322b-linux-amd64.deb",
         "sha512": "ab289083aa191c94c4e38a18826962069de8cc53b10dd60e7630e724773d12db5f0a742bfaf3d4c3c5375beb81983e307c1c8c87024b491b183571d5af7a800b"
       },
       "windows_msi": {
