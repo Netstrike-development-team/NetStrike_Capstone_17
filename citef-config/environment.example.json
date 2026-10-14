@@ -2,15 +2,11 @@
   "schema_version": 1,
   "network": {
     "exercise_cidr": "10.77.0.0/24",
-    "management_cidr": "10.77.1.0/24",
-    "internet_egress": "deny",
     "dns_servers": ["10.77.0.10"],
     "ntp_servers": ["10.77.0.10"],
     "reverse_dns_zone": "0.77.10.in-addr.arpa",
     "domain_dns_name": "simcorp.test",
-    "max_clock_skew_seconds": 60,
-    "egress_verified_by": "",
-    "egress_verified_at": ""
+    "max_clock_skew_seconds": 60
   },
   "assets": [
     {
@@ -18,8 +14,6 @@
       "address": "10.77.0.11",
       "dns_name": "ctrl01.simcorp.test",
       "os_family": "linux",
-      "os_image_assumption": "Ubuntu Server amd64",
-      "os_version_assumption": "26.04 LTS",
       "connection": "ssh",
       "port": 22,
       "logical_assets": ["CTRL01", "IDP01", "HELPDESK01", "CLOUD01", "FILE01"],
@@ -30,10 +24,8 @@
       "address": "10.77.0.10",
       "dns_name": "dc01.simcorp.test",
       "os_family": "windows",
-      "os_image_assumption": "Windows Server amd64",
-      "os_version_assumption": "2025 LTSC",
       "connection": "winrm",
-      "port": 5986,
+      "port": 5985,
       "logical_assets": ["DC01"],
       "required_services": ["NTDS", "DNS", "W32Time", "SplunkForwarder", "Sysmon64"]
     },
@@ -42,10 +34,8 @@
       "address": "10.77.0.20",
       "dns_name": "fin-ws01.simcorp.test",
       "os_family": "windows",
-      "os_image_assumption": "Windows 11 amd64",
-      "os_version_assumption": "26H2",
       "connection": "winrm",
-      "port": 5986,
+      "port": 5985,
       "logical_assets": ["FIN-WS01"],
       "required_services": ["WinRM", "SplunkForwarder", "Sysmon64"]
     },
@@ -54,9 +44,6 @@
       "address": "10.77.0.30",
       "dns_name": "splunk01.simcorp.test",
       "os_family": "linux",
-      "os_image_assumption": "Cyber Range-provided amd64 host",
-      "os_version_assumption": "Confirm with Cyber Range; verify Splunk compatibility",
-      "splunk_enterprise_version": "10.0.1",
       "connection": "ssh",
       "port": 22,
       "logical_assets": ["SPLUNK01"],
@@ -68,34 +55,32 @@
     "search_base_dn": "OU=Exercise,DC=simcorp,DC=test",
     "organizational_units": ["Exercise"],
     "groups": ["NetStrike Analysts"],
-    "users": []
+    "users": [
+      {
+        "sam_account_name": "exercise.user",
+        "display_name": "Exercise User",
+        "enabled": true,
+        "member_of": ["Domain Users", "NetStrike Analysts"]
+      }
+    ]
   },
-  "fixtures": [],
   "offline_artifacts": {
     "directory": "offline-bundles/CITEF-RELEASE",
-    "controller_source": {"file": "", "sha256": ""},
-    "python_runtime": {
-      "archive": {"file": "", "sha256": ""},
-      "requirements_lock": {"file": "", "sha256": ""}
-    },
     "universal_forwarder": {
-      "version": "",
+      "version": "10.0.1",
       "linux_deb": {
         "file": "",
-        "sha256": "",
         "sha512": "ab289083aa191c94c4e38a18826962069de8cc53b10dd60e7630e724773d12db5f0a742bfaf3d4c3c5375beb81983e307c1c8c87024b491b183571d5af7a800b"
       },
       "windows_msi": {
         "file": "windows/splunkforwarder-10.0.1-c486717c322b-windows-x64.msi",
-        "sha256": "",
         "sha512": "246e0ce374c89fe0f5ba52e95ccb1c7cdeb8bedebc04b244708beb270b0b5cb268407e7db0a9937354aeb074ecd9725122c35f078c0b1e0347b26661f40ccd96"
-      },
-      "receiver_ca": {"file": "", "sha256": ""}
+      }
     },
     "sysmon": {
-      "version": "",
-      "archive": {"file": "sysmon/Sysmon.zip", "sha256": ""},
-      "config": {"file": "sysmon-config.xml", "sha256": ""}
+      "version": "15.22",
+      "archive": {"file": "sysmon/Sysmon.zip", "sha256": "00ecf1b46aec99299d3ae0bca79dc621458bd014b20b509d7c5c8e8c8611aa54"},
+      "config": {"file": "sysmon/sysmon-config.xml", "sha256": "e6f9d6332ee7ac4c3bfb37db6692c05ca84f0b11ab0fff708faae3add4f96f51"}
     }
   },
   "splunk": {
@@ -104,22 +89,17 @@
     "forwarder_receiver": {"host": "splunk01.simcorp.test", "port": 9997},
     "windows_index": "netstrike",
     "linux_index": "netstrike",
-    "required_sources": []
+    "required_sources": [
+      {
+        "id": "windows_security",
+        "probe_query": "search index=exercise run_id=\"{run_id}\" source=\"WinEventLog:Security\"",
+        "expected_event_id": "readiness-windows-security-001"
+      }
+    ]
   },
   "controller": {
     "listen_port": 8443,
     "readiness_url": "https://ctrl01.simcorp.test:8443/api/facilitator/readiness",
-    "sso_allowed_origins": ["https://ctrl01.simcorp.test:8443"],
-    "tls_certificate": {"file": "", "sha256": ""},
-    "tls_ca": {"file": "", "sha256": ""},
-    "emergency_stop": {
-      "verified": false,
-      "operator": "",
-      "contact_channel": "",
-      "verified_at": ""
-    }
-  },
-  "snapshots": {
-    "snapshot_ids": {}
+    "sso_allowed_origins": ["https://ctrl01.simcorp.test:8443"]
   }
 }

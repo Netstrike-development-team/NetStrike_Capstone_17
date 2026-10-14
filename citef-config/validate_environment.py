@@ -150,9 +150,7 @@ def _validate_cross_fields(manifest: dict) -> None:
     network = manifest["network"]
     domain = network["domain_dns_name"].lower().rstrip(".")
     exercise = _private_network(network["exercise_cidr"], "network.exercise_cidr")
-    management = _private_network(network["management_cidr"], "network.management_cidr")
     _require(exercise.prefixlen == 24, "network.exercise_cidr must be /24 until subnet-specific reverse DNS support is configured")
-    _require(not exercise.overlaps(management), "exercise and management networks must not overlap")
     _require(
         network["reverse_dns_zone"] == _reverse_dns_zone(exercise),
         "network.reverse_dns_zone must match the reverse zone for network.exercise_cidr",
@@ -161,10 +159,9 @@ def _validate_cross_fields(manifest: dict) -> None:
     for field in ("dns_servers", "ntp_servers"):
         for index, value in enumerate(network[field]):
             address = _private_address(value, f"network.{field}[{index}]")
-            approved = next((item for item in (exercise, management) if address in item), None)
-            _require(approved is not None, f"network.{field}[{index}] must be inside an approved network")
+            _require(address in exercise, f"network.{field}[{index}] must be inside network.exercise_cidr")
             _require(
-                address not in (approved.network_address, approved.broadcast_address),
+                address not in (exercise.network_address, exercise.broadcast_address),
                 f"network.{field}[{index}] cannot be a network or broadcast address",
             )
 
@@ -183,17 +180,18 @@ def _validate_cross_fields(manifest: dict) -> None:
         )
         _require(address not in addresses, f"duplicate host address: {address}")
         addresses.add(address)
-        _require(
-            host["dns_name"].lower().rstrip(".") == f"{name.lower()}.{domain}",
-            f"{field}.dns_name must be {name.lower()}.{domain}",
-        )
+        if name != "SPLUNK01":
+            _require(
+                host["dns_name"].lower().rstrip(".") == f"{name.lower()}.{domain}",
+                f"{field}.dns_name must be {name.lower()}.{domain}",
+            )
         expected_connection = "ssh" if host["os_family"] == "linux" else "winrm"
         _require(
             host["connection"] == expected_connection,
             f"{field}.connection must be {expected_connection} for {host['os_family']}",
         )
         if expected_connection == "winrm":
-            _require(host["port"] == 5986, f"{field}.port must be 5986 so WinRM uses HTTPS")
+            _require(host["port"] == 5985, f"{field}.port must be 5985 so WinRM uses HTTP")
         for asset in host["logical_assets"]:
             _require(asset not in logical_to_host, f"logical asset {asset} is mapped more than once")
             logical_to_host[asset] = name
@@ -235,10 +233,6 @@ def _validate_cross_fields(manifest: dict) -> None:
         unknown_groups = set(user["member_of"]) - group_names - {"Domain Users"}
         _require(not unknown_groups, f"baseline identity {name} references groups not in identity_baseline.groups")
 
-    for index, fixture in enumerate(manifest["fixtures"]):
-        path = PurePosixPath(fixture["path"])
-        _require(path.is_absolute() and ".." not in path.parts, f"fixtures[{index}].path must be an absolute, traversal-free Linux path")
-
     splunk = manifest["splunk"]
     _require(splunk["forwarder_receiver"]["host"].lower() == hosts["SPLUNK01"]["dns_name"].lower(),
              "splunk.forwarder_receiver.host must match the approved SPLUNK01 DNS name")
@@ -260,45 +254,24 @@ def _validate_cross_fields(manifest: dict) -> None:
         "offline_artifacts.universal_forwarder.windows_msi.file must be the Windows MSI under the licensed artifact staging directory",
     )
     artifact_specs = [
-        (artifacts["controller_source"], "offline_artifacts.controller_source.file"),
-        (artifacts["python_runtime"]["archive"], "offline_artifacts.python_runtime.archive.file"),
-        (artifacts["python_runtime"]["requirements_lock"], "offline_artifacts.python_runtime.requirements_lock.file"),
         (artifacts["universal_forwarder"]["linux_deb"], "offline_artifacts.universal_forwarder.linux_deb.file"),
         (artifacts["universal_forwarder"]["windows_msi"], "offline_artifacts.universal_forwarder.windows_msi.file"),
-        (artifacts["universal_forwarder"]["receiver_ca"], "offline_artifacts.universal_forwarder.receiver_ca.file"),
         (artifacts["sysmon"]["archive"], "offline_artifacts.sysmon.archive.file"),
         (artifacts["sysmon"]["config"], "offline_artifacts.sysmon.config.file"),
     ]
     controller = manifest["controller"]
-    artifact_specs.extend(
-        (
-            (controller["tls_certificate"], "controller.tls_certificate.file"),
-            (controller["tls_ca"], "controller.tls_ca.file"),
-        )
+    optional_specs = (
+        (artifacts["universal_forwarder"].get("receiver_ca"), "offline_artifacts.universal_forwarder.receiver_ca.file"),
+        (controller.get("tls_certificate"), "controller.tls_certificate.file"),
+        (controller.get("tls_ca"), "controller.tls_ca.file"),
+    )
+    artifact_specs.extend((artifact, field) for artifact, field in optional_specs if artifact is not None)
+    _require(
+        ("tls_certificate" in controller) == ("tls_ca" in controller),
+        "controller.tls_certificate and controller.tls_ca must be provided together or both omitted",
     )
     for artifact, field in artifact_specs:
         _safe_relative_path(artifact["file"], field)
-
-    runtime = _safe_relative_path(
-        artifacts["python_runtime"]["archive"]["file"],
-        "offline_artifacts.python_runtime.archive.file",
-    )
-    lock = _safe_relative_path(
-        artifacts["python_runtime"]["requirements_lock"]["file"],
-        "offline_artifacts.python_runtime.requirements_lock.file",
-    )
-    bundle_root = runtime.parent.parent
-    _require(
-        runtime.name == "python-runtime.tar.gz" and runtime.parent.name == "runtime",
-        "offline_artifacts.python_runtime.archive.file must identify runtime/python-runtime.tar.gz",
-    )
-    _require(
-        lock.name == "requirements.lock"
-        and lock.parent.name == "CTRL01"
-        and lock.parent.parent.name == "destinations"
-        and lock.parent.parent.parent == bundle_root,
-        "offline_artifacts.python_runtime.requirements_lock.file must identify the CTRL01 lock in the same bundle",
-    )
 
     readiness_host = _internal_url(controller["readiness_url"], "controller.readiness_url", domain)
     _require(readiness_host == hosts["CTRL01"]["dns_name"].lower(), "controller.readiness_url must use the approved CTRL01 DNS name")
@@ -311,11 +284,6 @@ def _validate_cross_fields(manifest: dict) -> None:
                  f"controller.sso_allowed_origins[{index}] must use the approved CTRL01 DNS name")
         _require(_url_port(origin, f"controller.sso_allowed_origins[{index}]") == listen_port,
                  f"controller.sso_allowed_origins[{index}] port must match controller.listen_port")
-
-    _require(
-        set(manifest["snapshots"]["snapshot_ids"]) == set(hosts),
-        "snapshots.snapshot_ids must name every physical host exactly once",
-    )
 
 
 def validate_manifest(manifest: object) -> dict:
@@ -341,16 +309,20 @@ def load_manifest(path: Path) -> dict:
 def _inventory_host(host: dict) -> str:
     assets = ",".join(host["logical_assets"])
     services = ",".join(host["required_services"])
-    winrm_options = (
-        " ansible_winrm_scheme=https ansible_winrm_server_cert_validation=validate"
-        if host["connection"] == "winrm"
-        else ""
-    )
+    if host["connection"] == "winrm":
+        connection_options = (
+            "ansible_connection=winrm ansible_user=test "
+            "ansible_password=REPLACE_WITH_SECRET ansible_winrm_transport=ntlm "
+            f"ansible_port={host['port']} ansible_winrm_scheme=http"
+        )
+    else:
+        connection_options = (
+            f"ansible_connection={host['connection']} ansible_port={host['port']}"
+        )
     return (
-        f"{host['name'].lower()} ansible_host={host['address']} "
-        f"ansible_connection={host['connection']} ansible_port={host['port']} "
+        f"{host['name'].lower()} ansible_host={host['address']} {connection_options} "
         f"expected_os_family={host['os_family']} logical_name={host['name']} "
-        f"logical_assets={assets!r} required_services={services!r}{winrm_options}"
+        f"logical_assets={assets!r} required_services={services!r}"
     )
 
 

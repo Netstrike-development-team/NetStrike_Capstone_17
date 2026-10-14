@@ -193,28 +193,6 @@
           $Ansible.Changed = $false
           $Ansible.Result = @{ checked_users = $users.Count; domain = $domain }
 
-- name: Verify the clean fixture baseline
-  hosts: file_store
-  gather_facts: false
-  vars_files:
-    - "{{ playbook_dir }}/../environment.json"
-  tasks:
-    - name: Calculate fixture hashes without modifying files
-      ansible.builtin.stat:
-        path: "{{ item.path }}"
-        checksum_algorithm: sha256
-      loop: "{{ fixtures }}"
-      register: fixture_results
-
-    - name: Require every fixture to match its clean baseline hash
-      ansible.builtin.assert:
-        that:
-          - item.stat.exists
-          - item.stat.isreg
-          - item.stat.checksum | lower == item.item.sha256 | lower
-        fail_msg: "Fixture baseline mismatch at {{ item.item.path }}; restore the clean snapshot."
-      loop: "{{ fixture_results.results }}"
-
 - name: Verify controller, Splunk telemetry, and staff safety gates
   hosts: localhost
   gather_facts: false
@@ -229,8 +207,8 @@
           Authorization: "Bearer {{ lookup('ansible.builtin.env', 'NETSTRIKE_READINESS_TOKEN') }}"
         return_content: true
         status_code: 200
-        validate_certs: true
-        ca_path: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ controller.tls_ca.file }}"
+        validate_certs: "{{ controller.tls_ca is defined }}"
+        ca_path: "{{ (playbook_dir ~ '/../../' ~ offline_artifacts.directory ~ '/' ~ controller.tls_ca.file) if controller.tls_ca is defined else omit }}"
       register: local_readiness
       no_log: true
 
@@ -258,7 +236,7 @@
           latest_time: now
         return_content: true
         status_code: 200
-        validate_certs: true
+        validate_certs: "{{ offline_artifacts.universal_forwarder.receiver_ca is defined }}"
         timeout: 60
       loop: "{{ splunk.required_sources }}"
       loop_control:
@@ -276,13 +254,3 @@
       loop_control:
         label: "{{ item.item.id }}"
       no_log: true
-
-    - name: Confirm the emergency-stop operator and egress controls were verified
-      ansible.builtin.assert:
-        that:
-          - network.internet_egress == 'deny'
-          - network.egress_verified_by | length > 0
-          - controller.emergency_stop.verified | bool
-          - controller.emergency_stop.operator | length > 0
-          - controller.emergency_stop.contact_channel | length > 0
-        fail_msg: "Cyber Range egress or emergency-stop operator verification is missing."

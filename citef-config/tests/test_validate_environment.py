@@ -20,15 +20,11 @@ def valid_manifest():
         "schema_version": 1,
         "network": {
             "exercise_cidr": "10.77.0.0/24",
-            "management_cidr": "10.77.1.0/24",
-            "internet_egress": "deny",
             "dns_servers": ["10.77.0.11"],
             "ntp_servers": ["10.77.0.11"],
             "reverse_dns_zone": "0.77.10.in-addr.arpa",
             "domain_dns_name": "simcorp.test",
             "max_clock_skew_seconds": 60,
-            "egress_verified_by": "Range operator",
-            "egress_verified_at": "2026-10-01T12:00:00Z",
         },
         "assets": [
             {
@@ -36,10 +32,8 @@ def valid_manifest():
                 "address": address,
                 "dns_name": f"{name.lower()}.simcorp.test",
                 "os_family": os_family,
-                "os_image_assumption": "test image",
-                "os_version_assumption": "test version",
                 "connection": connection,
-                "port": 22 if connection == "ssh" else 5986,
+                "port": 22 if connection == "ssh" else 5985,
                 "logical_assets": assets,
                 "required_services": ["sshd" if os_family == "linux" else "WinRM"],
             }
@@ -56,26 +50,13 @@ def valid_manifest():
                 "member_of": ["Domain Users", "NetStrike Analysts"],
             }],
         },
-        "fixtures": [{"path": "/srv/fixtures/baseline.json", "sha256": "a" * 64}],
         "offline_artifacts": {
             "directory": "offline-bundles/test",
-            "controller_source": {"file": "source.tar.gz", "sha256": "1" * 64},
-            "python_runtime": {
-                "archive": {
-                    "file": "netstrike-offline-bundle/runtime/python-runtime.tar.gz",
-                    "sha256": "2" * 64,
-                },
-                "requirements_lock": {
-                    "file": "netstrike-offline-bundle/destinations/CTRL01/requirements.lock",
-                    "sha256": "3" * 64,
-                },
-            },
             "universal_forwarder": {
                 "version": "10.0.1",
-                "linux_deb": {"file": "forwarder.deb", "sha256": "a" * 64, "sha512": "a" * 128},
+                "linux_deb": {"file": "forwarder.deb", "sha512": "a" * 128},
                 "windows_msi": {
                     "file": "windows/splunkforwarder-10.0.1-c486717c322b-windows-x64.msi",
-                    "sha256": "b" * 64,
                     "sha512": "b" * 128,
                 },
                 "receiver_ca": {"file": "receiver-ca.pem", "sha256": "c" * 64},
@@ -106,20 +87,6 @@ def valid_manifest():
             "sso_allowed_origins": ["https://ctrl01.simcorp.test:8443"],
             "tls_certificate": {"file": "ctrl01.pem", "sha256": "4" * 64},
             "tls_ca": {"file": "range-ca.pem", "sha256": "5" * 64},
-            "emergency_stop": {
-                "verified": True,
-                "operator": "Exercise operator",
-                "contact_channel": "Range bridge",
-                "verified_at": "2026-10-01T12:00:00Z",
-            },
-        },
-        "snapshots": {
-            "snapshot_ids": {
-                "CTRL01": "ctrl01-clean-v1",
-                "DC01": "dc01-clean-v1",
-                "FIN-WS01": "fin-ws01-clean-v1",
-                "SPLUNK01": "splunk01-clean-v1",
-            },
         },
     }
 
@@ -129,9 +96,29 @@ class ValidateEnvironmentTests(unittest.TestCase):
         manifest = valid_manifest()
         self.assertEqual(validate_environment.validate_manifest(manifest), manifest)
 
+    def test_splunk_dns_name_can_be_customized(self):
+        manifest = valid_manifest()
+        manifest["assets"][3]["dns_name"] = "splunk-lab.simcorp.test"
+        manifest["splunk"]["forwarder_receiver"]["host"] = "splunk-lab.simcorp.test"
+        manifest["splunk"]["rest_url"] = "https://splunk-lab.simcorp.test:8089"
+        self.assertEqual(validate_environment.validate_manifest(manifest), manifest)
+
+    def test_certificates_are_optional(self):
+        manifest = valid_manifest()
+        del manifest["offline_artifacts"]["universal_forwarder"]["receiver_ca"]
+        del manifest["controller"]["tls_certificate"]
+        del manifest["controller"]["tls_ca"]
+        self.assertEqual(validate_environment.validate_manifest(manifest), manifest)
+
+    def test_controller_certificate_requires_its_ca(self):
+        manifest = valid_manifest()
+        del manifest["controller"]["tls_ca"]
+        with self.assertRaisesRegex(validate_environment.ManifestError, "provided together"):
+            validate_environment.validate_manifest(manifest)
+
     def test_example_template_is_fail_closed(self):
         path = Path(__file__).parents[1] / "environment.example.json"
-        with self.assertRaisesRegex(validate_environment.ManifestError, "egress_verified_by"):
+        with self.assertRaisesRegex(validate_environment.ManifestError, "Manifest schema validation failed"):
             validate_environment.load_manifest(path)
 
     def test_inventory_is_generated_from_approved_targets(self):
@@ -139,7 +126,12 @@ class ValidateEnvironmentTests(unittest.TestCase):
         self.assertIn("ctrl01 ansible_host=10.77.0.10", inventory)
         self.assertIn("[file_store]\nctrl01", inventory)
         self.assertIn("[domain_controllers]\ndc01", inventory)
-        self.assertIn("ansible_winrm_scheme=https", inventory)
+        self.assertIn(
+            "ansible_connection=winrm ansible_user=test "
+            "ansible_password=REPLACE_WITH_SECRET ansible_winrm_transport=ntlm "
+            "ansible_port=5985 ansible_winrm_scheme=http",
+            inventory,
+        )
 
     def test_duplicate_addresses_are_rejected(self):
         manifest = valid_manifest()
@@ -163,12 +155,6 @@ class ValidateEnvironmentTests(unittest.TestCase):
         manifest = valid_manifest()
         manifest["splunk"]["token"] = "should-not-be-here"
         with self.assertRaisesRegex(validate_environment.ManifestError, "must not contain credentials"):
-            validate_environment.validate_manifest(manifest)
-
-    def test_snapshot_inventory_must_cover_every_vm(self):
-        manifest = valid_manifest()
-        del manifest["snapshots"]["snapshot_ids"]["DC01"]
-        with self.assertRaisesRegex(validate_environment.ManifestError, "every physical host"):
             validate_environment.validate_manifest(manifest)
 
     def test_malformed_logical_asset_fails_with_validation_error(self):
@@ -195,15 +181,32 @@ class ValidateEnvironmentTests(unittest.TestCase):
         with self.assertRaisesRegex(validate_environment.ManifestError, "does not match '\\^https://"):
             validate_environment.validate_manifest(manifest)
 
+    def test_splunk_rest_url_accepts_http_and_https(self):
+        manifest = valid_manifest()
+        manifest["splunk"]["rest_url"] = "http://splunk01.simcorp.test:8089"
+        self.assertEqual(validate_environment.validate_manifest(manifest), manifest)
+
+    def test_splunk_rest_url_rejects_other_schemes(self):
+        manifest = valid_manifest()
+        manifest["splunk"]["rest_url"] = "ftp://splunk01.simcorp.test:8089"
+        with self.assertRaisesRegex(validate_environment.ManifestError, "rest_url"):
+            validate_environment.validate_manifest(manifest)
+
     def test_schema_rejects_unknown_fields(self):
         manifest = valid_manifest()
         manifest["network"]["unexpected"] = "not approved"
         with self.assertRaisesRegex(validate_environment.ManifestError, "unexpected"):
             validate_environment.validate_manifest(manifest)
 
+    def test_schema_rejects_fixture_configuration(self):
+        manifest = valid_manifest()
+        manifest["fixtures"] = []
+        with self.assertRaisesRegex(validate_environment.ManifestError, "fixtures"):
+            validate_environment.validate_manifest(manifest)
+
     def test_schema_rejects_invalid_hashes(self):
         manifest = valid_manifest()
-        manifest["offline_artifacts"]["controller_source"]["sha256"] = "not-a-hash"
+        manifest["offline_artifacts"]["sysmon"]["archive"]["sha256"] = "not-a-hash"
         with self.assertRaisesRegex(validate_environment.ManifestError, "sha256"):
             validate_environment.validate_manifest(manifest)
 
@@ -211,6 +214,26 @@ class ValidateEnvironmentTests(unittest.TestCase):
         manifest = valid_manifest()
         manifest["offline_artifacts"]["universal_forwarder"]["windows_msi"]["sha512"] = "not-a-hash"
         with self.assertRaisesRegex(validate_environment.ManifestError, "sha512"):
+            validate_environment.validate_manifest(manifest)
+
+    def test_schema_rejects_removed_artifact_fields(self):
+        for field in ("controller_source", "python_runtime"):
+            with self.subTest(field=field):
+                manifest = valid_manifest()
+                manifest["offline_artifacts"][field] = {}
+                with self.assertRaisesRegex(validate_environment.ManifestError, field):
+                    validate_environment.validate_manifest(manifest)
+
+    def test_forwarder_does_not_accept_sha256(self):
+        manifest = valid_manifest()
+        manifest["offline_artifacts"]["universal_forwarder"]["linux_deb"]["sha256"] = "a" * 64
+        with self.assertRaisesRegex(validate_environment.ManifestError, "sha256"):
+            validate_environment.validate_manifest(manifest)
+
+    def test_forwarder_file_path_must_remain_relative(self):
+        manifest = valid_manifest()
+        manifest["offline_artifacts"]["universal_forwarder"]["linux_deb"]["file"] = "../forwarder.deb"
+        with self.assertRaisesRegex(validate_environment.ManifestError, "safe relative path"):
             validate_environment.validate_manifest(manifest)
 
     def test_sysmon_archive_must_use_licensed_staging_directory(self):
@@ -225,10 +248,10 @@ class ValidateEnvironmentTests(unittest.TestCase):
         with self.assertRaisesRegex(validate_environment.ManifestError, "must be the Windows MSI"):
             validate_environment.validate_manifest(manifest)
 
-    def test_inventory_generation_revalidates_manifest(self):
+    def test_inventory_generation_rejects_public_network(self):
         manifest = valid_manifest()
-        manifest["network"]["internet_egress"] = "allow"
-        with self.assertRaisesRegex(validate_environment.ManifestError, "internet_egress"):
+        manifest["network"]["exercise_cidr"] = "203.0.113.0/24"
+        with self.assertRaisesRegex(validate_environment.ManifestError, "RFC 1918"):
             validate_environment.render_inventory(manifest)
 
     def test_disabled_baseline_identity_is_representable(self):
