@@ -16,7 +16,7 @@
       changed_when: false
 
 - name: Validate provisioned services, names, and clocks
-  hosts: all
+  hosts: all:!domain_controllers
   gather_facts: false
   vars_files:
     - "{{ playbook_dir }}/../environment.json"
@@ -53,7 +53,9 @@
       loop: "{{ assets }}"
       register: linux_dns_results
       changed_when: false
-      when: expected_os_family == "linux"
+      when:
+        - windows_server_available | default(false) | bool
+        - expected_os_family == "linux"
 
     - name: Require approved Linux DNS answers
       ansible.builtin.assert:
@@ -63,7 +65,9 @@
       loop: "{{ linux_dns_results.results | default([]) }}"
       loop_control:
         label: "{{ item.item.name }}"
-      when: expected_os_family == "linux"
+      when:
+        - windows_server_available | default(false) | bool
+        - expected_os_family == "linux"
 
     - name: Verify forward DNS on Windows hosts
       ansible.windows.win_powershell:
@@ -82,7 +86,9 @@
             }
           }
           $Ansible.Changed = $false
-      when: expected_os_family == "windows"
+      when:
+        - windows_server_available | default(false) | bool
+        - expected_os_family == "windows"
 
     - name: Confirm Linux services are active
       ansible.builtin.command:
@@ -116,20 +122,26 @@
         argv: [timedatectl, show, --property=NTPSynchronized, --value]
       register: linux_time_state
       changed_when: false
-      when: expected_os_family == "linux"
+      when:
+        - windows_server_available | default(false) | bool
+        - expected_os_family == "linux"
 
     - name: Require Linux time to be synchronized
       ansible.builtin.assert:
         that:
           - linux_time_state.stdout | trim == "yes"
-      when: expected_os_family == "linux"
+      when:
+        - windows_server_available | default(false) | bool
+        - expected_os_family == "linux"
 
     - name: Confirm Linux selected an approved internal time source
       ansible.builtin.command:
         argv: [timedatectl, timesync-status]
       register: linux_time_source
       changed_when: false
-      when: expected_os_family == "linux"
+      when:
+        - windows_server_available | default(false) | bool
+        - expected_os_family == "linux"
 
     - name: Require Linux NTP status to identify DC01
       ansible.builtin.assert:
@@ -140,13 +152,17 @@
             | list
             | length) > 0
         fail_msg: "{{ logical_name }} is not synchronized to an approved internal NTP source."
-      when: expected_os_family == "linux"
+      when:
+        - windows_server_available | default(false) | bool
+        - expected_os_family == "linux"
 
     - name: Check Windows domain time source
       ansible.windows.win_command: w32tm.exe /query /source
       register: windows_time_source
       changed_when: false
-      when: expected_os_family == "windows"
+      when:
+        - windows_server_available | default(false) | bool
+        - expected_os_family == "windows"
 
     - name: Verify the isolated DC01 time-source configuration
       ansible.windows.win_powershell:
@@ -166,6 +182,7 @@
           }
           $Ansible.Changed = $false
       when:
+        - windows_server_available | default(false) | bool
         - expected_os_family == "windows"
         - logical_name == "DC01"
 
@@ -174,5 +191,6 @@
         that:
           - "'dc01' in windows_time_source.stdout | lower"
       when:
+        - windows_server_available | default(false) | bool
         - expected_os_family == "windows"
         - logical_name != "DC01"

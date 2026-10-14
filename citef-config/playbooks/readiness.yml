@@ -31,7 +31,7 @@
       no_log: true
 
 - name: Verify approved hosts, services, DNS, and clock state
-  hosts: all
+  hosts: all:!domain_controllers
   gather_facts: false
   vars_files:
     - "{{ playbook_dir }}/../environment.json"
@@ -146,52 +146,54 @@
           - linux_time_state.stdout | trim == 'yes'
       when: expected_os_family == 'linux'
 
-- name: Compare the Active Directory baseline with the approved manifest
-  hosts: domain_controllers
-  gather_facts: false
-  vars_files:
-    - "{{ playbook_dir }}/../environment.json"
-  tasks:
-    - name: Verify domain and baseline users, enablement, and memberships
-      ansible.windows.win_powershell:
-        parameters:
-          expected_domain: "{{ identity_baseline.domain_dns_name }}"
-          search_base_dn: "{{ identity_baseline.search_base_dn }}"
-          expected_users: "{{ identity_baseline.users | to_json }}"
-        script: |
-          $ErrorActionPreference = 'Stop'
-          Import-Module ActiveDirectory
-          $domain = (Get-ADDomain).DNSRoot
-          if ($domain -ine $Ansible.Params.expected_domain) {
-            throw "Active Directory domain does not match the baseline."
-          }
-          $users = ConvertFrom-Json -InputObject $Ansible.Params.expected_users
-          $expectedNames = @($users | ForEach-Object { $_.sam_account_name } | Sort-Object -Unique)
-          $actualNames = @(
-            Get-ADUser -SearchBase $Ansible.Params.search_base_dn -Filter * |
-              Select-Object -ExpandProperty SamAccountName |
-              Sort-Object -Unique
-          )
-          if (Compare-Object -ReferenceObject $expectedNames -DifferenceObject $actualNames) {
-            throw "The exercise identity set differs from the approved baseline."
-          }
-          foreach ($expected in $users) {
-            $actual = Get-ADUser -Identity $expected.sam_account_name -Properties Enabled
-            if ([bool]$actual.Enabled -ne [bool]$expected.enabled) {
-              throw "Baseline enabled state differs for $($expected.sam_account_name)."
-            }
-            $actualGroups = @(
-              Get-ADPrincipalGroupMembership -Identity $actual |
-                Select-Object -ExpandProperty Name |
-                Sort-Object -Unique
-            )
-            $expectedGroups = @($expected.member_of | Sort-Object -Unique)
-            if (Compare-Object -ReferenceObject $expectedGroups -DifferenceObject $actualGroups) {
-              throw "Baseline group membership differs for $($expected.sam_account_name)."
-            }
-          }
-          $Ansible.Changed = $false
-          $Ansible.Result = @{ checked_users = $users.Count; domain = $domain }
+# Disabled while Windows Server (DC01) is unavailable.
+# - name: Compare the Active Directory baseline with the approved manifest
+#   hosts: domain_controllers
+#   gather_facts: false
+#   vars_files:
+#     - "{{ playbook_dir }}/../environment.json"
+#   tasks:
+#     - name: Verify domain and baseline users, enablement, and memberships
+#       ansible.windows.win_powershell:
+#         parameters:
+#           expected_domain: "{{ identity_baseline.domain_dns_name }}"
+#           search_base_dn: "{{ identity_baseline.search_base_dn }}"
+#           expected_users: "{{ identity_baseline.users | to_json }}"
+#         script: |
+#           $ErrorActionPreference = 'Stop'
+#           Import-Module ActiveDirectory
+#           $domain = (Get-ADDomain).DNSRoot
+#           if ($domain -ine $Ansible.Params.expected_domain) {
+#             throw "Active Directory domain does not match the baseline."
+#           }
+#           $users = ConvertFrom-Json -InputObject $Ansible.Params.expected_users
+#           $expectedNames = @($users | ForEach-Object { $_.sam_account_name } | Sort-Object -Unique)
+#           $actualNames = @(
+#             Get-ADUser -SearchBase $Ansible.Params.search_base_dn -Filter * |
+#               Select-Object -ExpandProperty SamAccountName |
+#               Sort-Object -Unique
+#           )
+#           if (Compare-Object -ReferenceObject $expectedNames -DifferenceObject $actualNames) {
+#             throw "The exercise identity set differs from the approved baseline."
+#           }
+#           foreach ($expected in $users) {
+#             $actual = Get-ADUser -Identity $expected.sam_account_name -Properties Enabled
+#             if ([bool]$actual.Enabled -ne [bool]$expected.enabled) {
+#               throw "Baseline enabled state differs for $($expected.sam_account_name)."
+#             }
+#             $actualGroups = @(
+#               Get-ADPrincipalGroupMembership -Identity $actual |
+#                 Select-Object -ExpandProperty Name |
+#                 Sort-Object -Unique
+#             )
+#             $expectedGroups = @($expected.member_of | Sort-Object -Unique)
+#             if (Compare-Object -ReferenceObject $expectedGroups -DifferenceObject $actualGroups) {
+#               throw "Baseline group membership differs for $($expected.sam_account_name)."
+#             }
+#           }
+#           $Ansible.Changed = $false
+#           $Ansible.Result = @{ checked_users = $users.Count; domain = $domain }
+#
 
 - name: Verify controller, Splunk telemetry, and staff safety gates
   hosts: localhost

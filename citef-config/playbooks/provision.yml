@@ -22,27 +22,29 @@
           - "{{ playbook_dir }}/../environment.json"
       changed_when: false
 
-    - name: Require domain bootstrap and membership credentials
-      ansible.builtin.assert:
-        that:
-          - ad_safe_mode_password is defined
-          - ad_safe_mode_password | length >= 16
-          - domain_admin_user is defined
-          - domain_admin_password is defined
-          - domain_admin_password | length >= 16
-        fail_msg: "Inject domain bootstrap credentials using the approved Ansible Vault or secret manager."
-      no_log: true
+    # Windows Server (DC01) is unavailable; re-enable with the DC play below.
+    # - name: Require domain bootstrap and membership credentials
+    #   ansible.builtin.assert:
+    #     that:
+    #       - ad_safe_mode_password is defined
+    #       - ad_safe_mode_password | length >= 16
+    #       - domain_admin_user is defined
+    #       - domain_admin_password is defined
+    #       - domain_admin_password | length >= 16
+    #     fail_msg: "Inject domain bootstrap credentials using the approved Ansible Vault or secret manager."
+    #   no_log: true
 
     - name: Validate all staged vendor artifacts before any host changes
       ansible.builtin.include_tasks: ../tasks/validate_artifacts.yml
 
-- name: Install the domain controller and establish internal DNS/time
-  hosts: domain_controllers
-  gather_facts: false
-  vars_files:
-    - "{{ playbook_dir }}/../environment.json"
-  roles:
-    - domain_controller
+# Windows Server (DC01) is unavailable; re-enable when it is.
+# - name: Install the domain controller and establish internal DNS/time
+#   hosts: domain_controllers
+#   gather_facts: false
+#   vars_files:
+#     - "{{ playbook_dir }}/../environment.json"
+#   roles:
+#     - domain_controller
 
 - name: Configure domain clients and Windows security telemetry
   hosts: workstations
@@ -53,7 +55,7 @@
     - windows_client
 
 - name: Configure Windows security telemetry on domain hosts
-  hosts: windows_hosts
+  hosts: windows_hosts:!domain_controllers
   gather_facts: false
   vars_files:
     - "{{ playbook_dir }}/../environment.json"

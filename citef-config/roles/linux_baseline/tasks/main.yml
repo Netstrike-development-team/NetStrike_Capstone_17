@@ -26,6 +26,7 @@
     group: root
     mode: "0644"
   notify: Restart systemd-resolved
+  when: windows_server_available | default(false) | bool
 
 - name: Configure DC01 as the only NTP source
   ansible.builtin.template:
@@ -35,6 +36,7 @@
     group: root
     mode: "0644"
   notify: Restart systemd-timesyncd
+  when: windows_server_available | default(false) | bool
 
 - name: Ensure systemd-resolved is enabled
   ansible.builtin.service:
@@ -64,6 +66,7 @@
   loop: "{{ assets }}"
   register: resolved_hosts
   changed_when: false
+  when: windows_server_available | default(false) | bool
 
 - name: Require the DNS response to match each approved address
   ansible.builtin.assert:
@@ -73,6 +76,7 @@
   loop: "{{ resolved_hosts.results }}"
   loop_control:
     label: "{{ item.item.name }}"
+  when: windows_server_available | default(false) | bool
 
 - name: Require systemd-timesyncd to report synchronized time
   ansible.builtin.command:
@@ -82,6 +86,7 @@
   retries: 12
   delay: 5
   until: time_sync_state.stdout | trim == "yes"
+  when: windows_server_available | default(false) | bool
 
 - name: Confirm systemd-timesyncd selected the approved internal source
   ansible.builtin.command:
@@ -90,3 +95,4 @@
   changed_when: false
   failed_when: >-
     (network.ntp_servers | select('in', time_sync_status.stdout) | list | length) == 0
+  when: windows_server_available | default(false) | bool
