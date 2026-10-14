@@ -200,8 +200,11 @@ in the local manifest. Licensed files remain Git-ignored. For example, stage
 Sysmon at `sysmon/Sysmon.zip` and the Windows forwarder at
 `windows/splunkforwarder-10.0.1-c486717c322b-windows-x64.msi`; Ansible verifies
 hashes (including vendor SHA-512 for the forwarder) and Authenticode
-signatures before installing. Sysmon's extracted `Sysmon64.exe` is also
-signature-checked. See the [offline bundle guide](../docs/offline-bundle.md).
+signatures before installing. The Sysmon configuration is maintained in
+`citef-config/files/sysmon-config.xml`; set its SHA-256 in the local manifest,
+and Ansible verifies and copies that repository file directly. Sysmon's
+extracted `Sysmon64.exe` is also signature-checked. See the
+[offline bundle guide](../docs/offline-bundle.md).
 
 Telemetry versions are Universal Forwarder 10.0.1 and Sysmon 15.22. CITEF
 permits Universal Forwarder and HEC ingestion into a dedicated `netstrike`

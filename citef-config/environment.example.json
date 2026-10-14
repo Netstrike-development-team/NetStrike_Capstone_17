@@ -80,7 +80,7 @@
     "sysmon": {
       "version": "15.22",
       "archive": {"file": "sysmon/Sysmon.zip", "sha256": "00ecf1b46aec99299d3ae0bca79dc621458bd014b20b509d7c5c8e8c8611aa54"},
-      "config": {"file": "sysmon/sysmon-config.xml", "sha256": "e6f9d6332ee7ac4c3bfb37db6692c05ca84f0b11ab0fff708faae3add4f96f51"}
+      "config": {"file": "sysmon-config.xml", "sha256": "e6f9d6332ee7ac4c3bfb37db6692c05ca84f0b11ab0fff708faae3add4f96f51"}
     }
   },
   "splunk": {

@@ -130,7 +130,7 @@
 
 - name: Stage project-reviewed Sysmon configuration
   ansible.windows.win_copy:
-    src: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ offline_artifacts.sysmon.config.file }}"
+    src: "{{ playbook_dir }}/../files/sysmon-config.xml"
     dest: C:\ProgramData\NetStrike\sysmon\sysmon-config.xml
 
 - name: Read the installed Sysmon configuration marker

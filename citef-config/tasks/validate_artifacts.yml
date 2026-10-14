@@ -18,9 +18,17 @@
       - "'..' not in item.file"
       - not item.file.startswith('/')
     fail_msg: "An offline artifact filename or SHA-256 is missing or unsafe."
-  loop: "{{ [offline_artifacts.sysmon.archive, offline_artifacts.sysmon.config] + optional_tls_artifacts }}"
+  loop: "{{ [offline_artifacts.sysmon.archive] + optional_tls_artifacts }}"
   loop_control:
     label: "{{ item.file | default('missing filename') }}"
+
+- name: Require the Sysmon configuration from the repository files directory
+  ansible.builtin.assert:
+    that:
+      - offline_artifacts.sysmon.config.sha256 is match('^[A-Fa-f0-9]{64}$')
+    fail_msg: >-
+      offline_artifacts.sysmon.config must provide the approved SHA-256 for
+      citef-config/files/sysmon-config.xml.
 
 - name: Require Sysmon ZIP in the licensed artifact staging directory
   ansible.builtin.assert:
@@ -44,11 +52,28 @@
   ansible.builtin.stat:
     path: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ item.file }}"
     checksum_algorithm: sha256
-  loop: "{{ [offline_artifacts.sysmon.archive, offline_artifacts.sysmon.config] + optional_tls_artifacts }}"
+  loop: "{{ [offline_artifacts.sysmon.archive] + optional_tls_artifacts }}"
   register: staged_artifacts
   delegate_to: localhost
   loop_control:
     label: "{{ item.file }}"
+
+- name: Verify the repository Sysmon configuration on the control host
+  ansible.builtin.stat:
+    path: "{{ playbook_dir }}/../files/sysmon-config.xml"
+    checksum_algorithm: sha256
+  register: sysmon_config_source
+  delegate_to: localhost
+
+- name: Require the repository Sysmon configuration checksum to match
+  ansible.builtin.assert:
+    that:
+      - sysmon_config_source.stat.exists
+      - sysmon_config_source.stat.isreg
+      - sysmon_config_source.stat.checksum | lower == offline_artifacts.sysmon.config.sha256 | lower
+    fail_msg: >-
+      citef-config/files/sysmon-config.xml is missing or does not match its
+      approved SHA-256.
 
 - name: Fail before provisioning when an artifact is absent or changed
   ansible.builtin.assert:
