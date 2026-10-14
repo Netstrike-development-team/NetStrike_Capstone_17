@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Services | SimCorp Financial Services</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: #2c3e50; background: #f5f7fa; }
+    header { background: #0b2545; }
+    .header-top { display: flex; align-items: center; justify-content: space-between; padding: 16px 56px; border-bottom: 1px solid #13315c; }
+    .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .logo-mark { width: 38px; height: 38px; background: #1d6fa4; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 18px; }
+    .logo-text { color: white; font-size: 20px; font-weight: 600; }
+    .logo-text span { color: #5bb8f5; }
+    .header-contact { color: #8faec8; font-size: 13px; text-align: right; }
+    .header-contact strong { color: white; display: block; font-size: 15px; }
+    nav { background: #13315c; }
+    nav ul { display: flex; list-style: none; padding: 0 56px; }
+    nav ul li a { display: block; padding: 14px 22px; color: #cdd9e8; text-decoration: none; font-size: 13.5px; font-weight: 500; }
+    nav ul li a:hover { color: white; background: rgba(255,255,255,0.08); }
+    nav ul li a.active { color: white; border-bottom: 3px solid #5bb8f5; }
+    .page-hero { background: linear-gradient(135deg, #0b2545 0%, #13315c 100%); color: white; padding: 64px 56px 48px; }
+    .breadcrumb { font-size: 12px; color: #8faec8; margin-bottom: 16px; }
+    .breadcrumb a { color: #8faec8; text-decoration: none; }
+    .breadcrumb span { color: #5bb8f5; }
+    .page-hero h1 { font-size: 38px; font-weight: 300; margin-bottom: 12px; }
+    .page-hero h1 strong { font-weight: 700; }
+    .page-hero p { font-size: 16px; opacity: 0.8; max-width: 600px; line-height: 1.6; }
+    .container { max-width: 1140px; margin: 0 auto; padding: 0 56px; }
+    .section { padding: 64px 0; }
+    .section-eyebrow { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: #1d6fa4; font-weight: 700; margin-bottom: 8px; }
+    .section h2 { font-size: 30px; color: #0b2545; font-weight: 700; margin-bottom: 10px; }
+    .section .lead { font-size: 16px; color: #5a6a7e; line-height: 1.65; margin-bottom: 40px; }
+    .divider { border: none; border-top: 1px solid #dee2e6; margin: 0; }
+    p { line-height: 1.7; color: #4a5568; margin-bottom: 14px; }
+    .service-block { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; padding: 56px 0; border-bottom: 1px solid #dee2e6; }
+    .service-block:last-child { border-bottom: none; }
+    .service-block.reverse { direction: rtl; }
+    .service-block.reverse > * { direction: ltr; }
+    .service-label { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; background: #e8f4fd; color: #1d6fa4; padding: 4px 12px; border-radius: 20px; margin-bottom: 14px; }
+    .service-block h3 { font-size: 26px; font-weight: 700; color: #0b2545; margin-bottom: 12px; }
+    .feature-list { list-style: none; margin: 16px 0; }
+    .feature-list li { padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 13.5px; color: #4a5568; display: flex; align-items: center; gap: 10px; }
+    .feature-list li::before { content: '&#10003;'; color: #1d6fa4; font-weight: 700; }
+    .feature-list li:last-child { border-bottom: none; }
+    .service-visual { background: linear-gradient(135deg, #0b2545 0%, #1d6fa4 100%); border-radius: 8px; padding: 40px; color: white; }
+    .service-visual h4 { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #a8d4f5; margin-bottom: 20px; }
+    .metric-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .metric-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .metric-value { font-size: 28px; font-weight: 700; color: white; }
+    .metric-label { font-size: 13px; color: #a8d4f5; line-height: 1.3; }
+    .cta-box { background: #1d4280; border-radius: 8px; padding: 40px; color: white; text-align: center; margin-top: 60px; }
+    .cta-box h3 { font-size: 24px; font-weight: 700; margin-bottom: 10px; }
+    .cta-box p { font-size: 15px; opacity: 0.85; margin-bottom: 24px; max-width: 500px; margin-left: auto; margin-right: auto; }
+    .btn { display: inline-block; padding: 13px 30px; border-radius: 4px; font-weight: 600; font-size: 14px; text-decoration: none; }
+    .btn-white { background: white; color: #1d4280; margin-right: 12px; }
+    .btn-outline { border: 2px solid rgba(255,255,255,0.6); color: white; }
+    footer { background: #0b2545; color: #8faec8; padding: 60px 56px 32px; }
+    .footer-grid { display: grid; grid-template-columns: 2.5fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 48px; }
+    footer h4 { color: white; font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 18px; font-weight: 700; }
+    footer ul { list-style: none; }
+    footer ul li { margin-bottom: 9px; font-size: 13px; }
+    footer ul li a { color: #8faec8; text-decoration: none; }
+    .footer-desc { font-size: 13.5px; line-height: 1.7; margin-bottom: 16px; }
+    .footer-address { font-size: 13px; line-height: 1.8; font-style: normal; }
+    .footer-address strong { color: white; display: block; margin-bottom: 4px; }
+    .footer-bottom { border-top: 1px solid #13315c; padding-top: 24px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+    .footer-bottom a { color: #8faec8; text-decoration: none; margin-left: 20px; }
+    .cert-badges { display: flex; gap: 12px; margin-top: 16px; }
+    .cert-badge { border: 1px solid #1d4280; border-radius: 4px; padding: 5px 10px; font-size: 11px; color: #8faec8; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-top">
+      <a href="index.html" class="logo">
+        <div class="logo-mark">SC</div>
+        <div class="logo-text">SimCorp <span>Financial</span></div>
+      </a>
+      <div class="header-contact">
+        <strong>+1-613-555-0001</strong>
+        Main Switchboard &mdash; Mon–Fri 8:00–18:00 EST
+      </div>
+    </div>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="services.html" class="active">Services</a></li>
+        <li><a href="leadership.html">Leadership</a></li>
+        <li><a href="careers.html">Careers</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="it-support.html">IT Support</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="page-hero">
+    <div class="breadcrumb"><a href="index.html">Home</a> &rsaquo; <span>Services</span></div>
+    <h1>Our <strong>Services</strong></h1>
+    <p>From portfolio construction to regulatory reporting — SimCorp delivers institutional-grade
+       financial services across six integrated practice areas.</p>
+  </div>
+
+  <div class="container">
+    <section class="section">
+
+      <div class="service-block">
+        <div>
+          <span class="service-label">01 &mdash; Core Service</span>
+          <h3>Investment Management</h3>
+          <p>Discretionary and advisory mandates across fixed income, Canadian and global equities,
+             real assets, and select alternative strategies. Our portfolio team applies the proprietary
+             SimScore risk-rating framework to every holding, balancing return objectives against
+             liquidity and regulatory constraints.</p>
+          <p>All mandates are managed from our Ottawa headquarters with real-time oversight through
+             BlackRock Aladdin OMS and Bloomberg B-PIPE market data feeds.</p>
+          <ul class="feature-list">
+            <li>Fixed income: government, corporate, and high-yield</li>
+            <li>Canadian and global equity (active and passive overlays)</li>
+            <li>Real estate investment trust allocation</li>
+            <li>Alternative risk premia and liquid alternatives</li>
+            <li>Custom liability-driven investment frameworks</li>
+            <li>CIRO-compliant order management and best-execution reporting</li>
+          </ul>
+        </div>
+        <div class="service-visual">
+          <h4>Portfolio Metrics (2023)</h4>
+          <div class="metric-row"><span class="metric-value">$14.2B</span><span class="metric-label">Assets under management across all mandates</span></div>
+          <div class="metric-row"><span class="metric-value">420+</span><span class="metric-label">Institutional and corporate clients</span></div>
+          <div class="metric-row"><span class="metric-value">96.4%</span><span class="metric-label">Client retention rate (rolling 5 years)</span></div>
+          <div class="metric-row"><span class="metric-value">+180bps</span><span class="metric-label">Average alpha over benchmark (5-year, blended)</span></div>
+        </div>
+      </div>
+
+      <div class="service-block reverse">
+        <div>
+          <span class="service-label">02 &mdash; Advisory</span>
+          <h3>Financial Advisory</h3>
+          <p>Strategic counsel for corporate treasuries, boards, and pension sponsors navigating
+             capital allocation decisions, M&amp;A considerations, and treasury policy review.
+             Our Ottawa-based advisory team combines CFA-qualified investment professionals with
+             sector specialists in financials, energy, and public sector.</p>
+          <ul class="feature-list">
+            <li>Treasury policy design and stress-testing</li>
+            <li>M&amp;A due diligence and transaction advisory</li>
+            <li>Capital structure optimisation</li>
+            <li>Pension liability immunisation strategies</li>
+            <li>Independent investment committee advisory</li>
+          </ul>
+          <p style="margin-top:16px; font-size:13.5px; color:#5a6a7e;">
+            Enquiries: <a href="mailto:advisory@simcorp.com" style="color:#1d6fa4;">advisory@simcorp.com</a>
+            &nbsp;|&nbsp; +1-613-555-0001 ext. 130
+          </p>
+        </div>
+        <div class="service-visual" style="background: linear-gradient(135deg, #1a5276, #154360);">
+          <h4>Advisory Coverage</h4>
+          <div class="metric-row"><span class="metric-value">38</span><span class="metric-label">Active advisory mandates in 2023</span></div>
+          <div class="metric-row"><span class="metric-value">$2.1B</span><span class="metric-label">Transaction advisory volume (2022–2023)</span></div>
+          <div class="metric-row"><span class="metric-value">12</span><span class="metric-label">CFA Charterholders on advisory team</span></div>
+        </div>
+      </div>
+
+      <div class="service-block">
+        <div>
+          <span class="service-label">03 &mdash; Operations</span>
+          <h3>Asset Servicing</h3>
+          <p>End-to-end middle- and back-office outsourcing for asset managers and institutional
+             investors. SimCorp provides custody coordination, fund administration, trade settlement,
+             NAV calculation, and CIRO-compliant regulatory reporting — removing operational burden
+             from lean investment teams.</p>
+          <ul class="feature-list">
+            <li>Fund administration and NAV calculation (daily)</li>
+            <li>Custody and subcustody coordination</li>
+            <li>Trade confirmation, matching, and settlement</li>
+            <li>Corporate actions processing and reconciliation</li>
+            <li>OSFI and NI 81-102 regulatory reporting</li>
+            <li>Investor reporting and statement generation</li>
+          </ul>
+        </div>
+        <div class="service-visual" style="background: linear-gradient(135deg, #145a32, #1e8449);">
+          <h4>Servicing Statistics</h4>
+          <div class="metric-row"><span class="metric-value">99.97%</span><span class="metric-label">Settlement accuracy rate (2023 audit)</span></div>
+          <div class="metric-row"><span class="metric-value">T+1</span><span class="metric-label">Trade settlement standard (CIRO compliant)</span></div>
+          <div class="metric-row"><span class="metric-value">0</span><span class="metric-label">OSFI non-conformities (last 3 annual examinations)</span></div>
+        </div>
+      </div>
+
+      <div class="service-block reverse">
+        <div>
+          <span class="service-label">04 &mdash; Technology</span>
+          <h3>Digital Banking &amp; API Integration</h3>
+          <p>For corporate treasury teams needing real-time multi-bank visibility and automated
+             cash management. SimCorp's digital banking layer connects via ISO 20022-compliant
+             APIs to major Canadian clearing institutions, providing a consolidated view of
+             intraday liquidity and automated sweep execution.</p>
+          <ul class="feature-list">
+            <li>Multi-bank connectivity (RBC, TD, BMO, Scotiabank, CIBC)</li>
+            <li>Intraday liquidity monitoring and reporting</li>
+            <li>Automated cash concentration and zero-balance accounts</li>
+            <li>FX execution and hedging workflow integration</li>
+            <li>SWIFT MT/MX and ISO 20022 message processing</li>
+          </ul>
+          <p style="margin-top:16px; font-size:13.5px; color:#5a6a7e;">
+            For API documentation: <a href="mailto:tech@simcorp.com" style="color:#1d6fa4;">tech@simcorp.com</a>
+          </p>
+        </div>
+        <div class="service-visual" style="background: linear-gradient(135deg, #4a235a, #7d3c98);">
+          <h4>Integration Metrics</h4>
+          <div class="metric-row"><span class="metric-value">99.9%</span><span class="metric-label">API uptime SLA (2023)</span></div>
+          <div class="metric-row"><span class="metric-value">5</span><span class="metric-label">Major Canadian banks connected via live API</span></div>
+          <div class="metric-row"><span class="metric-value">&lt;200ms</span><span class="metric-label">Average transaction processing latency</span></div>
+        </div>
+      </div>
+
+      <div class="cta-box">
+        <h3>Ready to Talk?</h3>
+        <p>Our client relations team will match you to the right service offering and arrange
+           an introductory call with the relevant practice lead.</p>
+        <a href="contact.html" class="btn btn-white">Contact Us</a>
+        <a href="mailto:info@simcorp.com" class="btn btn-outline">Email Directly</a>
+      </div>
+
+    </section>
+  </div>
+
+  <footer>
+    <div class="footer-grid">
+      <div>
+        <h4>SimCorp Financial Services</h4>
+        <p class="footer-desc">A mid-market investment management and financial advisory firm
+           serving corporate clients across Canada since 1987.</p>
+        <address class="footer-address">
+          <strong>Head Office</strong>
+          150 Elgin Street, Suite 800<br>
+          Ottawa, Ontario &nbsp;K2P 1L4<br>
+          +1-613-555-0001 &nbsp;&bull;&nbsp; info@simcorp.com
+        </address>
+        <div class="cert-badges">
+          <span class="cert-badge">ISO 27001</span>
+          <span class="cert-badge">CIRO Member</span>
+          <span class="cert-badge">OSFI Regulated</span>
+        </div>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li><a href="about.html">About SimCorp</a></li>
+          <li><a href="leadership.html">Leadership Team</a></li>
+          <li><a href="careers.html">Careers</a></li>
+          <li><a href="about.html#offices">Our Offices</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Services</h4>
+        <ul>
+          <li><a href="services.html">Investment Management</a></li>
+          <li><a href="services.html">Financial Advisory</a></li>
+          <li><a href="services.html">Asset Servicing</a></li>
+          <li><a href="services.html">Digital Banking</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Support</h4>
+        <ul>
+          <li><a href="contact.html">Contact Us</a></li>
+          <li><a href="it-support.html">IT Support</a></li>
+          <li><a href="it-support.html">Employee Portal</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2024 SimCorp Financial Services Inc. &mdash; SIMULATED ENVIRONMENT</span>
+      <div><a href="#">Privacy Policy</a><a href="#">Terms of Use</a></div>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,5 @@
+---
+- name: Restart Linux Universal Forwarder
+  ansible.builtin.service:
+    name: SplunkForwarder
+    state: restarted

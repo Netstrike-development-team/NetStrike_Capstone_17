@@ -1,0 +1,54 @@
+---
+- name: Gather Windows facts
+  ansible.builtin.setup:
+
+- name: Require the selected Windows 11 amd64 baseline
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.os_family == "Windows"
+      - ansible_facts.architecture in ["64-bit", "AMD64"]
+      - ansible_facts.hostname | lower == logical_name | lower
+      - "'Windows 11' in ansible_facts.distribution"
+    fail_msg: "FIN-WS01 must be the approved amd64 Windows 11 image with the configured hostname."
+
+- name: Point Windows clients at DC01 for DNS before domain join
+  ansible.windows.win_dns_client:
+    adapter_names: "*"
+    dns_servers: "{{ network.dns_servers }}"
+
+- name: Join the endpoint to the exercise domain
+  microsoft.ad.membership:
+    dns_domain_name: "{{ identity_baseline.domain_dns_name }}"
+    domain_admin_user: "{{ domain_admin_user }}"
+    domain_admin_password: "{{ domain_admin_password }}"
+    domain_ou_path: "{{ identity_baseline.search_base_dn }}"
+    state: domain
+    reboot: true
+    reboot_timeout: 1800
+  register: domain_membership
+  no_log: true
+
+- name: Ensure endpoint DNS remains on the internal domain controller
+  ansible.windows.win_dns_client:
+    adapter_names: "*"
+    dns_servers: "{{ network.dns_servers }}"
+
+- name: Configure Windows domain time hierarchy
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Parameters
+    name: Type
+    data: NT5DS
+    type: string
+  notify: Restart Windows Time
+
+- name: Configure Windows domain time resynchronization
+  ansible.windows.win_command: w32tm.exe /config /syncfromflags:DOMHIER /update
+  changed_when: false
+  notify: Restart Windows Time
+
+- name: Flush Windows Time configuration
+  ansible.builtin.meta: flush_handlers
+
+- name: Resynchronize endpoint with the AD time hierarchy
+  ansible.windows.win_command: w32tm.exe /resync /rediscover
+  changed_when: false

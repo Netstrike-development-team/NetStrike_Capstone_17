@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Operation Silent Spider · Participant Console</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script type="module" src="/static/participant.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">NS</div>
+        <div><strong>Operation Silent Spider</strong><small>Participant response console</small></div>
+      </div>
+      <div class="connection">
+        <label><span class="muted">Exercise access token</span><input id="token-input" type="password" autocomplete="off" placeholder="Paste token"></label>
+        <button id="connect">Connect</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div>
+        <p class="eyebrow">SimCorp security operations</p>
+        <h1>Investigate. Contain. Explain.</h1>
+        <p class="hero-copy">Use the evidence available in the range, record defensible conclusions, and apply only the approved response actions below.</p>
+      </div>
+      <aside class="status-card" aria-label="Exercise status">
+        <span id="run-state" class="pill">disconnected</span>
+        <div class="status-grid">
+          <div class="metric"><span>Exercise clock</span><strong id="elapsed">00:00:00</strong></div>
+          <div class="metric"><span>Injects received</span><strong id="inject-count">0</strong></div>
+          <div class="metric metric-wide"><span>Run ID</span><strong id="run-id">—</strong></div>
+        </div>
+      </aside>
+    </section>
+
+    <div id="notice" class="notice" role="status" aria-live="polite"></div>
+
+    <nav class="evidence-link" aria-label="Investigation tools">
+      <div><strong>Local evidence timeline</strong><span>Identity, endpoint, cloud and recovery signals from this synthetic run. Not Splunk.</span></div>
+      <a class="button secondary" href="/evidence" target="_blank" rel="noopener">Open evidence timeline</a>
+    </nav>
+
+    <article id="feedback-panel" class="panel space-top" hidden>
+      <div class="panel-header"><div><h2>Exercise feedback</h2><p>Available after staff have reviewed all five objectives. No public leaderboard.</p></div><button id="load-feedback" class="secondary">Load reviewed feedback</button></div>
+      <div id="feedback" class="timeline"></div>
+    </article>
+
+    <details class="panel support-panel space-top">
+      <summary id="support-title">Ask exercise staff for help</summary>
+      <p>Ask a question about the exercise or report a tool problem. Only you and authorized staff can see this thread. Staff reply manually; there are no automatic answers.</p>
+      <p>Do not include passwords, tokens or real personal information. For an urgent safety concern, contact the facilitator directly—do not wait for a reply here.</p>
+      <p id="support-summary" class="muted" role="status" aria-live="polite">Connect to load exercise support.</p>
+      <form id="support-form" class="form-grid">
+        <label class="form-wide">Related learning objective<select name="objective_id" required disabled><option value="">Select objective</option></select></label>
+        <label class="form-wide">Your question<textarea name="message" rows="3" required maxlength="1024" aria-describedby="support-limits" disabled></textarea></label>
+        <p id="support-limits" class="muted form-wide">Up to 1,024 characters. Wait for a reply before asking another question; up to 10 requests per run. Help is recorded for human evaluator review, not automatically scored.</p>
+        <div class="controls form-wide"><button id="support-send" disabled>Send help request</button><button id="support-refresh" type="button" class="secondary">Refresh replies</button></div>
+      </form>
+      <h2>Your help requests</h2>
+      <div id="support-threads" class="timeline"><p class="empty">No authorized support queue loaded.</p></div>
+    </details>
+
+    <section class="layout">
+      <div class="stack">
+        <article class="panel">
+          <div class="panel-header"><div><h2>Situation updates</h2><p>New information delivered by exercise control.</p></div><button id="refresh" class="secondary small">Refresh</button></div>
+          <div id="injects" class="timeline"><div class="empty">Connect to receive exercise injects.</div></div>
+        </article>
+
+        <details class="panel">
+          <summary>Submit your intrusion timeline</summary>
+          <p>Record at least six significant events before the containment checkpoint. Use occurrence times, cite event IDs from the evidence viewer, and distinguish observed facts from inference. Quality is reviewed by staff.</p>
+          <form id="intrusion-timeline">
+            <div id="timeline-entries" class="stack"></div>
+            <div class="controls space-top"><button id="add-timeline-entry" type="button" class="secondary">Add event</button><button type="submit" disabled>Submit timeline</button></div>
+          </form>
+        </details>
+
+        <article class="panel">
+          <div class="panel-header"><div><h2>Approved containment actions</h2><p>Every action is role-checked, allowlisted, reversible, and recorded.</p></div></div>
+          <div id="actions" class="actions">
+            <div class="action-card"><div><strong>Revoke a session</strong><small>Enter the session ID supported by your evidence.</small></div><input aria-label="Session ID" placeholder="Session ID"><button data-action="identity.session.revoke" data-type="session" disabled>Revoke session</button></div>
+            <div class="action-card"><div><strong>Remove an MFA factor</strong><small>Enter the factor ID supported by your evidence.</small></div><input aria-label="MFA factor ID" placeholder="Factor ID"><button data-action="identity.factor.remove" data-type="mfa_factor" disabled>Remove factor</button></div>
+            <div class="action-card"><div><strong>Rotate a credential</strong><small>Enter the affected synthetic identity ID.</small></div><input aria-label="Identity ID" placeholder="Identity ID"><button data-action="identity.credential.reset" data-type="identity" disabled>Rotate credential</button></div>
+            <div class="action-card"><div><strong>Preserve endpoint evidence</strong><small>Enter the designated evidence artifact ID.</small></div><input aria-label="Evidence artifact ID" placeholder="Artifact ID"><button data-action="evidence.artifact.preserve" data-type="evidence_artifact" disabled>Preserve evidence</button></div>
+            <div class="action-card"><div><strong>Isolate a remote path</strong><small>Enter the affected exercise host ID.</small></div><input aria-label="Host ID" placeholder="Host ID"><button data-action="endpoint.host.isolate" data-type="host" disabled>Isolate host</button></div>
+            <div class="action-card cloud-action" hidden><div><strong>Preserve cloud evidence</strong><small>Freeze the current bucket state and audit before remediation.</small></div><input aria-label="Cloud evidence bucket ID" placeholder="Bucket ID"><button data-action="cloud.evidence.preserve" data-type="cloud_bucket" disabled>Preserve cloud evidence</button></div>
+            <div class="action-card cloud-action" hidden><div><strong>Revoke a cloud key</strong><small>Use the opaque key ID found in the mock audit.</small></div><input aria-label="Cloud key ID" placeholder="Key ID"><button data-action="cloud.key.revoke" data-type="cloud_key" disabled>Revoke key</button></div>
+            <div class="action-card cloud-action" hidden><div><strong>Disable a cloud principal</strong><small>Disables the mock service identity and its keys.</small></div><input aria-label="Cloud principal ID" placeholder="Principal ID"><button data-action="cloud.principal.disable" data-type="cloud_principal" disabled>Disable principal</button></div>
+            <div class="action-card cloud-action" hidden><div><strong>Restore a bucket policy</strong><small>Restore the approved exercise policy.</small></div><input aria-label="Cloud policy bucket ID" placeholder="Bucket ID"><button data-action="cloud.policy.restore" data-type="cloud_bucket" disabled>Restore policy</button></div>
+            <div class="action-card impact-control" hidden><div><strong>Remove directory persistence</strong><small>Use the account ID supported by your evidence.</small></div><input aria-label="Persistence account ID" placeholder="Account ID"><button data-action="ad.persistence.remove" data-type="directory_account" disabled>Remove persistence</button></div>
+            <div class="action-card impact-control" hidden><div><strong>Stop the synthetic impact task</strong><small>Use the process ID from the exercise evidence.</small></div><input aria-label="Impact process ID" placeholder="Process ID"><button data-action="endpoint.process.stop" data-type="process" disabled>Stop task</button></div>
+          </div>
+        </article>
+        <details class="panel">
+          <summary>SimCorp staff directory · exercise information</summary>
+          <div class="panel-header"><div><h2>Reviewed staff context</h2><p>Account names are configured. Contact candidates are inferred, not verified addresses.</p></div><button id="load-directory" class="secondary small">Load directory</button></div>
+          <div id="directory" class="timeline"><div class="empty">Load the synthetic directory to review staff context.</div></div>
+        </details>
+        <article id="cloud-panel" class="panel" hidden>
+          <div class="panel-header"><div><h2>Mock-cloud investigation</h2><p>Local synthetic storage only. Access evidence does not prove external transfer.</p></div><button id="load-cloud" class="secondary small">Refresh cloud evidence</button></div>
+          <p id="cloud-summary" class="muted">Load current state and audit facts.</p>
+          <details><summary>Current objects and access controls</summary><pre id="cloud-state"></pre></details>
+          <div id="cloud-audit" class="timeline"></div>
+          <h3>Cloud assessment</h3>
+          <form id="cloud-form" class="form-grid">
+            <label class="form-wide">Affected service principal<input name="principal_id" required maxlength="128" placeholder="Principal found in audit"></label>
+            <label class="form-wide">Confirmed records accessed<input name="confirmed_count" type="number" min="0" max="25" required></label>
+            <label class="form-wide">Evidence conclusion<select name="conclusion" required><option value="">Select conclusion</option><option value="unknown">Insufficient evidence</option><option value="mock_access_only">Mock access confirmed; external transfer not established</option><option value="external_transfer_proven">External transfer proven</option></select></label>
+            <label class="form-wide">Cloud audit event IDs (one per line)<textarea name="evidence_ids" rows="3" required></textarea></label>
+            <button class="form-wide" type="submit" disabled>Submit cloud assessment</button>
+          </form>
+        </article>
+      </div>
+
+      <aside class="stack">
+        <article class="panel">
+        <div class="panel-header"><div><h2>Initial assessment</h2><p>Submit the affected identity, classification, and supporting artifacts.</p></div></div>
+        <form id="dp1-form" class="form-grid">
+          <label class="form-wide">Affected identity<input name="identity" required placeholder="Name or account"></label>
+          <label class="form-wide">Classification<select name="classification" required><option value="">Select classification</option><option>Likely account compromise</option><option>Identity compromise</option><option>Service outage</option><option>Benign activity</option></select></label>
+          <div class="form-wide">
+            <span class="muted">Evidence references — at least three across two sources</span>
+            <div class="evidence-row"><input name="reference" required placeholder="Event, ticket, or artifact ID"><input name="source" required placeholder="Source"></div>
+            <div class="evidence-row"><input name="reference" required placeholder="Event, ticket, or artifact ID"><input name="source" required placeholder="Source"></div>
+            <div class="evidence-row"><input name="reference" required placeholder="Event, ticket, or artifact ID"><input name="source" required placeholder="Source"></div>
+          </div>
+          <button class="form-wide" type="submit" disabled>Submit assessment</button>
+        </form>
+        </article>
+        <article id="recovery-panel" class="panel" hidden>
+          <div class="panel-header"><div><h2>Disposable-file recovery</h2><p>Five synthetic decoys only. No encryption or production data.</p></div><button id="load-recovery" class="secondary small">Refresh evidence</button></div>
+          <p id="recovery-summary" class="muted">Load current fixture hashes and audit.</p>
+          <details><summary>Current files, hashes and task state</summary><pre id="recovery-state"></pre></details>
+          <div id="recovery-audit" class="timeline"></div>
+          <form id="recovery-actions" class="form-grid">
+            <label class="form-wide">Fixture ID from the evidence<input name="fixture_id" required placeholder="Logical fixture ID, never a path"></label>
+            <label class="form-wide"><input id="recovery-preview" type="checkbox" checked> Preview only — do not execute</label>
+            <button data-recovery="recovery.fixture.restore" type="button" disabled>Restore decoys</button>
+            <button data-recovery="recovery.health.validate" type="button" class="secondary" disabled>Validate hashes</button>
+          </form>
+          <h3>Final incident brief</h3>
+          <p class="muted">Complete recovery and record a real health validation before citing it.</p>
+          <form id="recovery-brief" class="form-grid">
+            <label class="form-wide">Confirmed scope<textarea name="confirmed_scope" required maxlength="1024" rows="2"></textarea></label>
+            <label class="form-wide">Confirmed cloud records<input name="confirmed_cloud_records" type="number" min="0" max="25" required></label>
+            <label class="form-wide">Business impact<textarea name="business_impact" required maxlength="1024" rows="2"></textarea></label>
+            <label class="form-wide">Actions taken<textarea name="actions_taken" required maxlength="1024" rows="2"></textarea></label>
+            <label class="form-wide">Remaining risk and uncertainty<textarea name="remaining_risk" required maxlength="1024" rows="2"></textarea></label>
+            <label class="form-wide">Two prioritized follow-up recommendations (one per line)<textarea name="recommendations" required rows="3"></textarea></label>
+            <label class="form-wide">Recovery audit event IDs (one per line)<textarea name="evidence_ids" required rows="3"></textarea></label>
+            <button class="form-wide" type="submit" disabled>Submit incident brief</button>
+          </form>
+        </article>
+      </aside>
+    </section>
+    <p class="footer-note">Exercise-only system · Synthetic identities and data · Stop immediately if instructed by exercise control</p>
+  </main>
+</body>
+</html>

@@ -1,0 +1,47 @@
+[
+  {
+    "id": "job_001",
+    "title": "IT Support Specialist",
+    "department": "IT",
+    "company": "SimCorp Financial",
+    "posted": "2026-03-01",
+    "body": "SimCorp Financial is hiring an IT Support Specialist to join our growing Helpdesk team. The ideal candidate will have experience with Okta SSO administration, Active Directory, and Microsoft 365. You will be responsible for responding to employee requests through our helpdesk portal and providing Tier 1 and Tier 2 support. Contact our IT helpdesk at support@simcorp.com or call +1-613-555-0100.",
+    "source": "job_postings"
+  },
+  {
+    "id": "job_002",
+    "title": "Senior Systems Administrator",
+    "department": "IT",
+    "company": "SimCorp Financial",
+    "posted": "2026-02-15",
+    "body": "We are looking for a Senior Systems Administrator with strong expertise in VMware ESXi, Windows Server, and cloud platforms including AWS. Experience with Single Sign-On (SSO) solutions and identity providers such as Okta is required. The role involves managing our hybrid on-premises and cloud infrastructure and working closely with the IT Director.",
+    "source": "job_postings"
+  },
+  {
+    "id": "job_003",
+    "title": "Okta Identity Engineer",
+    "department": "IT",
+    "company": "SimCorp Financial",
+    "posted": "2026-01-20",
+    "body": "SimCorp Financial is seeking an Okta Identity Engineer to manage and expand our SSO and identity governance platform. You will act as the primary Okta administrator and work alongside our IT security team. Familiarity with SAML, OAuth, and MFA policy configuration is essential. For inquiries please contact it-careers@simcorp.com.",
+    "source": "job_postings"
+  },
+  {
+    "id": "job_004",
+    "title": "Finance Analyst",
+    "department": "Finance",
+    "company": "SimCorp Financial",
+    "posted": "2026-03-10",
+    "body": "SimCorp Financial seeks a Finance Analyst to support the VP of Finance and Finance Manager in monthly reporting and budget analysis. Strong Excel and SAP skills required. This role reports to the VP of Finance.",
+    "source": "job_postings"
+  },
+  {
+    "id": "job_005",
+    "title": "Network Security Engineer",
+    "department": "IT",
+    "company": "SimCorp Financial",
+    "posted": "2026-02-28",
+    "body": "Join SimCorp's IT security team as a Network Security Engineer. Responsibilities include managing firewall policies, monitoring SIEM alerts, and responding to incidents. Experience with Wazuh, Splunk, or similar SIEM platforms is a plus. All employees use SimCorp's corporate SSO portal powered by Okta.",
+    "source": "job_postings"
+  }
+]

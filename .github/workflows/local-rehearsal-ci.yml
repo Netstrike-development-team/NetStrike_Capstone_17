@@ -1,0 +1,74 @@
+name: Local full-play rehearsal
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6, Node 24
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6, Node 24
+        with:
+          python-version: '3.11'
+      - name: Install developer-only browser tooling and application dependencies
+        run: python -m pip install -r dashboard/requirements.txt -r scripts/requirements-browser-smoke.txt
+      - name: Install pinned Playwright's Chromium and Linux browser dependencies
+        run: python -m playwright install --with-deps chromium
+      - name: Exercise actual browser forms, evidence, recovery, export and reset (strict)
+        run: python scripts/record_ui_walkthrough.py --execute --smoke-only --output "$RUNNER_TEMP/browser-smoke-evidence"
+      - name: Exercise private help, evaluator review and immutable archives (strict)
+        run: python scripts/staff_browser_smoke.py --execute --output "$RUNNER_TEMP/staff-browser-smoke-evidence"
+      - name: Retain synthetic browser diagnostics (not usability or range sign-off)
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6, Node 24
+        with:
+          name: browser-smoke-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/browser-smoke-evidence/
+            ${{ runner.temp }}/staff-browser-smoke-evidence/
+          if-no-files-found: warn
+          retention-days: 14
+
+  full-play-rehearsal:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6, Node 24
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6, Node 24
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6, Node 24
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Test offline console interactions (no npm dependencies)
+        run: node --test dashboard/tests/*.test.mjs
+      - name: Install local service and test dependencies
+        run: python -m pip install -r dashboard/requirements.txt -r citef-config/requirements-validator.txt pytest coverage
+      - name: Test all core application and packaging regressions (strict)
+        run: python -m pytest shared/tests dashboard/tests orchestrator/tests scripts/tests citef-config/tests -q
+      - name: Run all local checkpoint combinations and fault/control cases
+        run: python scripts/rehearsal.py --execute --output "$RUNNER_TEMP/local-rehearsal-evidence"
+      - name: Independently verify exported evidence offline
+        run: python scripts/rehearsal.py --verify "$RUNNER_TEMP/local-rehearsal-evidence" --require-current-source
+      - name: Retain synthetic developer evidence (not range sign-off)
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6, Node 24
+        with:
+          name: local-full-play-rehearsal-${{ github.sha }}
+          path: ${{ runner.temp }}/local-rehearsal-evidence/
+          if-no-files-found: warn
+          retention-days: 14

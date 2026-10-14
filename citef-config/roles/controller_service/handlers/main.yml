@@ -1,0 +1,5 @@
+---
+- name: Restart NetStrike portal
+  ansible.builtin.systemd_service:
+    name: netstrike-portal.service
+    state: restarted

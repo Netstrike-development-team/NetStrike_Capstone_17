@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0.0",
+  "event_id": "11111111-1111-4111-8111-111111111111",
+  "timestamp": "2026-09-16T14:00:00.000Z",
+  "exercise_id": "silent-spider",
+  "run_id": "run-20260916-001",
+  "sequence": 1,
+  "event_type": "recon.source.harvested",
+  "phase": "reconnaissance",
+  "source": {
+    "kind": "module",
+    "component": "01-osint-profiler"
+  },
+  "actor": {
+    "type": "system",
+    "id": "01-osint-profiler"
+  },
+  "action": "source.harvest",
+  "target": {
+    "type": "dataset",
+    "id": "simcorp-employees"
+  },
+  "outcome": {
+    "status": "success"
+  },
+  "severity": "info",
+  "visibility": "facilitator",
+  "safety": {
+    "simulation_only": true,
+    "dry_run": false,
+    "within_allowlist": true,
+    "destructive": false,
+    "controls": ["fixture-only", "source-allowlist"]
+  },
+  "provenance": {
+    "producer": "01-osint-profiler",
+    "producer_version": "1.0.0"
+  },
+  "message": "Harvested five synthetic SimCorp employee records",
+  "attack": {
+    "technique_id": "T1593.001",
+    "tactic": "reconnaissance"
+  },
+  "objective_ids": [],
+  "checkpoint_id": null,
+  "correlation_ids": [],
+  "raw_data_ref": "artifact://run-20260916-001/osint/employees.json",
+  "data": {
+    "record_count": 5,
+    "synthetic": true
+  },
+  "extensions": {}
+}

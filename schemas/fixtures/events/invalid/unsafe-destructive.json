@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "event_id": "43333333-3333-4333-8333-333333333333",
+  "timestamp": "2026-09-16T14:00:00.000Z",
+  "exercise_id": "silent-spider",
+  "run_id": "unsafe-event",
+  "sequence": 1,
+  "event_type": "test.event",
+  "phase": "impact_recovery",
+  "source": { "kind": "test", "component": "contract-test" },
+  "actor": { "type": "system", "id": "test" },
+  "action": "event.validate",
+  "target": null,
+  "outcome": { "status": "success" },
+  "severity": "critical",
+  "visibility": "internal",
+  "safety": {
+    "simulation_only": true,
+    "dry_run": false,
+    "within_allowlist": true,
+    "destructive": true
+  },
+  "provenance": { "producer": "contract-test", "producer_version": "1.0.0" },
+  "message": "This fixture incorrectly claims a destructive action",
+  "data": {}
+}

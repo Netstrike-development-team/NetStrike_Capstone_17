@@ -1,0 +1,222 @@
+[
+  {
+    "id": "emp_001",
+    "name": "Sarah Mitchell",
+    "first": "Sarah",
+    "last": "Mitchell",
+    "title": "VP of Finance",
+    "department": "Finance",
+    "manager": "James Okafor",
+    "phone": null,
+    "source": "linkedin"
+  },
+  {
+    "id": "emp_002",
+    "name": "James Okafor",
+    "first": "James",
+    "last": "Okafor",
+    "title": "Chief Financial Officer",
+    "department": "Executive",
+    "manager": "CEO",
+    "phone": null,
+    "source": "linkedin"
+  },
+  {
+    "id": "emp_003",
+    "name": "Daniel Pryce",
+    "first": "Daniel",
+    "last": "Pryce",
+    "title": "IT Administrator",
+    "department": "IT",
+    "manager": "Rebecca Nwosu",
+    "phone": null,
+    "source": "linkedin"
+  },
+  {
+    "id": "emp_004",
+    "name": "Rebecca Nwosu",
+    "first": "Rebecca",
+    "last": "Nwosu",
+    "title": "Director of IT",
+    "department": "IT",
+    "manager": "James Okafor",
+    "phone": null,
+    "source": "linkedin"
+  },
+  {
+    "id": "emp_005",
+    "name": "Tyler Brennan",
+    "first": "Tyler",
+    "last": "Brennan",
+    "title": "IT Support Specialist",
+    "department": "Helpdesk",
+    "manager": "Rebecca Nwosu",
+    "phone": null,
+    "source": "linkedin"
+  },
+  {
+    "id": "emp_006",
+    "name": "Mariam Diallo",
+    "first": "Mariam",
+    "last": "Diallo",
+    "title": "Helpdesk Agent",
+    "department": "Helpdesk",
+    "manager": "Rebecca Nwosu",
+    "phone": null,
+    "source": "linkedin"
+  },
+  {
+    "id": "emp_007",
+    "name": "Kevin Ashworth",
+    "first": "Kevin",
+    "last": "Ashworth",
+    "title": "Senior Helpdesk Technician",
+    "department": "Helpdesk",
+    "manager": "Rebecca Nwosu",
+    "phone": null,
+    "source": "linkedin"
+  },
+  {
+    "id": "emp_008",
+    "name": "Priya Sharma",
+    "first": "Priya",
+    "last": "Sharma",
+    "title": "Okta Administrator",
+    "department": "IT",
+    "manager": "Rebecca Nwosu",
+    "phone": null,
+    "source": "linkedin"
+  },
+  {
+    "id": "emp_009",
+    "name": "Marcus Webb",
+    "first": "Marcus",
+    "last": "Webb",
+    "title": "Systems Administrator",
+    "department": "IT",
+    "manager": "Rebecca Nwosu",
+    "phone": null,
+    "source": "linkedin"
+  },
+  {
+    "id": "emp_010",
+    "name": "Claire Fontaine",
+    "first": "Claire",
+    "last": "Fontaine",
+    "title": "Chief Executive Officer",
+    "department": "Executive",
+    "manager": null,
+    "phone": null,
+    "source": "linkedin"
+  },
+  {
+    "id": "emp_011",
+    "name": "Andre Bouchard",
+    "first": "Andre",
+    "last": "Bouchard",
+    "title": "Finance Manager",
+    "department": "Finance",
+    "manager": "Sarah Mitchell",
+    "phone": null,
+    "source": "linkedin"
+  },
+  {
+    "id": "emp_012",
+    "name": "Natasha Cole",
+    "first": "Natasha",
+    "last": "Cole",
+    "title": "HR Director",
+    "department": "HR",
+    "manager": "Claire Fontaine",
+    "phone": null,
+    "source": "linkedin"
+  },
+  {
+    "id": "emp_013",
+    "name": "Omar Khalil",
+    "first": "Omar",
+    "last": "Khalil",
+    "title": "Network Engineer",
+    "department": "IT",
+    "manager": "Rebecca Nwosu",
+    "phone": null,
+    "source": "linkedin"
+  },
+  {
+    "id": "emp_014",
+    "name": "Jessica Park",
+    "first": "Jessica",
+    "last": "Park",
+    "title": "Security Analyst",
+    "department": "IT",
+    "manager": "Rebecca Nwosu",
+    "phone": null,
+    "source": "linkedin"
+  },
+  {
+    "id": "emp_015",
+    "name": "Brian Holloway",
+    "first": "Brian",
+    "last": "Holloway",
+    "title": "VP of Sales",
+    "department": "Sales",
+    "manager": "Claire Fontaine",
+    "phone": null,
+    "source": "linkedin"
+  },
+  {
+    "id": "emp_016",
+    "name": "Aisha Mensah",
+    "first": "Aisha",
+    "last": "Mensah",
+    "title": "Legal Counsel",
+    "department": "Legal",
+    "manager": "Claire Fontaine",
+    "phone": null,
+    "source": "linkedin"
+  },
+  {
+    "id": "emp_017",
+    "name": "Tom Gallagher",
+    "first": "Tom",
+    "last": "Gallagher",
+    "title": "DevOps Engineer",
+    "department": "IT",
+    "manager": "Rebecca Nwosu",
+    "phone": null,
+    "source": "linkedin"
+  },
+  {
+    "id": "emp_018",
+    "name": "Laura Simmons",
+    "first": "Laura",
+    "last": "Simmons",
+    "title": "Finance Analyst",
+    "department": "Finance",
+    "manager": "Sarah Mitchell",
+    "phone": null,
+    "source": "linkedin"
+  },
+  {
+    "id": "emp_019",
+    "name": "David Osei",
+    "first": "David",
+    "last": "Osei",
+    "title": "IT Support Specialist",
+    "department": "Helpdesk",
+    "manager": "Rebecca Nwosu",
+    "phone": null,
+    "source": "linkedin"
+  },
+  {
+    "id": "emp_020",
+    "name": "Rachel Torres",
+    "first": "Rachel",
+    "last": "Torres",
+    "title": "Chief Technology Officer",
+    "department": "Executive",
+    "manager": "Claire Fontaine",
+    "phone": null,
+    "source": "linkedin"
+  }
+]

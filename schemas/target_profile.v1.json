@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Synthetic exercise target profile v1",
+  "description": "Strict exercise input; the legacy target_profile.json remains unchanged.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "synthetic", "id", "employee_id", "name", "title", "role_group", "department", "manager", "username", "source_id", "confidence"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "synthetic": {"const": true},
+    "id": {"type": "string", "format": "uuid"},
+    "employee_id": {"type": "string", "pattern": "^emp_[0-9]{3}$"},
+    "name": {"type": "string", "minLength": 1, "maxLength": 100},
+    "title": {"type": "string", "minLength": 1, "maxLength": 100},
+    "role_group": {"enum": ["Helpdesk", "IT_Admin", "Executive", "Staff"]},
+    "department": {"type": "string", "minLength": 1, "maxLength": 100},
+    "manager": {"type": ["string", "null"], "maxLength": 100},
+    "username": {"type": "string", "pattern": "^[a-z][a-z0-9]*@simcorp\\.test$", "maxLength": 100},
+    "source_id": {"const": "linkedin"},
+    "confidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "role", "manager", "username"],
+      "properties": {
+        "name": {"const": "explicit"}, "role": {"const": "explicit"},
+        "manager": {"enum": ["explicit", "unknown"]}, "username": {"const": "configured"}
+      }
+    },
+    "email_candidates": {
+      "type": "array", "maxItems": 3,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["address", "pattern", "confidence", "rank"],
+        "properties": {
+          "address": {"type": "string", "pattern": "^[a-z][a-z0-9.]*@simcorp\\.test$", "maxLength": 150},
+          "pattern": {"enum": ["first.last", "f.last", "firstlast", "first"]},
+          "confidence": {"const": "inferred"}, "rank": {"type": "integer", "minimum": 1, "maximum": 3}
+        }
+      }
+    },
+    "phone_numbers": {
+      "type": "array", "maxItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["normalised", "label", "confidence"],
+        "properties": {
+          "normalised": {"const": "+1-613-555-0100"},
+          "label": {"const": "helpdesk"}, "confidence": {"const": "configured"}
+        }
+      }
+    }
+  }
+}

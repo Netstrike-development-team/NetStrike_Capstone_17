@@ -1,0 +1,253 @@
+---
+- name: Gather Windows facts
+  ansible.builtin.setup:
+
+- name: Require the selected Windows Server amd64 baseline
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.os_family == "Windows"
+      - ansible_facts.architecture in ["64-bit", "AMD64"]
+      - ansible_facts.hostname | lower == logical_name | lower
+      - "'Windows Server 2025' in ansible_facts.distribution"
+    fail_msg: "DC01 must be the approved amd64 Windows Server image with the configured hostname."
+
+- name: Install Active Directory Domain Services and DNS roles
+  ansible.windows.win_feature:
+    name:
+      - AD-Domain-Services
+      - DNS
+    state: present
+    include_management_tools: true
+  register: dc_features
+
+- name: Restart after installing directory services when required
+  ansible.windows.win_reboot:
+    reboot_timeout: 1800
+    post_reboot_delay: 30
+  when: dc_features.reboot_required
+
+- name: Create the isolated exercise forest
+  microsoft.ad.domain:
+    dns_domain_name: "{{ identity_baseline.domain_dns_name }}"
+    safe_mode_password: "{{ ad_safe_mode_password }}"
+    install_dns: true
+    reboot: true
+    reboot_timeout: 1800
+  register: domain_install
+  no_log: true
+
+- name: Wait for Active Directory and DNS to be available
+  ansible.windows.win_service:
+    name: "{{ item }}"
+    start_mode: auto
+    state: started
+  loop:
+    - NTDS
+    - DNS
+    - W32Time
+
+- name: Configure DC01 to use its local DNS service
+  ansible.windows.win_dns_client:
+    adapter_names: "*"
+    dns_servers:
+      - 127.0.0.1
+
+- name: Ensure the AD-integrated forward zone exists
+  ansible.windows.win_dns_zone:
+    name: "{{ network.domain_dns_name }}"
+    type: primary
+    replication: domain
+    dynamic_update: secure
+    state: present
+
+- name: Ensure the AD-integrated reverse zone exists
+  ansible.windows.win_dns_zone:
+    name: "{{ network.reverse_dns_zone }}"
+    type: primary
+    replication: domain
+    dynamic_update: secure
+    state: present
+
+- name: Register approved forward DNS records
+  ansible.windows.win_dns_record:
+    zone: "{{ network.domain_dns_name }}"
+    name: "{{ item.name | lower }}"
+    type: A
+    value: "{{ item.address }}"
+    state: present
+  loop: "{{ assets }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Register approved reverse DNS records
+  ansible.windows.win_dns_record:
+    zone: "{{ network.reverse_dns_zone }}"
+    name: "{{ item.address.split('.')[-1] }}"
+    type: PTR
+    value: "{{ item.dns_name }}."
+    state: present
+  loop: "{{ assets }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Disable DNS recursion and external forwarders in the isolated range
+  ansible.windows.win_powershell:
+    script: |
+      $ErrorActionPreference = 'Stop'
+      $changed = $false
+      $recursion = Get-DnsServerRecursion
+      if ($recursion.Enable) {
+        Set-DnsServerRecursion -Enable $false
+        $changed = $true
+      }
+      $forwarders = @(Get-DnsServerForwarder -ErrorAction SilentlyContinue)
+      if ($forwarders.Count -gt 0) {
+        Remove-DnsServerForwarder -Force
+        $changed = $true
+      }
+      $Ansible.Changed = $changed
+
+- name: Configure DC01 as the isolated authoritative time source
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Parameters
+    name: Type
+    data: NoSync
+    type: string
+  notify: Restart Windows Time
+
+- name: Advertise DC01 as a reliable time source
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Config
+    name: AnnounceFlags
+    data: 5
+    type: dword
+  notify: Restart Windows Time
+
+- name: Enable the Windows NTP server provider
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\NtpServer
+    name: Enabled
+    data: 1
+    type: dword
+  notify: Restart Windows Time
+
+- name: Mark DC01 as a reliable domain time source
+  ansible.windows.win_command: w32tm.exe /config /reliable:yes /update
+  changed_when: false
+  notify: Restart Windows Time
+
+- name: Allow only approved exercise hosts to use DC01 as an NTP server
+  ansible.windows.win_powershell:
+    parameters:
+      exercise_cidr: "{{ network.exercise_cidr }}"
+    script: |
+      $ErrorActionPreference = 'Stop'
+      $ruleName = 'NetStrike isolated NTP service'
+      $existing = Get-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
+      if ($existing) {
+        $portFilter = $existing | Get-NetFirewallPortFilter
+        $addressFilter = $existing | Get-NetFirewallAddressFilter
+        $valid = $existing.Enabled -eq 'True' -and
+          $existing.Direction -eq 'Inbound' -and
+          $existing.Action -eq 'Allow' -and
+          $portFilter.Protocol -eq 'UDP' -and
+          $portFilter.LocalPort -contains '123' -and
+          $addressFilter.RemoteAddress -contains $Ansible.Params.exercise_cidr
+        if (-not $valid) {
+          Remove-NetFirewallRule -DisplayName $ruleName
+          $existing = $null
+        }
+      }
+      if (-not $existing) {
+        New-NetFirewallRule -DisplayName $ruleName -Direction Inbound -Action Allow `
+          -Protocol UDP -LocalPort 123 -RemoteAddress $Ansible.Params.exercise_cidr `
+          -Profile Domain -Enabled True | Out-Null
+        $Ansible.Changed = $true
+      }
+
+- name: Flush time configuration handlers before proceeding
+  ansible.builtin.meta: flush_handlers
+
+- name: Create the exercise organizational units
+  microsoft.ad.ou:
+    name: "{{ item }}"
+    path: >-
+      {{
+        (
+          identity_baseline.organizational_units[:ansible_loop.index0]
+          | reverse
+          | map('regex_replace', '^(.*)$', 'OU=\\1')
+          | list
+        )
+        + (
+          identity_baseline.domain_dns_name.split('.')
+          | map('regex_replace', '^(.*)$', 'DC=\\1')
+          | list
+        )
+      | join(',')
+      }}
+    state: present
+  loop: "{{ identity_baseline.organizational_units }}"
+  loop_control:
+    extended: true
+
+- name: Create approved exercise security groups
+  microsoft.ad.group:
+    name: "{{ item }}"
+    scope: global
+    category: security
+    path: "{{ identity_baseline.search_base_dn }}"
+    state: present
+  loop: "{{ identity_baseline.groups }}"
+
+- name: Require a runtime password for every baseline exercise identity
+  ansible.builtin.assert:
+    that:
+      - baseline_user_passwords is defined
+      - item.sam_account_name in baseline_user_passwords
+      - baseline_user_passwords[item.sam_account_name] | length >= 16
+    fail_msg: "Missing runtime-injected password for an approved baseline account."
+  loop: "{{ identity_baseline.users }}"
+  no_log: true
+
+- name: Create approved baseline exercise identities
+  microsoft.ad.user:
+    name: "{{ item.display_name | default(item.sam_account_name) }}"
+    sam_account_name: "{{ item.sam_account_name }}"
+    password: "{{ baseline_user_passwords[item.sam_account_name] }}"
+    password_never_expires: true
+    enabled: "{{ item.enabled }}"
+    groups:
+      set: "{{ item.member_of }}"
+    path: "{{ identity_baseline.search_base_dn }}"
+    state: present
+    update_password: on_create
+  loop: "{{ identity_baseline.users }}"
+  loop_control:
+    label: "{{ item.sam_account_name }}"
+  no_log: true
+
+- name: Verify authoritative DNS records resolve to the manifest addresses
+  ansible.windows.win_powershell:
+    parameters:
+      approved_hosts: "{{ assets | to_json }}"
+      reverse_zone: "{{ network.reverse_dns_zone }}"
+      domain_zone: "{{ network.domain_dns_name }}"
+    script: |
+      $ErrorActionPreference = 'Stop'
+      $approved = ConvertFrom-Json -InputObject $Ansible.Params.approved_hosts
+      foreach ($hostEntry in $approved) {
+        $actual = @(
+          Resolve-DnsName -Server 127.0.0.1 -Name $hostEntry.dns_name -Type A |
+            Select-Object -ExpandProperty IPAddress
+        )
+        if ($hostEntry.address -notin $actual) {
+          throw "Forward DNS does not match the approved manifest for $($hostEntry.name)."
+        }
+        $reverseName = ($hostEntry.address -split '\.')[-1] + '.' + $Ansible.Params.reverse_zone
+        $ptr = Resolve-DnsName -Server 127.0.0.1 -Name $reverseName -Type PTR
+        if ($hostEntry.dns_name.TrimEnd('.') -notin $ptr.NameHost) {
+          throw "Reverse DNS does not match the approved manifest for $($hostEntry.name)."
+        }
+      }
+      $Ansible.Changed = $false

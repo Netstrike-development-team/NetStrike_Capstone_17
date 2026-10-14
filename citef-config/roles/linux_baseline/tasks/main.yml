@@ -1,0 +1,92 @@
+---
+- name: Gather Linux facts
+  ansible.builtin.setup:
+
+- name: Require amd64 and systemd on Linux targets
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.system == "Linux"
+      - ansible_facts.architecture in ["x86_64", "amd64"]
+      - ansible_service_mgr == "systemd"
+    fail_msg: "{{ logical_name }} requires an approved amd64 Linux image using systemd."
+
+- name: Require Ubuntu Server 26.04 for CTRL01
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution == "Ubuntu"
+      - ansible_facts.distribution_version == "26.04"
+    fail_msg: "CTRL01 must use the pinned Ubuntu Server 26.04 LTS baseline."
+  when: logical_name == "CTRL01"
+
+- name: Configure internal DNS and exercise search domain
+  ansible.builtin.template:
+    src: systemd-resolved.conf.j2
+    dest: /etc/systemd/resolved.conf.d/60-netstrike.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart systemd-resolved
+
+- name: Configure DC01 as the only NTP source
+  ansible.builtin.template:
+    src: systemd-timesyncd.conf.j2
+    dest: /etc/systemd/timesyncd.conf.d/60-netstrike.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart systemd-timesyncd
+
+- name: Ensure systemd-resolved is enabled
+  ansible.builtin.service:
+    name: systemd-resolved
+    enabled: true
+    state: started
+
+- name: Ensure the system resolver uses systemd-resolved
+  ansible.builtin.file:
+    src: /run/systemd/resolve/stub-resolv.conf
+    dest: /etc/resolv.conf
+    state: link
+    force: true
+
+- name: Ensure systemd-timesyncd is enabled
+  ansible.builtin.service:
+    name: systemd-timesyncd
+    enabled: true
+    state: started
+
+- name: Apply DNS and time changes before verification
+  ansible.builtin.meta: flush_handlers
+
+- name: Verify every approved forward DNS record
+  ansible.builtin.command:
+    argv: [getent, ahostsv4, "{{ item.dns_name }}"]
+  loop: "{{ assets }}"
+  register: resolved_hosts
+  changed_when: false
+
+- name: Require the DNS response to match each approved address
+  ansible.builtin.assert:
+    that:
+      - item.item.address in item.stdout
+    fail_msg: "{{ item.item.dns_name }} does not resolve to its approved address."
+  loop: "{{ resolved_hosts.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+
+- name: Require systemd-timesyncd to report synchronized time
+  ansible.builtin.command:
+    argv: [timedatectl, show, --property=NTPSynchronized, --value]
+  register: time_sync_state
+  changed_when: false
+  retries: 12
+  delay: 5
+  until: time_sync_state.stdout | trim == "yes"
+
+- name: Confirm systemd-timesyncd selected the approved internal source
+  ansible.builtin.command:
+    argv: [timedatectl, timesync-status]
+  register: time_sync_status
+  changed_when: false
+  failed_when: >-
+    (network.ntp_servers | select('in', time_sync_status.stdout) | list | length) == 0

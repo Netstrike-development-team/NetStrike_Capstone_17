@@ -1,0 +1,26 @@
+{
+  "schema_version": "2.0.0",
+  "event_id": "42222222-2222-4222-8222-222222222222",
+  "timestamp": "2026-09-16T14:00:00.000Z",
+  "exercise_id": "silent-spider",
+  "run_id": "invalid-version",
+  "sequence": 1,
+  "event_type": "test.event",
+  "phase": "control",
+  "source": { "kind": "test", "component": "contract-test" },
+  "actor": { "type": "system", "id": "test" },
+  "action": "event.validate",
+  "target": null,
+  "outcome": { "status": "success" },
+  "severity": "info",
+  "visibility": "internal",
+  "safety": {
+    "simulation_only": true,
+    "dry_run": true,
+    "within_allowlist": true,
+    "destructive": false
+  },
+  "provenance": { "producer": "contract-test", "producer_version": "1.0.0" },
+  "message": "This fixture uses an unsupported major version",
+  "data": {}
+}

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Operation Silent Spider · Facilitator Console</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script type="module" src="/static/facilitator.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><div class="brand-mark" aria-hidden="true">NS</div><div><strong>Operation Silent Spider</strong><small>Facilitator control room</small></div></div>
+      <div class="connection"><label><span class="muted">Staff access token</span><input id="token-input" type="password" autocomplete="off" placeholder="Paste token"></label><button id="connect">Connect</button></div>
+    </header>
+
+    <section class="hero">
+      <div><p class="eyebrow">Exercise control · Staff only</p><h1>Control the pace. Preserve the evidence.</h1><p class="hero-copy">Every transition is recorded. Use emergency stop for safety or platform faults, not to correct participant decisions.</p></div>
+      <aside class="status-card"><span id="run-state" class="pill">disconnected</span><div class="status-grid"><div class="metric"><span>Exercise clock</span><strong id="elapsed">00:00:00</strong></div><div class="metric"><span>Total events</span><strong id="event-count">0</strong></div><div class="metric metric-wide"><span>Run ID</span><strong id="run-id">—</strong></div></div></aside>
+    </section>
+    <div id="notice" class="notice" role="status" aria-live="polite"></div>
+
+    <nav class="evidence-link" aria-label="Exercise review">
+      <div><strong>After-action review and saved archives</strong><span>Review the current run or download read-only captures from earlier runs.</span></div>
+      <a class="button secondary" href="/evaluator" target="_blank" rel="noopener">Open evaluator review</a>
+    </nav>
+
+    <section class="ops-grid" aria-label="Local application operations">
+      <article class="panel ops-panel"><h2>Local application readiness</h2><div id="local-readiness"><p class="empty">Connect to inspect local checks.</p></div></article>
+      <article class="panel ops-panel"><h2>Automatic delivery health</h2><div id="clock-health"><p class="empty">Connect to inspect the supervised clock.</p></div></article>
+    </section>
+
+    <section class="panel space-top">
+      <div class="panel-header"><div><h2>Run controls</h2><p>Reviewed lifecycle operations only.</p></div><button id="refresh" class="secondary small">Refresh</button></div>
+      <p id="control-status" class="muted" role="status" aria-live="polite">Connect and inspect before using controls.</p>
+      <div class="controls"><button data-command="prepare" disabled>Prepare</button><button data-command="start" disabled>Start</button><button data-command="pause" class="warn" disabled>Pause</button><button data-command="resume" class="secondary" disabled>Resume</button><button id="resolve-dp2" class="secondary" disabled>Resolve DP2</button><button id="resolve-dp3" class="secondary" hidden disabled>Resolve DP3</button><button id="resolve-dp4" class="secondary" hidden disabled>Resolve DP4</button><button id="rollback-impact" class="secondary" hidden disabled>Roll back marker impact</button><button id="download-jsonl" class="secondary" disabled>Download JSONL</button><button id="download-csv" class="secondary" disabled>Download CSV</button></div>
+      <div class="form-grid controls-top">
+        <div class="form-wide"><label>Emergency-stop reason<input id="stop-reason" maxlength="512" placeholder="Required safety or platform reason"></label><button id="stop" class="danger small button-top" disabled>Emergency stop</button><p class="muted">Stop remains available during clock faults or another control request. If the application cannot be reached, contact the range operator directly.</p></div>
+        <div class="form-wide"><label>New run ID after stop<input id="new-run-id" placeholder="Optional; generated when blank"></label><button id="reset" class="secondary small button-top" disabled>Reset application state</button></div>
+      </div>
+      <details class="controls-top"><summary>Manual rehearsal time advance</summary><p>Normal play advances automatically on the server. This rehearsal control skips unplayed time; it does not prove timing or learner performance.</p><label>Advance to elapsed seconds<input id="advance-seconds" type="number" min="0" max="10800" value="300"></label><button id="advance" class="secondary small button-top" disabled>Advance rehearsal clock</button></details>
+    </section>
+
+    <section class="layout space-top">
+      <div class="stack">
+        <details class="panel support-panel">
+          <summary id="support-title">Participant help requests · Staff only</summary>
+          <p>Write a human reply using the approved facilitator content. Each request gets one permanent reply. Technical operators can explain platform issues, not coach.</p>
+          <p>Choose the actual assistance kind and affected objectives. These labels do not assign a grade or change the exercise branch. Do not include secrets or real personal information.</p>
+          <p id="support-summary" class="muted" role="status" aria-live="polite">Connect to load exercise support.</p>
+          <form id="support-form" class="form-grid">
+            <label class="form-wide">Unanswered request<select name="request_id" required disabled><option value="">Select an unanswered request</option></select></label>
+            <label class="form-wide">Reply kind<select name="kind" required disabled><option value="clarification">Clarification</option><option value="hint">Hint</option><option value="platform_issue">Platform issue</option></select></label>
+            <fieldset class="form-wide support-objectives"><legend>Affected learning objectives (select at least one)</legend>
+              <label><input type="checkbox" name="objective_ids" value="LO1" disabled>LO1 · Triage the identity incident</label>
+              <label><input type="checkbox" name="objective_ids" value="LO2" disabled>LO2 · Reconstruct the intrusion</label>
+              <label><input type="checkbox" name="objective_ids" value="LO3" disabled>LO3 · Contain identity and endpoint access</label>
+              <label><input type="checkbox" name="objective_ids" value="LO4" disabled>LO4 · Determine and contain cloud data exposure</label>
+              <label><input type="checkbox" name="objective_ids" value="LO5" disabled>LO5 · Recover and communicate</label>
+            </fieldset>
+            <label class="form-wide">Reply to participant<textarea name="message" rows="3" required maxlength="1024" disabled></textarea></label>
+            <div class="controls form-wide"><button id="support-send" disabled>Record and send reply</button><button id="support-refresh" type="button" class="secondary">Refresh queue</button></div>
+          </form>
+          <h2>Assistance transcript</h2>
+          <div id="support-threads" class="timeline"><p class="empty">No authorized support queue loaded.</p></div>
+        </details>
+        <article class="panel"><div class="panel-header"><div><h2>MSEL execution</h2><p>Ready items can be delivered or skipped explicitly.</p></div></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Item</th><th>Trigger</th><th>Status</th><th>Control</th></tr></thead><tbody id="msel-body"></tbody></table></div></article>
+        <article class="panel"><div class="panel-header"><div><h2>Recent event ledger</h2><p>Controller, module, participant-action, and checkpoint evidence.</p></div></div><div id="event-log" class="event-log"><div class="empty">Connect to load events.</div></div></article>
+      </div>
+      <aside class="stack">
+        <article class="panel"><div class="panel-header"><div><h2>Profile readiness</h2><p>Startup-validated synthetic fixture; setup audit recorded during Prepare.</p></div></div><div id="profile-summary" class="timeline">Connect to inspect profile readiness.</div></article>
+        <article class="panel"><div class="panel-header"><div><h2>Scheduled MFA</h2><p>Act as the synthetic user. Approval does not undo containment or create a real session.</p></div></div><div id="mfa-summary" class="timeline">No pending request.</div><div class="controls"><button id="mfa-deny" class="secondary" disabled>Deny request</button><button id="mfa-approve" disabled>Approve request</button></div></article>
+        <article class="panel"><div class="panel-header"><div><h2>DP2 verifier preview</h2><p>Authoritative state; does not resolve the branch until commanded.</p></div></div><div id="checks" class="checklist"></div></article>
+        <article id="cloud-verifier" class="panel" hidden><div class="panel-header"><div><h2>DP3 cloud verifier preview</h2><p>State and evidence checks; resolve only when DP3 is due.</p></div></div><div id="cloud-checks" class="checklist"></div></article>
+        <article id="impact-verifier" class="panel" hidden><div class="panel-header"><div><h2>DP4 prevention and recovery observations</h2><p>State/evidence checks only; report quality and the final rubric need evaluator review.</p></div></div><div id="impact-checks" class="checklist"></div><h3>Recovery and brief</h3><div id="recovery-checks" class="checklist"></div></article>
+        <article class="panel"><div class="panel-header"><div><h2>Participant submissions</h2><p>Structured checkpoint responses retained for evaluation.</p></div></div><div id="submissions" class="timeline"><div class="empty">No submissions.</div></div></article>
+      </aside>
+    </section>
+    <p class="footer-note">Staff-only control surface · Do not display on the participant workstation</p>
+  </main>
+</body>
+</html>

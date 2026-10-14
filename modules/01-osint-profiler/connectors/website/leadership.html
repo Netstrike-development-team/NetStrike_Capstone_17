@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leadership Team | SimCorp Financial Services</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: #2c3e50; background: #f5f7fa; }
+    header { background: #0b2545; }
+    .header-top { display: flex; align-items: center; justify-content: space-between; padding: 16px 56px; border-bottom: 1px solid #13315c; }
+    .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .logo-mark { width: 38px; height: 38px; background: #1d6fa4; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 18px; }
+    .logo-text { color: white; font-size: 20px; font-weight: 600; }
+    .logo-text span { color: #5bb8f5; }
+    .header-contact { color: #8faec8; font-size: 13px; text-align: right; }
+    .header-contact strong { color: white; display: block; font-size: 15px; }
+    nav { background: #13315c; }
+    nav ul { display: flex; list-style: none; padding: 0 56px; }
+    nav ul li a { display: block; padding: 14px 22px; color: #cdd9e8; text-decoration: none; font-size: 13.5px; font-weight: 500; }
+    nav ul li a:hover { color: white; background: rgba(255,255,255,0.08); }
+    nav ul li a.active { color: white; border-bottom: 3px solid #5bb8f5; }
+    .page-hero { background: linear-gradient(135deg, #0b2545 0%, #13315c 100%); color: white; padding: 64px 56px 48px; }
+    .breadcrumb { font-size: 12px; color: #8faec8; margin-bottom: 16px; }
+    .breadcrumb a { color: #8faec8; text-decoration: none; }
+    .breadcrumb span { color: #5bb8f5; }
+    .page-hero h1 { font-size: 38px; font-weight: 300; margin-bottom: 12px; }
+    .page-hero h1 strong { font-weight: 700; }
+    .page-hero p { font-size: 16px; opacity: 0.8; max-width: 580px; line-height: 1.6; }
+    .container { max-width: 1140px; margin: 0 auto; padding: 0 56px; }
+    .section { padding: 64px 0; }
+    .section-eyebrow { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: #1d6fa4; font-weight: 700; margin-bottom: 8px; }
+    .section h2 { font-size: 30px; color: #0b2545; font-weight: 700; margin-bottom: 10px; }
+    .section .lead { font-size: 16px; color: #5a6a7e; line-height: 1.65; margin-bottom: 48px; }
+    .divider { border: none; border-top: 1px solid #dee2e6; margin: 0; }
+    /* ── Executive Grid ── */
+    .exec-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px; margin-bottom: 48px; }
+    .exec-card { background: white; border-radius: 8px; box-shadow: 0 2px 12px rgba(11,37,69,0.09); overflow: hidden; display: flex; }
+    .exec-avatar { width: 140px; min-width: 140px; background: linear-gradient(160deg, #0b2545 0%, #1d6fa4 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 36px; font-weight: 700; letter-spacing: -1px; }
+    .exec-body { padding: 24px 28px; flex: 1; }
+    .exec-name { font-size: 20px; font-weight: 700; color: #0b2545; margin-bottom: 2px; }
+    .exec-title { font-size: 13px; color: #1d6fa4; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+    .exec-bio { font-size: 13.5px; color: #5a6a7e; line-height: 1.6; margin-bottom: 16px; }
+    .exec-contact { font-size: 13px; }
+    .exec-contact a { color: #1d6fa4; text-decoration: none; }
+    .exec-contact a:hover { text-decoration: underline; }
+    .exec-tag { display: inline-block; font-size: 11px; background: #e8f4fd; color: #1d6fa4; padding: 3px 10px; border-radius: 20px; font-weight: 600; margin-right: 6px; margin-top: 8px; }
+    /* ── Director Grid ── */
+    .director-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .director-card { background: white; border-radius: 6px; padding: 24px; box-shadow: 0 2px 10px rgba(11,37,69,0.07); }
+    .director-avatar { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #13315c, #1d6fa4); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px; margin-bottom: 14px; }
+    .director-name { font-size: 16px; font-weight: 700; color: #0b2545; margin-bottom: 2px; }
+    .director-title { font-size: 12px; color: #1d6fa4; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+    .director-dept { font-size: 12px; color: #9aa5b4; margin-bottom: 10px; }
+    .director-bio { font-size: 13px; color: #5a6a7e; line-height: 1.55; margin-bottom: 12px; }
+    .director-contact { font-size: 12.5px; }
+    .director-contact a { color: #1d6fa4; text-decoration: none; }
+    .exec-phone { margin-top: 6px; color: #4a5568; }
+    footer { background: #0b2545; color: #8faec8; padding: 60px 56px 32px; }
+    .footer-grid { display: grid; grid-template-columns: 2.5fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 48px; }
+    footer h4 { color: white; font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 18px; font-weight: 700; }
+    footer ul { list-style: none; }
+    footer ul li { margin-bottom: 9px; font-size: 13px; }
+    footer ul li a { color: #8faec8; text-decoration: none; }
+    .footer-desc { font-size: 13.5px; line-height: 1.7; margin-bottom: 16px; }
+    .footer-address { font-size: 13px; line-height: 1.8; font-style: normal; }
+    .footer-address strong { color: white; display: block; margin-bottom: 4px; }
+    .footer-bottom { border-top: 1px solid #13315c; padding-top: 24px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+    .footer-bottom a { color: #8faec8; text-decoration: none; margin-left: 20px; }
+    .cert-badges { display: flex; gap: 12px; margin-top: 16px; }
+    .cert-badge { border: 1px solid #1d4280; border-radius: 4px; padding: 5px 10px; font-size: 11px; color: #8faec8; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-top">
+      <a href="index.html" class="logo">
+        <div class="logo-mark">SC</div>
+        <div class="logo-text">SimCorp <span>Financial</span></div>
+      </a>
+      <div class="header-contact">
+        <strong>+1-613-555-0199</strong>
+        Executive Office &mdash; By Appointment
+      </div>
+    </div>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="services.html">Services</a></li>
+        <li><a href="leadership.html" class="active">Leadership</a></li>
+        <li><a href="careers.html">Careers</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="it-support.html">IT Support</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="page-hero">
+    <div class="breadcrumb"><a href="index.html">Home</a> &rsaquo; <span>Leadership</span></div>
+    <h1>Our <strong>Leadership Team</strong></h1>
+    <p>Experienced executives and department directors who guide SimCorp's strategy,
+       operations, and client relationships across our three Canadian offices.</p>
+  </div>
+
+  <div class="container">
+
+    <!-- C-Suite -->
+    <section class="section">
+      <div class="section-eyebrow">Executive Committee</div>
+      <h2>C-Suite Leadership</h2>
+      <p class="lead">SimCorp's executive committee sets firm-wide strategy and is collectively
+         accountable to our board of directors and regulated stakeholders.</p>
+
+      <div class="exec-grid">
+
+        <div class="exec-card">
+          <div class="exec-avatar">CF</div>
+          <div class="exec-body">
+            <div class="exec-name">Claire Fontaine</div>
+            <div class="exec-title">Chief Executive Officer</div>
+            <p class="exec-bio">Claire joined SimCorp in 2009 as Managing Director of Portfolio Strategy and was
+               appointed CEO in 2016. She holds an MBA from Queen's Smith School and a CFA designation.
+               Prior to SimCorp, Claire spent 11 years at RBC Global Asset Management.</p>
+            <div class="exec-contact">
+              &#9993;&nbsp;<a href="mailto:claire.fontaine@simcorp.com">claire.fontaine@simcorp.com</a>
+              <div class="exec-phone">&#9742;&nbsp;+1-613-555-0199 (Executive Office)</div>
+            </div>
+            <span class="exec-tag">Strategy</span>
+            <span class="exec-tag">Board Relations</span>
+            <span class="exec-tag">CFA</span>
+          </div>
+        </div>
+
+        <div class="exec-card">
+          <div class="exec-avatar">JO</div>
+          <div class="exec-body">
+            <div class="exec-name">James Okafor</div>
+            <div class="exec-title">Chief Financial Officer</div>
+            <p class="exec-bio">James oversees all financial reporting, treasury, and capital markets functions.
+               He joined SimCorp in 2014 from Deloitte's Financial Services practice. James holds a CPA
+               designation and an MSc in Financial Economics from the University of Toronto.</p>
+            <div class="exec-contact">
+              &#9993;&nbsp;<a href="mailto:james.okafor@simcorp.com">james.okafor@simcorp.com</a>
+              <div class="exec-phone">&#9742;&nbsp;+1-613-555-0115 (Finance Division)</div>
+            </div>
+            <span class="exec-tag">Finance</span>
+            <span class="exec-tag">Treasury</span>
+            <span class="exec-tag">CPA</span>
+          </div>
+        </div>
+
+        <div class="exec-card">
+          <div class="exec-avatar">RT</div>
+          <div class="exec-body">
+            <div class="exec-name">Rachel Torres</div>
+            <div class="exec-title">Chief Technology Officer</div>
+            <p class="exec-bio">Rachel leads SimCorp's technology transformation, including the 2024 Okta
+               identity platform rollout and Elastic SIEM deployment. She was previously VP Engineering
+               at a fintech startup and holds a BSc Computer Science from Carleton University.</p>
+            <div class="exec-contact">
+              &#9993;&nbsp;<a href="mailto:rachel.torres@simcorp.com">rachel.torres@simcorp.com</a>
+              <div class="exec-phone">&#9742;&nbsp;+1-613-555-0120 (IT Security Operations)</div>
+            </div>
+            <span class="exec-tag">Technology</span>
+            <span class="exec-tag">Cybersecurity</span>
+            <span class="exec-tag">Cloud</span>
+          </div>
+        </div>
+
+        <div class="exec-card">
+          <div class="exec-avatar">NC</div>
+          <div class="exec-body">
+            <div class="exec-name">Natasha Cole</div>
+            <div class="exec-title">HR Director</div>
+            <p class="exec-bio">Natasha leads human resources, talent acquisition, and equity programmes across
+               all three SimCorp offices. She joined SimCorp in 2017 and led the firm's CCDI certification
+               initiative in 2020. She holds a CHRP designation and an MBA from Ottawa University.</p>
+            <div class="exec-contact">
+              &#9993;&nbsp;<a href="mailto:natasha.cole@simcorp.com">natasha.cole@simcorp.com</a>
+              <div class="exec-phone">&#9742;&nbsp;+1-613-555-0110 (HR Department)</div>
+            </div>
+            <span class="exec-tag">HR</span>
+            <span class="exec-tag">Talent</span>
+            <span class="exec-tag">CHRP</span>
+          </div>
+        </div>
+
+        <div class="exec-card">
+          <div class="exec-avatar">BH</div>
+          <div class="exec-body">
+            <div class="exec-name">Brian Holloway</div>
+            <div class="exec-title">VP of Sales &amp; Client Relations</div>
+            <p class="exec-bio">Brian manages SimCorp's client-facing teams across Ottawa and Toronto, overseeing
+               new business development and institutional relationship management. He previously ran
+               institutional sales at TD Asset Management for eight years.</p>
+            <div class="exec-contact">
+              &#9993;&nbsp;<a href="mailto:brian.holloway@simcorp.com">brian.holloway@simcorp.com</a>
+              <div class="exec-phone">&#9742;&nbsp;+1-416-555-0200 (Toronto Office)</div>
+            </div>
+            <span class="exec-tag">Sales</span>
+            <span class="exec-tag">Client Relations</span>
+          </div>
+        </div>
+
+        <div class="exec-card">
+          <div class="exec-avatar">AM</div>
+          <div class="exec-body">
+            <div class="exec-name">Aisha Mensah</div>
+            <div class="exec-title">General Counsel &amp; Corporate Secretary</div>
+            <p class="exec-bio">Aisha oversees all legal matters, regulatory compliance, and corporate governance.
+               She was called to the Ontario Bar in 2010 and specialises in securities law and financial
+               services regulation. She reports directly to the CEO and board.</p>
+            <div class="exec-contact">
+              &#9993;&nbsp;<a href="mailto:aisha.mensah@simcorp.com">aisha.mensah@simcorp.com</a>
+              <div class="exec-phone">&#9742;&nbsp;+1-613-555-0001 ext. 201 (Legal)</div>
+            </div>
+            <span class="exec-tag">Legal</span>
+            <span class="exec-tag">Compliance</span>
+            <span class="exec-tag">Securities Law</span>
+          </div>
+        </div>
+
+      </div><!-- /exec-grid -->
+
+    </section>
+
+    <hr class="divider">
+
+    <!-- Directors -->
+    <section class="section">
+      <div class="section-eyebrow">Department Directors</div>
+      <h2>Senior Management</h2>
+      <p class="lead">Directors leading key functions across IT, Finance, and Client Operations.</p>
+      <div class="director-grid">
+
+        <div class="director-card">
+          <div class="director-avatar">RN</div>
+          <div class="director-name">Rebecca Nwosu</div>
+          <div class="director-title">Director of IT</div>
+          <div class="director-dept">Department: Information Technology &mdash; Ottawa HQ</div>
+          <p class="director-bio">Rebecca manages SimCorp's 12-person IT team, overseeing infrastructure,
+             helpdesk operations, and the Okta/Azure AD identity stack. She joined in 2018 and led
+             the ISO 27001 certification effort. Reports to CTO Rachel Torres.</p>
+          <div class="director-contact">
+            &#9993;&nbsp;<a href="mailto:rebecca.nwosu@simcorp.com">rebecca.nwosu@simcorp.com</a><br>
+            <span style="color:#5a6a7e;">&#9742;&nbsp;+1-613-555-0100 (IT Ops)</span>
+          </div>
+        </div>
+
+        <div class="director-card">
+          <div class="director-avatar">SM</div>
+          <div class="director-name">Sarah Mitchell</div>
+          <div class="director-title">VP of Finance</div>
+          <div class="director-dept">Department: Finance &mdash; Ottawa HQ</div>
+          <p class="director-bio">Sarah manages financial reporting, budgeting, and audit liaison functions.
+             She oversees a team of eight analysts and reports to CFO James Okafor.
+             Joined SimCorp in 2015 from KPMG's financial services audit group.</p>
+          <div class="director-contact">
+            &#9993;&nbsp;<a href="mailto:sarah.mitchell@simcorp.com">sarah.mitchell@simcorp.com</a><br>
+            <span style="color:#5a6a7e;">&#9742;&nbsp;+1-613-555-0115 (Finance)</span>
+          </div>
+        </div>
+
+        <div class="director-card">
+          <div class="director-avatar">PS</div>
+          <div class="director-name">Priya Sharma</div>
+          <div class="director-title">Okta Administrator &amp; IAM Lead</div>
+          <div class="director-dept">Department: IT Security &mdash; Ottawa HQ</div>
+          <p class="director-bio">Priya owns the Okta tenant, manages provisioning workflows, and
+             is the primary contact for all SSO and MFA escalations. She holds the Okta Certified
+             Administrator designation. Reports to Director of IT Rebecca Nwosu.</p>
+          <div class="director-contact">
+            &#9993;&nbsp;<a href="mailto:priya.sharma@simcorp.com">priya.sharma@simcorp.com</a><br>
+            <span style="color:#5a6a7e;">&#9742;&nbsp;+1-613-555-0100 ext. 112 (IT)</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div><!-- /container -->
+
+  <footer>
+    <div class="footer-grid">
+      <div>
+        <h4>SimCorp Financial Services</h4>
+        <p class="footer-desc">A mid-market investment management and financial advisory firm
+           serving corporate clients across Canada since 1987.</p>
+        <address class="footer-address">
+          <strong>Head Office</strong>
+          150 Elgin Street, Suite 800<br>
+          Ottawa, Ontario &nbsp;K2P 1L4<br>
+          +1-613-555-0001 &nbsp;&bull;&nbsp; info@simcorp.com
+        </address>
+        <div class="cert-badges">
+          <span class="cert-badge">ISO 27001</span>
+          <span class="cert-badge">CIRO Member</span>
+          <span class="cert-badge">OSFI Regulated</span>
+        </div>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li><a href="about.html">About SimCorp</a></li>
+          <li><a href="leadership.html">Leadership Team</a></li>
+          <li><a href="careers.html">Careers</a></li>
+          <li><a href="about.html#offices">Our Offices</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Services</h4>
+        <ul>
+          <li><a href="services.html">Investment Management</a></li>
+          <li><a href="services.html">Financial Advisory</a></li>
+          <li><a href="services.html">Asset Servicing</a></li>
+          <li><a href="services.html">Digital Banking</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Support</h4>
+        <ul>
+          <li><a href="contact.html">Contact Us</a></li>
+          <li><a href="it-support.html">IT Support</a></li>
+          <li><a href="it-support.html">Employee Portal</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2024 SimCorp Financial Services Inc. &mdash; SIMULATED ENVIRONMENT</span>
+      <div><a href="#">Privacy Policy</a><a href="#">Terms of Use</a></div>
+    </div>
+  </footer>
+
+</body>
+</html>

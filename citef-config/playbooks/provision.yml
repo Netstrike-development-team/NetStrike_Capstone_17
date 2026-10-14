@@ -1,0 +1,81 @@
+---
+- name: Validate approved configuration and offline installation artifacts
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/../environment.json"
+  tasks:
+    - name: Refuse provisioning without a unique deployment identifier
+      ansible.builtin.assert:
+        that:
+          - deployment_id is defined
+          - deployment_id is match('^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$')
+        fail_msg: "Pass a unique, path-safe deployment_id (8-64 letters, digits, dots, underscores, or hyphens)."
+
+    - name: Validate the approved environment manifest
+      ansible.builtin.command:
+        argv:
+          - python3
+          - "{{ playbook_dir }}/../validate_environment.py"
+          - validate
+          - --config
+          - "{{ playbook_dir }}/../environment.json"
+      changed_when: false
+
+    - name: Require domain bootstrap and membership credentials
+      ansible.builtin.assert:
+        that:
+          - ad_safe_mode_password is defined
+          - ad_safe_mode_password | length >= 16
+          - domain_admin_user is defined
+          - domain_admin_password is defined
+          - domain_admin_password | length >= 16
+        fail_msg: "Inject domain bootstrap credentials using the approved Ansible Vault or secret manager."
+      no_log: true
+
+    - name: Validate all staged vendor artifacts before any host changes
+      ansible.builtin.include_tasks: ../tasks/validate_artifacts.yml
+
+- name: Install the domain controller and establish internal DNS/time
+  hosts: domain_controllers
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/../environment.json"
+  roles:
+    - domain_controller
+
+- name: Configure domain clients and Windows security telemetry
+  hosts: workstations
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/../environment.json"
+  roles:
+    - windows_client
+
+- name: Configure Windows security telemetry on domain hosts
+  hosts: windows_hosts
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/../environment.json"
+  roles:
+    - windows_telemetry
+
+- name: Configure isolated DNS/time on Linux hosts
+  hosts: linux_hosts
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/../environment.json"
+  roles:
+    - linux_baseline
+  tasks:
+    - name: Configure Splunk forwarder on the controller host
+      ansible.builtin.include_role:
+        name: linux_telemetry
+      when: logical_name == "CTRL01"
+    - name: Deploy the offline controller portal service
+      ansible.builtin.include_role:
+        name: controller_service
+      when: logical_name == "CTRL01"
+
+- name: Check provisioned OS services and baseline readiness
+  ansible.builtin.import_playbook: provisioning_validation.yml

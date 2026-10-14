@@ -1,0 +1,5 @@
+README_RANSOMHUB.txt
+scenario_events.jsonl
+test_demo/
+ransomware_test_files/
+.pytest_cache/

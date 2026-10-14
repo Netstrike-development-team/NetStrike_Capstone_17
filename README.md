@@ -5,100 +5,93 @@ Team: Ashley Goman, Anna Brimacombe-Tanner, Patrick Luu, Aya Debbagh
 Client: Dr. Miguel Garzon | Supervisors: Prof. Timothy Lethbridge, Prof. Garzon  
 Partner: University of Ottawa Cyber Range
 
----
+## What this is
 
-## What This Is
+Operation Silent Spider is a facilitated blue-team exercise for cybersecurity
+students and junior defenders. Participants investigate a fictitious SimCorp
+identity compromise that progresses through a Finance workstation, Active
+Directory, a stateful Python mock cloud, and a safe impact/recovery stage.
 
-A modular attack simulation suite modeling **Scattered Spider (UNC3944)**,
-one of the most active financially motivated threat actor groups operating today.
-The suite executes a full 7-phase kill chain within the CITEF cyber range,
-from OSINT reconnaissance through to ransomware deployment, with a real-time
-detection dashboard and MITRE ATT&CK-tagged event logging.
+The MVP is designed for one team in an isolated Cyber Range environment. It
+uses synthetic identities and data, deterministic decision branches, Splunk
+telemetry, and reversible actions. It does not use public-cloud resources,
+real credential collection, learner-operated red teaming, or destructive
+encryption.
 
-Built to run in CITEF today and portable to the Cyber Range team's
-next-generation platform.
+## Exercise at a glance
 
----
+- **Total duration:** 2 hours 50 minutes, including briefing and hotwash
+- **Participants:** ideally 4; supported range 2–6
+- **Learning goals:** triage, timeline reconstruction, containment, cloud
+  scoping, recovery, and incident communication
+- **Decision model:** four checkpoints select documented contained or adverse
+  variants from verified exercise state
+- **Delivery:** Cyber Range-managed amd64 VMs with no Internet access
+- **Reset:** restore clean VM snapshots, then run readiness validation
 
-## Attack Phases
+## MVP technology
 
-| Module | Phase | Description |
-|--------|-------|-------------|
-| `01-osint-profiler` | Reconnaissance | OSINT scraper building structured target profiles |
-| `02-phishing-infra` | Initial Access | Fake Okta login page + credential capture backend |
-| `03-vishing-scripts` | Identity Takeover | Context-aware helpdesk impersonation script generator |
-| `04-mfa-fatigue-sim` | MFA Bypass | Push bombing simulator against simulated Okta |
-| `05-lateral-movement` | Lateral Movement | AD enumeration + privilege escalation engine |
-| `06-cloud-exfil` | Data Exfiltration | S3 enumeration + bulk data download via AWS CLI |
-| `07-ransomware-sim` | Impact | Benign AES file encryptor mimicking RansomHub |
+| Need | MVP choice |
+|---|---|
+| Scenario controller and portal | Python 3.11, FastAPI, SQLite, server-rendered web UI |
+| SIEM | Cyber Range-provided Splunk Enterprise 10.0.1; capacity limits are recorded in the [CITEF decision log](docs/exercise-design/06-citef-requirements-and-approval.md) |
+| Windows collection | Splunk Universal Forwarder 10.0.1, Sysmon 15.22, Windows audit and PowerShell logs |
+| Endpoint response | NetStrike allowlisted safe actions; no commercial EDR dependency |
+| Infrastructure configuration | Ansible over SSH/WinRM plus PowerShell where required |
+| Cloud stage | Project-owned stateful Python mock; no AWS or LocalStack |
+| Impact stage | Marker files and reversible moves inside disposable fixtures; no encryption |
+| Offline installation | Staged and verified artifacts; see the [bundle status and installation guide](docs/offline-bundle.md) |
 
-All phases are executed via **MITRE CALDERA** (adversary emulation framework)
-and orchestrated by our custom Python scenario runner.
+CALDERA, GHOSTS, Wazuh/Elastic, public cloud, and a custom SIEM are outside the
+MVP. They may be reconsidered only after the complete blue-team exercise works.
 
----
+## Repository structure
 
-## Detection Layer
-
-- **Log Analyzer**: ingests structured JSON events from all modules, applies
-  MITRE ATT&CK-mapped detection rules, scores each phase
-- **Detection Dashboard**: real-time React UI showing attack timeline,
-  technique heatmap, and blue team scoring
-- **SIEM Integration**: Wazuh collects host telemetry; dashboards surface
-  IOCs and lateral movement paths
-
----
-
-## Stack
-
-| Component | Technology |
-|-----------|------------|
-| Attack orchestration | Python + FastAPI + CALDERA API |
-| Victim simulation | GHOSTS (NIST) |
-| Detection / SIEM | Wazuh + Elastic |
-| Local infrastructure | Vagrant + Ansible |
-| Dashboard | React + TypeScript + FastAPI |
-| Event schema | STIX 2.1-aligned JSON |
-
----
-
-## Repository Structure
-```
-NetStrike_Capstone_17/
-├── _legacy/                    # Pre-pivot code (archived)
-│   ├── attacks/
-│   ├── backend/
-│   ├── frontend/
-│   ├── infrastructure_old/
-│   └── SIEM/
-├── modules/
-│   ├── 01-osint-profiler/      # Reconnaissance: OSINT automation
-│   ├── 02-phishing-infra/      # Initial Access: credential capture page
-│   ├── 03-vishing-scripts/     # Identity Takeover: call script generator
-│   ├── 04-mfa-fatigue-sim/     # MFA Bypass: push bombing simulator
-│   ├── 05-lateral-movement/    # Lateral Movement: AD enumeration engine
-│   ├── 06-cloud-exfil/         # Exfiltration: S3 data theft module
-│   └── 07-ransomware-sim/      # Impact: benign AES encryption payload
-├── orchestrator/               # Scenario runner, Caldera client, flag tracker
-├── detection/                  # Log analyzer, MITRE detection rules, scoring
-├── dashboard/                  # React frontend + FastAPI backend
-├── ghosts/                     # NIST Ghosts victim simulation config
-├── citef-config/               # Vagrant + Ansible environment setup
-├── schemas/                    # Shared JSON schemas
-├── docs/                       # Scenario design document + references
-└── scripts/                    # Utility scripts
+```text
+modules/              Controlled scenario fixtures and safe actions
+orchestrator/          Scenario control, events, and action adapters
+schemas/               Shared versioned event contracts
+dashboard/             Existing participant/facilitator UI code
+detection/             Existing detection and scoring code
+citef-config/          Infrastructure and Ansible configuration
+docs/README.md         Index of guides, contracts, and planning snapshots
+docs/exercise-design/  Authoritative exercise design and delivery package
+docs/roadmap.md        Current schedule, ownership, and milestones
 ```
 
----
+Some older module names remain because the project began as an attack-chain
+prototype. The blue-team design package and safe-action contracts define the
+supported MVP behavior.
 
-## Scenario Design Document
+## Current state
 
-See [`docs/operation-silent-spider.pdf`](docs/operation-silent-spider.pdf)
-for the full scenario design including MITRE ATT&CK mappings, exercise
-timeline, and CITEF environment requirements.
+The exercise design, shared event contract, safe-action contract, and safe
+identity, endpoint/AD, mock-cloud, and impact/recovery controls have been built.
+Offline Ansible provisioning and manifest validation are implemented, but have
+not yet been exercised against CITEF VMs. The CI bundle now contains the
+portable Python runtime, resolved dependencies, project source trees, and pinned
+Ansible collections, with a generated per-artifact inventory and checksums.
+Clean-target installation, approvals and hashes for licensed/approved external
+artifacts, normalized portal-event forwarding, and end-to-end telemetry
+acceptance remain open.
+The next delivery goal is a complete identity vertical
+slice: start a run, deliver an inject, investigate it in Splunk, take a safe
+containment action, score the checkpoint, export evidence, and restore the
+environment.
 
----
+See:
 
-## MITRE ATT&CK Coverage
+- [Documentation index](docs/README.md)
+- [Exercise design package](docs/exercise-design/README.md)
+- [Architecture](docs/architecture.md)
+- [Roadmap and ownership](docs/roadmap.md)
+- [Shared event contract](docs/event-contract-v1.md)
+- [Safe-action contract](docs/safe-action-contract-v1.md)
 
-14 tactic categories | 20+ techniques mapped  
-Full mapping in scenario document and tagged on every emitted log event.
+## Development workflow
+
+- Feature branches and pull requests target `dev`.
+- CI and at least one teammate review are required before merge.
+- `main` is reserved for tested milestone/release snapshots.
+- Follow the [milestone promotion checklist](docs/milestone-release-checklist.md); prototype promotion is not Cyber Range v1.0 acceptance.
+- Cyber Range-specific secrets and licensed installers are never committed.

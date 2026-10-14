@@ -14,22 +14,32 @@ permissions:
 jobs:
   build:
     name: Build and verify bundle
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Check out the committed source revision
-        uses: actions/checkout@v4
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6, Node 24
+        with:
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6, Node 24
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install bundle builder test dependencies
-        run: python -m pip install pytest
+      - name: Install bundle builder and Ansible dependencies
+        run: |
+          python -m pip install pytest -r citef-config/requirements-controller.txt
 
       - name: Test offline bundle builder
         run: python -m pytest scripts/tests/test_offline_bundle.py -q
+
+      - name: Download pinned Ansible collections
+        run: |
+          mkdir -p "$RUNNER_TEMP/ansible-collections"
+          ansible-galaxy collection download \
+            --requirements-file citef-config/requirements.yml \
+            --download-path "$RUNNER_TEMP/ansible-collections"
 
       - name: Download portable CPython runtime
         id: runtime
@@ -49,11 +59,26 @@ jobs:
         run: |
           requirements=(
             --requirements shared/requirements.txt
+            --requirements modules/01-osint-profiler/requirements.txt
             --requirements modules/04-mfa-fatigue-sim/requirements.txt
             --requirements modules/05-lateral-movement/requirements.txt
             --requirements modules/06-cloud-exfil/requirements.txt
             --requirements modules/07-ransomware-sim/requirements.txt
+            --requirements dashboard/requirements.txt
+            --requirements citef-config/requirements-validator.txt
+            --requirements citef-config/requirements-controller.txt
           )
+
+          mapfile -d '' -t collection_archives < <(
+            find "$RUNNER_TEMP/ansible-collections" -maxdepth 1 -type f -name '*.tar.gz' -print0 | sort -z
+          )
+          if [[ "${#collection_archives[@]}" -eq 0 ]]; then
+            echo "ansible-galaxy produced no collection archives" >&2
+            exit 1
+          fi
+          for archive in "${collection_archives[@]}"; do
+            requirements+=(--ansible-collection-archive "$archive")
+          done
 
           output="offline-bundles/netstrike-${DESTINATION}-${RUN_ID}.tar.gz"
           python scripts/offline_bundle.py build \
@@ -67,7 +92,7 @@ jobs:
         run: python scripts/offline_bundle.py verify "offline-bundles/netstrike-${DESTINATION}-${RUN_ID}.tar.gz"
 
       - name: Upload offline bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6, Node 24
         with:
           name: netstrike-offline-bundle-${{ env.DESTINATION }}-${{ github.run_id }}
           path: offline-bundles/netstrike-${{ env.DESTINATION }}-${{ github.run_id }}.tar.gz
