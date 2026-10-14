@@ -30,6 +30,7 @@ SOURCE_DIRECTORIES = (
     "shared",
     "orchestrator",
     "schemas",
+    "offline-bundles",
 )
 
 
@@ -336,7 +337,7 @@ def _copy_source_directories(
         shutil.copytree(
             source,
             destination,
-            ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc"),
+            ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc", "netstrike-*.tar.gz"),
         )
         copied.append(
             {
