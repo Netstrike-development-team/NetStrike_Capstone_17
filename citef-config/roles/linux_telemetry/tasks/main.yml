@@ -82,6 +82,33 @@
     mode: "0644"
   notify: Restart Linux Universal Forwarder
 
+- name: Allow the forwarder user to read /var/log (adm group)
+  ansible.builtin.user:
+    name: splunkfwd
+    groups: adm
+    append: true
+  notify: Restart Linux Universal Forwarder
+
+- name: Check whether the forwarder systemd unit exists
+  ansible.builtin.stat:
+    path: /etc/systemd/system/SplunkForwarder.service
+  register: linux_uf_unit
+
+- name: Register the forwarder as a systemd service
+  when: not linux_uf_unit.stat.exists
+  ansible.builtin.command:
+    cmd: >-
+      /opt/splunkforwarder/bin/splunk enable boot-start
+      -systemd-managed 1 -user splunkfwd
+      --accept-license --answer-yes --no-prompt
+  environment:
+    LD_LIBRARY_PATH: /opt/splunkforwarder/lib
+  changed_when: true
+
+- name: Reload systemd units
+  ansible.builtin.systemd:
+    daemon_reload: true
+
 - name: Enable and start the Linux Universal Forwarder
   ansible.builtin.service:
     name: SplunkForwarder
