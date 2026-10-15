@@ -37,6 +37,31 @@
     - name: Validate all staged vendor artifacts before any host changes
       ansible.builtin.include_tasks: ../tasks/validate_artifacts.yml
 
+- name: Trust SSH host keys of the Linux targets (trust on first use)
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/../environment.json"
+  tasks:
+    - name: Scan ed25519 host keys of Linux assets
+      ansible.builtin.command:
+        argv: [ssh-keyscan, -t, ed25519, -p, "{{ item.port }}", "{{ item.address }}"]
+      loop: "{{ assets | selectattr('os_family', 'equalto', 'linux') | rejectattr('name', 'equalto', 'SPLUNK01') | list }}"
+      loop_control:
+        label: "{{ item.name }}"
+      register: ssh_hostkeys
+      changed_when: false
+      failed_when: ssh_hostkeys.stdout | length == 0
+
+    - name: Record the scanned host keys in known_hosts
+      ansible.builtin.known_hosts:
+        name: "{{ item.item.address if item.item.port | int == 22 else '[' ~ item.item.address ~ ']:' ~ item.item.port }}"
+        key: "{{ item.item.address if item.item.port | int == 22 else '[' ~ item.item.address ~ ']:' ~ item.item.port }} {{ (item.stdout_lines | reject('match', '^#') | first).split(' ', 1)[1] }}"
+        state: present
+      loop: "{{ ssh_hostkeys.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
 # Windows Server (DC01) is unavailable; re-enable when it is.
 # - name: Install the domain controller and establish internal DNS/time
 #   hosts: domain_controllers
@@ -63,8 +88,10 @@
     - windows_telemetry
 
 - name: Configure isolated DNS/time on Linux hosts
-  hosts: linux_hosts
+  # SPLUNK01 is already provisioned; leave it out of host configuration.
+  hosts: linux_hosts:!splunk
   gather_facts: false
+  become: true
   vars_files:
     - "{{ playbook_dir }}/../environment.json"
   roles:

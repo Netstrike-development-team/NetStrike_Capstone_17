@@ -317,7 +317,11 @@ def _inventory_host(host: dict) -> str:
         )
     else:
         connection_options = (
-            f"ansible_connection={host['connection']} ansible_port={host['port']}"
+            f"ansible_connection={host['connection']} ansible_user=test "
+            "ansible_password=REPLACE_WITH_SECRET "
+            "ansible_become_method=su ansible_become_user=root "
+            "ansible_become_password=REPLACE_WITH_ROOT_SECRET "
+            f"ansible_port={host['port']}"
         )
     return (
         f"{host['name'].lower()} ansible_host={host['address']} {connection_options} "
