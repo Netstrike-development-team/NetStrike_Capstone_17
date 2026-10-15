@@ -105,6 +105,56 @@ Failures fail the job; evidence upload still runs. See the
 [milestone checklist](milestone-release-checklist.md) for final-source evidence.
 This adds a CI check, not a change to repository branch-protection rules.
 
+### Transfer completeness and hidden-marker safety (#175)
+
+The full-play upload retains a single `local-rehearsal-evidence.tar.gz` archive
+of its generated output. Each case requires both the hidden fixed
+`disposable/.netstrike-disposable-root` marker and empty fixture staging
+directories. Direct upload omitted hidden markers in the #174 main artifact,
+even though in-workspace verification passed. Merely enabling hidden files also
+loses empty directories during file-only transfer. The archive preserves both;
+the original download remains incomplete and is not relabelled as repaired.
+The dependency-free Python archiver records directory entries explicitly and
+does not add macOS AppleDouble/xattr sidecars; no filesystem metadata is
+mistaken for scenario evidence. `--archive` is explicit, rechecks the guard,
+creates only a new output outside the input and refuses existing files/links.
+
+Before upload, `scripts/check_rehearsal_upload.py` inspects the trusted,
+quiescent generated directory without application imports or writes. It permits
+only the fixed marker bytes at the expected case/disposable location; unrelated
+hidden entries (including `.env`/`.git`), symlinks, hardlinks, special files and
+oversized outputs fail closed. Limits are 5,000 entries, 20 MiB per file and
+128 MiB total. This is a file-shape check, **not** a free-text secret scrubber or
+a successful-rehearsal certificate. It does not secure an untrusted parent path
+or concurrent filesystem edits. CI must keep this directory task-owned.
+
+The guard also runs after earlier failures. Safe partial diagnostics can still
+archive and upload, without being called verified; absent/unsafe output fails
+the guard and is not uploaded. Archive failure also blocks upload. No workflow
+upload enables broad hidden-file collection. No whole checkout, `.git`,
+credentials directory or unrelated runtime is included.
+
+The regression round-trips all 24 generated cases through an artifact-equivalent
+archive using the actual packaging command and models ZIP transfer of that one
+file, then runs the unchanged strict verifier on the unpacked package. It checks
+all directory entries, including empty staging directories. This catches the
+previous omissions locally; it is not a mocked claim that GitHub transfer
+succeeded. After CI, download the **new**
+`local-full-play-rehearsal-<checkout SHA>` artifact. Extract its
+`local-rehearsal-evidence.tar.gz` into a new approved directory, then verify:
+
+```sh
+mkdir /approved/staff/downloaded-package
+tar -xzf /approved/staff/local-rehearsal-evidence.tar.gz -C /approved/staff/downloaded-package
+python scripts/rehearsal.py --verify /approved/staff/downloaded-package --require-current-source
+```
+
+Use a clean checkout of the exact source recorded in its manifest. PR Actions
+can record a temporary merge SHA rather than the feature head. Keep original
+downloads intact; do not reconstruct markers, weaken the verifier or substitute
+a separate local run as proof the downloaded artifact passed. This fix does not
+change scenario state, acceptance, deployment ownership or branch protections.
+
 The same strict workflow executes all dependency-free `dashboard/tests/*.test.mjs`
 client regressions and the [learner run-boundary HTTP checks](participant-run-safety.md).
 Those tests compose real API roles through full-play recovery and reset; the

@@ -64,11 +64,20 @@ jobs:
         run: python scripts/rehearsal.py --execute --output "$RUNNER_TEMP/local-rehearsal-evidence"
       - name: Independently verify exported evidence offline
         run: python scripts/rehearsal.py --verify "$RUNNER_TEMP/local-rehearsal-evidence" --require-current-source
-      - name: Retain synthetic developer evidence (not range sign-off)
+      - name: Check generated rehearsal upload safety
+        id: rehearsal_upload_safety
         if: always()
+        run: python scripts/check_rehearsal_upload.py "$RUNNER_TEMP/local-rehearsal-evidence"
+      - name: Package generated rehearsal evidence with markers and empty directories
+        id: rehearsal_archive
+        if: always() && steps.rehearsal_upload_safety.outcome == 'success'
+        run: python scripts/check_rehearsal_upload.py "$RUNNER_TEMP/local-rehearsal-evidence" --archive "$RUNNER_TEMP/local-rehearsal-evidence.tar.gz"
+      - name: Retain synthetic developer evidence (not range sign-off)
+        if: always() && steps.rehearsal_archive.outcome == 'success'
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6, Node 24
         with:
           name: local-full-play-rehearsal-${{ github.sha }}
-          path: ${{ runner.temp }}/local-rehearsal-evidence/
+          # A single guarded archive preserves fixed markers AND empty staging directories.
+          path: ${{ runner.temp }}/local-rehearsal-evidence.tar.gz
           if-no-files-found: warn
           retention-days: 14
