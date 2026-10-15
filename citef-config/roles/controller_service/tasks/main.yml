@@ -285,6 +285,9 @@
     ca_path: "{{ '/etc/netstrike/tls-ca.pem' if controller.tls_ca is defined else omit }}"
     timeout: 30
   register: controller_local_readiness
+  until: controller_local_readiness.status is defined and controller_local_readiness.status == 200
+  retries: 30
+  delay: 5
   no_log: true
 
 - name: Require controller application and event ledger readiness
