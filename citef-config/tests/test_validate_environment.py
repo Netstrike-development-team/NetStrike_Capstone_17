@@ -127,11 +127,13 @@ class ValidateEnvironmentTests(unittest.TestCase):
         self.assertIn("[file_store]\nctrl01", inventory)
         self.assertIn("[domain_controllers]\ndc01", inventory)
         self.assertIn(
-            "ansible_connection=winrm ansible_user=test "
-            "ansible_password=REPLACE_WITH_SECRET ansible_winrm_transport=ntlm "
+            "ansible_connection=winrm ansible_winrm_transport=ntlm "
             "ansible_port=5985 ansible_winrm_scheme=http",
             inventory,
         )
+        self.assertNotIn("ansible_user=", inventory)
+        self.assertNotIn("ansible_password=", inventory)
+        self.assertNotIn("ansible_become_password=", inventory)
 
     def test_duplicate_addresses_are_rejected(self):
         manifest = valid_manifest()

@@ -312,16 +312,13 @@ def _inventory_host(host: dict) -> str:
     services = ",".join(host["required_services"])
     if host["connection"] == "winrm":
         connection_options = (
-            "ansible_connection=winrm ansible_user=test "
-            "ansible_password=REPLACE_WITH_SECRET ansible_winrm_transport=ntlm "
+            "ansible_connection=winrm ansible_winrm_transport=ntlm "
             f"ansible_port={host['port']} ansible_winrm_scheme=http"
         )
     else:
         connection_options = (
-            f"ansible_connection={host['connection']} ansible_user=test "
-            "ansible_password=REPLACE_WITH_SECRET "
+            f"ansible_connection={host['connection']} "
             "ansible_become_method=su ansible_become_user=root "
-            "ansible_become_password=REPLACE_WITH_ROOT_SECRET "
             f"ansible_port={host['port']}"
         )
     return (

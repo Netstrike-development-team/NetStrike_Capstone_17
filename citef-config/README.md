@@ -160,15 +160,14 @@ python3 -m pip install --no-index \
 For WinRM, install `pywinrm` from `citef-config/requirements-controller.txt`
 the same way into the Python environment used by `ansible-playbook`.
 
-The ignored generated inventory contains placeholders for every host (`test` /
-`REPLACE_WITH_SECRET`; Windows also uses NTLM over HTTP, port 5985), not
-approved credentials.
-Replace them locally; for an existing manifest, set every Windows asset's
-`port` to `5985` before rendering. Never put credentials in the manifest,
-history, or repository. Inject SSH/WinRM credentials through approved Vault
-or secret management, and `NETSTRIKE_READINESS_TOKEN`/`SPLUNK_TOKEN` into the
-Ansible process environment. Each Splunk probe must include `{run_id}` and
-return its configured `expected_event_id` to prove freshness and correlation.
+The ignored generated inventory does not contain account names or passwords.
+Supply approved SSH/WinRM credentials through Vault or secret management, for
+example with an Ansible vars file (`-e @secrets.yml`). For an existing
+manifest, set every Windows asset's `port` to `5985` before rendering. Never
+put credentials in the manifest, history, or repository.
+Inject `NETSTRIKE_READINESS_TOKEN`/`SPLUNK_TOKEN` into the Ansible process
+environment. Each Splunk probe must include `{run_id}` and return its
+configured `expected_event_id` to prove freshness and correlation.
 
 For a standalone Windows telemetry run, you can override the inventory account
 and have Ansible prompt for its password:
