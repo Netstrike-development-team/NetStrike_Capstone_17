@@ -94,7 +94,7 @@ jobs:
       - name: Upload offline bundle
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6, Node 24
         with:
+          name: netstrike-offline-bundle-${{ env.DESTINATION }}-${{ github.run_id }}
           path: offline-bundles/netstrike-${{ env.DESTINATION }}-${{ github.run_id }}.tar.gz
-          archive: false
           if-no-files-found: error
           retention-days: 14
