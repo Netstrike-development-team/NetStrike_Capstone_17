@@ -156,8 +156,9 @@ python3 -m pip install --no-index \
 For WinRM, install `pywinrm` from `citef-config/requirements-controller.txt`
 the same way into the Python environment used by `ansible-playbook`.
 
-The ignored generated inventory contains Windows placeholders (`test` /
-`REPLACE_WITH_SECRET`, NTLM over HTTP, port 5985), not approved credentials.
+The ignored generated inventory contains placeholders for every host (`test` /
+`REPLACE_WITH_SECRET`; Windows also uses NTLM over HTTP, port 5985), not
+approved credentials.
 Replace them locally; for an existing manifest, set every Windows asset's
 `port` to `5985` before rendering. Never put credentials in the manifest,
 history, or repository. Inject SSH/WinRM credentials through approved Vault
@@ -240,7 +241,29 @@ match is checked).
 Inject `controller_service_tokens` (token-to-`actor_id`/`role` mapping),
 `controller_readiness_token`, `controller_identity_audit_key` (32+ characters),
 and `controller_tls_private_key_pem` through approved secret management. Trust
-the controller TLS CA on clients and the Ansible host. Capture a clean snapshot
+the controller TLS CA on clients and the Ansible host.
+
+`controller_readiness_token` must be a key of `controller_service_tokens`, and
+that entry must have `role: facilitator`; otherwise the role's assertions fail.
+Define the token once and reference it so the two cannot drift:
+
+```yaml
+_ready: "<random-token>"   # e.g. openssl rand -hex 32
+controller_readiness_token: "{{ _ready }}"
+controller_service_tokens:
+  "{{ _ready }}":
+    actor_id: facilitator-1
+    role: facilitator
+```
+
+By default the controller role reads the extracted bundle from
+`<offline_artifacts.directory>/netstrike-offline-bundle`. To use a bundle
+extracted elsewhere, set `controller_offline_bundle_root` to its absolute path
+(the directory containing `runtime/` and `destinations/`), e.g.
+`-e controller_offline_bundle_root=/path/to/offline-bundle/netstrike-offline-bundle`.
+
+Keep this vars file out of git (or encrypt it with `ansible-vault`) and pass it
+with `-e @secrets.yml`. Capture a clean snapshot
 only after facilitator preparation and all external readiness gates pass.
 
 Provision approved VMs from `citef-config/` with:

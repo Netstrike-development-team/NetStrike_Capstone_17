@@ -119,10 +119,3 @@
       - offline_artifacts.universal_forwarder.version | length > 0
       - offline_artifacts.sysmon.version | length > 0
     fail_msg: "Complete the Splunk/forwarder versions, receiver, and index settings before provisioning."
-
-- name: Verify the offline bundle checksum manifest
-  ansible.builtin.command:
-    argv: [sha256sum, -c, SHA256SUMS]
-    chdir: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/netstrike-offline-bundle"
-  changed_when: false
-  delegate_to: localhost

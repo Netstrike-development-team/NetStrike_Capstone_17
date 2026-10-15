@@ -20,9 +20,13 @@
 - name: Define controller release and artifact paths
   ansible.builtin.set_fact:
     controller_source_root: "{{ playbook_dir }}/../../"
-    controller_bundle_root: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/netstrike-offline-bundle"
+    controller_bundle_root: "{{ controller_offline_bundle_root | default(playbook_dir ~ '/../../' ~ offline_artifacts.directory ~ '/netstrike-offline-bundle') }}"
     controller_release_path: "/opt/netstrike/releases/{{ deployment_id }}"
-    controller_wheelhouse_path: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/netstrike-offline-bundle/destinations/CTRL01/wheelhouse"
+  changed_when: false
+
+- name: Define controller wheelhouse path
+  ansible.builtin.set_fact:
+    controller_wheelhouse_path: "{{ controller_bundle_root }}/destinations/CTRL01/wheelhouse"
   changed_when: false
 
 - name: Create the unprivileged portal service account
@@ -41,12 +45,12 @@
     group: "{{ item.group | default('root') }}"
     mode: "{{ item.mode }}"
   loop:
-    - {path: /opt/netstrike, mode: "0755"}
-    - {path: /opt/netstrike/releases, mode: "0755"}
-    - {path: /opt/netstrike/runtime, mode: "0755"}
-    - {path: /opt/netstrike/offline, mode: "0755"}
-    - {path: /opt/netstrike/wheelhouse, mode: "0755"}
-    - {path: /etc/netstrike, mode: "0700"}
+    - {path: /opt/netstrike, group: netstrike, mode: "0750"}
+    - {path: /opt/netstrike/releases, group: netstrike, mode: "0750"}
+    - {path: /opt/netstrike/runtime, group: netstrike, mode: "0750"}
+    - {path: /opt/netstrike/offline, group: netstrike, mode: "0750"}
+    - {path: /opt/netstrike/wheelhouse, group: netstrike, mode: "0750"}
+    - {path: /etc/netstrike, group: netstrike, mode: "0750"}
     - {path: /var/lib/netstrike, owner: netstrike, group: netstrike, mode: "0750"}
     - {path: /var/lib/netstrike/fixtures, owner: netstrike, group: netstrike, mode: "0750"}
 
@@ -129,6 +133,19 @@
   environment:
     PIP_NO_INDEX: "1"
 
+- name: Grant the netstrike group read access to the runtime, virtual environment, and release
+  ansible.builtin.file:
+    path: "{{ item }}"
+    recurse: true
+    owner: root
+    group: netstrike
+    mode: "u=rwX,g=rX,o-rwx"
+  loop:
+    - /opt/netstrike/runtime
+    - /opt/netstrike/venv
+    - "{{ controller_release_path }}"
+  changed_when: false
+
 - name: Link the selected controller release
   ansible.builtin.file:
     src: "{{ controller_release_path }}"
@@ -164,8 +181,8 @@
   ansible.builtin.file:
     path: /etc/netstrike/tls.key
     owner: root
-    group: root
-    mode: "0600"
+    group: netstrike
+    mode: "0640"
   when: controller.tls_certificate is not defined
 
 - name: Install the controller TLS certificate and trusted CA
@@ -187,8 +204,8 @@
     content: "{{ controller_tls_private_key_pem }}"
     dest: /etc/netstrike/tls.key
     owner: root
-    group: root
-    mode: "0600"
+    group: netstrike
+    mode: "0640"
   no_log: true
   notify: Restart NetStrike portal
 
