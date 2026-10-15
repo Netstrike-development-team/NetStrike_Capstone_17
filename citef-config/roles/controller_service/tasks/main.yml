@@ -273,6 +273,13 @@
 - name: Apply changed portal configuration before readiness checks
   ansible.builtin.meta: flush_handlers
 
+- name: Resolve the controller DNS name to its listen address locally
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '\s{{ controller.readiness_url | urlsplit("hostname") | regex_escape }}(\s|$)'
+    line: "{{ ansible_host }} {{ controller.readiness_url | urlsplit('hostname') }}"
+    state: present
+
 - name: Verify the local controller readiness endpoint
   ansible.builtin.uri:
     url: "{{ controller.readiness_url }}"

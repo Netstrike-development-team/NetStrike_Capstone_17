@@ -54,7 +54,7 @@
       register: linux_dns_results
       changed_when: false
       when:
-        - windows_server_available | default(false) | bool
+        - (windows_server_available | default(false) | bool) or (external_ntp | default(false) | bool)
         - expected_os_family == "linux"
 
     - name: Require approved Linux DNS answers
@@ -123,7 +123,7 @@
       register: linux_time_state
       changed_when: false
       when:
-        - windows_server_available | default(false) | bool
+        - (windows_server_available | default(false) | bool) or (external_ntp | default(false) | bool)
         - expected_os_family == "linux"
 
     - name: Require Linux time to be synchronized
@@ -131,7 +131,7 @@
         that:
           - linux_time_state.stdout | trim == "yes"
       when:
-        - windows_server_available | default(false) | bool
+        - (windows_server_available | default(false) | bool) or (external_ntp | default(false) | bool)
         - expected_os_family == "linux"
 
     - name: Confirm Linux selected an approved internal time source
@@ -140,10 +140,10 @@
       register: linux_time_source
       changed_when: false
       when:
-        - windows_server_available | default(false) | bool
+        - (windows_server_available | default(false) | bool) or (external_ntp | default(false) | bool)
         - expected_os_family == "linux"
 
-    - name: Require Linux NTP status to identify DC01
+    - name: Require Linux NTP status to identify an approved source
       ansible.builtin.assert:
         that:
           - >-
@@ -153,7 +153,7 @@
             | length) > 0
         fail_msg: "{{ logical_name }} is not synchronized to an approved internal NTP source."
       when:
-        - windows_server_available | default(false) | bool
+        - (windows_server_available | default(false) | bool) or (external_ntp | default(false) | bool)
         - expected_os_family == "linux"
 
     - name: Check Windows domain time source
@@ -161,7 +161,7 @@
       register: windows_time_source
       changed_when: false
       when:
-        - windows_server_available | default(false) | bool
+        - (windows_server_available | default(false) | bool) or (external_ntp | default(false) | bool)
         - expected_os_family == "windows"
 
     - name: Verify the isolated DC01 time-source configuration
@@ -183,8 +183,18 @@
           $Ansible.Changed = $false
       when:
         - windows_server_available | default(false) | bool
+        - not (external_ntp | default(false) | bool)
         - expected_os_family == "windows"
         - logical_name == "DC01"
+
+    - name: Require Windows time to use the external NTP servers
+      ansible.builtin.assert:
+        that:
+          - (network.ntp_servers | select('in', windows_time_source.stdout) | list | length) > 0
+        fail_msg: "{{ logical_name }} is not synchronized to an approved external NTP source."
+      when:
+        - external_ntp | default(false) | bool
+        - expected_os_family == "windows"
 
     - name: Require Windows time to use the exercise domain controller
       ansible.builtin.assert:
@@ -192,5 +202,6 @@
           - "'dc01' in windows_time_source.stdout | lower"
       when:
         - windows_server_available | default(false) | bool
+        - not (external_ntp | default(false) | bool)
         - expected_os_family == "windows"
         - logical_name != "DC01"

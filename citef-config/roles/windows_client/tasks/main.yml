@@ -11,6 +11,22 @@
       - "'Windows 11' in ansible_facts.distribution"
     fail_msg: "FIN-WS01 must be the approved amd64 Windows 11 image with the configured hostname."
 
+- name: Configure Windows Time to use the external NTP servers
+  ansible.windows.win_command: >-
+    w32tm.exe /config /manualpeerlist:"{{ network.ntp_servers | map('regex_replace', '$', ',0x8') | join(' ') }}"
+    /syncfromflags:manual /reliable:no /update
+  changed_when: true
+  notify: Restart Windows Time
+  when: external_ntp | default(false) | bool
+
+- name: Apply Windows Time configuration
+  ansible.builtin.meta: flush_handlers
+
+- name: Resynchronize Windows Time with the external NTP servers
+  ansible.windows.win_command: w32tm.exe /resync /rediscover
+  changed_when: false
+  when: external_ntp | default(false) | bool
+
 # Domain join and DC01 DNS/time are disabled while Windows Server is unavailable.
 # - name: Point Windows clients at DC01 for DNS before domain join
 #   ansible.windows.win_dns_client:

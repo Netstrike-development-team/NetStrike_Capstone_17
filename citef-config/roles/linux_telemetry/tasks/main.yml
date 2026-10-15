@@ -29,8 +29,8 @@
   ansible.builtin.file:
     path: /opt/splunkforwarder/etc/system/local
     state: directory
-    owner: root
-    group: root
+    owner: splunkfwd
+    group: splunkfwd
     mode: "0755"
 
 - name: Create local forwarder CA directory
@@ -95,13 +95,37 @@
   register: linux_uf_unit
 
 - name: Register the forwarder as a systemd service
+  # `splunk enable boot-start` fails here: systemctl loads Splunk's bundled
+  # libcrypto instead of the system OpenSSL, so the unit is written directly.
   when: not linux_uf_unit.stat.exists
-  ansible.builtin.command:
-    cmd: >-
-      /opt/splunkforwarder/bin/splunk enable boot-start
-      -systemd-managed 1 -user splunkfwd
-      --accept-license --answer-yes --no-prompt
-  changed_when: true
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/SplunkForwarder.service
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Splunk Universal Forwarder
+      After=network.target
+      Wants=network.target
+
+      [Service]
+      Type=simple
+      Restart=always
+      ExecStart=/opt/splunkforwarder/bin/splunk _internal_launch_under_systemd --accept-license --no-prompt --answer-yes
+      KillMode=mixed
+      KillSignal=SIGINT
+      TimeoutStopSec=360
+      LimitNOFILE=65536
+      SuccessExitStatus=51 52
+      RestartPreventExitStatus=51
+      RestartForceExitStatus=52
+      User=splunkfwd
+      Group=splunkfwd
+      Delegate=true
+
+      [Install]
+      WantedBy=multi-user.target
 
 - name: Reload systemd units
   ansible.builtin.systemd:

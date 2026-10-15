@@ -58,7 +58,11 @@ The proposed exercise subnet is `10.77.0.0/24`; `10.77.1.0/24` is reserved
 for management. Configure `simcorp.test` DNS on `DC01` and point scenario VMs
 to `10.77.0.10`. Use `DC01` as the isolated time source/PDC emulator; Linux
 and non-domain services use its NTP service, while domain members use domain
-time. There is no public upstream. Before snapshot capture, verify forward
+time. There is no public upstream. To use a
+separate NTP server (e.g. while `DC01` does not exist), set
+`network.ntp_servers` to its private IPv4 address (it may be outside the
+exercise subnet; `DC01` is no longer required in the list) and pass
+`-e external_ntp=true` so Linux (chrony) and Windows (w32time, including `DC01` once it exists) sync from those servers and are validated. Before snapshot capture, verify forward
 and reverse DNS and clock skew. Confirm non-overlap with CITEF and place
 approved addresses in the local manifest before generating inventory.
 

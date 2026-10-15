@@ -157,9 +157,11 @@ def _validate_cross_fields(manifest: dict) -> None:
     )
 
     for field in ("dns_servers", "ntp_servers"):
+        # An external NTP server may sit outside the exercise subnet (DC01 not required).
         for index, value in enumerate(network[field]):
             address = _private_address(value, f"network.{field}[{index}]")
-            _require(address in exercise, f"network.{field}[{index}] must be inside network.exercise_cidr")
+            if field == "dns_servers":
+                _require(address in exercise, f"network.{field}[{index}] must be inside network.exercise_cidr")
             _require(
                 address not in (exercise.network_address, exercise.broadcast_address),
                 f"network.{field}[{index}] cannot be a network or broadcast address",
@@ -200,7 +202,6 @@ def _validate_cross_fields(manifest: dict) -> None:
     _require(REQUIRED_HOSTS.issubset(hosts), "assets must include CTRL01, DC01, FIN-WS01, and SPLUNK01")
     dc_address = hosts["DC01"]["address"]
     _require(dc_address in network["dns_servers"], "network.dns_servers must include the planned DC01 DNS service address")
-    _require(dc_address in network["ntp_servers"], "network.ntp_servers must include the planned DC01 time service address")
     for name in REQUIRED_HOSTS:
         _require(name in hosts[name]["logical_assets"], f"logical asset {name} must map to its dedicated host")
     _require(

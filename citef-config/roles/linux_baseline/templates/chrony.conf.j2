@@ -1,4 +1,4 @@
-# Managed by Ansible: DC01 is the only approved NTP source.
+# Managed by Ansible: network.ntp_servers are the only approved NTP sources.
 {% for server in network.ntp_servers %}
 server {{ server }} iburst
 {% endfor %}
