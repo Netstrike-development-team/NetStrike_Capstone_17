@@ -5,12 +5,14 @@
   vars_files:
     - "{{ playbook_dir }}/../environment.json"
   tasks:
-    - name: Refuse provisioning without a unique deployment identifier
+    - name: Refuse provisioning without a deployment version and exercise run identifier
       ansible.builtin.assert:
         that:
-          - deployment_id is defined
-          - deployment_id is match('^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$')
-        fail_msg: "Pass a unique, path-safe deployment_id (8-64 letters, digits, dots, underscores, or hyphens)."
+          - deployment_version is defined
+          - deployment_version is match('^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$')
+          - exercise_run_id is defined
+          - exercise_run_id is match('^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$')
+        fail_msg: "Pass path-safe deployment_version and exercise_run_id values (8-64 letters, digits, dots, underscores, or hyphens)."
 
     - name: Validate the approved environment manifest
       ansible.builtin.command:

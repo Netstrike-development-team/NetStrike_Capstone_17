@@ -136,7 +136,8 @@ ansible-playbook \
   -i inventory.ini \
   playbooks/provision.yml \
   -e @secrets.yml \
-  --extra-vars "deployment_id=UNIQUE_DEPLOYMENT_ID"
+  --extra-vars "deployment_version=DASHBOARD_VERSION" \
+  --extra-vars "exercise_run_id=UNIQUE_EXERCISE_RUN_ID"
 ```
 
 Provision only after independent review of the manifest, images, bundle,
