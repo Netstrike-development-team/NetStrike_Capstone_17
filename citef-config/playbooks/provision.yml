@@ -92,6 +92,10 @@
   hosts: linux_hosts:!splunk
   gather_facts: false
   become: true
+  # su allocates a pty that merges stderr into module stdout; keep Python warnings out of the JSON stream
+  environment:
+    PYTHONWARNINGS: ignore
+    PYTHONDONTWRITEBYTECODE: "1"
   vars_files:
     - "{{ playbook_dir }}/../environment.json"
   roles:
