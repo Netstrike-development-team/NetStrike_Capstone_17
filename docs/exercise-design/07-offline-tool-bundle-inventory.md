@@ -1,13 +1,16 @@
 # Offline tool bundle inventory and deployment decisions
 
-**Status (2026-10-07):** The merged CI workflow builds and verifies a
+**Status (2026-10-15):** The merged CI workflow builds and verifies a
 versioned CTRL01 bundle containing the portable Python runtime, resolved wheels,
 project source trees, and pinned Ansible collections. `inventory.json` records
 per-artifact version, source, license, owner, SHA-256, destination VM, and offline
 installation method. A CI bundle is not Cyber Range deployment acceptance:
 compatible target images, and clean network-isolated VM evidence remain separate
 gates. Patrick reports that the Ubuntu offline application smoke test and Windows
-Sysmon-to-Splunk ingestion test succeeded; remaining acceptance checks are listed
+Sysmon-to-Splunk ingestion test succeeded. A later scoped provisioning rehearsal
+is recorded in the [2026-10-15 validation report](../20261015%20Offline%20Bundle%20and%20Provisioning%20Validation.md);
+its DNS-only air-gap simulation and unconfigured DC01/Splunk host failures do not
+establish full offline or range readiness. Remaining acceptance checks are listed
 in the test record below.
 
 This document is the consolidated source for:
@@ -214,6 +217,17 @@ the [CITEF guide](../../citef-config/README.md) for collection staging and
 config deployment workflow.
 
 ## Offline installation test record
+
+**Follow-up (2026-10-15):** A scoped offline-bundle provisioning rehearsal was
+run against FIN-WS01 and CTRL01 from a separate Ansible VM. The reported Ansible
+failures were for DC01 and the Splunk Server, neither of which was configured in
+this test; warnings caused by `su` were harmless. Internet isolation was simulated
+by blocking outbound DNS requests only, existing personal-network DNS/NTP was
+used instead of DC01, and blank-state snapshots were created but not restored.
+The detailed scope and limitations are in the
+[dated validation report](../20261015%20Offline%20Bundle%20and%20Provisioning%20Validation.md).
+This does not replace the full offline-install, telemetry, or restore acceptance
+checks below.
 
 **Status (2026-10-07):** Patrick reports that the dashboard was installed and
 ran successfully on Ubuntu Server 26.04.1 with the Ethernet interface manually

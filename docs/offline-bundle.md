@@ -232,3 +232,6 @@ and exercise readiness on a clean, network-isolated target VM before delivery.
 
 For tool decisions, unresolved approvals, package inventories, and the clean-VM
 verification record, see [exercise-design/07-offline-tool-bundle-inventory.md](exercise-design/07-offline-tool-bundle-inventory.md).
+The separate [2026-10-15 provisioning rehearsal report](20261015%20Offline%20Bundle%20and%20Provisioning%20Validation.md)
+records its limited host scope and DNS-only air-gap simulation; it is not full
+offline-readiness or snapshot-restore acceptance.
