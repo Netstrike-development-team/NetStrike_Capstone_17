@@ -92,7 +92,7 @@
     "required_sources": [
       {
         "id": "windows_security",
-        "probe_query": "search index=exercise run_id=\"{run_id}\" source=\"WinEventLog:Security\"",
+        "probe_query": "search index=netstrike run_id=\"{run_id}\" source=\"WinEventLog:Security\"",
         "expected_event_id": "readiness-windows-security-001"
       }
     ]

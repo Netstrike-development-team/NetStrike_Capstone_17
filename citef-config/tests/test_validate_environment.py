@@ -1,3 +1,4 @@
+import json
 import importlib.util
 import unittest
 from pathlib import Path
@@ -76,7 +77,7 @@ def valid_manifest():
             "required_sources": [
                 {
                     "id": "windows_security",
-                    "probe_query": 'search index=exercise run_id="{run_id}" source="WinEventLog:Security"',
+                    "probe_query": 'search index=netstrike run_id="{run_id}" source="WinEventLog:Security"',
                     "expected_event_id": "readiness-windows-security-001",
                 }
             ],
@@ -120,6 +121,18 @@ class ValidateEnvironmentTests(unittest.TestCase):
         path = Path(__file__).parents[1] / "environment.example.json"
         with self.assertRaisesRegex(validate_environment.ManifestError, "Manifest schema validation failed"):
             validate_environment.load_manifest(path)
+
+    def test_example_readiness_probe_uses_configured_windows_index(self):
+        path = Path(__file__).parents[1] / "environment.example.json"
+        manifest = json.loads(path.read_text())
+        probe = next(
+            source for source in manifest["splunk"]["required_sources"]
+            if source["id"] == "windows_security"
+        )
+        self.assertIn(
+            f"index={manifest['splunk']['windows_index']}",
+            probe["probe_query"],
+        )
 
     def test_inventory_is_generated_from_approved_targets(self):
         inventory = validate_environment.render_inventory(valid_manifest())
