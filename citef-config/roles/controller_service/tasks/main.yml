@@ -51,7 +51,7 @@
     - {path: /opt/netstrike/offline, group: netstrike, mode: "0750"}
     - {path: /opt/netstrike/wheelhouse, group: netstrike, mode: "0750"}
     - {path: /etc/netstrike, group: netstrike, mode: "0750"}
-    - {path: /var/lib/netstrike, owner: netstrike, group: netstrike, mode: "0750"}
+    - {path: /var/lib/netstrike, owner: netstrike, group: "{{ event_spool_group | default('netstrike-staff') }}", mode: "0750"}
     - {path: /var/lib/netstrike/fixtures, owner: netstrike, group: netstrike, mode: "0750"}
 
 - name: Copy the application source from the Git checkout

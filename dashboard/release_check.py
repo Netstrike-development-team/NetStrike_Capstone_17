@@ -10,7 +10,7 @@ from pathlib import Path
 import re
 import stat
 
-SOURCE_TREES = ("modules", "dashboard", "citef-config", "shared", "orchestrator", "schemas", "offline-bundles")
+SOURCE_TREES = ("modules", "dashboard", "citef-config", "shared", "orchestrator", "schemas", "offline-bundles", "splunk")
 MAX_INVENTORY_BYTES = 2 * 1024 * 1024
 MAX_FILE_BYTES = 64 * 1024 * 1024
 MAX_TREE_BYTES = 128 * 1024 * 1024
