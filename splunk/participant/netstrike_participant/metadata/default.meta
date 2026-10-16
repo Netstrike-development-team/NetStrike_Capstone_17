@@ -1,0 +1,3 @@
+[]
+access = read : [ netstrike_participant, netstrike_facilitator, admin ], write : [ admin ]
+export = none
