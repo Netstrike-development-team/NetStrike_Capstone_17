@@ -31,6 +31,7 @@ SOURCE_DIRECTORIES = (
     "orchestrator",
     "schemas",
     "offline-bundles",
+    "splunk"
 )
 
 

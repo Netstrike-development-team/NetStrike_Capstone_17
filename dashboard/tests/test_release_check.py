@@ -73,7 +73,7 @@ def test_builder_source_format_composes_with_read_only_inspector(bundle, monkeyp
     assert report["scope"] == "selected_application_source_only"
     assert report["repository_revision"] == REVISION
     assert report["inventory_sha256"] == inventory_digest(bundle)
-    assert len(report["source_artifacts"]) == 7
+    assert len(report["source_artifacts"]) == 8
     assert not report["source_authenticity_verified"]
     assert not report["running_process_verified"]
     assert not report["external_readiness_verified"]
@@ -201,7 +201,7 @@ def test_malformed_and_duplicate_inventory_is_safe(bundle, raw):
 def test_other_valid_commit_does_not_pass_expected_revision(bundle):
     report = inspect(bundle, revision="b" * 40)
     assert report["blockers"] == ["expected_repository_revision"]
-    assert len(report["source_artifacts"]) == 7  # Hashes alone do not prove the requested commit.
+    assert len(report["source_artifacts"]) == 8  # Hashes alone do not prove the requested commit.
 
 
 @pytest.mark.parametrize("location", ["inventory", "source-root", "tree", "file", "directory", "empty-directory"])

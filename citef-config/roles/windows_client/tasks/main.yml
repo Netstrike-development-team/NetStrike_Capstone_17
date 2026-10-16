@@ -11,6 +11,13 @@
       - "'Windows 11' in ansible_facts.distribution"
     fail_msg: "FIN-WS01 must be the approved amd64 Windows 11 image with the configured hostname."
 
+- name: Ensure the Windows Time service is running
+  ansible.windows.win_service:
+    name: W32Time
+    start_mode: auto
+    state: started
+  when: external_ntp | default(false) | bool
+
 - name: Configure Windows Time to use the external NTP servers
   ansible.windows.win_command: >-
     w32tm.exe /config /manualpeerlist:"{{ network.ntp_servers | map('regex_replace', '$', ',0x8') | join(' ') }}"

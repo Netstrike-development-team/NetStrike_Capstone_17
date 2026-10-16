@@ -29,11 +29,11 @@ network and Docker-hosted Splunk. The files were copied to the Ansible host with
 `scp`; USB is the planned transfer method in the Cyber Range.
 
 Ran the script with the offline bundle, licensed-artifact archive, environment
-file, secrets file, a test deployment ID, and `external-ntp=true`:
+file, secrets file, a test deployment version, a test exercise run ID, and `external-ntp=true`:
 
 ```sh
 ./provision.sh <offline-bundle.tar.gz> offline-bundles.tar.gz \
-  environment.json secrets.yml <deployment-id> true
+  environment.json secrets.yml <deployment-version> <exercise-run-id> true
 ```
 
 The credentials were test-only and supplied through the local secrets file;
