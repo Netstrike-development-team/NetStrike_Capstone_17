@@ -25,8 +25,9 @@ Windows Security/PowerShell/Sysmon and Linux inputs already come from
   buckets capped at a day). Splunk freezes whole buckets, so expect data to persist
   slightly longer. Events with timestamps older than a day (backdated PRE-02 history)
   may be frozen almost immediately.
-- **Roles.** `netstrike_participant` imports nothing (the built-in `user` role can
-  search all non-internal indexes). `netstrike_facilitator` imports `power`. Assign
+- **Roles.** `netstrike_participant` imports nothing. Do not also give participants
+  the built-in `user` role: Splunk unions role permissions, so `user` exposes
+  `netstrike_staff` (verified live). `netstrike_facilitator` imports `power`. Assign
   real users to them; none exist in the repo.
 - **Participant application events.** No participant-safe application feed exists
   (`docs/event-spool.md`), so participants get host telemetry only.
@@ -34,6 +35,13 @@ Windows Security/PowerShell/Sysmon and Linux inputs already come from
   `timestamp` as event time) because sorted keys make a regex time prefix unsafe.
   `crcSalt=<SOURCE>` keeps similar immutable batches distinct; renaming the spool
   path re-indexes it.
+- **Run ID.** Application events carry `run_id` in the JSON body. Host sources get it
+  from the forwarder `_meta = run_id::{{ exercise_run_id }}` in each `inputs.conf.j2`
+  stanza (an indexed field; `fields.conf` declares it). Search `run_id=<id>`, not the
+  bare string. `exercise_run_id` is the unique exercise-run ID and must be identical on
+  all hosts; `deployment_version` is the deployed dashboard version (controller
+  release path only). `scripts/provision.sh` requires both. `run_id` is not a default
+  "selected field"; tick it under All fields or use a saved search with `table`.
 - **Windows fields** use `rex` on rendered XML (no add-on assumed).
 - **Checkpoint 1 = DP1** (identity triage: Sarah, ≥3 artifacts from ≥2 sources,
   per `orchestrator/checkpoints.py`).
@@ -48,15 +56,18 @@ Windows Security/PowerShell/Sysmon and Linux inputs already come from
    account, and grant `splunkfwd` read-only access through a staff-only group
    (`0750` directories, `0640` files). No participant or world access.
 3. Adjust `monitor://` in `inputs.conf` if the spool is not `/var/lib/netstrike/event-spool`.
-4. Review `lookups/netstrike_expected_sources.csv` (`required`, `max_age_seconds`);
+4. Provision hosts with both `deployment_version` and `exercise_run_id`
+   (`scripts/provision.sh`), so every source is tagged with the run ID.
+5. Review `lookups/netstrike_expected_sources.csv` (`required`, `max_age_seconds`);
    the required set is an assumption for the identity slice.
 
 ## Acceptance checklist (to run live and record in #102)
 
 - [ ] `NetStrike Probe - Run ID by source` with a fresh run ID shows every
       identity-slice source (application and Windows).
-- [ ] `NetStrike Health - Source freshness` alerts for a deliberately stopped source
-      before participants enter.
+- [ ] `NetStrike Health - Source freshness` (an alert that returns rows only when a
+      required source is MISSING/STALE; `Source overview` lists all statuses) flags a
+      deliberately stopped source before participants enter.
 - [ ] As a participant: `index=netstrike_staff` and `_internal` are refused, and no
       `netstrike:event:v1` events appear (`NetStrike Access - Participant index isolation` returns 0).
 - [ ] `NetStrike Access - Role definitions` output saved as evidence.
