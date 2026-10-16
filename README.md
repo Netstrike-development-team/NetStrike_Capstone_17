@@ -67,12 +67,15 @@ supported MVP behavior.
 
 The exercise design, shared event contract, safe-action contract, and safe
 identity, endpoint/AD, mock-cloud, and impact/recovery controls have been built.
-Offline Ansible provisioning and manifest validation are implemented, but have
-not yet been exercised against CITEF VMs. The CI bundle now contains the
-portable Python runtime, resolved dependencies, project source trees, and pinned
-Ansible collections, with a generated per-artifact inventory and checksums.
-Clean-target installation, approvals and hashes for licensed/approved external
-artifacts, normalized portal-event forwarding, and end-to-end telemetry
+Offline Ansible provisioning and manifest validation are implemented. A
+scoped local provisioning rehearsal was recorded on October 15, 2026, but it
+did not configure DC01 or Splunk, restore snapshots, or establish CITEF
+readiness; see the [validation report](docs/20261015%20Offline%20Bundle%20and%20Provisioning%20Validation.md).
+The CI bundle contains the portable Python runtime, resolved dependencies,
+project source trees, and pinned Ansible collections, with a generated
+per-artifact inventory and checksums. CITEF deployment, complete clean-target
+provisioning/readiness acceptance, external-artifact staging and manifest
+verification, normalized portal-event forwarding, and end-to-end telemetry
 acceptance remain open.
 The next delivery goal is a complete identity vertical
 slice: start a run, deliver an inject, investigate it in Splunk, take a safe
@@ -91,7 +94,11 @@ See:
 ## Development workflow
 
 - Feature branches and pull requests target `dev`.
-- CI and at least one teammate review are required before merge.
-- `main` is reserved for tested milestone/release snapshots.
-- Follow the [milestone promotion checklist](docs/milestone-release-checklist.md); prototype promotion is not Cyber Range v1.0 acceptance.
+- Normal merges require CI and at least one teammate review. #174 was an
+  owner-authorized exception and did not claim independent review.
+- Follow the [milestone promotion checklist](docs/milestone-release-checklist.md):
+  `main` normally holds reviewed milestone/release snapshots. The October 14,
+  2026 promotion (#174) is an explicitly validation-deferred development
+  snapshot, not a tested milestone or accepted release. Post-merge CI passed;
+  a separate downloadable rehearsal-artifact packaging issue is tracked in #175.
 - Cyber Range-specific secrets and licensed installers are never committed.
