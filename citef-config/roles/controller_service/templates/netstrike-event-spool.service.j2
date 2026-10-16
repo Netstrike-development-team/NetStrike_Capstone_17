@@ -1,0 +1,19 @@
+[Unit]
+Description=NetStrike event spool export (one batch)
+After=netstrike-portal.service
+ConditionPathExists=/var/lib/netstrike/portal.sqlite3
+
+[Service]
+Type=oneshot
+User=netstrike
+Group=netstrike
+WorkingDirectory=/opt/netstrike/current
+UMask=0027
+ExecStart=/opt/netstrike/venv/bin/python -m dashboard.event_spool --database /var/lib/netstrike/portal.sqlite3 --output /var/lib/netstrike/event-spool --exercise-id {{ event_spool_exercise_id | default('operation-silent-spider') }} --limit {{ event_spool_batch_limit | default(500) }} --execute
+# The exporter writes 0700/0600 as netstrike; publish read-only access to the staff group (0750/0640).
+ExecStartPost=+/bin/sh -c 'find /var/lib/netstrike/event-spool -mindepth 1 ! -name .lock -exec chgrp {{ event_spool_group | default("netstrike-staff") }} {} + && find /var/lib/netstrike/event-spool -mindepth 1 -type d -exec chmod 0750 {} + && find /var/lib/netstrike/event-spool -mindepth 1 -type f ! -name .lock -exec chmod 0640 {} +'
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/netstrike

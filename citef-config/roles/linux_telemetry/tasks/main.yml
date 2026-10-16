@@ -89,6 +89,28 @@
     append: true
   notify: Restart Linux Universal Forwarder
 
+- name: Create the staff group that may read the event spool
+  ansible.builtin.group:
+    name: "{{ event_spool_group | default('netstrike-staff') }}"
+    system: true
+
+- name: Allow the forwarder user to read the event spool (staff group)
+  ansible.builtin.user:
+    name: splunkfwd
+    groups: "{{ event_spool_group | default('netstrike-staff') }}"
+    append: true
+  notify: Restart Linux Universal Forwarder
+
+- name: Deploy the NetStrike application-event input app to the forwarder
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../splunk/forwarder/netstrike_app_events_inputs/"
+    dest: /opt/splunkforwarder/etc/apps/netstrike_app_events_inputs/
+    owner: root
+    group: splunkfwd
+    mode: "0644"
+    directory_mode: "0755"
+  notify: Restart Linux Universal Forwarder
+
 - name: Check whether the forwarder systemd unit exists
   ansible.builtin.stat:
     path: /etc/systemd/system/SplunkForwarder.service
