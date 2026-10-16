@@ -21,7 +21,7 @@ The workflow currently pins Linux x86_64/glibc, `CTRL01`, CPython `3.11.16`,
 and python-build-standalone release `20260924`. The wheelhouse covers shared,
 module 01 and modules 04–07, dashboard, and Ansible-controller/validator
 requirements. The bundle also contains the `modules/`, `dashboard/`,
-`citef-config/`, `shared/`, `orchestrator/`, and `schemas/` source trees plus
+`citef-config/`, `shared/`, `orchestrator/`, `schemas/`, and `offline-bundles/` source trees plus
 pinned Ansible Galaxy collections and manifest metadata. These pins and inputs are
 in `.github/workflows/offline-bundle.yml` and `citef-config/requirements.yml`.
 
@@ -73,7 +73,7 @@ method; review explicit UNKNOWN metadata before approving a transfer.
 Before installing or starting source, optionally run the
 [read-only application source checker](offline-release-source-check.md) against
 the expected commit and inventory SHA-256 recorded from trusted staging. It uses
-only the bundled Python standard library and checks all six source trees without
+only the bundled Python standard library and checks all seven source trees without
 Git, dependencies, credentials or a live process. This supplements, not replaces,
 the whole-bundle checksums/install verification below. It requires a pristine
 extraction; source caches/extra files are not silently ignored.
@@ -232,3 +232,6 @@ and exercise readiness on a clean, network-isolated target VM before delivery.
 
 For tool decisions, unresolved approvals, package inventories, and the clean-VM
 verification record, see [exercise-design/07-offline-tool-bundle-inventory.md](exercise-design/07-offline-tool-bundle-inventory.md).
+The separate [2026-10-15 provisioning rehearsal report](20261015%20Offline%20Bundle%20and%20Provisioning%20Validation.md)
+records its limited host scope and DNS-only air-gap simulation; it is not full
+offline-readiness or snapshot-restore acceptance.

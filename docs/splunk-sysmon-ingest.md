@@ -66,15 +66,27 @@ host's marker in the configured index and Sysmon event source.
 read -rsp 'Splunk API token: ' SPLUNK_TOKEN
 printf '\n'
 export SPLUNK_TOKEN
-ansible-playbook \
-  -i citef-config/inventory.ini \
-  citef-config/playbooks/test_sysmon_ingest.yml \
+cd citef-config
+../../python/bin/ansible-playbook \
+  -i inventory.ini \
+  playbooks/test_sysmon_ingest.yml \
   --extra-vars "exercise_run_id=sysmon-ingest-$(date -u +%Y%m%dT%H%M%SZ)"
 unset SPLUNK_TOKEN
 ```
 
-Run this from the repository root after populating the approved manifest,
-inventory, Ansible runtime/collections, and TLS trust files. The token needs
+`inventory.ini` is generated and ignored by Git; create it first with
+`python3 validate_environment.py inventory > inventory.ini` (run from
+`citef-config/`). If it is missing or has no `[windows_hosts]` group, the
+playbook fails with an error about `windows_hosts`.
+
+Run this from `citef-config/` so its `ansible.cfg` (which sets
+`collections_path = collections`) is used; from another directory Ansible
+reports that `ansible.windows.win_powershell` cannot be found. The collections
+must first be installed into `citef-config/collections` (see the
+[`citef-config` README](../citef-config/README.md) or, from an offline bundle,
+[the bundle guide](offline-bundle.md)); that directory is ignored by Git and
+does not exist in a fresh checkout. Populate the approved manifest,
+inventory, the Ansible runtime/collections, and TLS trust files first. The token needs
 permission to search the configured Windows index. The playbook suppresses
 task output containing the token or search response. A successful run verifies
 local Sysmon event generation and arrival in Splunk for each Windows endpoint;

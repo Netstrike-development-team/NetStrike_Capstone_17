@@ -1,0 +1,9 @@
+# Managed by Ansible: network.ntp_servers are the only approved NTP sources.
+{% for server in network.ntp_servers %}
+server {{ server }} iburst
+{% endfor %}
+driftfile /var/lib/chrony/chrony.drift
+makestep 1.0 3
+rtcsync
+ntsdumpdir /var/lib/chrony
+logdir /var/log/chrony

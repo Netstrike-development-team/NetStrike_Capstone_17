@@ -18,6 +18,16 @@
     fail_msg: "CTRL01 must use the pinned Ubuntu Server 26.04 LTS baseline."
   when: logical_name == "CTRL01"
 
+- name: Ensure systemd drop-in directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - /etc/systemd/resolved.conf.d
+
 - name: Configure internal DNS and exercise search domain
   ansible.builtin.template:
     src: systemd-resolved.conf.j2
@@ -26,15 +36,17 @@
     group: root
     mode: "0644"
   notify: Restart systemd-resolved
+  when: windows_server_available | default(false) | bool
 
-- name: Configure DC01 as the only NTP source
+- name: Configure approved NTP sources
   ansible.builtin.template:
-    src: systemd-timesyncd.conf.j2
-    dest: /etc/systemd/timesyncd.conf.d/60-netstrike.conf
+    src: chrony.conf.j2
+    dest: /etc/chrony/chrony.conf
     owner: root
     group: root
     mode: "0644"
-  notify: Restart systemd-timesyncd
+  notify: Restart chrony
+  when: (windows_server_available | default(false) | bool) or (external_ntp | default(false) | bool)
 
 - name: Ensure systemd-resolved is enabled
   ansible.builtin.service:
@@ -49,9 +61,9 @@
     state: link
     force: true
 
-- name: Ensure systemd-timesyncd is enabled
+- name: Ensure chrony is enabled
   ansible.builtin.service:
-    name: systemd-timesyncd
+    name: chrony
     enabled: true
     state: started
 
@@ -64,6 +76,7 @@
   loop: "{{ assets }}"
   register: resolved_hosts
   changed_when: false
+  when: windows_server_available | default(false) | bool
 
 - name: Require the DNS response to match each approved address
   ansible.builtin.assert:
@@ -73,8 +86,9 @@
   loop: "{{ resolved_hosts.results }}"
   loop_control:
     label: "{{ item.item.name }}"
+  when: windows_server_available | default(false) | bool
 
-- name: Require systemd-timesyncd to report synchronized time
+- name: Require chrony to report synchronized time
   ansible.builtin.command:
     argv: [timedatectl, show, --property=NTPSynchronized, --value]
   register: time_sync_state
@@ -82,11 +96,13 @@
   retries: 12
   delay: 5
   until: time_sync_state.stdout | trim == "yes"
+  when: windows_server_available | default(false) | bool
 
-- name: Confirm systemd-timesyncd selected the approved internal source
+- name: Confirm chrony selected the approved internal source
   ansible.builtin.command:
-    argv: [timedatectl, timesync-status]
+    argv: [chronyc, sources]
   register: time_sync_status
   changed_when: false
   failed_when: >-
     (network.ntp_servers | select('in', time_sync_status.stdout) | list | length) == 0
+  when: (windows_server_available | default(false) | bool) or (external_ntp | default(false) | bool)

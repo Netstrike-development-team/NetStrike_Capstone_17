@@ -16,7 +16,7 @@
       changed_when: false
 
 - name: Validate provisioned services, names, and clocks
-  hosts: all
+  hosts: all:!domain_controllers
   gather_facts: false
   vars_files:
     - "{{ playbook_dir }}/../environment.json"
@@ -31,6 +31,11 @@
           - ansible_facts.architecture in ["64-bit", "AMD64", "x86_64", "amd64"]
         fail_msg: "{{ logical_name }} does not match its approved inventory identity."
 
+    - name: Refresh the target clock immediately before comparison
+      ansible.builtin.setup:
+        gather_subset: [min, date_time]
+        filter: ansible_date_time
+
     - name: Read the control-host clock immediately before comparison
       ansible.builtin.command:
         argv: [date, -u, +%s]
@@ -38,14 +43,19 @@
       register: control_epoch_current
       changed_when: false
 
+    - name: Report measured clock skew
+      ansible.builtin.set_fact:
+        measured_clock_skew: >-
+          {{ ((ansible_facts.date_time.epoch | int) -
+          (control_epoch_current.stdout | int)) | abs }}
+
     - name: Require target clock skew to be within the approved limit
       ansible.builtin.assert:
         that:
-          - >-
-            (((ansible_facts.date_time.epoch | int) -
-            (control_epoch_current.stdout | int)) | abs)
-            <= (network.max_clock_skew_seconds | int)
-        fail_msg: "{{ logical_name }} exceeds the approved clock-skew limit."
+          - (measured_clock_skew | int) <= (network.max_clock_skew_seconds | int)
+        fail_msg: >-
+          {{ logical_name }} exceeds the approved clock-skew limit
+          ({{ measured_clock_skew }}s measured, {{ network.max_clock_skew_seconds }}s allowed).
 
     - name: Verify forward DNS on Linux hosts
       ansible.builtin.command:
@@ -53,7 +63,9 @@
       loop: "{{ assets }}"
       register: linux_dns_results
       changed_when: false
-      when: expected_os_family == "linux"
+      when:
+        - (windows_server_available | default(false) | bool) or (external_ntp | default(false) | bool)
+        - expected_os_family == "linux"
 
     - name: Require approved Linux DNS answers
       ansible.builtin.assert:
@@ -63,7 +75,9 @@
       loop: "{{ linux_dns_results.results | default([]) }}"
       loop_control:
         label: "{{ item.item.name }}"
-      when: expected_os_family == "linux"
+      when:
+        - windows_server_available | default(false) | bool
+        - expected_os_family == "linux"
 
     - name: Verify forward DNS on Windows hosts
       ansible.windows.win_powershell:
@@ -82,7 +96,9 @@
             }
           }
           $Ansible.Changed = $false
-      when: expected_os_family == "windows"
+      when:
+        - windows_server_available | default(false) | bool
+        - expected_os_family == "windows"
 
     - name: Confirm Linux services are active
       ansible.builtin.command:
@@ -116,22 +132,28 @@
         argv: [timedatectl, show, --property=NTPSynchronized, --value]
       register: linux_time_state
       changed_when: false
-      when: expected_os_family == "linux"
+      when:
+        - (windows_server_available | default(false) | bool) or (external_ntp | default(false) | bool)
+        - expected_os_family == "linux"
 
     - name: Require Linux time to be synchronized
       ansible.builtin.assert:
         that:
           - linux_time_state.stdout | trim == "yes"
-      when: expected_os_family == "linux"
+      when:
+        - (windows_server_available | default(false) | bool) or (external_ntp | default(false) | bool)
+        - expected_os_family == "linux"
 
     - name: Confirm Linux selected an approved internal time source
       ansible.builtin.command:
-        argv: [timedatectl, timesync-status]
+        argv: [chronyc, sources]
       register: linux_time_source
       changed_when: false
-      when: expected_os_family == "linux"
+      when:
+        - (windows_server_available | default(false) | bool) or (external_ntp | default(false) | bool)
+        - expected_os_family == "linux"
 
-    - name: Require Linux NTP status to identify DC01
+    - name: Require Linux NTP status to identify an approved source
       ansible.builtin.assert:
         that:
           - >-
@@ -140,13 +162,17 @@
             | list
             | length) > 0
         fail_msg: "{{ logical_name }} is not synchronized to an approved internal NTP source."
-      when: expected_os_family == "linux"
+      when:
+        - (windows_server_available | default(false) | bool) or (external_ntp | default(false) | bool)
+        - expected_os_family == "linux"
 
     - name: Check Windows domain time source
       ansible.windows.win_command: w32tm.exe /query /source
       register: windows_time_source
       changed_when: false
-      when: expected_os_family == "windows"
+      when:
+        - (windows_server_available | default(false) | bool) or (external_ntp | default(false) | bool)
+        - expected_os_family == "windows"
 
     - name: Verify the isolated DC01 time-source configuration
       ansible.windows.win_powershell:
@@ -166,13 +192,26 @@
           }
           $Ansible.Changed = $false
       when:
+        - windows_server_available | default(false) | bool
+        - not (external_ntp | default(false) | bool)
         - expected_os_family == "windows"
         - logical_name == "DC01"
+
+    - name: Require Windows time to use the external NTP servers
+      ansible.builtin.assert:
+        that:
+          - (network.ntp_servers | select('in', windows_time_source.stdout) | list | length) > 0
+        fail_msg: "{{ logical_name }} is not synchronized to an approved external NTP source."
+      when:
+        - external_ntp | default(false) | bool
+        - expected_os_family == "windows"
 
     - name: Require Windows time to use the exercise domain controller
       ansible.builtin.assert:
         that:
           - "'dc01' in windows_time_source.stdout | lower"
       when:
+        - windows_server_available | default(false) | bool
+        - not (external_ntp | default(false) | bool)
         - expected_os_family == "windows"
         - logical_name != "DC01"

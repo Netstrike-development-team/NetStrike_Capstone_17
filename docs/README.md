@@ -65,15 +65,14 @@ index](exercise-design/README.md).
 | Document | What it covers |
 |---|---|
 | [Offline bundle build and install](offline-bundle.md) | Building, verifying, installing, and smoke-testing the Python bundle |
+| [2026-10-15 offline bundle and provisioning validation](20261015%20Offline%20Bundle%20and%20Provisioning%20Validation.md) | Local provisioning rehearsal, scope, and limitations; not CITEF acceptance |
 | [Splunk Sysmon ingestion](splunk-sysmon-ingest.md) | Configure the Splunk receiver and test Windows Sysmon forwarding |
 | [Application telemetry comparison](application-telemetry-comparison.md) | Read-only canonical ledger versus saved raw receiver-export comparison; not live ingestion or readiness proof |
 | [Offline application source check](offline-release-source-check.md) | Read-only selected-source comparison against a separately recorded commit/inventory digest, without Git or runtime dependencies |
 | [Milestone promotion checklist](milestone-release-checklist.md) | Strict main/dev checks, source-matched evidence and prototype versus accepted-release gates |
 | [Application security gate](application-security-gate.md) | Blocking maintained-code scans, informational legacy boundary and recorder loopback request controls |
 | [CI test and coverage evidence](ci-evidence-checks.md) | Strict module test outcomes, retained coverage, no-tests boundaries and pinned Node-24 actions/CI image |
-| [CITEF requirements and approval](exercise-design/06-citef-requirements-and-approval.md) | Environment questionnaire, decision log, fallbacks, and approval records |
-| [CITEF topology and readiness](../citef-config/README.md) | Proposed infrastructure, manifest, provisioning, post-restore readiness, and acceptance; proposed, not deployment approval |
-| [Offline tool-bundle inventory](exercise-design/07-offline-tool-bundle-inventory.md) | Software inputs, approvals, and artifact handling |
+| [CITEF topology and Ansible workflow](../citef-config/README.md) | Proposed topology, local manifest, provisioning, and post-restore Ansible checks; not deployment approval |
 
 ## Application and component guides
 
@@ -101,8 +100,13 @@ exercise-design package above for normative interface and exercise requirements.
 ## Choosing a source of truth
 
 - Use the exercise-design package for approved exercise intent, safety, and
-  delivery requirements; record environment-specific decisions in its approval
-  pack.
+  delivery requirements. The [CITEF approval pack](exercise-design/06-citef-requirements-and-approval.md)
+  owns range decisions; the [offline tool-bundle inventory](exercise-design/07-offline-tool-bundle-inventory.md)
+  owns artifact choices and deployment evidence.
+- Use the [CITEF configuration guide](../citef-config/README.md) for the
+  manifest and Ansible commands, not as an approval record. The
+  [offline bundle guide](offline-bundle.md) owns bundle build/install steps;
+  the dated validation report records one scoped local rehearsal.
 - Use versioned contracts for interface requirements. Developer handoffs
   describe a particular implementation and do not replace those contracts.
 - Treat dated reviews, local verification receipts, and development estimates as

@@ -5,6 +5,15 @@
   vars_files:
     - "{{ playbook_dir }}/../environment.json"
   tasks:
+    - name: Require an inventory with Windows hosts
+      ansible.builtin.assert:
+        that:
+          - groups['windows_hosts'] is defined
+          - groups['windows_hosts'] | length > 0
+        fail_msg: >-
+          The inventory has no windows_hosts group. Generate citef-config/inventory.ini
+          with validate_environment.py inventory and pass it with -i.
+
     - name: Require a unique path-safe test run identifier
       ansible.builtin.assert:
         that:
@@ -83,8 +92,8 @@
           latest_time: now
         return_content: true
         status_code: 200
-        validate_certs: true
-        ca_path: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ offline_artifacts.universal_forwarder.receiver_ca.file }}"
+        validate_certs: "{{ offline_artifacts.universal_forwarder.receiver_ca is defined }}"
+        ca_path: "{{ (playbook_dir ~ '/../../' ~ offline_artifacts.directory ~ '/' ~ offline_artifacts.universal_forwarder.receiver_ca.file) if offline_artifacts.universal_forwarder.receiver_ca is defined else omit }}"
         timeout: 60
       loop: "{{ groups['windows_hosts'] }}"
       loop_control:

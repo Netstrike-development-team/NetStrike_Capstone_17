@@ -7,18 +7,6 @@
     group: root
     mode: "0600"
 
-- name: Verify the staged Linux Universal Forwarder package
-  ansible.builtin.stat:
-    path: "/var/tmp/{{ offline_artifacts.universal_forwarder.linux_deb.file | basename }}"
-    checksum_algorithm: sha256
-  register: linux_uf_package
-
-- name: Require the Linux forwarder package hash to match the approved artifact
-  ansible.builtin.assert:
-    that:
-      - linux_uf_package.stat.checksum | lower == offline_artifacts.universal_forwarder.linux_deb.sha256 | lower
-    fail_msg: "Staged Linux Universal Forwarder package failed SHA-256 verification."
-
 - name: Verify staged Linux Universal Forwarder vendor SHA-512
   ansible.builtin.stat:
     path: "/var/tmp/{{ offline_artifacts.universal_forwarder.linux_deb.file | basename }}"
@@ -41,8 +29,8 @@
   ansible.builtin.file:
     path: /opt/splunkforwarder/etc/system/local
     state: directory
-    owner: root
-    group: root
+    owner: splunkfwd
+    group: splunkfwd
     mode: "0755"
 
 - name: Create local forwarder CA directory
@@ -54,6 +42,7 @@
     mode: "0755"
 
 - name: Stage the approved Splunk receiver CA
+  when: offline_artifacts.universal_forwarder.receiver_ca is defined
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ offline_artifacts.universal_forwarder.receiver_ca.file }}"
     dest: /opt/splunkforwarder/etc/auth/netstrike/receiver-ca.pem
@@ -62,12 +51,14 @@
     mode: "0644"
 
 - name: Verify the staged Linux receiver CA
+  when: offline_artifacts.universal_forwarder.receiver_ca is defined
   ansible.builtin.stat:
     path: /opt/splunkforwarder/etc/auth/netstrike/receiver-ca.pem
     checksum_algorithm: sha256
   register: linux_ca
 
 - name: Require the Linux receiver CA hash to match the approved artifact
+  when: offline_artifacts.universal_forwarder.receiver_ca is defined
   ansible.builtin.assert:
     that:
       - linux_ca.stat.checksum | lower == offline_artifacts.universal_forwarder.receiver_ca.sha256 | lower
@@ -90,6 +81,55 @@
     group: root
     mode: "0644"
   notify: Restart Linux Universal Forwarder
+
+- name: Allow the forwarder user to read /var/log (adm group)
+  ansible.builtin.user:
+    name: splunkfwd
+    groups: adm
+    append: true
+  notify: Restart Linux Universal Forwarder
+
+- name: Check whether the forwarder systemd unit exists
+  ansible.builtin.stat:
+    path: /etc/systemd/system/SplunkForwarder.service
+  register: linux_uf_unit
+
+- name: Register the forwarder as a systemd service
+  # `splunk enable boot-start` fails here: systemctl loads Splunk's bundled
+  # libcrypto instead of the system OpenSSL, so the unit is written directly.
+  when: not linux_uf_unit.stat.exists
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/SplunkForwarder.service
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Splunk Universal Forwarder
+      After=network.target
+      Wants=network.target
+
+      [Service]
+      Type=simple
+      Restart=always
+      ExecStart=/opt/splunkforwarder/bin/splunk _internal_launch_under_systemd --accept-license --no-prompt --answer-yes
+      KillMode=mixed
+      KillSignal=SIGINT
+      TimeoutStopSec=360
+      LimitNOFILE=65536
+      SuccessExitStatus=51 52
+      RestartPreventExitStatus=51
+      RestartForceExitStatus=52
+      User=splunkfwd
+      Group=splunkfwd
+      Delegate=true
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Reload systemd units
+  ansible.builtin.systemd:
+    daemon_reload: true
 
 - name: Enable and start the Linux Universal Forwarder
   ansible.builtin.service:

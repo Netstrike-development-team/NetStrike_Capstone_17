@@ -1,383 +1,200 @@
-# CITEF topology and readiness workflow
+# CITEF topology and Ansible workflow
 
-**Owner:** Patrick Luu  
-**Status:** Proposed design; not approved for CITEF deployment  
-**Tracking:** [#103](https://github.com/Netstrike-development-team/NetStrike_Capstone_17/issues/103), [#79](https://github.com/Netstrike-development-team/NetStrike_Capstone_17/issues/79)
+**Status (2026-10-15):** Proposed configuration; not approved for CITEF
+deployment. A local provisioning rehearsal is recorded in
+[the October 15 report](../docs/20261015%20Offline%20Bundle%20and%20Provisioning%20Validation.md).
+It did not configure or restore a CITEF environment.
 
-This package defines a reproducible logical topology and the gate to run after
-Cyber Range snapshot restoration. It intentionally does not invent live CITEF
-addresses, image versions, or access credentials. The range has confirmed
-on October 2, 2026 that the team may create any required amd64 VM, Windows 11,
-Windows Server, and multiple Linux distributions are available, DNS/NTP must
-be configured by the team through Ansible, and scenario VMs have no Internet
-access. Earlier range decisions also confirmed offline file transfer, Splunk
-Enterprise, and clean snapshots. The planning baseline now selects Ubuntu
-Server 26.04 LTS, Windows Server 2025 LTSC, and Windows 11 26H2, with a
-proposed configurable RFC1918 address plan below. These are team assumptions,
-not CITEF allocations or approval. Verify image availability/builds and
-network overlap with the range before deployment. The local manifest
-intentionally validates configuration and egress evidence, not CITEF
-approval; record approval separately in the CITEF decision record before
-deployment.
+## Sources of truth
 
-## Proposed logical topology
+- [CITEF requirements and approval](../docs/exercise-design/06-citef-requirements-and-approval.md)
+  is the decision record for confirmed requirements, open questions, and
+  approval.
+- [Offline tool-bundle inventory](../docs/exercise-design/07-offline-tool-bundle-inventory.md)
+  records selected artifacts, licensing dispositions, and test evidence.
+- [Offline bundle guide](../docs/offline-bundle.md) describes the CI artifact
+  build, integrity checks, and application smoke test.
+- [Safety and reset](../docs/exercise-design/04-safety-and-reset.md) defines
+  exercise-wide stop, snapshot, and admission rules. This guide covers the
+  Ansible-specific manifest and playbooks only.
+
+## Proposed topology
 
 ![Proposed NetStrike CITEF example environment network diagram](../docs/network-diagram.png)
 
-The diagram illustrates the proposed logical connections and planning
-addresses. It does not define firewall rules, routes, browser source
-addresses, Ansible control-host placement, or management-network interfaces;
-confirm those with CITEF before deployment.
+The diagram and addresses below are planning examples, not approved host
+assignments, routes, firewall rules, or management interfaces. Confirm the
+images, network ranges, and access paths with CITEF before using the manifest.
 
-Keep `DC01`, `FIN-WS01`, and `SPLUNK01` on separate VMs. The initial
-zero-cost layout places project-owned Linux services on `CTRL01`; `FILE01` is
-a controller-managed logical fixture store on `CTRL01`, outside participant
-and attack-module administration. If the range has capacity and approves it,
-`FILE01` can instead be a separate Linux VM. Never consolidate the controller,
-domain controller, participant endpoint, or Splunk.
+| Asset | Proposed placement | Example address and DNS | Purpose |
+|---|---|---|---|
+| `CTRL01` | Ubuntu Server 26.04 amd64 | `10.77.0.11`, `ctrl01.simcorp.test` | Staff controller, portal, event ledger, action adapters, and mock services |
+| `DC01` | Windows Server 2025 LTSC | `10.77.0.10`, `dc01.simcorp.test` | Synthetic AD, internal DNS, and isolated time source |
+| `FIN-WS01` | Windows 11 26H2 | `10.77.0.20`, `fin-ws01.simcorp.test` | Participant endpoint and telemetry |
+| `SPLUNK01` | CITEF-managed Splunk Enterprise 10.0.1 | `10.77.0.30`, `splunk01.simcorp.test` | SIEM; 10 GB/day ingestion and 300 GB disk limits |
+| `FILE01` | Logical service on `CTRL01`, or a separately approved Linux VM | Not assigned | Disposable fixtures and controller-managed known-good copy |
 
-| Logical asset | Proposed placement | Trust boundary and purpose |
-|---|---|---|
-| `CTRL01` | Ubuntu Server 26.04 LTS amd64; proposed `10.77.0.11` | Facilitator-controlled controller, portal, event ledger, action adapters, mock IdP/helpdesk/cloud services |
-| `DC01` | Windows Server 2025 LTSC amd64; proposed `10.77.0.10` | Synthetic SimCorp AD and directory evidence; proposed internal DNS/NTP source |
-| `FIN-WS01` | Windows 11 26H2 amd64; proposed `10.77.0.20` | Participant investigation endpoint and endpoint telemetry |
-| `SPLUNK01` | Cyber Range-supported host running Splunk Enterprise 10.0.1; proposed `10.77.0.30` | SIEM, saved searches, and source health; 10 GB maximum daily ingestion and 300 GB disk limit confirmed |
-| `FILE01` | Logical service on `CTRL01`; optional dedicated Linux VM | Disposable synthetic fixtures and controller-managed known-good copy |
+The local October 15 rehearsal used Ubuntu Server 26.04.1 for `CTRL01` and
+Windows 11 26H2 for `FIN-WS01`. Its personal-network addresses and credentials
+are intentionally omitted. `DC01` and the Splunk host were not configured in
+that rehearsal. The tested images do not establish CITEF image approval.
 
-### Planning image and address assumptions
+Keep the controller, domain controller, participant endpoint, and Splunk on
+separate VMs. Project-owned Linux services may share `CTRL01`; `FILE01` may be
+separate only if CITEF approves the additional VM. The example exercise subnet
+is `10.77.0.0/24`; `10.77.1.0/24` is a proposed management subnet. Confirm
+non-overlap and actual allocations with CITEF. Scenario VMs must not have an
+Internet path.
 
-As of October 2, 2026, the candidate releases are:
+## Prepare and validate the manifest
 
-| VM | Planning image | Current vendor release evidence |
-|---|---|---|
-| `CTRL01` | Ubuntu Server 26.04 LTS amd64 | [Ubuntu release list](https://wiki.ubuntu.com/Releases) identifies 26.04 (Resolute Raccoon) as the latest release |
-| `DC01` | Windows Server 2025 LTSC amd64 | [Microsoft Windows Server release information](https://learn.microsoft.com/en-us/windows/release-health/windows-server-release-info) identifies Windows Server 2025 as current LTSC |
-| `FIN-WS01` | Windows 11 26H2 amd64 | [Microsoft Windows 11 release information](https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information) lists 26H2 as the latest generally available feature release |
+Copy `environment.example.json` to the ignored `environment.json` and replace
+the example values with approved, non-secret configuration. Do not commit the
+local manifest. It contains Ansible and inventory inputs, not approvals,
+snapshot IDs, or credentials.
 
-At image acquisition, record the exact image identifier, edition, architecture,
-build/update level, and SHA-256. Microsoft lists Windows 11 26H2 build
-26300.9550 and Windows Server 2025 build 26100.33451 as the latest revisions
-on September 29 and September 14, 2026, respectively. Stage any required
-updates and package artifacts before transfer: exercise VMs cannot fetch
-updates or packages from the Internet. Verify the final Ansible collections
-and Splunk version support the chosen OS releases. In particular, do not
-assume the Cyber Range's Splunk host can be changed to Ubuntu 26.04.
+The JSON Schema validates fields, types, enumerations, and formats.
+`validate_environment.py` adds cross-field checks for network membership and
+overlap, asset mappings, DNS/domain relationships, artifact paths, and
+endpoint/port consistency. Both validation and inventory rendering apply these
+checks. The checked-in example is intentionally incomplete and must fail
+validation until the range-owned values and staged artifact paths are supplied.
 
-The proposed exercise subnet is `10.77.0.0/24`; `10.77.1.0/24` is reserved
-as a separate management subnet. The sample static exercise addresses and
-internal service plan are:
+`identity_baseline.users` is the intended exact set of domain users, including
+enabled state and memberships. The current `readiness.yml` does **not** compare
+that AD baseline: its domain-controller play is disabled while `DC01` is
+unavailable. Do not describe AD readiness as verified until that play is
+enabled, tested, and its result recorded.
 
-| Asset | Proposed exercise IP | Proposed internal DNS name |
-|---|---|---|
-| `DC01` | `10.77.0.10` | `dc01.simcorp.test` |
-| `CTRL01` | `10.77.0.11` | `ctrl01.simcorp.test` |
-| `FIN-WS01` | `10.77.0.20` | `fin-ws01.simcorp.test` |
-| `SPLUNK01` | `10.77.0.30` | `splunk01.simcorp.test` |
-
-Configure the `simcorp.test` DNS zone on `DC01`; point scenario VMs at
-`10.77.0.10` for DNS. Configure `DC01` as the isolated exercise time source
-and the AD PDC emulator; point Linux and non-domain services at its NTP
-service, and configure domain members to use the domain time hierarchy.
-`DC01` has no public upstream in the isolated exercise network. Validate
-forward and reverse name resolution and measured clock skew before snapshot
-capture. These addresses/domain are repository planning assumptions only:
-check that the ranges do not overlap with the Cyber Range management network
-and record the assigned values in the approved local manifest before
-generating inventory.
-
-Participant and simulated-action access is limited to `FIN-WS01` and explicitly
-allowlisted service paths. The Ansible control channel, controller, Splunk
-administration, hypervisor, and snapshot controls are staff-only. Use the
-Cyber Range-approved isolated network and management path; do not introduce a
-bridged/NAT Internet path. The actual subnet and firewall rules must come from
-CITEF, not this repository.
-
-## Range-owner decisions required before deployment
-
-Confirm and record the following with Zian/Julien, coordinating dates and
-delivery with Latifa:
-
-| Decision | Required evidence |
-|---|---|
-| VM mapping and compute | Exact amd64 image/version, vCPU, RAM, disk, owner, and snapshot-capable asset ID for each physical host |
-| Addresses and DNS | Approved non-overlapping exercise/management CIDRs, static host addresses, FQDNs, DNS server addresses, and records resolving each host to its approved address |
-| Time | Approved NTP source, service/configuration on each VM, and accepted maximum clock skew |
-| Firewall and access | Written default-deny Internet policy; participant, controller, Splunk, SSH, and WinRM paths/ports; management reachability during endpoint isolation |
-| Identity | Approved exercise domain, baseline synthetic accounts and group memberships, AD administration path, and reset behavior |
-| Telemetry | Splunk product/version and capacity are recorded above; still confirm URL, source/index conventions, required data-source probes, role boundaries, and credential injection method |
-| Offline delivery | Reviewed bundle version/hash, approved transfer route, host-side checksum verification, and licensed installer approvals |
-| Safety response | Named emergency-stop operator, tested staff contact channel, egress-policy verifier, failed-restore escalation path, and evidence-retention requirement |
-| Snapshot ownership | Operator and immutable snapshot/image identifier for every physical host; restore steps and escalation owner |
-
-The environment questionnaire in
-[`../docs/exercise-design/06-citef-requirements-and-approval.md`](../docs/exercise-design/06-citef-requirements-and-approval.md)
-remains the decision record. A proposed value is not an approved value.
-
-The team owns Ansible configuration of DNS and NTP; this is not a Cyber Range
-service dependency. Select an approved internal DNS domain/host and NTP
-endpoint, then configure and validate them on every VM. Scenario VMs have no
-Internet access, so package installation, time synchronization, name
-resolution, and telemetry must not depend on public endpoints. Choose Linux
-images whose supported network/time services can be configured by the pinned
-Ansible roles, or add and test the matching distribution-specific role before
-the image is approved.
-
-## Approved manifest and generated inventory
-
-Copy `environment.example.json` to the ignored local file
-`environment.json`, then fill it only with approved, non-secret configuration.
-Do not commit the copy. The JSON Schema (`environment.schema.json`) enforces required fields, types,
-allowed properties and values, date/URL/IP formats, and digest shapes. The
-small cross-field layer in `validate_environment.py` checks network overlap
-and membership, host/logical-asset mappings, DNS/domain relationships,
-artifact bundle layout, and endpoint/port consistency. Both validation and
-inventory rendering run these gates. Validation enforces:
-
-- disjoint RFC 1918 management/exercise networks and deny-by-default egress;
-- unique, in-subnet target IPs and fully qualified host names;
-- dedicated controller, domain-controller, workstation, and Splunk hosts;
-- `FILE01` on `CTRL01` or a separate Linux host;
-- required service checks, exact identity baseline, fixture hashes, and
-  run-correlated Splunk probes;
-- per-host clean snapshot IDs, restore ownership, emergency-stop verification;
-  and
-- no credential or secret fields in the manifest.
-
-Validate the manifest and render an Ansible inventory only after it is
-complete:
+Validate and render the ignored inventory from `citef-config/`:
 
 ```sh
-python3 citef-config/validate_environment.py validate \
-  --config citef-config/environment.json
-python3 citef-config/validate_environment.py inventory \
-  --config citef-config/environment.json \
-  > citef-config/inventory.ini
+python3 validate_environment.py validate --config environment.json
+python3 validate_environment.py inventory --config environment.json > inventory.ini
 ```
 
-`validate_environment.py` requires `jsonschema`, declared in
-`citef-config/requirements-validator.txt` and also in
-`shared/requirements.txt`, which the current workflow includes. Confirm the
-wheel is present in the built bundle before deployment. On the Ansible control
-host, install it from the wheelhouse before running Ansible, using the same
-Python interpreter that will run the validator:
+Install the validator requirement from the bundle wheelhouse using the same
+Python interpreter that runs validation:
 
 ```sh
 python3 -m pip install --no-index \
-  --find-links offline-bundles/CITEF-RELEASE/netstrike-offline-bundle/destinations/CTRL01/wheelhouse \
-  -r citef-config/requirements-validator.txt
+  --find-links ../offline-bundles/CITEF-RELEASE/netstrike-offline-bundle/destinations/CTRL01/wheelhouse \
+  -r requirements-validator.txt
 ```
 
-The generated inventory is ignored by Git and contains only approved host
-addresses and connection settings. It contains no account names, passwords,
-tokens, or private keys. Inject SSH/WinRM credentials using the approved local
-Ansible Vault or Cyber Range secret-injection mechanism; never put them in the
-manifest, command history, or repository. Inject
-`NETSTRIKE_READINESS_TOKEN` and `SPLUNK_TOKEN` into the Ansible process
-environment through the approved secret manager.
-Each Splunk probe query must include `{run_id}` and return its configured
-`expected_event_id` field/value so the check proves both source freshness and
-correlation for the new run.
-
-The checked-in example intentionally fails validation because its range-owned
-configuration and egress verification fields are incomplete. No inventory can
-be rendered from it. CITEF approval is an operational prerequisite recorded in
-the requirements/decision record; it is not duplicated as a manifest field.
-The example and test addresses are not CITEF assignments.
-
-## Offline provisioning and controller deployment
-
-The manually triggered `Build offline bundle` workflow publishes a
-hash-verified Python runtime and wheelhouse for the requirements listed in the
-workflow, the matching project source trees, and pinned Ansible collection
-archives. Its generated `inventory.json` records each runtime/package/source/
-collection's version, source, license, owner, SHA-256, destination, and offline
-installation method; review any UNKNOWN license/owner values before release.
-This is a reproducible build artifact, not by itself a complete CITEF transfer
-release: approved Universal Forwarder and Sysmon installers, receiver CA,
-controller TLS certificate and CA, and any other separately staged artifacts
-must be added to the deployment manifest and verified. See the
-[offline bundle guide](../docs/offline-bundle.md) for contents and installation
-steps. Stage the generated bundle plus approved external artifacts under the
-directory named by `offline_artifacts.directory`. The example manifest's
-artifact paths must be replaced with the staged relative paths and SHA-256
-digests.
-
-For example, place the licensed Sysmon ZIP at
-`offline-bundles/CITEF-RELEASE/sysmon/Sysmon.zip`. The checked-in
-`offline-bundles/CITEF-RELEASE/sysmon/.gitkeep` marks this staging location;
-the ZIP and other licensed artifacts remain ignored by Git. Set
-`offline_artifacts.sysmon.archive.file` to `sysmon/Sysmon.zip` and populate its
-approved SHA-256 in the local `environment.json`. Ansible resolves artifact
-paths relative to `offline_artifacts.directory`, verifies the archive hash,
-then extracts and signature-checks `Sysmon64.exe` before installation.
-
-Place the Windows Universal Forwarder MSI at
-`offline-bundles/CITEF-RELEASE/windows/splunkforwarder-10.0.1-c486717c322b-windows-x64.msi`.
-The checked-in `offline-bundles/CITEF-RELEASE/windows/.gitkeep` marks its
-staging location; the licensed MSI remains ignored by Git. The example manifest
-uses this relative path, and Ansible verifies its SHA-256, published SHA-512,
-and Authenticode signature before installing it.
-
-Download the pinned Ansible collections and dependencies on a connected
-staging machine, transfer the tarballs through the approved offline path, and
-install them on the Ansible control host without Galaxy access:
+Install the controller requirements from the same wheelhouse into the Python
+environment used by `ansible-playbook`:
 
 ```sh
-ansible-galaxy collection download \
-  -r citef-config/requirements.yml \
-  -p citef-config/collection-bundle
-ansible-galaxy collection install \
-  --offline \
-  citef-config/collection-bundle/*.tar.gz \
-  -p citef-config/collections
+python3 -m pip install --no-index \
+  --find-links ../offline-bundles/CITEF-RELEASE/netstrike-offline-bundle/destinations/CTRL01/wheelhouse \
+  -r requirements-controller.txt
 ```
 
-Run `ansible-playbook` from `citef-config/` so its pinned `ansible.cfg`,
-collections, roles, and ignored `environment.json` are used. The provisioning
-gate verifies every declared artifact hash and the Python bundle's
-`SHA256SUMS` before any range host changes. The controller role extracts the
-release into a deployment-specific directory, installs the runtime without network
-access, and starts a restricted systemd service as the unprivileged
-`netstrike` account. It extracts source into an immutable, content-addressed
-release directory, binds only to CTRL01's approved inventory address, serves
-HTTPS using the staged certificate, and checks that the injected private key
-matches that certificate.
+Use the bundle's pinned local Python requirements and collection archives as described in the
+[offline bundle guide](../docs/offline-bundle.md); do not fetch packages or
+collections from the Internet on the target network.
 
-Inject `controller_service_tokens` (a JSON-compatible mapping from token to
-`actor_id`/`role`), `controller_readiness_token` (a facilitator token),
-`controller_identity_audit_key` (at least 32 characters), and
-`controller_tls_private_key_pem` through the approved Ansible Vault or secret
-manager. The controller TLS CA must be trusted by clients and the Ansible
-control host. The local provisioning check requires the application to be
-ready to prepare; a clean snapshot is captured only after approved facilitator
-preparation and the full external readiness gates pass.
+The generated inventory does not contain account names or passwords. Supply
+approved SSH/WinRM credentials through Ansible Vault or another approved secret
+manager, for example a private vars file passed with `-e @secrets.yml`.
+Never put credentials in the manifest, shell history, or repository. Inject
+`NETSTRIKE_READINESS_TOKEN` and `SPLUNK_TOKEN` into the Ansible process
+environment for readiness checks. Each configured Splunk probe must include
+`{run_id}` and return its configured `expected_event_id`.
 
-Provision approved VMs from `citef-config/` with:
+For isolated tests only, the manifest may omit the Universal Forwarder receiver
+CA and controller TLS certificate/CA: forwarder traffic is plaintext, the
+controller uses a short-lived self-signed certificate, and Splunk REST skips
+certificate verification. These settings are not approved deployment
+configuration. Approved runs require certificates; `tls_certificate` and
+`tls_ca` must be set together.
+
+## Provisioning
+
+Before changing hosts, `provision.yml` validates the manifest and staged vendor
+artifact hashes. It currently configures workstations and Windows telemetry,
+the Linux baseline, the controller portal, and controller telemetry.
+`DC01` provisioning is disabled in the playbook while the host is unavailable;
+`SPLUNK01` is not configured by the project playbook. Do not treat the current
+playbook as complete range deployment.
+
+Inject `controller_service_tokens`, `controller_readiness_token`,
+`controller_identity_audit_key` (32 or more characters), and
+`controller_tls_private_key_pem` through approved secret management. The
+readiness token must be one of the service-token keys and must map to a
+facilitator role. Keep secrets outside Git or encrypt them with Ansible Vault.
+
+By default, the controller role reads the extracted bundle from
+`<offline_artifacts.directory>/netstrike-offline-bundle`. If it is extracted
+elsewhere, set `controller_offline_bundle_root` to the absolute path containing
+`runtime/` and `destinations/`. Run Ansible from this directory so its pinned
+configuration, roles, collections, and local manifest are used:
 
 ```sh
 ansible-playbook \
   -i inventory.ini \
   playbooks/provision.yml \
+  -e @secrets.yml \
   --extra-vars "deployment_id=UNIQUE_DEPLOYMENT_ID"
 ```
 
-Do not use the checked-in sample values or attempt provisioning until the
-manifest, images, transfer artifacts, TLS materials, secrets, and CITEF
-approvals have been populated and independently reviewed. Live provisioning
-and restore-cycle acceptance still require the actual range.
+Provision only after independent review of the manifest, images, bundle,
+external artifacts, TLS material, secrets, and CITEF approvals. The example
+values are not deployable.
 
-The selected telemetry versions are Splunk Universal Forwarder 10.0.1 and
-Sysmon 15.22. CITEF permits Universal Forwarder and HTTP Event Collector (HEC)
-ingestion and allows a dedicated `netstrike` index with one-day retention
-(permissions relayed 2026-10-04). Separate participant access for investigating
-permitted simulation telemetry from facilitator access for managing the
-simulation and Splunk configuration. The planned split is Universal Forwarder
-for Windows event-channel logs and HEC for normalized project events. The portal's structured
-exercise-event ledger remains in its local SQLite database; normalized
-application-event forwarding to Splunk is not implemented yet. Do not declare
-an application-event Splunk source ready until HEC/index configuration,
-participant/facilitator access controls, and its run-correlated query are added
-and tested.
+For a standalone Windows telemetry test, Ansible can prompt for the inventory
+account password:
+
+```sh
+ansible-playbook \
+  -i inventory.ini \
+  playbooks/windows_telemetry.yml \
+  --user 'DOMAIN\username' \
+  --ask-pass
+```
+
+Use NTLM over HTTP only on an isolated, approved management network; otherwise
+use CITEF's approved WinRM transport and protection. For receiver setup and
+Sysmon-to-Splunk verification, follow the
+[Splunk/Sysmon ingestion guide](../docs/splunk-sysmon-ingest.md).
 
 ## Post-restore readiness
 
-Use clean snapshots as the reset mechanism. Ansible validates the restored
-environment; any approved idempotent correction is a separate, versioned
-provisioning action. Ansible does not recreate VMs, control the hypervisor,
-modify snapshots, or promise a timed reset.
+The complete restore/admission procedure is in
+[safety and reset](../docs/exercise-design/04-safety-and-reset.md). The
+Ansible readiness playbook is read-only except for sending its configured test
+events; it checks manifest validity, host connectivity and identity, OS family,
+DNS, clock skew/synchronization, required services, local application readiness,
+and run-correlated Splunk probes. It excludes `DC01` and does not currently
+verify the AD identity baseline. The local application endpoint explicitly
+reports application-only scope; it is not a CITEF readiness certificate.
 
-### Initial baseline and snapshot capture
-
-The first clean baseline is a separate, one-time deployment activity:
-
-1. Verify the candidate amd64 images/releases and proposed private subnets
-   with the range owners. Record the exact image/build, assigned addresses,
-   access protocols, and offline bundle approval.
-2. Configure the approved VMs using the versioned offline deployment
-   automation, synthetic identity manifest, telemetry configuration, and
-   fixture hashes. Do not use Internet package repositories or include
-   licensed installers/secrets in Git.
-3. Run the same service, identity, fixture, clock, application, and Splunk
-   checks used by the readiness procedure. Confirm egress denial and emergency
-   stop with the range operator. Any failure blocks snapshot capture.
-4. Ask the named snapshot owner to capture the clean VM snapshots only after
-   the checks pass. Record each immutable snapshot/image ID in the local
-   manifest and record evidence of the passing baseline.
-5. Restore those snapshots and pass readiness once before accepting them as
-   the delivery baseline.
-
-The repository includes offline Ansible provisioning roles for the proposed
-Ubuntu/Windows images, DNS/NTP, AD/DNS baseline, Universal Forwarder/Sysmon,
-and controller portal. The roles are syntax-checked but have not been tested
-against actual CITEF images. Do not treat them as hypervisor/snapshot controls
-or claim range acceptance until live image tests and restore cycles pass.
-
-1. Stop the scenario; close/archive its run evidence; verify no registered
-   action or prior-run process remains. Keep prior evidence intact.
-2. The named range operator restores every physical VM from its recorded clean
-   snapshot ID. If any restore fails, stop and escalate to Zian/Julien; do not
-   admit participants or attempt an unapproved partial reset.
-3. Transfer the reviewed offline bundle. Verify its manifest and SHA-256 on
-   each destination before installing or applying configuration.
-4. Generate a new, unique run ID and emit one harmless, identifiable
-   readiness event from each required source. Do not reuse a previous run ID.
-5. Inject runtime credentials through the approved mechanism and run:
-
-   ```sh
-   ansible-playbook \
-     -i citef-config/inventory.ini \
-     citef-config/playbooks/readiness.yml \
-     --extra-vars "exercise_run_id=NEW_UNIQUE_RUN_ID"
-   ```
-
-   The playbook checks connectivity, OS mapping, internal DNS answers, clock
-   skew, required OS services, AD domain/users/group membership, fixture
-   SHA-256 hashes, local application/event-ledger readiness, and each
-   run-correlated Splunk source probe. It is read-only apart from those
-   explicitly emitted test events. Secret-bearing API calls suppress task
-   output.
-6. A staff operator separately confirms the egress deny rule and tests
-   emergency-stop reachability on the approved non-delivery test run. The
-   manifest attestation records the operator, time, and contact channel; it
-   does not trigger the stop or claim to independently prove firewall state.
-7. Record all host snapshot IDs, readiness output, test-event IDs, bundle
-   digest, operator, and outcome in the cycle record below. The facilitator
-   signs the readiness record before participant admission.
-8. Repeat restore plus readiness until three consecutive cycles reproduce the
-   documented baseline. Any failed check blocks admission, is recorded, and
-   must be corrected before restarting the three-cycle acceptance sequence.
-
-The controller's `/api/facilitator/readiness` endpoint remains a local
-application check only. A passing local report cannot replace the Ansible
-checks, Splunk source queries, human egress/emergency-stop verification,
-snapshot-restore evidence, or facilitator admission signature.
-
-## Three-cycle acceptance record
-
-Complete this table with actual evidence; do not mark a cycle passed from a
-planned or simulated result.
-
-| Cycle | Date/operator | Snapshot IDs / bundle digest | New run ID and telemetry probe IDs | Ansible result / blockers | Egress + emergency-stop operator evidence | Facilitator sign-off |
-|---|---|---|---|---|---|---|
-| 1 | Pending | Pending | Pending | Pending | Pending | Pending |
-| 2 | Pending | Pending | Pending | Pending | Pending | Pending |
-| 3 | Pending | Pending | Pending | Pending | Pending | Pending |
-
-The repository currently has no approved CITEF manifest or recorded CITEF
-restore cycle. This is a proposed implementation and acceptance procedure,
-not evidence that #103's external deployment criteria have passed.
-
-## Local checks
-
-The schema validator uses `jsonschema` from
-`citef-config/requirements-validator.txt`; the cross-field checks use the
-Python standard library. Install the requirement as described above, then run
-the checks without range access:
+After the approved snapshot restore, inject the secrets and use a new unique
+run ID:
 
 ```sh
-python3 -m unittest discover -s citef-config/tests -v
+ansible-playbook \
+  -i inventory.ini \
+  playbooks/readiness.yml \
+  -e @secrets.yml \
+  --extra-vars "exercise_run_id=NEW_UNIQUE_RUN_ID"
 ```
 
-Ansible syntax and live-target checks require the approved offline Ansible
-runtime/collections and a complete local manifest. Do not validate by
-connecting to guessed or example addresses.
+Separately verify network policy, snapshot identity, and emergency-stop
+reachability with the range operator. A local manifest check, playbook result,
+or application readiness response cannot attest to those controls. The
+October 15 local rehearsal did not restore snapshots or establish CITEF
+readiness; see its [validation report](../docs/20261015%20Offline%20Bundle%20and%20Provisioning%20Validation.md).
+
+## Local tests
+
+With `jsonschema` installed from the offline wheelhouse, run:
+
+```sh
+python3 -m unittest discover -s tests -v
+```
+
+Ansible syntax and live-target checks require the approved runtime,
+collections, complete local manifest, and authorized targets. Do not test
+against guessed or example addresses.

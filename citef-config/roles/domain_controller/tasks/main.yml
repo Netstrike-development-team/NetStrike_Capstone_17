@@ -114,6 +114,15 @@
     data: NoSync
     type: string
   notify: Restart Windows Time
+  when: not (external_ntp | default(false) | bool)
+
+- name: Sync DC01 from the external NTP servers
+  ansible.windows.win_command: >-
+    w32tm.exe /config /manualpeerlist:"{{ network.ntp_servers | map('regex_replace', '$', ',0x8') | join(' ') }}"
+    /syncfromflags:manual /reliable:yes /update
+  changed_when: true
+  notify: Restart Windows Time
+  when: external_ntp | default(false) | bool
 
 - name: Advertise DC01 as a reliable time source
   ansible.windows.win_regedit:

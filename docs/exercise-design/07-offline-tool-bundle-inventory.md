@@ -1,35 +1,38 @@
 # Offline tool bundle inventory and deployment decisions
 
-**Status (2026-10-07):** The merged CI workflow builds and verifies a
+**Status (2026-10-15):** The merged CI workflow builds and verifies a
 versioned CTRL01 bundle containing the portable Python runtime, resolved wheels,
 project source trees, and pinned Ansible collections. `inventory.json` records
 per-artifact version, source, license, owner, SHA-256, destination VM, and offline
-installation method. A CI bundle is not Cyber Range deployment acceptance:
-compatible target images, and clean network-isolated VM evidence remain separate
-gates. Patrick reports that the Ubuntu offline application smoke test and Windows
-Sysmon-to-Splunk ingestion test succeeded; remaining acceptance checks are listed
+installation method. A CI bundle is not Cyber Range deployment acceptance: compatible target images
+and clean network-isolated VM evidence remain separate gates. Patrick reports that the Ubuntu offline application smoke test and Windows
+Sysmon-to-Splunk ingestion test succeeded. A later scoped provisioning rehearsal
+is recorded in the [2026-10-15 validation report](../20261015%20Offline%20Bundle%20and%20Provisioning%20Validation.md);
+its DNS-only air-gap simulation and unconfigured DC01/Splunk host failures do not
+establish full offline or range readiness. Remaining acceptance checks are listed
 in the test record below.
 
-This document is the consolidated source for:
+This document is the source of truth for:
 
 - offline bundle scope and artifact inventory;
-- tool and approval decisions for the exercise;
-- installation and readiness expectations for offline deployment; and
-- the current gaps that still need verification before release.
+- artifact/tool approval dispositions and test evidence; and
+- remaining artifact and deployment acceptance gates.
 
-It supersedes the earlier 07 planning notes and should be used alongside
-[06-citef-requirements-and-approval.md](06-citef-requirements-and-approval.md)
-and the [CITEF configuration guide](../../citef-config/README.md).
+Use [06-citef-requirements-and-approval.md](06-citef-requirements-and-approval.md)
+for CITEF decisions and open environment requirements, the
+[CITEF configuration guide](../../citef-config/README.md) for Ansible commands,
+and the [offline bundle guide](../offline-bundle.md) for bundle build/install
+steps.
 
 ## Decision and approval gates
 
 | Item | Current status | Evidence required to close |
 |---|---|---|
-| Splunk Enterprise and capacity | CITEF-provided Splunk Enterprise 10.0.1 under the Cyber Range educational license; maximum 10 GB ingestion per day and 300 GB disk | Confirmed 2026-10-02. CITEF permits HEC and Universal Forwarder ingestion and a dedicated `netstrike` index with one-day retention; participant investigation and facilitator simulation-management access must be separated (relayed 2026-10-04). Patrick reports approximately 2 MB for 5,000 events over two hours; one-day retention and RBAC are being configured under [#102](https://github.com/Netstrike-development-team/NetStrike_Capstone_17/issues/102) |
+| Splunk Enterprise and capacity | CITEF-provided Splunk Enterprise 10.0.1; approved ingestion methods, index, limits, retention, and access boundary are recorded in the [CITEF decision log](06-citef-requirements-and-approval.md) | Patrick reports approximately 2 MB for 5,000 events over two hours. Application-event ingestion, one-day retention, and participant/facilitator RBAC are still being verified under [#102](https://github.com/Netstrike-development-team/NetStrike_Capstone_17/issues/102) |
 | Windows telemetry and forwarding | Selected Splunk Universal Forwarder 10.0.1 and Sysmon 15.22 | Patrick reports both staged archives matched the recorded hashes, and Sysmon events arrived in the `netstrike` index from Windows 11 26H2 (build 26300.9550, AMD64); screenshot evidence is linked in the test record. No additional licensing or transfer review is considered applicable per Patrick |
 | Controller, portal, and state | Python 3.11, FastAPI, SQLite; the bundle includes the declared dashboard, validator, controller, shared, and module wheels | Build inventory records exact wheel/runtime versions, license/author metadata, checksums, CTRL01 destination, and offline install method |
-| Ansible and remote configuration | `ansible-core` requirement `>=2.16,<3`; `ansible.windows` 3.8.0 and `microsoft.ad` 1.12.1 | Patrick reports all VMs were successfully deployed using Ansible and the collection checksum passed |
-| Snapshot restoration and readiness | All VMs were successfully deployed using Ansible | Snapshot design, restoration, and readiness workflow are tracked under [#103](https://github.com/Netstrike-development-team/NetStrike_Capstone_17/issues/103) |
+| Ansible and remote configuration | `ansible-core` requirement `>=2.16,<3`; `ansible.windows` 3.8.0 and `microsoft.ad` 1.12.1 | The October 7 record reports an Ansible deployment and collection-checksum pass, but does not itemize host or readiness results. The October 15 rehearsal had two failures on hosts it did not configure; see the [dated report](../20261015%20Offline%20Bundle%20and%20Provisioning%20Validation.md) |
+| Snapshot restoration and readiness | Snapshot restoration has not been demonstrated; the October 15 rehearsal created blank-state snapshots but did not restore them | Three restore/readiness cycles remain required under [#103](https://github.com/Netstrike-development-team/NetStrike_Capstone_17/issues/103) |
 | Commercial EDR | Not included in the MVP | Sysmon and Windows logs provide endpoint evidence; restricted NetStrike exercise controls simulate limited containment actions and must be described as exercise controls, not production EDR |
 | Mock cloud and impact | Project-owned stateful Python mock; safe marker files and reversible file moves | Keep the mock local; limit changes to allowlisted disposable fixtures; do not add real cloud APIs or encryption |
 | Scenario VM architecture and images | Ubuntu Server 26.04.1 for the Linux controller/portal smoke test; Windows 11 26H2 build 26300.9550 AMD64 for Windows telemetry | Patrick identified these as the selected target images; record sizing/destination roles and validate provisioning/readiness and snapshot restoration |
@@ -38,8 +41,8 @@ and the [CITEF configuration guide](../../citef-config/README.md).
 | Student-funded software | No paid software or public-cloud services are required from the student team | Use the Cyber Range-provided Splunk educational license and free/open-source or project-owned components; verify evaluation terms |
 | Project runtime package lock and wheelhouse | Generated by the CI workflow for each bundle revision | Review generated `inventory.json` and `requirements.lock`; exact wheel versions and hashes are recorded per build |
 | Ansible collections and other system installers | `citef-config/requirements.yml` pins `ansible.windows` and `microsoft.ad`; controller requirements and collection archives are bundled | The bundle records versions, metadata, SHA-256, CTRL01 destination, and offline install method; approved system installers remain separately staged |
-| Portal network independence | Dashboard and dependencies installed and ran on Ubuntu Server 26.04.1 AMD64 with the Ethernet interface disabled | The offline install/run is the acceptance test for this issue; a separate external-request audit is not required |
-| Clean offline installation | Ubuntu Server 26.04.1 AMD64 dashboard install tested with the Ethernet interface disabled; all VMs subsequently deployed using Ansible per Patrick | Preserve the test record below and complete outstanding readiness and snapshot-restore checks on the selected target images |
+| Portal network independence | Dashboard and dependencies ran on Ubuntu Server 26.04.1 AMD64 with the Ethernet interface disabled | This demonstrates a disconnected local smoke test, not an audit of attempted external requests. The portal dependency/network audit below remains open |
+| Clean offline installation | The October 7 record reports a Ubuntu Server 26.04.1 AMD64 dashboard install with the Ethernet interface disabled; a separate October 15 rehearsal had limited provisioning scope | Preserve each dated result below; clean-target provisioning, readiness, and snapshot restoration remain separate checks |
 | Versioned release bundle | CI builds a versioned runtime/source/collection bundle; the offline test record identifies the tested source commit and workflow artifact | Selecting or identifying a later release candidate is outside this issue; release assembly and transfer planning remain separate deployment work |
 | Artifact licensing and transfer | Patrick reports no additional licensing or transfer review is applicable to the tested artifacts/use | Treat as the project owner's stated disposition for this acceptance record; keep proprietary installers, secrets, and credentials out of Git |
 
@@ -152,8 +155,10 @@ should not be included on exercise VMs unless operationally required.
 ## System tools, collections, installers, and project configuration
 
 The workflow records downloaded collection metadata, resolved Python artifacts,
-and source-tree metadata in each generated bundle. The bundle has not yet passed
-a clean target-VM installation test. No Splunk/Universal Forwarder installer or
+and source-tree metadata in each generated bundle. A local Ubuntu application
+smoke test and a scoped provisioning rehearsal are recorded below; the bundle
+has not passed complete clean-target provisioning and readiness acceptance.
+No Splunk/Universal Forwarder installer or
 Sysmon binary is checked into the repository; those exact, approved artifacts
 must be staged outside Git and their hashes added to the deployment manifest.
 Do not infer that Wazuh, Elastic, or another SIEM in legacy documentation is
@@ -171,7 +176,7 @@ part of the approved Splunk-based MVP.
 | Splunk Enterprise | 10.0.1; range version and 10 GB/day ingestion / 300 GB disk limits confirmed 2026-10-02 | Cyber Range-provided instance | Cyber Range educational license, confirmed; no Splunk installer is in the project bundle | N/A for transfer (record receiver identity/config separately) | Existing `SPLUNK01` | Configure the range-provided service; no offline installer transfer planned |
 | Splunk Universal Forwarder | **10.0.1 selected** to match Splunk Enterprise 10.0.1 ([Splunk download](https://www.splunk.com/en_us/download/universal-forwarder.html)) | Splunk distribution / Splunk Inc. | Splunk software license; no additional licensing or transfer review considered applicable per Patrick | Windows x64 MSI SHA-512: `246e0ce374c89fe0f5ba52e95ccb1c7cdeb8bedebc04b244708beb270b0b5cb268407e7db0a9937354aeb074ecd9725122c35f078c0b1e0347b26661f40ccd96`; Linux amd64 DEB SHA-512: `ab289083aa191c94c4e38a18826962069de8cc53b10dd60e7630e724773d12db5f0a742bfaf3d4c3c5375beb81983e307c1c8c87024b491b183571d5af7a800b` | Windows endpoints and Linux forwarder host(s), if used | Stage the matching installer locally; verify its SHA-512; install/configure offline with Ansible; collect Windows event channels |
 | Sysmon distribution archive | **15.22 selected** ([Microsoft Sysmon](https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon)) | Microsoft Sysinternals / Microsoft | Microsoft Sysinternals terms; no additional licensing or transfer review considered applicable per Patrick | ZIP archive SHA-256 (contains executable and EULA): `00ecf1b46aec99299d3ae0bca79dc621458bd014b20b509d7c5c8e8c8611aa54`; Patrick reports the staged archive matched | Windows endpoints | Stage the archive locally; verify archive SHA-256 and executable Authenticode signature; install offline with reviewed XML config |
-| Sysmon XML configuration | Project revision to be fixed at release; current file `citef-config/files/sysmon-config.xml` | Project-authored | Project-authored configuration | Generate from exact release file | Windows endpoints | Bundle with source/configuration, verify SHA-256, and apply locally |
+| Sysmon XML configuration | Project revision to be fixed at release; current file `citef-config/files/sysmon-config.xml` | Project-authored | Project-authored configuration | Generate from exact release file | Windows endpoints | Verify SHA-256 and copy directly from `citef-config/files`; apply locally |
 | Splunk HEC inputs and project event mapping | HEC permitted; exact configuration/revision pending | Project-authored Splunk inputs, field mappings, searches, dashboards | Project-authored configuration | Generate SHA-256 from exact release files | `netstrike` index on existing Splunk instance | Configure HEC and project field mappings locally; send normalized project events via HEC and validate correlation/health |
 | Dedicated exercise index | `netstrike`, one-day retention; creation permitted | Cyber Range Splunk administrator / project configuration | Covered by the range-provided Splunk service; confirm local configuration process | Record configuration revision/hash | Existing `SPLUNK01` | Create/configure locally; isolate exercise data by `exercise_id` and `run_id`; verify one-day retention |
 | Splunk access control | Participant investigates permitted simulation telemetry; facilitator manages simulation and Splunk configuration | Cyber Range Splunk administrator / project roles | Covered by range-provided Splunk service; implement least-privilege roles | Record role/search-filter configuration revision and test evidence | `netstrike` index and facilitator management interfaces | Configure separate participant and facilitator roles; verify participant cannot access facilitator-only data or management actions and facilitator can manage the simulation |
@@ -215,6 +220,17 @@ config deployment workflow.
 
 ## Offline installation test record
 
+**Follow-up (2026-10-15):** A scoped offline-bundle provisioning rehearsal was
+run against FIN-WS01 and CTRL01 from a separate Ansible VM. The reported Ansible
+failures were for DC01 and the Splunk Server, neither of which was configured in
+this test; warnings caused by `su` were harmless. Internet isolation was simulated
+by blocking outbound DNS requests only, existing personal-network DNS/NTP was
+used instead of DC01, and blank-state snapshots were created but not restored.
+The detailed scope and limitations are in the
+[dated validation report](../20261015%20Offline%20Bundle%20and%20Provisioning%20Validation.md).
+This does not replace the full offline-install, telemetry, or restore acceptance
+checks below.
+
 **Status (2026-10-07):** Patrick reports that the dashboard was installed and
 ran successfully on Ubuntu Server 26.04.1 with the Ethernet interface manually
 disabled; installation and checksum checks passed and the dashboard was
@@ -222,8 +238,9 @@ accessible. The tested bundle included source through commit
 `5553a3fce81b4f59981460259a8f933b9d4d4b69`. Patrick also reports successful
 Sysmon deployment and ingestion into Splunk's `netstrike` index from Windows 11
 26H2 build 26300.9550 AMD64, with the staged Sysmon ZIP and Windows Forwarder
-matching their recorded hashes. All VMs were successfully deployed using
-Ansible. These results establish application smoke-test, provisioning, and
+matching their recorded hashes. Patrick also reported an Ansible deployment;
+individual host and readiness results were not itemized. These results
+establish application smoke-test, provisioning, and
 event-ingestion success, not all deployment acceptance: detailed readiness and
 access-control outcomes and snapshot restore are not recorded. Replication steps for the
 application smoke test are in the
@@ -244,11 +261,11 @@ secrets and link them from the approved project evidence location.
 | Windows Security and PowerShell audit policy revision | Pending |
 | Installation commands and local artifact source | Offline installation succeeded on Ubuntu Server 26.04.1; see linked offline-bundle application smoke-test procedure |
 | Package/config checksum verification | Installation and bundle/package checks passed; GitHub Actions artifact ZIP digest recorded above; requirements-lock checksum passed |
-| Portal external-request audit | Not required for this offline-readiness test; the Ethernet interface was disabled and the dashboard was accessible |
+| Portal external-request audit | Not performed; the Ethernet interface was disabled for the local smoke test, so no application/network request audit was recorded. Still required before claiming portal network independence |
 | Linux application smoke checks | Patrick reports health/UI and readiness testing involved accessing the dashboard; the specific route status codes and role-boundary outcomes were not itemized |
 | Windows image and Sysmon-to-Splunk test (2026-10-07) | Windows 11 26H2 build 26300.9550 AMD64; staged Sysmon ZIP and Windows Forwarder matched recorded hashes; Sysmon events successfully appeared in the Splunk `netstrike` index |
 | Splunk sample volume | Approximately 2 MB for 5,000 events over two hours, without filtering. At a constant rate this extrapolates to about 24 MB/day, roughly 0.24% of the 10 GB/day allowance; a typical several-hour simulation would produce only a few MB at this observed rate |
-| Ansible provisioning and readiness | All VMs were successfully deployed using Ansible; individual readiness-check results not itemized |
+| Ansible provisioning and readiness (October 7) | Patrick reported successful deployment, but individual host and readiness-check results were not itemized; the later October 15 rehearsal is separately scoped in its linked report |
 | Snapshot restore | Planned/tracked under [#103](https://github.com/Netstrike-development-team/NetStrike_Capstone_17/issues/103); outside this issue's acceptance scope |
 | Splunk `netstrike` one-day retention and participant/facilitator RBAC checks | Being configured under [#102](https://github.com/Netstrike-development-team/NetStrike_Capstone_17/issues/102); not yet verified for this acceptance record |
 | Result, failures, and remediation | Linux dashboard installed and ran offline; Windows Sysmon events ingested into `netstrike`; remaining deployment acceptance checks above are pending |
