@@ -88,6 +88,7 @@
           foreach ($entry in $approved) {
             $answers = @(
               Resolve-DnsName -Name $entry.dns_name -Type A |
+                Where-Object { $_.PSObject.Properties['IPAddress'] } |
                 Select-Object -ExpandProperty IPAddress
             )
             if ($entry.address -notin $answers) {

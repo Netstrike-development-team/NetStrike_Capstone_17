@@ -104,6 +104,13 @@ class ValidateEnvironmentTests(unittest.TestCase):
         manifest["splunk"]["rest_url"] = "https://splunk-lab.simcorp.test:8089"
         self.assertEqual(validate_environment.validate_manifest(manifest), manifest)
 
+    def test_splunk_dns_name_must_be_in_the_authoritative_zone(self):
+        manifest = valid_manifest()
+        manifest["assets"][3]["dns_name"] = "192.168.0.234"
+        manifest["splunk"]["forwarder_receiver"]["host"] = "192.168.0.234"
+        with self.assertRaisesRegex(validate_environment.ManifestError, "fully qualified name within"):
+            validate_environment.validate_manifest(manifest)
+
     def test_certificates_are_optional(self):
         manifest = valid_manifest()
         del manifest["offline_artifacts"]["universal_forwarder"]["receiver_ca"]

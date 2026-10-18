@@ -104,6 +104,7 @@
     - name: Resolve every approved host from Windows targets
       ansible.windows.win_shell: >-
         (Resolve-DnsName -Name '{{ item.dns_name }}' -Type A -ErrorAction Stop |
+        Where-Object { $_.PSObject.Properties['IPAddress'] } |
         Select-Object -ExpandProperty IPAddress) -join ','
       loop: "{{ assets }}"
       register: windows_dns_results

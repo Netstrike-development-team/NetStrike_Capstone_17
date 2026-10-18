@@ -182,10 +182,16 @@ def _validate_cross_fields(manifest: dict) -> None:
         )
         _require(address not in addresses, f"duplicate host address: {address}")
         addresses.add(address)
+        dns_name = host["dns_name"].lower().rstrip(".")
         if name != "SPLUNK01":
             _require(
-                host["dns_name"].lower().rstrip(".") == f"{name.lower()}.{domain}",
+                dns_name == f"{name.lower()}.{domain}",
                 f"{field}.dns_name must be {name.lower()}.{domain}",
+            )
+        else:
+            _require(
+                dns_name.endswith(f".{domain}") and dns_name != domain,
+                f"{field}.dns_name must be a fully qualified name within {domain}",
             )
         expected_connection = "ssh" if host["os_family"] == "linux" else "winrm"
         _require(

@@ -71,7 +71,7 @@
 - name: Register approved forward DNS records
   ansible.windows.win_dns_record:
     zone: "{{ network.domain_dns_name }}"
-    name: "{{ item.name | lower }}"
+    name: "{{ item.dns_name | lower | regex_replace('\\.' ~ (network.domain_dns_name | lower | trim('.')) ~ '\\.?$', '') }}"
     type: A
     value: "{{ item.address }}"
     state: present
@@ -271,6 +271,7 @@
       foreach ($hostEntry in $approved) {
         $actual = @(
           Resolve-DnsName -Server 127.0.0.1 -Name $hostEntry.dns_name -Type A |
+            Where-Object { $_.PSObject.Properties['IPAddress'] } |
             Select-Object -ExpandProperty IPAddress
         )
         if ($hostEntry.address -notin $actual) {
