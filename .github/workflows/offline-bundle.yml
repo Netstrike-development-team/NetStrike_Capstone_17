@@ -1,6 +1,10 @@
 name: Build offline bundle
 
 on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
   workflow_dispatch:
 
 env:
@@ -32,7 +36,7 @@ jobs:
           python -m pip install pytest -r citef-config/requirements-controller.txt
 
       - name: Test offline bundle builder
-        run: python -m pytest scripts/tests/test_offline_bundle.py -q
+        run: python -m pytest scripts/tests/test_offline_bundle.py scripts/tests/test_offline_smoke.py -q
 
       - name: Download pinned Ansible collections
         run: |
@@ -90,6 +94,47 @@ jobs:
         env:
           RUN_ID: ${{ github.run_id }}
         run: python scripts/offline_bundle.py verify "offline-bundles/netstrike-${DESTINATION}-${RUN_ID}.tar.gz"
+
+      - name: Smoke full play from the actual bundle with kernel networking isolated
+        env:
+          RUN_ID: ${{ github.run_id }}
+          EXPECTED_REVISION: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          archive="$GITHUB_WORKSPACE/offline-bundles/netstrike-${DESTINATION}-${RUN_ID}.tar.gz"
+          archive_sha="$(sha256sum "$archive" | cut -d ' ' -f 1)"
+          host_namespace="$(readlink /proc/self/ns/net)"
+          # Only setup runs as root. All installs/application execution run as
+          # the runner user, with no capabilities, no privilege regain and lo only.
+          sudo /usr/bin/unshare --net -- /bin/sh -eu -c '
+            ip link set lo up
+            exec /usr/bin/setpriv --reuid "$1" --regid "$2" --clear-groups \
+              --bounding-set=-all --inh-caps=-all --ambient-caps=-all --no-new-privs \
+              "$3" -I -B "$4" --archive "$5" --output "$6" \
+              --expect-revision "$7" --expect-archive-sha256 "$8" \
+              --host-network-namespace "$9" --execute
+          ' offline-smoke "$(id -u)" "$(id -g)" "$(command -v python)" \
+            "$GITHUB_WORKSPACE/scripts/offline_smoke.py" "$archive" \
+            "$RUNNER_TEMP/offline-fullplay-smoke" "$EXPECTED_REVISION" "$archive_sha" "$host_namespace"
+
+      - name: Retain bounded synthetic smoke evidence (not range acceptance)
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6, Node 24
+        with:
+          name: offline-fullplay-smoke-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/offline-fullplay-smoke/smoke-summary.json
+            ${{ runner.temp }}/offline-fullplay-smoke/network-boundary.json
+            ${{ runner.temp }}/offline-fullplay-smoke/application-smoke.json
+            ${{ runner.temp }}/offline-fullplay-smoke/release-source.json
+            ${{ runner.temp }}/offline-fullplay-smoke/preflight.json
+            ${{ runner.temp }}/offline-fullplay-smoke/http-checks.json
+            ${{ runner.temp }}/offline-fullplay-smoke/run-review-bundle.json
+            ${{ runner.temp }}/offline-fullplay-smoke/events.jsonl
+            ${{ runner.temp }}/offline-fullplay-smoke/learner-audit.jsonl
+            ${{ runner.temp }}/offline-fullplay-smoke/*.log
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Upload offline bundle
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6, Node 24
