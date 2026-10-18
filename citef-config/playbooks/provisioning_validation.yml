@@ -82,8 +82,9 @@
         parameters:
           approved_hosts: "{{ assets | to_json }}"
         script: |
+          param([string]$approved_hosts)
           $ErrorActionPreference = 'Stop'
-          $approved = ConvertFrom-Json -InputObject $Ansible.Params.approved_hosts
+          $approved = ConvertFrom-Json -InputObject $approved_hosts
           foreach ($entry in $approved) {
             $answers = @(
               Resolve-DnsName -Name $entry.dns_name -Type A |

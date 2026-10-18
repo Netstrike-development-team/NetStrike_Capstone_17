@@ -39,8 +39,9 @@
         parameters:
           probe_marker: "NetStrikeSysmonTest-{{ exercise_run_id }}-{{ logical_name }}"
         script: |
+          param([string]$probe_marker)
           $ErrorActionPreference = 'Stop'
-          $marker = $Ansible.Params.probe_marker
+          $marker = $probe_marker
           Start-Process -FilePath $env:ComSpec `
             -ArgumentList @('/d', '/c', "echo $marker") `
             -Wait -NoNewWindow -ErrorAction Stop | Out-Null

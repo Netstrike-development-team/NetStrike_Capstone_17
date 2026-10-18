@@ -2,11 +2,11 @@
 set -Eeuo pipefail
 
 usage() {
-  echo "Usage: $0 <netstrike-bundle.tar.gz> <offline-bundles.tar.gz> <environment.json> <secrets.yml> <deployment-version> <exercise-run-id> [external-ntp] [work-dir]" >&2
+  echo "Usage: $0 <netstrike-bundle.tar.gz> <offline-bundles.tar.gz> <environment.json> <secrets.yml> <deployment-version> <exercise-run-id> [work-dir]" >&2
   exit 2
 }
 
-[[ $# -ge 6 && $# -le 8 ]] || usage
+[[ $# -ge 6 && $# -le 7 ]] || usage
 
 bundle_archive=$(realpath "$1")
 offline_archive=$(realpath "$2")
@@ -14,13 +14,7 @@ environment_file=$(realpath "$3")
 secrets_file=$(realpath "$4")
 deployment_version=$5
 exercise_run_id=$6
-external_ntp=${7:-false}
-work_dir=${8:-"$PWD/offline-bundle"}
-
-case "$external_ntp" in
-  true|false) ;;
-  *) echo "external-ntp must be true or false" >&2; exit 2 ;;
-esac
+work_dir=${7:-"$PWD/offline-bundle"}
 
 for file in "$bundle_archive" "$offline_archive" "$environment_file" "$secrets_file"; do
   [[ -f "$file" ]] || { echo "File not found: $file" >&2; exit 1; }
@@ -72,5 +66,4 @@ cd source/citef-config
   --extra-vars "deployment_version=$deployment_version" \
   --extra-vars "exercise_run_id=$exercise_run_id" \
   --extra-vars "@secrets.yml" \
-  --extra-vars "controller_offline_bundle_root=$bundle_root" \
-  --extra-vars "external_ntp=$external_ntp"
+  --extra-vars "controller_offline_bundle_root=$bundle_root"

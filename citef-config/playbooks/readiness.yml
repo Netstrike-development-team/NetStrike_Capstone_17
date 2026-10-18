@@ -169,16 +169,21 @@
           search_base_dn: "{{ identity_baseline.search_base_dn }}"
           expected_users: "{{ identity_baseline.users | to_json }}"
         script: |
+          param(
+            [string]$expected_domain,
+            [string]$search_base_dn,
+            [string]$expected_users
+          )
           $ErrorActionPreference = 'Stop'
           Import-Module ActiveDirectory
           $domain = (Get-ADDomain).DNSRoot
-          if ($domain -ine $Ansible.Params.expected_domain) {
+          if ($domain -ine $expected_domain) {
             throw "Active Directory domain does not match the baseline."
           }
-          $users = ConvertFrom-Json -InputObject $Ansible.Params.expected_users
+          $users = ConvertFrom-Json -InputObject $expected_users
           $expectedNames = @($users | ForEach-Object { $_.sam_account_name } | Sort-Object -Unique)
           $actualNames = @(
-            Get-ADUser -SearchBase $Ansible.Params.search_base_dn -Filter * |
+            Get-ADUser -SearchBase $search_base_dn -Filter * |
               Select-Object -ExpandProperty SamAccountName |
               Sort-Object -Unique
           )

@@ -94,15 +94,22 @@
   ansible.windows.win_powershell:
     script: |
       $ErrorActionPreference = 'Stop'
+      $ConfirmPreference = 'None'
       $changed = $false
       $recursion = Get-DnsServerRecursion
       if ($recursion.Enable) {
-        Set-DnsServerRecursion -Enable $false
+        Set-DnsServerRecursion -Enable $false -Confirm:$false
         $changed = $true
       }
       $forwarders = @(Get-DnsServerForwarder -ErrorAction SilentlyContinue)
-      if ($forwarders.Count -gt 0) {
-        Remove-DnsServerForwarder -Force
+      $forwarderAddresses = @(
+        $forwarders |
+          ForEach-Object { $_.IPAddress } |
+          Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) } |
+          ForEach-Object { ([string]$_).Trim() }
+      )
+      if ($forwarderAddresses.Count -gt 0) {
+        Remove-DnsServerForwarder -IPAddress $forwarderAddresses -Force -Confirm:$false
         $changed = $true
       }
       $Ansible.Changed = $changed
@@ -150,6 +157,7 @@
     parameters:
       exercise_cidr: "{{ network.exercise_cidr }}"
     script: |
+      param([string]$exercise_cidr)
       $ErrorActionPreference = 'Stop'
       $ruleName = 'NetStrike isolated NTP service'
       $existing = Get-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
@@ -161,7 +169,7 @@
           $existing.Action -eq 'Allow' -and
           $portFilter.Protocol -eq 'UDP' -and
           $portFilter.LocalPort -contains '123' -and
-          $addressFilter.RemoteAddress -contains $Ansible.Params.exercise_cidr
+          $addressFilter.RemoteAddress -contains $exercise_cidr
         if (-not $valid) {
           Remove-NetFirewallRule -DisplayName $ruleName
           $existing = $null
@@ -169,7 +177,7 @@
       }
       if (-not $existing) {
         New-NetFirewallRule -DisplayName $ruleName -Direction Inbound -Action Allow `
-          -Protocol UDP -LocalPort 123 -RemoteAddress $Ansible.Params.exercise_cidr `
+          -Protocol UDP -LocalPort 123 -RemoteAddress $exercise_cidr `
           -Profile Domain -Enabled True | Out-Null
         $Ansible.Changed = $true
       }
@@ -183,17 +191,25 @@
     path: >-
       {{
         (
-          identity_baseline.organizational_units[:ansible_loop.index0]
-          | reverse
-          | map('regex_replace', '^(.*)$', 'OU=\\1')
-          | list
+          omit
+          if ansible_loop.index0 == 0
+          else (
+            (
+              (
+                identity_baseline.organizational_units[:ansible_loop.index0]
+                | reverse
+                | map('regex_replace', '^', 'OU=')
+                | list
+              )
+              + (
+                identity_baseline.domain_dns_name.split('.')
+                | map('regex_replace', '^', 'DC=')
+                | list
+              )
+            )
+            | join(',')
+          )
         )
-        + (
-          identity_baseline.domain_dns_name.split('.')
-          | map('regex_replace', '^(.*)$', 'DC=\\1')
-          | list
-        )
-      | join(',')
       }}
     state: present
   loop: "{{ identity_baseline.organizational_units }}"
@@ -245,10 +261,13 @@
     parameters:
       approved_hosts: "{{ assets | to_json }}"
       reverse_zone: "{{ network.reverse_dns_zone }}"
-      domain_zone: "{{ network.domain_dns_name }}"
     script: |
+      param(
+        [string]$approved_hosts,
+        [string]$reverse_zone
+      )
       $ErrorActionPreference = 'Stop'
-      $approved = ConvertFrom-Json -InputObject $Ansible.Params.approved_hosts
+      $approved = ConvertFrom-Json -InputObject $approved_hosts
       foreach ($hostEntry in $approved) {
         $actual = @(
           Resolve-DnsName -Server 127.0.0.1 -Name $hostEntry.dns_name -Type A |
@@ -257,7 +276,7 @@
         if ($hostEntry.address -notin $actual) {
           throw "Forward DNS does not match the approved manifest for $($hostEntry.name)."
         }
-        $reverseName = ($hostEntry.address -split '\.')[-1] + '.' + $Ansible.Params.reverse_zone
+        $reverseName = ($hostEntry.address -split '\.')[-1] + '.' + $reverse_zone
         $ptr = Resolve-DnsName -Server 127.0.0.1 -Name $reverseName -Type PTR
         if ($hostEntry.dns_name.TrimEnd('.') -notin $ptr.NameHost) {
           throw "Reverse DNS does not match the approved manifest for $($hostEntry.name)."
