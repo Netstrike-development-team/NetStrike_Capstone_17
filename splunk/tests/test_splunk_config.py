@@ -99,6 +99,23 @@ class SplunkConfigTests(unittest.TestCase):
         for required in ("windows_security", "windows_powershell", "windows_sysmon"):
             self.assertIn(required, ids)
 
+    def test_learner_monitor_has_separate_path_index_and_contract(self):
+        inputs = parse_conf(FORWARDER / "default" / "inputs.conf")
+        learner = inputs["monitor:///var/lib/netstrike/learner-event-spool"]
+        staff = inputs["monitor:///var/lib/netstrike/event-spool"]
+        self.assertEqual("netstrike", learner["index"])
+        self.assertEqual("netstrike:learner:audit:v1", learner["sourcetype"])
+        self.assertNotEqual(staff["sourcetype"], learner["sourcetype"])
+        for key in ("whitelist", "blacklist", "followSymlink", "crcSalt"):
+            self.assertEqual(staff[key], learner[key])
+        for folder in (FORWARDER, STAFF):
+            stanza = parse_conf(folder / "default" / "props.conf")[learner["sourcetype"]]
+            self.assertEqual("UTC", stanza["TZ"])
+        self.assertEqual("timestamp", parse_conf(FORWARDER / "default" / "props.conf")[learner["sourcetype"]]["TIMESTAMP_FIELDS"])
+        searches = parse_conf(PARTICIPANT / "default" / "savedsearches.conf")
+        self.assertIn("Investigate - SimCorp audit timeline", searches)
+        self.assertIn("`netstrike_simcorp_audit`", searches["Investigate - SimCorp audit timeline"]["search"])
+
     def test_no_secrets_committed(self):
         pattern = re.compile(r"(token|password|pass4SymmKey|sslPassword|hec)\s*=", re.I)
         for path in ROOT.rglob("*"):

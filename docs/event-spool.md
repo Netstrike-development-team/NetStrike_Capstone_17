@@ -27,17 +27,18 @@ including `participant`, `facilitator` and `evaluator` visibility. **The spool
 files and unfiltered canonical ledger must remain facilitator-only.** A
 visibility field is not access control. These raw events can contain branch
 answers, checkpoint results, human review history and submissions. Never share
-the spool through the portal or expose its directory over HTTP. If events are
-forwarded into the participant-accessible `netstrike` index, enforce and test
-Splunk role/search restrictions or filter the feed so participants see only
-permitted investigation telemetry and cannot retrieve facilitator/evaluator
-content or management data.
+the spool through the portal or expose its directory over HTTP. Forward this
+unfiltered ledger only to `netstrike_staff`, never the participant-accessible
+`netstrike` index. Do not rely on visibility fields or search filters as the
+security boundary. The separate [learner audit projection](learner-splunk-audit.md)
+publishes only explicitly reviewed application facts to the learner index.
 
 Known sensitive keys must already be redacted; invalid/unredacted input is
 refused, not silently rewritten. Arbitrary prose cannot be sanitized by key
 redaction. Continue using synthetic identities and reviewing free-text sharing.
 The existing participant portal remains the safe, filtered learner interface.
-A separate participant-safe Splunk feed is not implemented by this milestone.
+The separate learner feed has its own strict schema and publication history;
+it is not a canonical ledger export or a live ingestion acceptance claim.
 
 ## Preview and publish
 
@@ -142,8 +143,8 @@ integrity. There is no pruning, archival retention service or backfill repair.
 
 ## Splunk handoff and acceptance (Patrick)
 
-This is a monitored-file contract, not deployable Splunk/Ansible configuration.
-Patrick owns the following deployment decisions and live verification:
+Versioned Splunk/Ansible wiring now exists; local tests do not certify its live
+deployment. Patrick owns the following deployment decisions and live verification:
 
 - Schedule the exporter under the approved unprivileged staff account with the
   same source revision/schema and private output location. Record failures and
@@ -152,14 +153,12 @@ Patrick owns the following deployment decisions and live verification:
   Do not ingest HEAD/manifests, `.pending-*`/`.head-*`, the SQLite database, or
   unrelated exports. Disable symlink following. Use `monitor`, not the destructive
   Splunk `batch` input, so the exporter can continue verifying retained files.
-- Use the `netstrike` index with one-day retention and a distinct raw-JSON
+- Use the staff-only `netstrike_staff` index with one-day retention and a distinct raw-JSON
   sourcetype. Parse one JSON object per line; keep nested fields, original
   `timestamp` as event time and `event_id`/`exercise_id`/`run_id`/`sequence`/
   `source.component` searchable. Configure adequate event truncation/line-breaking
-  for up to 256 KiB lines. Because participants will have access to permitted
-  simulation telemetry in this index, do not forward the unfiltered canonical
-  spool unless Splunk RBAC is configured and tested to prevent participant
-  searches from returning facilitator/evaluator-only content.
+  for up to 256 KiB lines. Test that participants cannot search this index or
+  receive canonical rows through other roles, apps, exports or search permissions.
 - Immutable batches can share the beginning of their JSON content. Review file
   identity/CRC handling so distinct paths are not mistaken for the same file;
   changing a monitored path or resetting forwarder checkpoints can re-index it.

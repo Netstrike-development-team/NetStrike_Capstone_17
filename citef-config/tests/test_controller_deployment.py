@@ -59,6 +59,23 @@ def inject(monkeypatch, environment):
         monkeypatch.setenv(key, value)
 
 
+def test_spool_service_renders_two_separate_publishers_with_same_scope():
+    engine = Environment(undefined=StrictUndefined)
+    raw = engine.from_string((ROLE / "templates/netstrike-event-spool.service.j2").read_text()).render()
+    commands = [line for line in raw.splitlines() if line.startswith(("ExecStart=/opt", "ExecStartPost=/opt"))]
+    assert "dashboard.event_spool" in commands[0]
+    assert "dashboard.learner_spool" in commands[1]
+    assert "--source-spool /var/lib/netstrike/event-spool" in commands[1]
+    assert "--output /var/lib/netstrike/learner-event-spool" in commands[1]
+    assert all("--exercise-id operation-silent-spider" in line and "--execute" in line for line in commands[:2])
+    assert "ExecStartPost=-" not in raw
+    assert "User=netstrike" in raw and "Group=netstrike" in raw
+    tasks = yaml.safe_load((ROLE / "tasks/main.yml").read_text())
+    creation = next(t for t in tasks if t["name"] == "Create separate event spool directories readable by the staff group")
+    assert creation["loop"] == ["/var/lib/netstrike/event-spool", "/var/lib/netstrike/learner-event-spool"]
+    assert creation["ansible.builtin.file"]["mode"] == "0750"
+
+
 @pytest.mark.parametrize("scope", [None, "identity", "cloud"])
 def test_real_template_selects_expected_scope_and_run_before_factory_start(tmp_path, monkeypatch, scope):
     environment = render(tmp_path, scope)

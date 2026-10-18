@@ -12,6 +12,10 @@ UMask=0027
 ExecStart=/opt/netstrike/venv/bin/python -m dashboard.event_spool --database /var/lib/netstrike/portal.sqlite3 --output /var/lib/netstrike/event-spool --exercise-id {{ event_spool_exercise_id | default('operation-silent-spider') }} --limit {{ event_spool_batch_limit | default(500) }} --execute
 # The exporter writes 0700/0600 as netstrike; publish read-only access to the staff group (0750/0640).
 ExecStartPost=+/bin/sh -c 'find /var/lib/netstrike/event-spool -mindepth 1 ! -name .lock -exec chgrp {{ event_spool_group | default("netstrike-staff") }} {} + && find /var/lib/netstrike/event-spool -mindepth 1 -type d -exec chmod 0750 {} + && find /var/lib/netstrike/event-spool -mindepth 1 -type f ! -name .lock -exec chmod 0640 {} +'
+# Learner publication consumes verified immutable staff batches, not live DB rows.
+# It runs as netstrike; failure fails this service without withholding staff access.
+ExecStartPost=/opt/netstrike/venv/bin/python -m dashboard.learner_spool --source-spool /var/lib/netstrike/event-spool --output /var/lib/netstrike/learner-event-spool --exercise-id {{ event_spool_exercise_id | default('operation-silent-spider') }} --execute
+ExecStartPost=+/bin/sh -c 'find /var/lib/netstrike/learner-event-spool -mindepth 1 ! -name .lock -exec chgrp {{ event_spool_group | default("netstrike-staff") }} {} + && find /var/lib/netstrike/learner-event-spool -mindepth 1 -type d -exec chmod 0750 {} + && find /var/lib/netstrike/learner-event-spool -mindepth 1 -type f ! -name .lock -exec chmod 0640 {} +'
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectHome=true
