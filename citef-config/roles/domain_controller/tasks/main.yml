@@ -215,7 +215,11 @@
       - baseline_user_passwords is defined
       - item.sam_account_name in baseline_user_passwords
       - baseline_user_passwords[item.sam_account_name] | length >= 16
-    fail_msg: "Missing runtime-injected password for an approved baseline account."
+      - baseline_user_passwords[item.sam_account_name] is search('[A-Z]')
+      - baseline_user_passwords[item.sam_account_name] is search('[a-z]')
+      - baseline_user_passwords[item.sam_account_name] is search('[0-9]')
+      - baseline_user_passwords[item.sam_account_name] is search('[^A-Za-z0-9]')
+    fail_msg: "Missing or weak runtime-injected password for an approved baseline account (16+ characters with uppercase, lowercase, numbers and symbols)."
   loop: "{{ identity_baseline.users }}"
   no_log: true
 
