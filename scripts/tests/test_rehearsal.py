@@ -3,11 +3,17 @@
 from copy import deepcopy
 import importlib
 import json
+import os
 import shutil
 import socket
+import subprocess
+import sys
+import tarfile
+import zipfile
 from pathlib import Path
 
 import pytest
+import yaml
 
 from scripts import rehearsal
 
@@ -215,6 +221,63 @@ def test_all_sixteen_combinations_are_covered(full_package):
     assert verification["cases_verified"] == 24
     assert verification["branch_paths_verified"] == 16
     assert verification["control_fault_cases_verified"] == 8
+
+
+def test_ci_artifact_round_trip_keeps_markers_and_empty_directories(full_package, tmp_path):
+    """Run the real packaging command; model ZIP transfer of its single file."""
+    from scripts.check_rehearsal_upload import inspect_upload
+
+    inspected = inspect_upload(full_package)
+    assert inspected["hidden_root_markers"] == 24
+    workflow = yaml.safe_load(
+        (rehearsal.ROOT / ".github/workflows/local-rehearsal-ci.yml").read_text()
+    )
+    upload = next(
+        step for step in workflow["jobs"]["full-play-rehearsal"]["steps"]
+        if step.get("name") == "Retain synthetic developer evidence (not range sign-off)"
+    )
+    packaging = next(
+        step for step in workflow["jobs"]["full-play-rehearsal"]["steps"]
+        if step.get("id") == "rehearsal_archive"
+    )
+    runner_temp = tmp_path / "runner temp"
+    shutil.copytree(full_package, runner_temp / "local-rehearsal-evidence")
+    result = subprocess.run(
+        ["bash", "-c", packaging["run"]], cwd=rehearsal.ROOT,
+        env=os.environ | {
+            "RUNNER_TEMP": str(runner_temp),
+            "PATH": str(Path(sys.executable).parent) + os.pathsep + os.environ["PATH"],
+        },
+        capture_output=True, text=True, check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    packed = Path(upload["with"]["path"].replace("${{ runner.temp }}", str(runner_temp)))
+    assert packed.name == "local-rehearsal-evidence.tar.gz" and packed.is_file()
+    archive = tmp_path / "downloaded-artifact.zip"
+    with zipfile.ZipFile(archive, "w") as output:
+        output.write(packed, packed.name)
+    downloaded = tmp_path / "downloaded"
+    with zipfile.ZipFile(archive) as source:
+        source.extractall(downloaded)  # Only this test's own generated paths.
+    transferred = tmp_path / "unpacked"
+    with tarfile.open(downloaded / packed.name) as source:
+        source.extractall(transferred, filter="data")
+    verified = rehearsal.verify_package(transferred)
+    assert verified["full_suite"] and verified["cases_verified"] == 24
+    assert verified["events_validated"] == 3555
+    markers = list(transferred.glob("*/disposable/.netstrike-disposable-root"))
+    assert len(markers) == 24
+    for marker in markers:
+        assert marker.read_bytes() == rehearsal.ROOT_CONTENT
+    assert {p.relative_to(full_package) for p in full_package.rglob("*")} == {
+        p.relative_to(transferred) for p in transferred.rglob("*")
+    }
+
+
+def test_upload_guard_inputs_are_in_exact_source_fingerprints():
+    fingerprints = rehearsal._source()["files_sha256"]
+    for name in ("scripts/check_rehearsal_upload.py", "scripts/tests/test_rehearsal_upload.py"):
+        assert fingerprints[name] == rehearsal._sha(rehearsal.ROOT / name)
 
 
 def test_partial_controls_prevent_fabricated_access_or_rearmed_impact(full_package):
