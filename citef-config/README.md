@@ -119,6 +119,13 @@ the Linux baseline, the controller portal, and controller telemetry.
 `SPLUNK01` is not configured by the project playbook. Do not treat the current
 playbook as complete range deployment.
 
+The controller application now defaults to the full-play scenario. Set
+`controller_scenario_scope=identity` or `cloud` only for an explicitly scoped
+test. The controller and all forwarders receive the same `exercise_run_id`;
+after a portal-only reset changes that ID, Prepare/Start remain blocked until
+the approved clean deployment/forwarder handoff is completed. See
+[full-play deployment binding](../docs/full-play-deployment-binding.md).
+
 Inject `controller_service_tokens`, `controller_readiness_token`,
 `controller_identity_audit_key` (32 or more characters), and
 `controller_tls_private_key_pem` through approved secret management. The

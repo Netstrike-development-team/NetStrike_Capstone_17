@@ -111,6 +111,7 @@ class PortalConfiguration:
     audit_key: bytes = field(repr=False)
     authenticator: TokenAuthenticator = field(repr=False)
     origins: tuple[str, ...]
+    host_telemetry_run_id: str | None = None
 
     @classmethod
     def from_environment(cls):
@@ -160,6 +161,16 @@ def inspect_configuration(environment=None, *, expected_scope=None):
     audit = probe("identity_audit_key", audit_key)
     allowed = probe("sso_origins", origins)
     identifier = probe("run_identifier", run_identifier)
+
+    def telemetry_binding():
+        value = env.get("NETSTRIKE_HOST_TELEMETRY_RUN_ID")
+        if value is not None and (not isinstance(value, str)
+                                  or not IDENTIFIER.fullmatch(value)
+                                  or identifier != value):
+            raise ValueError("configured host telemetry requires a matching explicit run")
+        return value
+
+    telemetry_run = probe("configured_host_telemetry_run", telemetry_binding)
     database = probe("database_target", lambda: _database(env.get("NETSTRIKE_PORTAL_DATABASE", "output/netstrike-portal.sqlite3")))
     scenario_path = env.get("NETSTRIKE_SCENARIO_PATH", str(DEFAULT_SCENARIO_PATH))
     profile_path = env.get("NETSTRIKE_PROFILE_FIXTURE", str(DEFAULT_PROFILE_PATH))
@@ -226,6 +237,8 @@ def inspect_configuration(environment=None, *, expected_scope=None):
         report["warnings"].append("full_play_startup_provisions_five_disposable_decoys")
     if database == ":memory:":
         report["warnings"].append("database_is_ephemeral")
+    if telemetry_run is not None:
+        report["warnings"].append("configured_host_telemetry_binding_is_not_ingestion_proof")
     if auth and not auth[1] & {"facilitator", "technical_operator"}:
         report["warnings"].append("no_staff_control_credential")
     if auth and not auth[1] & {"facilitator", "evaluator"}:
@@ -234,5 +247,6 @@ def inspect_configuration(environment=None, *, expected_scope=None):
         report["warnings"].append("no_cloud_recovery_credential")
     configuration = None if blockers else PortalConfiguration(
         database, identifier, str(scenario_path), str(profile_path), impact_root, audit, auth[0], allowed,
+        telemetry_run,
     )
     return report, configuration

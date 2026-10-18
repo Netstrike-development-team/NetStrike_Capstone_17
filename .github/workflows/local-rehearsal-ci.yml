@@ -57,9 +57,9 @@ jobs:
       - name: Test offline console interactions (no npm dependencies)
         run: node --test dashboard/tests/*.test.mjs
       - name: Install local service and test dependencies
-        run: python -m pip install -r dashboard/requirements.txt -r citef-config/requirements-validator.txt pytest coverage
+        run: python -m pip install -r dashboard/requirements.txt -r citef-config/requirements-test.txt pytest coverage
       - name: Test all core application and packaging regressions (strict)
-        run: python -m pytest shared/tests dashboard/tests orchestrator/tests scripts/tests citef-config/tests -q
+        run: python -m pytest shared/tests dashboard/tests orchestrator/tests scripts/tests citef-config/tests splunk/tests -q
       - name: Run all local checkpoint combinations and fault/control cases
         run: python scripts/rehearsal.py --execute --output "$RUNNER_TEMP/local-rehearsal-evidence"
       - name: Independently verify exported evidence offline

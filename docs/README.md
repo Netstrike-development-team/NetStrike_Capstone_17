@@ -42,6 +42,7 @@ index](exercise-design/README.md).
 | [Application-event spool](event-spool.md) | Local export of the canonical event ledger and the separate Splunk/visibility acceptance work |
 | [Application readiness](application-readiness.md) | Local preflight, guarded preparation/start, and the boundary from range approval |
 | [Application deployment inputs](application-deployment-contract.md) | Offline read-only configuration inspection before startup side effects; not runtime/range readiness |
+| [Full-play deployment binding](full-play-deployment-binding.md) | Full-exercise selection, shared portal/host run intent and safe next-run admission after reset |
 | [Supervised exercise clock](exercise-clock.md) | Staff clock inspection, supervision, failure behavior, and recovery |
 | [Human support workflow](exercise-support.md) | Private learner requests, staff replies, roles, and API lifecycle |
 | [Run-review archives](run-review-archives.md) | Capture and retrieval of frozen run-review snapshots across application reset |
