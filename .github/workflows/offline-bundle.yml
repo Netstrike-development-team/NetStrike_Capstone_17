@@ -131,6 +131,7 @@ jobs:
             ${{ runner.temp }}/offline-fullplay-smoke/http-checks.json
             ${{ runner.temp }}/offline-fullplay-smoke/run-review-bundle.json
             ${{ runner.temp }}/offline-fullplay-smoke/events.jsonl
+            ${{ runner.temp }}/offline-fullplay-smoke/canonical-events.jsonl
             ${{ runner.temp }}/offline-fullplay-smoke/learner-audit.jsonl
             ${{ runner.temp }}/offline-fullplay-smoke/*.log
           if-no-files-found: warn

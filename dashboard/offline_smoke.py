@@ -166,6 +166,9 @@ def publication(work):
     require(public == expected and public, "projection_reconciliation")
     require({event["run_id"] for event in public} == {INITIAL, FRESH}, "run_correlation")
     require(any(event["visibility"] != "participant" for event in canonical), "private_source_present")
+    with (work.parent / "canonical-events.jsonl").open("x", encoding="utf-8") as handle:
+        for event in canonical:
+            handle.write(json.dumps(event, sort_keys=True) + "\n")
     with (work.parent / "learner-audit.jsonl").open("x", encoding="utf-8") as handle:
         for event in public:
             handle.write(json.dumps(event, sort_keys=True) + "\n")

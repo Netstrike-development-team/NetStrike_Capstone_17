@@ -93,8 +93,10 @@ approval. Review the workflow/release before executing a bundle's runtime/code.
 ## Evidence, failure and handoff
 
 The output directory is new and private. It retains summary, observed network
-boundary, source check, preflight, HTTP status checks, synthetic review/canonical/
-learner exports and bounded install/application logs. Commands time out, excessive
+boundary, source check, preflight, HTTP status checks, synthetic review, the
+initial-run HTTP event export, the final both-run canonical/learner exports and
+bounded install/application logs. The final canonical/learner pair supports
+independent exact projection reconciliation after artifact download. Commands time out, excessive
 output is refused before it exceeds the log cap, and failed child process groups
 are killed. Existing outputs are never overwritten or automatically repaired.
 Partial diagnostics remain for inspection; do not reuse a failed output path.
