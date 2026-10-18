@@ -16,7 +16,7 @@
       changed_when: false
 
 - name: Validate provisioned services, names, and clocks
-  hosts: all:!domain_controllers
+  hosts: all
   gather_facts: false
   vars_files:
     - "{{ playbook_dir }}/../environment.json"
@@ -64,7 +64,6 @@
       register: linux_dns_results
       changed_when: false
       when:
-        - (windows_server_available | default(false) | bool) or (external_ntp | default(false) | bool)
         - expected_os_family == "linux"
 
     - name: Require approved Linux DNS answers
@@ -76,7 +75,6 @@
       loop_control:
         label: "{{ item.item.name }}"
       when:
-        - windows_server_available | default(false) | bool
         - expected_os_family == "linux"
 
     - name: Verify forward DNS on Windows hosts
@@ -97,7 +95,6 @@
           }
           $Ansible.Changed = $false
       when:
-        - windows_server_available | default(false) | bool
         - expected_os_family == "windows"
 
     - name: Confirm Linux services are active
@@ -133,7 +130,6 @@
       register: linux_time_state
       changed_when: false
       when:
-        - (windows_server_available | default(false) | bool) or (external_ntp | default(false) | bool)
         - expected_os_family == "linux"
 
     - name: Require Linux time to be synchronized
@@ -141,7 +137,6 @@
         that:
           - linux_time_state.stdout | trim == "yes"
       when:
-        - (windows_server_available | default(false) | bool) or (external_ntp | default(false) | bool)
         - expected_os_family == "linux"
 
     - name: Confirm Linux selected an approved internal time source
@@ -150,7 +145,6 @@
       register: linux_time_source
       changed_when: false
       when:
-        - (windows_server_available | default(false) | bool) or (external_ntp | default(false) | bool)
         - expected_os_family == "linux"
 
     - name: Require Linux NTP status to identify an approved source
@@ -163,7 +157,6 @@
             | length) > 0
         fail_msg: "{{ logical_name }} is not synchronized to an approved internal NTP source."
       when:
-        - (windows_server_available | default(false) | bool) or (external_ntp | default(false) | bool)
         - expected_os_family == "linux"
 
     - name: Check Windows domain time source
@@ -171,7 +164,6 @@
       register: windows_time_source
       changed_when: false
       when:
-        - (windows_server_available | default(false) | bool) or (external_ntp | default(false) | bool)
         - expected_os_family == "windows"
 
     - name: Verify the isolated DC01 time-source configuration
@@ -192,7 +184,6 @@
           }
           $Ansible.Changed = $false
       when:
-        - windows_server_available | default(false) | bool
         - not (external_ntp | default(false) | bool)
         - expected_os_family == "windows"
         - logical_name == "DC01"
@@ -211,7 +202,6 @@
         that:
           - "'dc01' in windows_time_source.stdout | lower"
       when:
-        - windows_server_available | default(false) | bool
         - not (external_ntp | default(false) | bool)
         - expected_os_family == "windows"
         - logical_name != "DC01"
