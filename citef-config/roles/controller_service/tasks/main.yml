@@ -1,4 +1,13 @@
 ---
+- name: Validate controller exercise selection and run binding
+  ansible.builtin.assert:
+    that:
+      - controller_scenario_scope in ['identity', 'cloud', 'full-play']
+      - exercise_run_id is defined
+      - exercise_run_id is string
+      - exercise_run_id is match('^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$')
+    fail_msg: "Select identity, cloud or full-play and supply the same path-safe exercise_run_id used by the forwarders."
+
 - name: Require runtime-injected portal credentials and TLS key
   ansible.builtin.assert:
     that:
@@ -22,6 +31,7 @@
     controller_source_root: "{{ playbook_dir }}/../../"
     controller_bundle_root: "{{ controller_offline_bundle_root | default(playbook_dir ~ '/../../' ~ offline_artifacts.directory ~ '/netstrike-offline-bundle') }}"
     controller_release_path: "/opt/netstrike/releases/{{ deployment_version }}"
+    controller_scenario_file: "{{ {'identity': 'identity-slice.v1.json', 'cloud': 'cloud-slice.v1.json', 'full-play': 'full-play.v1.json'}[controller_scenario_scope] }}"
   changed_when: false
 
 - name: Define controller wheelhouse path
@@ -73,7 +83,7 @@
     path: "{{ controller_release_path }}/{{ item }}"
   loop:
     - dashboard/app.py
-    - orchestrator/scenarios/identity-slice.v1.json
+    - "orchestrator/scenarios/{{ controller_scenario_file }}"
     - orchestrator/fixtures/identity-profiles.v1.json
   register: controller_source_contents
 

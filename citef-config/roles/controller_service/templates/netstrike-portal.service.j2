@@ -10,6 +10,7 @@ Group=netstrike
 WorkingDirectory=/opt/netstrike/current
 EnvironmentFile=/etc/netstrike/controller.env
 Environment=PYTHONUNBUFFERED=1
+ExecStartPre=/opt/netstrike/venv/bin/python -B -m dashboard.preflight --expect-scope {{ controller_scenario_scope }}
 ExecStart=/opt/netstrike/venv/bin/uvicorn dashboard.app:create_default_app --factory --host {{ ansible_host }} --port {{ controller.listen_port }} --ssl-certfile /etc/netstrike/tls.crt --ssl-keyfile /etc/netstrike/tls.key
 Restart=on-failure
 RestartSec=5

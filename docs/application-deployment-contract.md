@@ -12,7 +12,7 @@ records are progress, not evidence supplied by this new application check. See
 
 For selected extracted-bundle source consistency, the separate
 [offline release-source checker](offline-release-source-check.md) compares a saved
-expected commit/inventory digest and all six source trees without runtime inputs.
+expected commit/inventory digest and the builder's selected source trees without runtime inputs.
 Configuration preflight below remains configuration-only; neither helper verifies
 an already running process, the whole installation or range acceptance.
 
@@ -27,8 +27,10 @@ python -B -m dashboard.preflight --expect-scope identity
 For an approved cloud-slice or full-play configuration, select `cloud` or
 `full-play` instead. This **checks** operator intent; it does not change scenario
 selection. Full play still requires `NETSTRIKE_SCENARIO_PATH` and an approved
-`NETSTRIKE_IMPACT_ROOT`. The current Ansible template remains identity-only;
-this PR does not change it, create VMs or select the range's release configuration.
+`NETSTRIKE_IMPACT_ROOT`. The controller Ansible role now defaults to full play
+and supplies matching scope/run intent; identity/cloud remain explicit overrides.
+See [deployment binding and reset handoff](full-play-deployment-binding.md).
+The application factory's standalone default remains identity-only.
 
 For Patrick's existing extracted-bundle layout, run the bundled interpreter:
 
@@ -61,6 +63,7 @@ as `ready_to_start`, live source ingestion or participant-admission permission.
 | `NETSTRIKE_SSO_ALLOWED_ORIGINS` | Required nonempty JSON array of exact HTTP(S) origins; existing allowlist rejects wildcard/userinfo/path/query configurations. |
 | `NETSTRIKE_PORTAL_DATABASE` | Defaults to `output/netstrike-portal.sqlite3`, relative to the process working directory. Only path shape/current regular-file target and existing ancestors are inspected; SQLite content and write permissions are **not** tested. `:memory:` remains supported with an ephemeral-storage warning. |
 | `NETSTRIKE_RUN_ID` | Optional bounded exercise identifier. Omission preserves startup UUID generation. Full-play directory IDs must satisfy the existing stricter impact contract; an already-present fixture is not adopted. |
+| `NETSTRIKE_HOST_TELEMETRY_RUN_ID` | Optional configured host-run binding. Requires an explicit matching `NETSTRIKE_RUN_ID` before startup; a later reset mismatch blocks prepare/start. Does not prove live ingestion or automatically reconfigure hosts. Supplied by the deployment template, omitted by ordinary standalone demos. |
 | `NETSTRIKE_SCENARIO_PATH` | Defaults to identity slice. Selected local scenario JSON is bounded to 1 MiB and duplicate fields are rejected by configuration inspection; existing definition validation applies. |
 | `NETSTRIKE_PROFILE_FIXTURE` | Defaults to reviewed local profile fixture. Existing roster/schema/seed/SSO/MFA/witness bindings are validated without creating a runtime. |
 | `NETSTRIKE_IMPACT_ROOT` | Required for selected full play; existing absolute dedicated root ownership/structure checked without writing its marker or files. Ignored as an impact prerequisite for identity/cloud slices. |

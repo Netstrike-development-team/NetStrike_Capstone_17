@@ -105,6 +105,12 @@ Failures fail the job; evidence upload still runs. See the
 [milestone checklist](milestone-release-checklist.md) for final-source evidence.
 This adds a CI check, not a change to repository branch-protection rules.
 
+Core CI also renders the controller's real startup template and exercises
+[full-play deployment/run binding](full-play-deployment-binding.md), including
+reset admission guards. Static `splunk/tests` are included; passing them does
+not validate a live Splunk instance. Install `citef-config/requirements-test.txt`
+for the template-rendering developer tests (Ansible already depends on Jinja2).
+
 ### Transfer completeness and hidden-marker safety (#175)
 
 The full-play upload retains a single `local-rehearsal-evidence.tar.gz` archive
