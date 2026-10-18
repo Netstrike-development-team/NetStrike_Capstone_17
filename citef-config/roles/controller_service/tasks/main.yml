@@ -273,13 +273,16 @@
     mode: "0644"
   notify: Restart NetStrike portal
 
-- name: Create the event spool directory readable by the staff group
+- name: Create separate event spool directories readable by the staff group
   ansible.builtin.file:
-    path: /var/lib/netstrike/event-spool
+    path: "{{ item }}"
     state: directory
     owner: netstrike
     group: "{{ event_spool_group | default('netstrike-staff') }}"
     mode: "0750"
+  loop:
+    - /var/lib/netstrike/event-spool
+    - /var/lib/netstrike/learner-event-spool
 
 - name: Install the event spool exporter service
   ansible.builtin.template:

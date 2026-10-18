@@ -16,7 +16,7 @@ Windows Security/PowerShell/Sysmon and Linux inputs already come from
 ## Design decisions
 
 - **Two indexes.** `netstrike` (CITEF-approved, participant-searchable) holds host
-  telemetry. The canonical application ledger contains facilitator/evaluator events
+  telemetry and the separate reviewed SimCorp audit projection. The canonical application ledger contains facilitator/evaluator events
   and answer labels, so it goes to **`netstrike_staff`**, which only
   `netstrike_facilitator` can search. A visibility field is not access control, so
   no `srchFilter` is relied on. **`netstrike_staff` is not in the CITEF approval
@@ -29,8 +29,10 @@ Windows Security/PowerShell/Sysmon and Linux inputs already come from
   the built-in `user` role: Splunk unions role permissions, so `user` exposes
   `netstrike_staff` (verified live). `netstrike_facilitator` imports `power`. Assign
   real users to them; none exist in the repo.
-- **Participant application events.** No participant-safe application feed exists
-  (`docs/event-spool.md`), so participants get host telemetry only.
+- **Participant application events.** A separate fact-only projection uses
+  `netstrike:learner:audit:v1`; neutral timeline/identity/helpdesk/storage searches
+  are included. See [contract and live handoff](../docs/learner-splunk-audit.md).
+  This is simulated application evidence, not vendor/Windows logs or a new EDR.
 - **Parsing.** JSON is extracted on the forwarder (`INDEXED_EXTRACTIONS=json`,
   `timestamp` as event time) because sorted keys make a regex time prefix unsafe.
   `crcSalt=<SOURCE>` keeps similar immutable batches distinct; renaming the spool
@@ -57,10 +59,13 @@ Windows Security/PowerShell/Sysmon and Linux inputs already come from
 1. Splunk server: copy the `staff` and `participant` apps, restart, create users and
    assign roles. Store credentials outside Git.
 2. CTRL01: copy the forwarder app. Create the spool directory, run
-   `python -m dashboard.event_spool --execute` on a schedule under the staff
+   `python -m dashboard.event_spool --execute` followed by
+   `python -m dashboard.learner_spool --execute` with their required scoped paths
+   (the existing controller service includes both) on a schedule under the staff
    account, and grant `splunkfwd` read-only access through a staff-only group
    (`0750` directories, `0640` files). No participant or world access.
-3. Adjust `monitor://` in `inputs.conf` if the spool is not `/var/lib/netstrike/event-spool`.
+3. Review both `monitor://` paths: `/var/lib/netstrike/event-spool` must route only
+   to `netstrike_staff`; `/var/lib/netstrike/learner-event-spool` routes to `netstrike`.
 4. Provision hosts with both `deployment_version` and `exercise_run_id`
    (`scripts/provision.sh`), so every source is tagged with the run ID.
 5. Review `lookups/netstrike_expected_sources.csv` (`required`, `max_age_seconds`);
@@ -77,6 +82,9 @@ Windows Security/PowerShell/Sysmon and Linux inputs already come from
       `netstrike:event:v1` events appear (`NetStrike Access - Participant index isolation` returns 0).
 - [ ] `NetStrike Access - Role definitions` output saved as evidence.
 - [ ] Participant searches return rows and show no answer labels.
+- [ ] Learner audit searches preserve assigned exercise/run/event IDs and typed
+      application facts; compare with the separate local projection, not the
+      canonical-contract `dashboard.telemetry_check` helper.
 - [ ] Check for duplicates/gaps and compare with `python -m dashboard.telemetry_check` (#158).
 - [ ] `NetStrike Health - Ingestion volume by source` measured during a rehearsal.
 - [ ] Redeploy to a clean Splunk from this directory and re-run the checks; save evidence outside reverted VMs.

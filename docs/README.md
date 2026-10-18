@@ -40,6 +40,7 @@ index](exercise-design/README.md).
 | [Safe-action contract v1](safe-action-contract-v1.md) | Authorization, validation, execution, rollback, and audit requirements for state-changing actions |
 | [Synthetic profile contract v1](synthetic-profile-contract-v1.md) | Maintained synthetic identity input, validation, and runtime configuration |
 | [Application-event spool](event-spool.md) | Local export of the canonical event ledger and the separate Splunk/visibility acceptance work |
+| [Learner-safe Splunk audit](learner-splunk-audit.md) | Separate fact-only SimCorp application evidence, participant investigation workflow and live handoff |
 | [Application readiness](application-readiness.md) | Local preflight, guarded preparation/start, and the boundary from range approval |
 | [Application deployment inputs](application-deployment-contract.md) | Offline read-only configuration inspection before startup side effects; not runtime/range readiness |
 | [Full-play deployment binding](full-play-deployment-binding.md) | Full-exercise selection, shared portal/host run intent and safe next-run admission after reset |

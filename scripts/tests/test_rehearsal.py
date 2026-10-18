@@ -30,6 +30,51 @@ def load_result(root, name):
     return json.loads((root / name / "result.json").read_text(encoding="utf-8"))
 
 
+def test_all_full_play_paths_produce_only_reviewed_learner_facts(full_package, tmp_path):
+    from dashboard import event_spool, learner_spool
+    from dashboard.learner_audit import RULES, project
+    from dashboard.store import PortalStore
+
+    manifest = json.loads((full_package / "manifest.json").read_text())
+    assert len(manifest["cases"]) == 24
+    covered = set()
+    for case in manifest["cases"]:
+        events = [json.loads(line) for line in (full_package / case["case_id"] / "events.jsonl").read_text().splitlines()]
+        projections = [result for event in events if (result := project(event)) is not None]
+        assert projections
+        original = {event["event_id"]: event for event in events}
+        assert len(projections) == len({event["event_id"] for event in projections})
+        for result in projections:
+            source = original[result["event_id"]]
+            assert source["visibility"] == "participant"
+            assert source["source"]["kind"] == "module"
+            assert source["event_type"] in RULES
+            covered.add(source["event_type"])
+            for key in ("exercise_id", "run_id", "timestamp"):
+                assert result[key] == source[key]
+            assert not {"message", "reason", "data", "sequence", "phase", "visibility", "objectives", "attack", "checkpoint", "score"} & result.keys()
+            assert "approved_policy_hash" not in result["facts"]
+        # Exercise the real two-stage publication for both end-to-end extremes.
+        if case["case_id"] in {"path-pass-pass-pass-pass", "path-miss-miss-miss-miss"}:
+            root = tmp_path / case["case_id"]
+            root.mkdir()
+            store = PortalStore(root / "portal.sqlite3")
+            try:
+                for event in events:
+                    store.append_event(event)
+            finally:
+                store.close()
+            staff, learner = root / "staff", root / "learner"
+            while event_spool.export(root / "portal.sqlite3", staff, exercise_id=events[0]["exercise_id"], execute=True)["events_remaining"]:
+                pass
+            report = learner_spool.export(staff, learner, exercise_id=events[0]["exercise_id"], execute=True)
+            actual = [json.loads(line) for path in sorted(learner.glob("batch-*/events.jsonl")) for line in path.read_text().splitlines()]
+            assert actual == projections
+            assert report["published_events"] == len(projections)
+            assert not report["splunk_ingestion_verified"]
+    assert {"helpdesk.identity_reset.completed", "cloud.object.accessed", "impact.markers.applied", "recovery.fixture.restored"} <= covered
+
+
 def copy_case(root, tmp_path, name="path-pass-pass-pass-pass"):
     destination = tmp_path / "copy"
     destination.mkdir()
