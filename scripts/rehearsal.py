@@ -183,6 +183,7 @@ def _source() -> dict:
         "scripts/offline_smoke.py",
         "scripts/tests/test_offline_bundle.py",
         "scripts/tests/test_offline_smoke.py",
+        "scripts/tests/test_module_ci_workflow.py",
         "dashboard/offline_smoke.py",
         "dashboard/tests/test_packaged_journey.py",
         "dashboard/service.py",
