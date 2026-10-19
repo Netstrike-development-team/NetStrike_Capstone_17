@@ -1,5 +1,9 @@
 # CI test results and coverage evidence
 
+See the [CI/CD quality trends](ci-cd-overview.md) for weekly timeline charts
+of mean coverage, test-count-weighted pass rate, mean tests per run, and
+workflow success since September 1.
+
 The module workflow previously ignored pytest failures and wrote nested-module
 coverage under `modules/` while uploading from the repository root. It also used
 slash-containing artifact names and attempted uploads for modules without tests.
