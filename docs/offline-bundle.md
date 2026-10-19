@@ -14,14 +14,15 @@ live in [exercise-design/07-offline-tool-bundle-inventory.md](exercise-design/07
    does not necessarily include current dev changes. Record the workflow run and
    confirm its source revision in `inventory.json`. For milestone promotion, use
    the [release checklist](milestone-release-checklist.md).
-3. Wait for the bundle build and offline-install verification to pass.
+3. Wait for the bundle build, offline-install verification and
+   [actual packaged full-play smoke](offline-fullplay-smoke.md) to pass.
 4. Download the `netstrike-offline-bundle-CTRL01-<run-id>` artifact.
 
 The workflow currently pins Linux x86_64/glibc, `CTRL01`, CPython `3.11.16`,
 and python-build-standalone release `20260924`. The wheelhouse covers shared,
 module 01 and modules 04–07, dashboard, and Ansible-controller/validator
 requirements. The bundle also contains the `modules/`, `dashboard/`,
-`citef-config/`, `shared/`, `orchestrator/`, `schemas/`, and `offline-bundles/` source trees plus
+`citef-config/`, `shared/`, `orchestrator/`, `schemas/`, `offline-bundles/`, and `splunk/` source trees plus
 pinned Ansible Galaxy collections and manifest metadata. These pins and inputs are
 in `.github/workflows/offline-bundle.yml` and `citef-config/requirements.yml`.
 
@@ -70,10 +71,17 @@ method; review explicit UNKNOWN metadata before approving a transfer.
 
 ## 3. Run the application smoke test on an isolated Linux VM
 
+The workflow now automatically runs the separate **full-play packaged developer
+smoke** under kernel network isolation and a fresh bundled interpreter. See
+[its exact scope and evidence](offline-fullplay-smoke.md). The manual UI recipe
+below remains an optional **identity-slice** observation; it unsets the scenario
+path and is not full-play or range acceptance. Neither procedure replaces live
+Ansible/systemd, Windows/AD, Splunk or snapshot tests.
+
 Before installing or starting source, optionally run the
 [read-only application source checker](offline-release-source-check.md) against
 the expected commit and inventory SHA-256 recorded from trusted staging. It uses
-only the bundled Python standard library and checks all seven source trees without
+only the bundled Python standard library and checks all eight source trees without
 Git, dependencies, credentials or a live process. This supplements, not replaces,
 the whole-bundle checksums/install verification below. It requires a pristine
 extraction; source caches/extra files are not silently ignored.
