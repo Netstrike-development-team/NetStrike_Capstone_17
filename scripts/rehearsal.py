@@ -198,6 +198,8 @@ def _source() -> dict:
         "dashboard/event_spool.py",
         "dashboard/learner_audit.py",
         "dashboard/learner_spool.py",
+        "dashboard/learner_check.py",
+        "dashboard/tests/test_learner_check.py",
         "dashboard/tests/test_learner_audit.py",
         "dashboard/tests/test_learner_spool.py",
         "scripts/tests/test_rehearsal.py",

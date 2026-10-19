@@ -53,6 +53,9 @@ an ephemeral port. The worker checks actual routes, not mocked API responses:
   fresh start/stop and immutability of the archived prior review.
 - Canonical and separate learner publication, exact projection reconciliation,
   both run IDs and a duplicate-free local retry.
+- The packaged learner/export comparison utility for both run IDs, with explicitly
+  synthetic local receiver fixtures and injected loss/duplication/change/wrong-run
+  faults. Its receipt is not a real Splunk export or live ingestion proof.
 
 This is a representative packaged smoke, **not all 16 branching combinations**.
 The separate full-play rehearsal retains its 24-case branch/fault coverage and
@@ -94,7 +97,8 @@ approval. Review the workflow/release before executing a bundle's runtime/code.
 
 The output directory is new and private. It retains summary, observed network
 boundary, source check, preflight, HTTP status checks, synthetic review, the
-initial-run HTTP event export, the final both-run canonical/learner exports and
+initial-run HTTP event export, the final both-run canonical/learner exports, the
+explicitly synthetic comparison receipt and
 bounded install/application logs. The final canonical/learner pair supports
 independent exact projection reconciliation after artifact download. Commands time out, excessive
 output is refused before it exceeds the log cap, and failed child process groups

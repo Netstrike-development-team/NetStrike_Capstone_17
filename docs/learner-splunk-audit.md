@@ -132,10 +132,11 @@ need not be one-to-one: mock activity does not necessarily cause a Windows event
 2. Verify JSON fields, nested `facts.*`, timestamp/UTC parsing, distinct file CRC
    handling, run correlation, freshness, duplicate/loss counts and volume under
    Splunk Enterprise 10.0.1 / 10 GB per day / allocated disk constraints.
-3. Compare exported learner rows with the local projected JSONL by event ID and
-   content, including blocked/success paths and an application reset. The
-   existing `dashboard.telemetry_check` validates the **canonical** contract; do
-   not use it to certify the different learner schema or filter canonical data.
+3. Use [`dashboard.learner_check`](learner-telemetry-comparison.md) to compare
+   independently exported learner Raw Events with the run-scoped local projected
+   JSONL, including blocked/success paths and reset. File agreement is not live
+   receiver or role acceptance. `dashboard.telemetry_check` remains the separate
+   **canonical** contract checker; never filter canonical data into learner input.
 4. Search as the actual participant role: learner results appear; staff index,
    canonical sourcetype and private raw/control/assessment content are inaccessible.
 5. Test stopped ingestion and snapshot recovery; retain receiver searches,

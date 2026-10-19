@@ -164,6 +164,7 @@ def execute(archive, output, *, revision, archive_sha256, host_namespace):
                 and application["packaged_runtime_verified"]
                 and application["application_reset_verified"] and application["archive_preserved"]
                 and application["publication_retry_verified"]
+                and application["learner_comparison_verified"]
                 and not application["external_readiness_verified"] and not application["splunk_ingestion_verified"], "invalid_application_receipt")
         bundle_tools._verify_checksums(bundle)  # Packaged source must remain unchanged.
         require(isolation(host_namespace) == boundary, "isolation_changed")

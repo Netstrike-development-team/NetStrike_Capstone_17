@@ -133,6 +133,7 @@ jobs:
             ${{ runner.temp }}/offline-fullplay-smoke/events.jsonl
             ${{ runner.temp }}/offline-fullplay-smoke/canonical-events.jsonl
             ${{ runner.temp }}/offline-fullplay-smoke/learner-audit.jsonl
+            ${{ runner.temp }}/offline-fullplay-smoke/learner-comparison-smoke.json
             ${{ runner.temp }}/offline-fullplay-smoke/*.log
           if-no-files-found: warn
           retention-days: 14
