@@ -69,14 +69,16 @@
     src: "{{ controller_source_root }}/{{ item }}"
     dest: "{{ controller_release_path }}/"
     owner: root
-    group: root
-    mode: preserve
+    group: netstrike
+    mode: "u=rwX,g=rX,o-rwx"
+    directory_mode: "0750"
   loop:
     - dashboard
     - modules
     - shared
     - orchestrator
     - schemas
+  notify: Restart NetStrike portal
 
 - name: Require the staged release to contain its service entry point and fixtures
   ansible.builtin.stat:
@@ -142,6 +144,7 @@
     extra_args: "--no-index --find-links=/opt/netstrike/wheelhouse --require-hashes"
   environment:
     PIP_NO_INDEX: "1"
+  notify: Restart NetStrike portal
 
 - name: Grant the netstrike group read access to the runtime, virtual environment, and release
   ansible.builtin.file:
@@ -300,22 +303,15 @@
     group: root
     mode: "0644"
 
+- name: Apply changed portal configuration before starting the service
+  ansible.builtin.meta: flush_handlers
+
 - name: Enable and start the NetStrike portal
   ansible.builtin.systemd_service:
     name: netstrike-portal.service
     enabled: true
     state: started
     daemon_reload: true
-
-- name: Enable and start the event spool exporter timer
-  ansible.builtin.systemd_service:
-    name: netstrike-event-spool.timer
-    enabled: true
-    state: started
-    daemon_reload: true
-
-- name: Apply changed portal configuration before readiness checks
-  ansible.builtin.meta: flush_handlers
 
 - name: Resolve the controller DNS name to its listen address locally
   ansible.builtin.lineinfile:
@@ -345,7 +341,15 @@
   ansible.builtin.assert:
     that:
       - controller_local_readiness.json.scope == 'local_application_only'
+      - controller_local_readiness.json.run_id == exercise_run_id
       - controller_local_readiness.json.ready_to_prepare | bool
       - not (controller_local_readiness.json.external_readiness_verified | bool)
     fail_msg: "Controller baseline readiness failed; exercise admission remains blocked."
   no_log: true
+
+- name: Enable and start the event spool exporter timer
+  ansible.builtin.systemd_service:
+    name: netstrike-event-spool.timer
+    enabled: true
+    state: started
+    daemon_reload: true

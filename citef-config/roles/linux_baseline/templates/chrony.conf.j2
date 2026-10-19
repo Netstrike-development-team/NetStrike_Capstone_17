@@ -2,6 +2,7 @@
 {% for server in network.ntp_servers %}
 server {{ server }} iburst
 {% endfor %}
+maxdistance 15
 driftfile /var/lib/chrony/chrony.drift
 makestep 1.0 3
 rtcsync
