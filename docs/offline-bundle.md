@@ -20,7 +20,9 @@ live in [exercise-design/07-offline-tool-bundle-inventory.md](exercise-design/07
 The workflow currently pins Linux x86_64/glibc, `CTRL01`, CPython `3.11.16`,
 and python-build-standalone release `20260924`. The wheelhouse covers shared,
 module 01 and modules 04–07, dashboard, and Ansible-controller/validator
-requirements. The bundle also contains the `modules/`, `dashboard/`,
+requirements. The builder uses Docker to resolve and include the complete
+Ubuntu 26.04 amd64 dependency set for Linux domain enrollment (`realmd`,
+`adcli`, and SSSD). The bundle also contains the `modules/`, `dashboard/`,
 `citef-config/`, `shared/`, `orchestrator/`, `schemas/`, and `offline-bundles/` source trees plus
 pinned Ansible Galaxy collections and manifest metadata. These pins and inputs are
 in `.github/workflows/offline-bundle.yml` and `citef-config/requirements.yml`.
@@ -223,12 +225,16 @@ collection's name, version, license, owner, SHA-256, destination VM, offline
 installation method, and file path. `requirements.lock` carries pip's wheel
 hashes; `SHA256SUMS` is the integrity manifest for all bundle files.
 
-It does not include OS packages, VM images, credentials, or licensed products
-such as Splunk, Universal Forwarder, or Sysmon. The target must be compatible
-with Linux x86_64 and glibc. Review the `python-build-standalone` distribution
-terms before redistributing the bundle. The Actions artifact is temporary CI
-storage, not CITEF approval or an approved transfer channel. Test installation
-and exercise readiness on a clean, network-isolated target VM before delivery.
+It does not include general OS packages, VM images, credentials, or licensed
+products such as Splunk, Universal Forwarder, or Sysmon. It does include the
+Ubuntu 26.04 domain-enrollment package set, recorded by SHA-256 in
+`inventory.json` and installed by `linux_baseline` with apt downloads disabled.
+The target must be compatible with Linux x86_64 and glibc; domain-package
+installation requires Ubuntu 26.04. Review the `python-build-standalone`
+distribution terms before redistributing the bundle. The Actions artifact is
+temporary CI storage, not CITEF approval or an approved transfer channel. Test
+installation and exercise readiness on a clean, network-isolated target VM
+before delivery.
 
 For tool decisions, unresolved approvals, package inventories, and the clean-VM
 verification record, see [exercise-design/07-offline-tool-bundle-inventory.md](exercise-design/07-offline-tool-bundle-inventory.md).

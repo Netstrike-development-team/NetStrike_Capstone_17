@@ -101,7 +101,7 @@ Splunk separate while consolidating project-owned services.
 | `IDP01`, `HELPDESK01`, `CLOUD01` | Project services, not necessarily separate VMs | `CTRL01` | Logical services; placement and resource sizing to confirm |
 | `FILE01` | Disposable fixture storage | `CTRL01` or separate Linux VM | Proposed role; confirm storage and separation |
 | `DC01` | Separate Windows Server amd64 VM | None preferred | Proposed role; exact CITEF image/build and sizing pending; team configures AD, DNS, and telemetry |
-| `FIN-WS01` | Separate Windows 11 amd64 VM | None preferred | Proposed role; exact CITEF image/build and sizing pending; team configures telemetry and participant access |
+| `FIN-WS01` | Separate Windows 11 Pro or Enterprise amd64 VM | None preferred | Must join the exercise AD domain; Windows Home cannot join a domain. Exact CITEF image/build and sizing pending; team configures telemetry and participant access |
 | `SPLUNK01` | Range-provided Splunk Enterprise VM | None preferred | Product/version confirmed above; underlying OS/image, sizing, and ownership pending |
 
 Confirm for every supplied VM:
@@ -120,7 +120,9 @@ are maintained in the
 [`citef-config` topology guide](../../citef-config/README.md) and example
 manifest. They are planning values, not CITEF allocations; this questionnaire
 tracks confirmation of exact image/build, sizing, network overlap, and
-approved assignments before inventory generation.
+approved assignments before inventory generation. Select a Windows 11 Pro or
+Enterprise image for `FIN-WS01`; Home edition cannot join the exercise AD
+domain.
 
 ### Network, DNS, and time
 

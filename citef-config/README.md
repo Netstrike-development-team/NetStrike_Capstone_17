@@ -30,9 +30,18 @@ images, network ranges, and access paths with CITEF before using the manifest.
 |---|---|---|---|
 | `CTRL01` | Ubuntu Server 26.04 amd64 | `10.77.0.11`, `ctrl01.simcorp.test` | Staff controller, portal, event ledger, action adapters, and mock services |
 | `DC01` | Windows Server 2025 LTSC | `10.77.0.10`, `dc01.simcorp.test` | Synthetic AD, internal DNS, and isolated time source |
-| `FIN-WS01` | Windows 11 26H2 | `10.77.0.20`, `fin-ws01.simcorp.test` | Participant endpoint and telemetry |
+| `FIN-WS01` | Windows 11 Pro or Enterprise 26H2 | `10.77.0.20`, `fin-ws01.simcorp.test` | Participant endpoint and telemetry |
 | `SPLUNK01` | CITEF-managed Splunk Enterprise 10.0.1 | `10.77.0.30`, `splunk01.simcorp.test` | SIEM; 10 GB/day ingestion and 300 GB disk limits |
 | `FILE01` | Logical service on `CTRL01`, or a separately approved Linux VM | Not assigned | Disposable fixtures and controller-managed known-good copy |
+
+`FIN-WS01` must use Windows Pro or Enterprise because it joins the exercise
+Active Directory domain; Windows Home cannot join a domain.
+
+Linux hosts managed by `linux_baseline` also join the exercise domain. The role
+installs the offline-bundled Ubuntu 26.04 `realmd`, `adcli`, and SSSD packages
+without network access, places the computer account in
+`identity_baseline.search_base_dn`, and uses the injected domain administrator
+credentials without logging the password.
 
 The local October 15 rehearsal used Ubuntu Server 26.04.1 for `CTRL01` and
 Windows 11 26H2 for `FIN-WS01`. Its personal-network addresses and credentials
@@ -131,6 +140,46 @@ Inject `controller_service_tokens`, `controller_readiness_token`,
 `controller_tls_private_key_pem` through approved secret management. The
 readiness token must be one of the service-token keys and must map to a
 facilitator role. Keep secrets outside Git or encrypt them with Ansible Vault.
+
+The role renders the current [portal environment contract](../docs/application-deployment-contract.md):
+the persistent database, reviewed profile and selected scenario paths, scope
+guard, shared portal/host run ID, dedicated disposable impact root, audit key,
+exact SSO origin allowlist and role-token mapping. Set
+`controller.sso_allowed_origins` in the approved environment manifest to the
+actual browser-facing origin, including its scheme and port. This is a JSON
+array in the application environment, not a comma-separated string.
+
+### Portal startup and recovery
+
+Ansible loads the changed systemd unit and applies its pending restart handler
+**before** ensuring the portal is started. A new deployment therefore starts
+only once: full-play startup creates the run fixture, and an immediate second
+start would correctly fail `disposable_impact_root` validation. Source and
+dependency changes also notify the handler; source permissions match the final
+read-only release permissions so unchanged copies do not request a restart.
+The spool timer is enabled only after authenticated local readiness confirms
+the requested `exercise_run_id` and application baseline.
+
+The unit runs read-only preflight under the same service identity, working
+directory and protected environment as the application, then starts exactly
+one Uvicorn worker. Automatic process restart is disabled: neither full-play
+fixtures nor the retained SQLite ledger implement crash-resume. A failed
+process must not loop or erase evidence to manufacture a successful startup.
+Changing configuration/source on an existing run is not a supported live
+upgrade; use the approved clean-snapshot/new-run procedure.
+
+For a startup failure, inspect `sudo systemctl status netstrike-portal.service`
+and `sudo journalctl -u netstrike-portal.service -b --no-pager` on CTRL01.
+Preflight prints safe blocker IDs; do not print or copy
+`/etc/netstrike/controller.env` into diagnostics. In particular,
+`disposable_impact_root` after an earlier startup can mean that the run fixture
+already exists, not that another environment variable is missing. Preserve the
+database, fixtures and spools, export available staff evidence, then follow the
+[coordinated restore and new-run handoff](../docs/full-play-deployment-binding.md#reset-and-next-run-admission).
+Do not remove state, reuse a run ID, or bypass preflight to force a restart.
+Local readiness still does not prove Splunk ingestion or authorize admission.
+
+### Bundle selection and provisioning command
 
 By default, the controller role reads the extracted bundle from
 `<offline_artifacts.directory>/netstrike-offline-bundle`. If it is extracted
