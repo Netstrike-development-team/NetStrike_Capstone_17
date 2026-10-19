@@ -151,12 +151,13 @@ array in the application environment, not a comma-separated string.
 
 ### Portal startup and recovery
 
-Ansible loads the changed systemd unit and applies its pending restart handler
-**before** ensuring the portal is started. A new deployment therefore starts
-only once: full-play startup creates the run fixture, and an immediate second
-start would correctly fail `disposable_impact_root` validation. Source and
-dependency changes also notify the handler; source permissions match the final
-read-only release permissions so unchanged copies do not request a restart.
+Ansible writes all portal configuration, source, dependencies, certificates and
+the systemd unit **before** the first start, then starts the portal once. The
+role never restarts a portal: full-play startup creates the run fixture, and a
+second start with the same run ID would correctly fail `disposable_impact_root`
+validation. If the portal is already running, a rerun leaves it untouched and
+warns that changed configuration is not applied; if it is stopped and the run
+fixture already exists, the play fails with a request for a new run ID.
 The spool timer is enabled only after authenticated local readiness confirms
 the requested `exercise_run_id` and application baseline.
 

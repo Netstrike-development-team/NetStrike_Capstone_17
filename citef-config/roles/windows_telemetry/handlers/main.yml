@@ -3,3 +3,7 @@
   ansible.windows.win_service:
     name: SplunkForwarder
     state: restarted
+  register: windows_uf_restart
+  until: windows_uf_restart is succeeded
+  retries: 3
+  delay: 10
