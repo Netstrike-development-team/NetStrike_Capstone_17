@@ -12,6 +12,7 @@ import pytest
 
 from scripts import offline_bundle
 from scripts.offline_bundle import (
+    _copy_linux_package_archives,
     _copy_ansible_collection_archives,
     _copy_source_directories,
     _configured_destination,
@@ -184,6 +185,26 @@ def test_inventory_verification_checks_required_fields_and_hashes(
     wheel_inventory = _write_lock_and_inventory(
         [wheel], wheelhouse, "CTRL01", bundle_root=bundle
     )
+    package_dir = tmp_path / "linux-package-download"
+    package_dir.mkdir()
+
+    for package in offline_bundle.LINUX_DOMAIN_PACKAGES:
+        (package_dir / f"{package}_1.0_amd64.deb").write_bytes(b"package")
+
+    def package_metadata(command, **kwargs):
+        package_name = Path(command[2]).name.split("_", 1)[0]
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            stdout=f"{package_name}\n1.0\namd64\nUbuntu Maintainers\n",
+        )
+
+    monkeypatch.setattr(
+        offline_bundle.subprocess,
+        "run",
+        package_metadata,
+    )
+    package_inventory = _copy_linux_package_archives(package_dir, bundle, "CTRL01")
 
     repo = tmp_path / "repo"
     for directory in offline_bundle.SOURCE_DIRECTORIES:
@@ -199,14 +220,73 @@ def test_inventory_verification_checks_required_fields_and_hashes(
             runtime_archive, "https://example.invalid/runtime", "3.11.16", "CTRL01"
         ),
         "artifacts": wheel_inventory,
+        "linux_packages": package_inventory,
         "source_artifacts": source_inventory,
         "ansible_collections": [],
     }
     offline_bundle._verify_inventory_artifacts(bundle, inventory)
 
+    bundled_package = bundle / package_inventory[0]["file"]
+    bundled_package.write_bytes(b"tampered")
+    with pytest.raises(ValueError, match="inventory SHA-256 mismatch: adcli"):
+        offline_bundle._verify_inventory_artifacts(bundle, inventory)
+
     wheel.write_bytes(b"tampered")
     with pytest.raises(ValueError, match="inventory SHA-256 mismatch: demo"):
         offline_bundle._verify_inventory_artifacts(bundle, inventory)
+
+
+def test_downloads_linux_domain_packages_for_pinned_ubuntu_image(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    commands = []
+
+    def fake_run(command, **kwargs):
+        commands.append(command)
+        volume = command[command.index("--volume") + 1]
+        package_dir = Path(volume.split(":", 1)[0])
+        package_dir.mkdir(parents=True, exist_ok=True)
+        for package in offline_bundle.LINUX_DOMAIN_PACKAGES:
+            (package_dir / f"{package}_1.0_amd64.deb").touch()
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr(offline_bundle.subprocess, "run", fake_run)
+    package_dir = tmp_path / "packages"
+
+    offline_bundle._download_linux_packages(package_dir)
+
+    assert commands[0][0:2] == ["docker", "run"]
+    assert offline_bundle.LINUX_PACKAGE_IMAGE in commands[0]
+    assert "apt-get install --download-only" in commands[0][-1]
+    assert all(
+        (package_dir / f"{package}_1.0_amd64.deb").is_file()
+        for package in offline_bundle.LINUX_DOMAIN_PACKAGES
+    )
+
+
+def test_linux_package_inventory_requires_direct_packages(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    package_dir = tmp_path / "packages"
+    package_dir.mkdir()
+    (package_dir / "adcli_1.0_amd64.deb").write_bytes(b"package")
+
+    def package_metadata(command, **kwargs):
+        package_name = Path(command[2]).name.split("_", 1)[0]
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            stdout=f"{package_name}\n1.0\namd64\nUbuntu Maintainers\n",
+        )
+
+    monkeypatch.setattr(
+        offline_bundle.subprocess,
+        "run",
+        package_metadata,
+    )
+
+    with pytest.raises(ValueError, match="missing requested packages"):
+        _copy_linux_package_archives(package_dir, tmp_path / "bundle", "CTRL01")
 
 
 def test_copies_ansible_collections_and_records_manifest_metadata(tmp_path: Path):
