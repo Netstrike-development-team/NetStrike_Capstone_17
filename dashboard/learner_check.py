@@ -96,6 +96,7 @@ def compare(expected, observed, *, exercise_id, run_id):
             "expected_sha256": hashlib.sha256(expected_bytes).hexdigest(),
             "observed_sha256": hashlib.sha256(observed_bytes).hexdigest(),
             "writes_performed": False, "live_splunk_verified": False,
+            "indexed_event_boundaries_verified": False,
             "participant_access_verified": False, "external_readiness_verified": False}
 
 
@@ -119,6 +120,7 @@ def main(argv=None):
         print(json.dumps({"scope": "supplied_learner_raw_export_comparison", "status": "invalid_input",
                           "code": code, "supplied_files_match": False, "writes_performed": False,
                           "live_splunk_verified": False, "participant_access_verified": False,
+                          "indexed_event_boundaries_verified": False,
                           "external_readiness_verified": False}), file=sys.stderr)
         return 2
     print(json.dumps(report, sort_keys=True))

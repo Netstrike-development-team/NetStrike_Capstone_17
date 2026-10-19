@@ -50,7 +50,8 @@ def test_order_whitespace_and_crlf_do_not_change_match(inputs):
     assert result["expected_sha256"] == hashlib.sha256(before[0]).hexdigest()
     assert result["observed_sha256"] == hashlib.sha256(before[1]).hexdigest()
     assert (expected.read_bytes(), observed.read_bytes()) == before
-    assert not any(result[name] for name in ("writes_performed", "live_splunk_verified", "participant_access_verified", "external_readiness_verified"))
+    assert not any(result[name] for name in ("writes_performed", "live_splunk_verified", "participant_access_verified",
+                                           "indexed_event_boundaries_verified", "external_readiness_verified"))
 
 
 @pytest.mark.parametrize("fault,key", [("missing", "missing_events"), ("duplicate", "duplicate_events"),

@@ -130,6 +130,13 @@ licence/disk volume, exactly-once transport or VM/UF snapshot behavior. Patrick'
 backlog, replay/checkpoints, line breaking, truncation or input format without
 editing evidence to hide the problem.
 
+`indexed_event_boundaries_verified` also remains **false**. Counts here refer to
+JSONL records in the supplied files, not independently queried indexed event
+counts. Raw export can flatten a multi-line indexed event: two JSON lines might
+match the expected bytes even if Splunk indexed them as one event. Patrick must
+independently compare the scoped Splunk event count with the baseline and inspect
+event boundaries and extracted fields; do not use this receipt to certify them.
+
 ## Developer verification
 
 Tests cover valid/malformed/private/wrong-scope inputs, all transport faults,
