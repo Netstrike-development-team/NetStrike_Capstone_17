@@ -189,10 +189,18 @@ Local readiness still does not prove Splunk ingestion or authorize admission.
 
 ### Bundle selection and provisioning command
 
-By default, the controller role reads the extracted bundle from
+By default, the controller and Linux baseline roles read the extracted bundle from
 `<offline_artifacts.directory>/netstrike-offline-bundle`. If it is extracted
 elsewhere, set `controller_offline_bundle_root` to the absolute path containing
-`runtime/` and `destinations/`. Run Ansible from this directory so its pinned
+`runtime/` and `destinations/` on the machine running Ansible, for example
+`/srv/offline-bundle/netstrike-offline-bundle`. Both roles honor this override;
+Linux domain packages are read from
+`<controller_offline_bundle_root>/destinations/CTRL01/linux-packages/`.
+Keep `offline_artifacts.directory` pointing at the separately staged vendor
+artifacts (such as `offline-bundles/CITEF-RELEASE`); it need not be changed to
+select the extracted bundle. Supply the override in your extra-vars file or as
+`--extra-vars "controller_offline_bundle_root=/srv/offline-bundle/netstrike-offline-bundle"`.
+Run Ansible from this directory so its pinned
 configuration, roles, collections, and local manifest are used:
 
 ```sh

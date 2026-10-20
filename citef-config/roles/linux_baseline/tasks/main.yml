@@ -115,7 +115,7 @@
 
 - name: Stage Linux Active Directory package bundle
   ansible.builtin.copy:
-    src: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/netstrike-offline-bundle/destinations/CTRL01/linux-packages/"
+    src: "{{ controller_offline_bundle_root | default(playbook_dir ~ '/../../' ~ offline_artifacts.directory ~ '/netstrike-offline-bundle') }}/destinations/CTRL01/linux-packages/"
     dest: /var/cache/netstrike-linux-domain-packages/
     owner: root
     group: root
