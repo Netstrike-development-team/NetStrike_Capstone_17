@@ -488,9 +488,11 @@ def _download_linux_packages(package_dir: Path) -> None:
         LINUX_PACKAGE_IMAGE,
         "/bin/sh",
         "-ec",
+        # Keep APT's root/_apt-owned cache directories off the host bind mount.
         "apt-get update && apt-get install --download-only "
-        "--no-install-recommends --yes -o Dir::Cache::archives=/packages "
-        + " ".join(LINUX_DOMAIN_PACKAGES),
+        "--no-install-recommends --yes "
+        + " ".join(LINUX_DOMAIN_PACKAGES)
+        + " && install -m 0644 /var/cache/apt/archives/*.deb /packages/",
     ]
     completed = subprocess.run(command, cwd=REPO_ROOT, check=False)
     if completed.returncode:
@@ -516,12 +518,9 @@ def _copy_linux_package_archives(
         completed = subprocess.run(
             [
                 "dpkg-deb",
-                "--field",
+                "--show",
+                "--showformat=${Package}\\n${Version}\\n${Architecture}\\n${Maintainer}\\n",
                 str(source),
-                "Package",
-                "Version",
-                "Architecture",
-                "Maintainer",
             ],
             check=True,
             capture_output=True,
@@ -579,7 +578,9 @@ def _verify_linux_packages_offline(bundle: Path, destination_vm: str) -> None:
         LINUX_PACKAGE_IMAGE,
         "/bin/sh",
         "-ec",
-        "apt-get install --no-download --no-install-recommends --yes /packages/*.deb",
+        "install -m 0644 /packages/*.deb /var/cache/apt/archives/ && "
+        "apt-get install --no-download --no-install-recommends --yes "
+        "/var/cache/apt/archives/*.deb",
     ]
     subprocess.run(command, check=True)
 

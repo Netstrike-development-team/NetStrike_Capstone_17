@@ -27,6 +27,20 @@ Ubuntu 26.04 amd64 dependency set for Linux domain enrollment (`realmd`,
 pinned Ansible Galaxy collections and manifest metadata. These pins and inputs are
 in `.github/workflows/offline-bundle.yml` and `citef-config/requirements.yml`.
 
+For local builds, run `scripts/offline_bundle.py` as your normal user with
+access to Docker, not with `sudo`. APT's cache stays inside the disposable
+container; only readable `.deb` files are exported to the host. Older script
+versions placed APT's root/`_apt`-owned `partial/` directory in the host temporary
+directory, which could cause an `Operation not permitted` error during cleanup
+(`.../linux-packages/partial`). Update the script and rerun the build if you
+encounter that error.
+
+Offline Linux package verification copies the `.deb` files from the read-only
+bundle mount into the container's APT archive cache before installation. APT's
+`--no-download` mode requires cached archives; passing local paths outside that
+cache can fail with `Pathname to install is not absolute`. The deployment role
+likewise configures its staged package directory as APT's archive cache.
+
 ## 2. Verify and install
 
 The GitHub artifact is released as a ZIP containing the bundle archive. Extract

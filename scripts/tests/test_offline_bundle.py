@@ -1,6 +1,7 @@
 import io
 import hashlib
 import json
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -192,7 +193,7 @@ def test_inventory_verification_checks_required_fields_and_hashes(
         (package_dir / f"{package}_1.0_amd64.deb").write_bytes(b"package")
 
     def package_metadata(command, **kwargs):
-        package_name = Path(command[2]).name.split("_", 1)[0]
+        package_name = Path(command[-1]).name.split("_", 1)[0]
         return subprocess.CompletedProcess(
             command,
             0,
@@ -258,10 +259,145 @@ def test_downloads_linux_domain_packages_for_pinned_ubuntu_image(
     assert commands[0][0:2] == ["docker", "run"]
     assert offline_bundle.LINUX_PACKAGE_IMAGE in commands[0]
     assert "apt-get install --download-only" in commands[0][-1]
+    assert "Dir::Cache::archives=/packages" not in commands[0][-1]
+    assert commands[0][-1].endswith(
+        " && install -m 0644 /var/cache/apt/archives/*.deb /packages/"
+    )
     assert all(
         (package_dir / f"{package}_1.0_amd64.deb").is_file()
         for package in offline_bundle.LINUX_DOMAIN_PACKAGES
     )
+
+
+def test_linux_package_download_reports_container_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        offline_bundle.subprocess,
+        "run",
+        lambda command, **kwargs: subprocess.CompletedProcess(command, 100),
+    )
+
+    with pytest.raises(RuntimeError, match="download failed with exit code 100"):
+        offline_bundle._download_linux_packages(tmp_path / "packages")
+
+
+def test_linux_package_download_rejects_missing_archives(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        offline_bundle.subprocess,
+        "run",
+        lambda command, **kwargs: subprocess.CompletedProcess(command, 0),
+    )
+
+    with pytest.raises(ValueError, match="apt produced no Linux domain package archives"):
+        offline_bundle._download_linux_packages(tmp_path / "packages")
+
+
+def test_linux_package_verification_stages_archives_in_container_cache(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    commands = []
+
+    def run(command, **kwargs):
+        commands.append(command)
+        assert kwargs["check"] is True
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr(offline_bundle.subprocess, "run", run)
+
+    offline_bundle._verify_linux_packages_offline(tmp_path, "CTRL01")
+
+    command, = commands
+    assert command[:3] == ["docker", "run", "--rm"]
+    assert command[command.index("--network") + 1] == "none"
+    assert command[command.index("--volume") + 1] == (
+        f"{tmp_path}/destinations/CTRL01/linux-packages:/packages:ro"
+    )
+    assert command[-1] == (
+        "install -m 0644 /packages/*.deb /var/cache/apt/archives/ && "
+        "apt-get install --no-download --no-install-recommends --yes "
+        "/var/cache/apt/archives/*.deb"
+    )
+
+
+@pytest.mark.parametrize("architecture", ["amd64", "all"])
+def test_linux_package_inventory_requests_unlabelled_metadata(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, architecture: str
+):
+    package_dir = tmp_path / "packages"
+    package_dir.mkdir()
+    monkeypatch.setattr(offline_bundle, "LINUX_DOMAIN_PACKAGES", ("adcli",))
+    (package_dir / f"adcli_1.0_{architecture}.deb").write_bytes(b"package")
+
+    def package_metadata(command, **kwargs):
+        assert command == [
+            "dpkg-deb",
+            "--show",
+            "--showformat=${Package}\\n${Version}\\n${Architecture}\\n${Maintainer}\\n",
+            str(package_dir / f"adcli_1.0_{architecture}.deb"),
+        ]
+        return subprocess.CompletedProcess(
+            command, 0, stdout=f"adcli\n1.0\n{architecture}\nUbuntu Maintainers\n"
+        )
+
+    monkeypatch.setattr(offline_bundle.subprocess, "run", package_metadata)
+
+    inventory = _copy_linux_package_archives(package_dir, tmp_path / "bundle")
+
+    assert inventory[0]["name"] == "adcli"
+    assert inventory[0]["version"] == "1.0"
+    assert inventory[0]["architecture"] == architecture
+    assert inventory[0]["owner"] == "Ubuntu Maintainers"
+
+
+@pytest.mark.skipif(shutil.which("dpkg-deb") is None, reason="dpkg-deb is not installed")
+def test_linux_package_inventory_reads_real_debian_metadata(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    source = tmp_path / "source"
+    control = source / "DEBIAN"
+    control.mkdir(parents=True)
+    (control / "control").write_text(
+        "Package: adcli\nVersion: 1.0\nArchitecture: amd64\n"
+        "Maintainer: Example Maintainer <maintainer@example.invalid>\n"
+        "Description: Offline bundle metadata test\n",
+        encoding="utf-8",
+    )
+    package_dir = tmp_path / "packages"
+    package_dir.mkdir()
+    subprocess.run(
+        ["dpkg-deb", "--build", str(source), str(package_dir / "adcli_1.0_amd64.deb")],
+        check=True,
+        capture_output=True,
+    )
+    monkeypatch.setattr(offline_bundle, "LINUX_DOMAIN_PACKAGES", ("adcli",))
+
+    inventory = _copy_linux_package_archives(package_dir, tmp_path / "bundle")
+
+    assert inventory[0]["name"] == "adcli"
+    assert inventory[0]["version"] == "1.0"
+    assert inventory[0]["architecture"] == "amd64"
+    assert inventory[0]["owner"] == "Example Maintainer <maintainer@example.invalid>"
+
+
+def test_linux_package_inventory_rejects_unsupported_architecture(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    package_dir = tmp_path / "packages"
+    package_dir.mkdir()
+    (package_dir / "adcli_1.0_arm64.deb").write_bytes(b"package")
+    monkeypatch.setattr(
+        offline_bundle.subprocess,
+        "run",
+        lambda command, **kwargs: subprocess.CompletedProcess(
+            command, 0, stdout="adcli\n1.0\narm64\nUbuntu Maintainers\n"
+        ),
+    )
+
+    with pytest.raises(ValueError, match="unsupported Linux package architecture: arm64"):
+        _copy_linux_package_archives(package_dir, tmp_path / "bundle")
 
 
 def test_linux_package_inventory_requires_direct_packages(
@@ -272,7 +408,7 @@ def test_linux_package_inventory_requires_direct_packages(
     (package_dir / "adcli_1.0_amd64.deb").write_bytes(b"package")
 
     def package_metadata(command, **kwargs):
-        package_name = Path(command[2]).name.split("_", 1)[0]
+        package_name = Path(command[-1]).name.split("_", 1)[0]
         return subprocess.CompletedProcess(
             command,
             0,
