@@ -11,6 +11,29 @@
       - "'Windows Server 2025' in ansible_facts.distribution"
     fail_msg: "DC01 must be the approved amd64 Windows Server image with the configured hostname."
 
+- name: Read the Ansible controller UTC clock
+  ansible.builtin.command:
+    argv: [date, -u, "+%Y-%m-%dT%H:%M:%SZ"]
+  delegate_to: localhost
+  register: controller_utc_time
+  changed_when: false
+
+- name: Set DC01 clock from the Ansible controller UTC clock
+  ansible.windows.win_powershell:
+    parameters:
+      controller_utc_time: "{{ controller_utc_time.stdout }}"
+    script: |
+      param([string]$controller_utc_time)
+      $ErrorActionPreference = 'Stop'
+      $utcTime = [DateTimeOffset]::ParseExact(
+        $controller_utc_time,
+        "yyyy-MM-dd'T'HH:mm:ss'Z'",
+        [Globalization.CultureInfo]::InvariantCulture,
+        [Globalization.DateTimeStyles]::AssumeUniversal
+      )
+      Set-Date -Date $utcTime.LocalDateTime | Out-Null
+      $Ansible.Changed = $true
+
 - name: Install Active Directory Domain Services and DNS roles
   ansible.windows.win_feature:
     name:

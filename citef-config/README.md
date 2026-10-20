@@ -147,6 +147,12 @@ the Linux baseline, the controller portal, and controller telemetry.
 `SPLUNK01` is not configured by the project playbook. Do not treat the current
 playbook as complete range deployment.
 
+The domain-controller role always sets DC01's system clock from the Ansible
+controller's UTC clock before installing Active Directory, then configures
+DC01's time service according to the selected NTP settings. Keep the controller
+clock accurate before provisioning; this is a one-time clock set, not ongoing
+synchronization.
+
 The Windows Universal Forwarder restart handler waits up to 120 seconds for
 shutdown before starting the service, then up to 120 seconds for it to reach
 Running. This accommodates slow shutdowns that can otherwise report
