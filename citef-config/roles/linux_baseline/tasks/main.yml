@@ -144,10 +144,7 @@
       - join
       - --user
       - >-
-        {{
-          (domain_admin_user | replace('\\', '/') | split('/') | last)
-          ~ ('@' ~ identity_baseline.domain_dns_name if '@' not in domain_admin_user else '')
-        }}
+        {{ domain_admin_user | replace('\\', '/') | split('/') | last }}
       - --computer-ou
       - "{{ identity_baseline.search_base_dn }}"
       - --client-software=sssd

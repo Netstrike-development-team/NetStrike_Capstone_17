@@ -43,6 +43,17 @@ without network access, places the computer account in
 `identity_baseline.search_base_dn`, and uses the injected domain administrator
 credentials without logging the password.
 
+For Linux joins, bare administrator names and `DOMAIN\user` or `DOMAIN/user`
+names are passed to `realmd` as an unqualified account name so it selects the
+discovered Kerberos realm. Explicit `user@REALM` names are preserved; their realm
+must match the directory's Kerberos configuration (normally the uppercase AD
+DNS domain). Appending a lowercase DNS domain to an account can cause
+`Couldn't get kerberos ticket: KDC reply did not match expectations`.
+The `Password for ...:` prompt is normal even when the password is supplied
+through stdin; it does not by itself indicate missing credentials. If a join
+still fails, inspect `sudo journalctl -u realmd --since '15 minutes ago' --no-pager`
+on the target for the underlying error rather than disabling password redaction.
+
 The same offline package bundle includes `systemd-resolved` and `chrony`.
 The role installs these prerequisites before configuring or starting DNS and time
 services; minimal images need not have them preinstalled. If provisioning reports

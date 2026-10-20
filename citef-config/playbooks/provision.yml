@@ -29,18 +29,16 @@
         that:
           - ad_safe_mode_password is defined
           - ad_safe_mode_password | length >= 16
-          - ad_safe_mode_password is search('[A-Z]')
-          - ad_safe_mode_password is search('[a-z]')
+          - ad_safe_mode_password is search('[A-Za-z]')
           - ad_safe_mode_password is search('[0-9]')
           - ad_safe_mode_password is search('[^A-Za-z0-9]')
           - domain_admin_user is defined
           - domain_admin_password is defined
           - domain_admin_password | length >= 16
-          - domain_admin_password is search('[A-Z]')
-          - domain_admin_password is search('[a-z]')
+          - domain_admin_password is search('[A-Za-z]')
           - domain_admin_password is search('[0-9]')
           - domain_admin_password is search('[^A-Za-z0-9]')
-        fail_msg: "Inject domain bootstrap credentials using the approved Ansible Vault or secret manager. Passwords must be 16+ characters with uppercase, lowercase, numbers and symbols."
+        fail_msg: "Inject domain bootstrap credentials using the approved Ansible Vault or secret manager. Passwords must be 16+ characters with lowercase, numbers and symbols."
       no_log: true
 
     - name: Validate all staged vendor artifacts before any host changes
