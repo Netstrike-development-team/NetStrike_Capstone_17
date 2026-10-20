@@ -26,6 +26,7 @@ UNKNOWN = "UNKNOWN (review required)"
 LINUX_PACKAGE_IMAGE = "ubuntu:26.04"
 LINUX_DOMAIN_PACKAGES = (
     "adcli",
+    "chrony",
     "libnss-sss",
     "libpam-sss",
     "packagekit",
@@ -34,6 +35,7 @@ LINUX_DOMAIN_PACKAGES = (
     "sssd",
     "sssd-ad",
     "sssd-tools",
+    "systemd-resolved",
 )
 SOURCE_DIRECTORIES = (
     "modules",

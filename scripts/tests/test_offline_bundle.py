@@ -259,6 +259,9 @@ def test_downloads_linux_domain_packages_for_pinned_ubuntu_image(
     assert commands[0][0:2] == ["docker", "run"]
     assert offline_bundle.LINUX_PACKAGE_IMAGE in commands[0]
     assert "apt-get install --download-only" in commands[0][-1]
+    assert {"systemd-resolved", "chrony"} <= set(offline_bundle.LINUX_DOMAIN_PACKAGES)
+    assert "systemd-resolved" in commands[0][-1].split()
+    assert "chrony" in commands[0][-1].split()
     assert "Dir::Cache::archives=/packages" not in commands[0][-1]
     assert commands[0][-1].endswith(
         " && install -m 0644 /var/cache/apt/archives/*.deb /packages/"

@@ -22,7 +22,10 @@ and python-build-standalone release `20260924`. The wheelhouse covers shared,
 module 01 and modules 04–07, dashboard, and Ansible-controller/validator
 requirements. The builder uses Docker to resolve and include the complete
 Ubuntu 26.04 amd64 dependency set for Linux domain enrollment (`realmd`,
-`adcli`, and SSSD). The bundle also contains the `modules/`, `dashboard/`,
+`adcli`, and SSSD) and the DNS/time services (`systemd-resolved` and `chrony`).
+The Linux baseline installs these packages before configuring or starting the
+services. Rebuild older bundles that lack the DNS/time packages before using the
+updated role on minimal images. The bundle also contains the `modules/`, `dashboard/`,
 `citef-config/`, `shared/`, `orchestrator/`, `schemas/`, and `offline-bundles/` source trees plus
 pinned Ansible Galaxy collections and manifest metadata. These pins and inputs are
 in `.github/workflows/offline-bundle.yml` and `citef-config/requirements.yml`.

@@ -43,6 +43,14 @@ without network access, places the computer account in
 `identity_baseline.search_base_dn`, and uses the injected domain administrator
 credentials without logging the password.
 
+The same offline package bundle includes `systemd-resolved` and `chrony`.
+The role installs these prerequisites before configuring or starting DNS and time
+services; minimal images need not have them preinstalled. If provisioning reports
+`Could not find the requested service systemd-resolved`, use this updated role
+and rebuild and transfer the offline bundle so it contains both packages and
+their dependencies. Older bundles containing only membership packages are
+insufficient; no Internet-enabled package installation is required on the target.
+
 The local October 15 rehearsal used Ubuntu Server 26.04.1 for `CTRL01` and
 Windows 11 26H2 for `FIN-WS01`. Its personal-network addresses and credentials
 are intentionally omitted. `DC01` and the Splunk host were not configured in

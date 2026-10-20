@@ -10,6 +10,34 @@ from jinja2 import Environment, StrictUndefined
 ROLES = Path(__file__).resolve().parents[1] / "roles"
 
 
+def test_linux_prerequisites_are_installed_before_dns_and_time_configuration():
+    tasks = yaml.safe_load((ROLES / "linux_baseline/tasks/main.yml").read_text())
+    names = [task["name"] for task in tasks]
+    ordered_tasks = [
+        "Require Ubuntu 26.04 for the bundled Linux membership packages",
+        "Remove stale Linux domain package files",
+        "Stage Linux Active Directory package bundle",
+        "Install Linux Active Directory packages without downloading",
+    ]
+    indices = [names.index(name) for name in ordered_tasks]
+    assert indices == sorted(indices)
+    install_index = indices[-1]
+    for name in (
+        "Configure internal DNS and exercise search domain",
+        "Configure approved NTP sources and root distance",
+        "Ensure systemd-resolved is enabled",
+        "Ensure the system resolver uses systemd-resolved",
+        "Ensure chrony is enabled",
+        "Apply DNS and time changes before verification",
+        "Verify every approved forward DNS record",
+        "Check existing Linux domain membership",
+    ):
+        assert install_index < names.index(name)
+    install = tasks[install_index]["ansible.builtin.shell"]
+    assert "--no-download" in install
+    assert "Dir::Cache::archives=/var/cache/netstrike-linux-domain-packages" in install
+
+
 @pytest.mark.parametrize("override", [None, "/srv/offline-bundle/netstrike-offline-bundle"])
 def test_linux_packages_follow_controller_bundle_selection(tmp_path, override):
     playbook_dir = tmp_path / "citef-config" / "playbooks"

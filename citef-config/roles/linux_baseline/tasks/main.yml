@@ -18,6 +18,36 @@
     fail_msg: "CTRL01 must use the pinned Ubuntu Server 26.04 LTS baseline."
   when: logical_name == "CTRL01"
 
+- name: Require Ubuntu 26.04 for the bundled Linux membership packages
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution == "Ubuntu"
+      - ansible_facts.distribution_version == "26.04"
+    fail_msg: "Linux domain membership packages are bundled for Ubuntu 26.04 amd64."
+
+- name: Remove stale Linux domain package files
+  ansible.builtin.file:
+    path: /var/cache/netstrike-linux-domain-packages
+    state: absent
+
+- name: Stage Linux Active Directory package bundle
+  ansible.builtin.copy:
+    src: "{{ controller_offline_bundle_root | default(playbook_dir ~ '/../../' ~ offline_artifacts.directory ~ '/netstrike-offline-bundle') }}/destinations/CTRL01/linux-packages/"
+    dest: /var/cache/netstrike-linux-domain-packages/
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Install Linux Active Directory packages without downloading
+  ansible.builtin.shell: >-
+    apt-get --no-download
+    -o Dir::Cache::archives=/var/cache/netstrike-linux-domain-packages
+    install --yes /var/cache/netstrike-linux-domain-packages/*.deb
+  args:
+    chdir: /var/cache/netstrike-linux-domain-packages
+  register: linux_domain_package_install
+  changed_when: "'Setting up ' in linux_domain_package_install.stdout"
+
 - name: Ensure systemd drop-in directories exist
   ansible.builtin.file:
     path: "{{ item }}"
@@ -100,36 +130,6 @@
   changed_when: false
   failed_when: >-
     (network.ntp_servers | select('in', time_sync_status.stdout) | list | length) == 0
-
-- name: Require Ubuntu 26.04 for the bundled Linux membership packages
-  ansible.builtin.assert:
-    that:
-      - ansible_facts.distribution == "Ubuntu"
-      - ansible_facts.distribution_version == "26.04"
-    fail_msg: "Linux domain membership packages are bundled for Ubuntu 26.04 amd64."
-
-- name: Remove stale Linux domain package files
-  ansible.builtin.file:
-    path: /var/cache/netstrike-linux-domain-packages
-    state: absent
-
-- name: Stage Linux Active Directory package bundle
-  ansible.builtin.copy:
-    src: "{{ controller_offline_bundle_root | default(playbook_dir ~ '/../../' ~ offline_artifacts.directory ~ '/netstrike-offline-bundle') }}/destinations/CTRL01/linux-packages/"
-    dest: /var/cache/netstrike-linux-domain-packages/
-    owner: root
-    group: root
-    mode: "0644"
-
-- name: Install Linux Active Directory packages without downloading
-  ansible.builtin.shell: >-
-    apt-get --no-download
-    -o Dir::Cache::archives=/var/cache/netstrike-linux-domain-packages
-    install --yes /var/cache/netstrike-linux-domain-packages/*.deb
-  args:
-    chdir: /var/cache/netstrike-linux-domain-packages
-  register: linux_domain_package_install
-  changed_when: "'Setting up ' in linux_domain_package_install.stdout"
 
 - name: Check existing Linux domain membership
   ansible.builtin.command:
