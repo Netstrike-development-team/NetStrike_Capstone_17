@@ -1,9 +1,18 @@
 ---
 - name: Restart Windows Universal Forwarder
-  ansible.windows.win_service:
-    name: SplunkForwarder
-    state: restarted
-  register: windows_uf_restart
-  until: windows_uf_restart is succeeded
-  retries: 3
-  delay: 10
+  ansible.windows.win_powershell:
+    script: |
+      $ErrorActionPreference = 'Stop'
+      $service = Get-Service -Name SplunkForwarder -ErrorAction Stop
+      $timeout = [TimeSpan]::FromSeconds(120)
+
+      if ($service.Status -eq 'StartPending') {
+        $service.WaitForStatus('Running', $timeout)
+      }
+      # Do not send another stop request while a previous shutdown is pending.
+      if ($service.Status -ne 'Stopped' -and $service.Status -ne 'StopPending') {
+        $service.Stop()
+      }
+      $service.WaitForStatus('Stopped', $timeout)
+      $service.Start()
+      $service.WaitForStatus('Running', $timeout)

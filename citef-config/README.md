@@ -128,6 +128,13 @@ the Linux baseline, the controller portal, and controller telemetry.
 `SPLUNK01` is not configured by the project playbook. Do not treat the current
 playbook as complete range deployment.
 
+The Windows Universal Forwarder restart handler waits up to 120 seconds for
+shutdown before starting the service, then up to 120 seconds for it to reach
+Running. This accommodates slow shutdowns that can otherwise report
+`Cannot stop SplunkForwarder service on computer` even though the service stops
+shortly afterward. Timeouts and service-control errors still fail provisioning;
+check the Windows Service Control Manager and Splunk logs if they persist.
+
 The controller application now defaults to the full-play scenario. Set
 `controller_scenario_scope=identity` or `cloud` only for an explicitly scoped
 test. The controller and all forwarders receive the same `exercise_run_id`;
