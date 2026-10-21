@@ -69,8 +69,9 @@
     src: "{{ controller_source_root }}/{{ item }}"
     dest: "{{ controller_release_path }}/"
     owner: root
-    group: root
-    mode: preserve
+    group: netstrike
+    mode: "u=rwX,g=rX,o-rwx"
+    directory_mode: "0750"
   loop:
     - dashboard
     - modules
@@ -162,7 +163,6 @@
     dest: /opt/netstrike/current
     state: link
     force: true
-  notify: Restart NetStrike portal
 
 - name: Generate a self-signed controller certificate (no certificates supplied; testing only)
   ansible.builtin.command:
@@ -185,7 +185,6 @@
       - "subjectAltName=DNS:{{ controller.readiness_url | urlsplit('hostname') }},IP:{{ ansible_host }}"
     creates: /etc/netstrike/tls.crt
   when: controller.tls_certificate is not defined
-  notify: Restart NetStrike portal
 
 - name: Restrict the generated controller key
   ansible.builtin.file:
@@ -206,7 +205,6 @@
   loop:
     - {source: "{{ controller.tls_certificate }}", dest: /etc/netstrike/tls.crt}
     - {source: "{{ controller.tls_ca }}", dest: /etc/netstrike/tls-ca.pem}
-  notify: Restart NetStrike portal
 
 - name: Install the controller TLS private key
   when: controller.tls_certificate is defined
@@ -217,7 +215,6 @@
     group: netstrike
     mode: "0640"
   no_log: true
-  notify: Restart NetStrike portal
 
 - name: Verify the controller certificate chain
   when: controller.tls_certificate is defined
@@ -262,7 +259,6 @@
     group: root
     mode: "0600"
   no_log: true
-  notify: Restart NetStrike portal
 
 - name: Install the hardened systemd portal service
   ansible.builtin.template:
@@ -271,7 +267,6 @@
     owner: root
     group: root
     mode: "0644"
-  notify: Restart NetStrike portal
 
 - name: Create separate event spool directories readable by the staff group
   ansible.builtin.file:
@@ -300,22 +295,45 @@
     group: root
     mode: "0644"
 
-- name: Enable and start the NetStrike portal
+- name: Load the systemd units
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Read the current portal service state
+  ansible.builtin.systemd_service:
+    name: netstrike-portal.service
+  register: controller_portal_unit
+
+- name: Look for an existing run fixture
+  ansible.builtin.stat:
+    path: "/var/lib/netstrike/fixtures/{{ exercise_run_id }}"
+    follow: false
+  register: controller_run_fixture
+
+- name: Refuse to start a portal whose run was already started
+  ansible.builtin.fail:
+    msg: >-
+      The portal is not running but fixtures/{{ exercise_run_id }} already exists, so
+      startup preflight would reject this run ID. Configuration is applied only before the
+      first start. Use a new exercise_run_id on a clean snapshot (see
+      docs/full-play-deployment-binding.md#reset-and-next-run-admission).
+  when:
+    - controller_portal_unit.status.ActiveState | default('inactive') != 'active'
+    - controller_run_fixture.stat.exists
+
+- name: Warn that a running portal keeps its start-time configuration
+  ansible.builtin.debug:
+    msg: >-
+      The portal is already running; configuration changes written by this play are not
+      applied to it. Use a new exercise_run_id on a clean snapshot to apply them.
+  when: controller_portal_unit.status.ActiveState | default('inactive') == 'active'
+
+- name: Enable and start the NetStrike portal once
   ansible.builtin.systemd_service:
     name: netstrike-portal.service
     enabled: true
     state: started
-    daemon_reload: true
-
-- name: Enable and start the event spool exporter timer
-  ansible.builtin.systemd_service:
-    name: netstrike-event-spool.timer
-    enabled: true
-    state: started
-    daemon_reload: true
-
-- name: Apply changed portal configuration before readiness checks
-  ansible.builtin.meta: flush_handlers
+  when: controller_portal_unit.status.ActiveState | default('inactive') != 'active'
 
 - name: Resolve the controller DNS name to its listen address locally
   ansible.builtin.lineinfile:
@@ -345,7 +363,15 @@
   ansible.builtin.assert:
     that:
       - controller_local_readiness.json.scope == 'local_application_only'
+      - controller_local_readiness.json.run_id == exercise_run_id
       - controller_local_readiness.json.ready_to_prepare | bool
       - not (controller_local_readiness.json.external_readiness_verified | bool)
     fail_msg: "Controller baseline readiness failed; exercise admission remains blocked."
   no_log: true
+
+- name: Enable and start the event spool exporter timer
+  ansible.builtin.systemd_service:
+    name: netstrike-event-spool.timer
+    enabled: true
+    state: started
+    daemon_reload: true

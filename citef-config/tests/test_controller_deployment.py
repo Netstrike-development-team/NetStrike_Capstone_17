@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 from jinja2 import Environment, StrictUndefined
 
 from dashboard.app import create_default_app
-from dashboard.configuration import ConfigurationError, inspect_configuration
+from dashboard.configuration import ConfigurationError, _tokens, inspect_configuration
 from dashboard.service import PortalService
 from dashboard.store import PortalStore
 
@@ -22,6 +22,21 @@ TOKEN = "synthetic-deployment-staff-credential-only"
 RUN_ID = "deployment-run-20261018"
 SCENARIOS = {"identity": "identity-slice.v1.json", "cloud": "cloud-slice.v1.json",
              "full-play": "full-play.v1.json"}
+
+
+def test_example_secret_principals_are_valid_after_replacing_placeholders():
+    example = yaml.safe_load((ROOT / "citef-config/secrets.example.yml").read_text())
+    principals = example["controller_service_tokens"]
+    # Replace only credential placeholders, preserving the documented principals.
+    tokens = {f"synthetic-example-token-{index:032d}": record
+              for index, record in enumerate(principals.values())}
+    authenticator, roles = _tokens(json.dumps(tokens))
+    assert roles == {"facilitator", "soc_analyst"}
+    for token, record in tokens.items():
+        assert authenticator.authenticate(
+            "Bearer " + token, allowed_roles=roles,
+        ).role == record["role"]
+    assert principals[example["controller_readiness_token"]]["role"] == "facilitator"
 
 
 def render(tmp_path, scope=None):

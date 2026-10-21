@@ -1,0 +1,47 @@
+@startuml
+title NetStrike local network
+left to right direction
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+skinparam packageTitleAlignment left
+skinparam shadowing false
+
+actor "Facilitator / browser" as Browser
+
+package "Exercise network (192.168.0.0/24 | simcorp.test)" as Exercise {
+  node "ANSIBLE01\n192.168.0.36\nansible01.simcorp.test\nUbuntu Server 26.04.1 LTS | SSH :22\nOffline-bundle staging\nAnsible playbook runner\nDNS + NTP client" as Ansible
+  node "CTRL01\n192.168.0.27\nctrl01.simcorp.test\nUbuntu Server 26.04.1 LTS | SSH :22\nLogical assets: IDP01, HELPDESK01,\nCLOUD01, FILE01 (fixtures)\nController :8443\nDNS + NTP client\nSplunkForwarder" as CTRL
+  node "DC01\n192.168.0.70\ndc01.simcorp.test\nWindows | WinRM :5985\nAD DS (NTDS), DNS, W32Time\nSplunkForwarder, Sysmon64" as DC
+  node "FIN-WS01\n192.168.0.200\nfin-ws01.simcorp.test\nWindows | WinRM :5985\nDNS + NTP client\nSplunkForwarder, Sysmon64" as WS
+  node "SPLUNK01\n192.168.0.234\nsplunk01.simcorp.test\nCyber Range-provided Splunk host\nForwarder receiver :9997" as SPLUNK
+}
+
+Browser --> CTRL : HTTPS :8443
+Ansible --> CTRL : SSH :22
+Ansible --> DC : WinRM :5985
+Ansible --> WS : WinRM :5985
+Ansible --> SPLUNK
+
+CTRL --> DC : DNS :53\nNTP :123
+Ansible --> DC : DNS :53\nNTP :123
+WS --> DC : DNS :53\nNTP :123
+SPLUNK --> DC : DNS :53\nNTP :123
+
+CTRL --> SPLUNK : Splunk Forwarder :9997
+DC --> SPLUNK : Splunk Forwarder :9997
+WS --> SPLUNK : Splunk Forwarder :9997
+
+note bottom of Exercise
+  Manifest DNS and NTP servers: 192.168.0.70
+  Reverse DNS zone: 0.168.192.in-addr.arpa
+  Splunk REST URL: http://splunk01.simcorp.test
+  FILE01 is a logical fixture service on CTRL01, not a separate VM.
+end note
+
+note bottom
+  Based on citef-config/environment.local.json.
+  Connections represent manifest endpoints and configured
+  services and ports; actual firewall enforcement, participant
+  access policy, and external routes require Cyber Range approval.
+end note
+@enduml

@@ -39,6 +39,15 @@ an unsafe root or reused run fixture still fail closed. No fixture is adopted,
 cleared or overwritten to make startup pass. An already-running process is not
 verified by preflight, and restarting a retained run is not crash-resume.
 
+Ansible flushes pending portal changes before its ensure-started task, so the
+initial deployment does not start and immediately restart the same run. The
+handler reloads systemd before starting the new unit; source/dependency changes
+also request that handler. The unit pins one Uvicorn worker and disables automatic
+restart. Preserve state and use the restore/new-run procedure after process
+failure or when replacing an already-used deployment; these changes do not add
+crash-resume. The event spool timer starts only after authenticated local
+readiness confirms the configured run and baseline.
+
 ## Reset and next-run admission
 
 The binding is optional for standalone local applications but always supplied

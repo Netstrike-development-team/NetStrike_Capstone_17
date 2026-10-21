@@ -21,15 +21,39 @@ live in [exercise-design/07-offline-tool-bundle-inventory.md](exercise-design/07
 The workflow currently pins Linux x86_64/glibc, `CTRL01`, CPython `3.11.16`,
 and python-build-standalone release `20260924`. The wheelhouse covers shared,
 module 01 and modules 04–07, dashboard, and Ansible-controller/validator
-requirements. The bundle also contains the `modules/`, `dashboard/`,
-`citef-config/`, `shared/`, `orchestrator/`, `schemas/`, `offline-bundles/`, and `splunk/` source trees plus
-pinned Ansible Galaxy collections and manifest metadata. These pins and inputs are
-in `.github/workflows/offline-bundle.yml` and `citef-config/requirements.yml`.
+requirements. The builder uses Docker to resolve and include the complete
+Ubuntu 26.04 amd64 dependency set for Linux domain enrollment (`realmd`,
+`adcli`, and SSSD) and the DNS/time services (`systemd-resolved` and `chrony`).
+The Linux baseline installs these packages before configuring or starting the
+services. Rebuild older bundles that lack the DNS/time packages before using the
+updated role on minimal images. The bundle also contains the `modules/`, `dashboard/`,
+`citef-config/`, `shared/`, `orchestrator/`, `schemas/`, and `offline-bundles/` and `splunk` 
+source trees plus pinned Ansible Galaxy collections and manifest metadata. These pins 
+and inputs are in `.github/workflows/offline-bundle.yml` and `citef-config/requirements.yml`.
+
+For local builds, run `scripts/offline_bundle.py` as your normal user with
+access to Docker, not with `sudo`. APT's cache stays inside the disposable
+container; only readable `.deb` files are exported to the host. Older script
+versions placed APT's root/`_apt`-owned `partial/` directory in the host temporary
+directory, which could cause an `Operation not permitted` error during cleanup
+(`.../linux-packages/partial`). Update the script and rerun the build if you
+encounter that error.
+
+Offline Linux package verification copies the `.deb` files from the read-only
+bundle mount into the container's APT archive cache before installation. APT's
+`--no-download` mode requires cached archives; passing local paths outside that
+cache can fail with `Pathname to install is not absolute`. The deployment role
+likewise configures its staged package directory as APT's archive cache.
 
 ## 2. Verify and install
 
 The GitHub artifact is released as a ZIP containing the bundle archive. Extract
-it into the approved staging area:
+it into the approved staging area on `ANSIBLE01`, the Ansible execution host:
+
+The bundle's `destinations/CTRL01/` paths remain the application payload for
+`CTRL01`; they do not identify where Ansible runs. Run provisioning from the
+approved `citef-config/` source tree on `ANSIBLE01`, using the extracted bundle
+for its offline runtime, dependencies, and collections.
 
 ```sh
 unzip netstrike-offline-bundle-CTRL01-RUN_ID.zip
@@ -231,12 +255,16 @@ collection's name, version, license, owner, SHA-256, destination VM, offline
 installation method, and file path. `requirements.lock` carries pip's wheel
 hashes; `SHA256SUMS` is the integrity manifest for all bundle files.
 
-It does not include OS packages, VM images, credentials, or licensed products
-such as Splunk, Universal Forwarder, or Sysmon. The target must be compatible
-with Linux x86_64 and glibc. Review the `python-build-standalone` distribution
-terms before redistributing the bundle. The Actions artifact is temporary CI
-storage, not CITEF approval or an approved transfer channel. Test installation
-and exercise readiness on a clean, network-isolated target VM before delivery.
+It does not include general OS packages, VM images, credentials, or licensed
+products such as Splunk, Universal Forwarder, or Sysmon. It does include the
+Ubuntu 26.04 domain-enrollment package set, recorded by SHA-256 in
+`inventory.json` and installed by `linux_baseline` with apt downloads disabled.
+The target must be compatible with Linux x86_64 and glibc; domain-package
+installation requires Ubuntu 26.04. Review the `python-build-standalone`
+distribution terms before redistributing the bundle. The Actions artifact is
+temporary CI storage, not CITEF approval or an approved transfer channel. Test
+installation and exercise readiness on a clean, network-isolated target VM
+before delivery.
 
 For tool decisions, unresolved approvals, package inventories, and the clean-VM
 verification record, see [exercise-design/07-offline-tool-bundle-inventory.md](exercise-design/07-offline-tool-bundle-inventory.md).

@@ -67,8 +67,8 @@ index](exercise-design/README.md).
 | Document | What it covers |
 |---|---|
 | [Offline bundle build and install](offline-bundle.md) | Building, verifying, installing, and smoke-testing the Python bundle |
+| [2026-10-21 offline bundle and provisioning validation](offline-bundle-provisioning-validation.md) | Local VM layout, offline provisioning, snapshot timing, readiness, and telemetry evidence with limitations; not CITEF acceptance |
 | [Actual offline full-play smoke](offline-fullplay-smoke.md) | Kernel-isolated packaged runtime/HTTP workflow gate and evidence boundaries |
-| [2026-10-15 offline bundle and provisioning validation](20261015%20Offline%20Bundle%20and%20Provisioning%20Validation.md) | Local provisioning rehearsal, scope, and limitations; not CITEF acceptance |
 | [Splunk Sysmon ingestion](splunk-sysmon-ingest.md) | Configure the Splunk receiver and test Windows Sysmon forwarding |
 | [Application telemetry comparison](application-telemetry-comparison.md) | Read-only canonical ledger versus saved raw receiver-export comparison; not live ingestion or readiness proof |
 | [Offline application source check](offline-release-source-check.md) | Read-only selected-source comparison against a separately recorded commit/inventory digest, without Git or runtime dependencies |

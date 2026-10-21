@@ -97,12 +97,13 @@ Splunk separate while consolidating project-owned services.
 
 | Logical asset | Preferred placement | Can consolidate with | Confirmed CITEF mapping/specification |
 |---|---|---|---|
-| `CTRL01` | Linux amd64 controller and project services | `IDP01`, `HELPDESK01`, `CLOUD01`, `FILE01` | Proposed role; exact CITEF image/build and sizing pending |
-| `IDP01`, `HELPDESK01`, `CLOUD01` | Project services, not necessarily separate VMs | `CTRL01` | Logical services; placement and resource sizing to confirm |
-| `FILE01` | Disposable fixture storage | `CTRL01` or separate Linux VM | Proposed role; confirm storage and separation |
-| `DC01` | Separate Windows Server amd64 VM | None preferred | Proposed role; exact CITEF image/build and sizing pending; team configures AD, DNS, and telemetry |
-| `FIN-WS01` | Separate Windows 11 amd64 VM | None preferred | Proposed role; exact CITEF image/build and sizing pending; team configures telemetry and participant access |
-| `SPLUNK01` | Range-provided Splunk Enterprise VM | None preferred | Product/version confirmed above; underlying OS/image, sizing, and ownership pending |
+| `CTRL01` | Ubuntu Server 26.04.1 LTS amd64 controller and project services | `IDP01`, `HELPDESK01`, `CLOUD01`, `FILE01` | Selected local layout; range image approval and sizing remain pending |
+| `IDP01`, `HELPDESK01`, `CLOUD01` | Project services, not separate VMs | `CTRL01` | Logical services on `CTRL01` |
+| `FILE01` | Disposable fixture service on `CTRL01` | `CTRL01` | Consolidated; no separate VM |
+| `ANSIBLE01` | Separate Ubuntu Server 26.04.1 LTS amd64 VM | None | Ansible execution and offline-bundle staging |
+| `DC01` | Separate Windows Server 2025 Evaluation Version amd64 VM, build 26100.32230 | None | Selected local build; range image approval and sizing remain pending; team configures AD, DNS, and telemetry |
+| `FIN-WS01` | Separate Windows 11 Pro 26H2 amd64 VM, build 2300.9457 | None | Selected local build; range image approval and sizing remain pending; joins exercise AD and receives telemetry |
+| `SPLUNK01` | Cyber Range-provided Splunk host | None | Range supplies the host; final platform details and deployment validation remain range-coordinated |
 
 Confirm for every supplied VM:
 
@@ -120,7 +121,9 @@ are maintained in the
 [`citef-config` topology guide](../../citef-config/README.md) and example
 manifest. They are planning values, not CITEF allocations; this questionnaire
 tracks confirmation of exact image/build, sizing, network overlap, and
-approved assignments before inventory generation.
+approved assignments before inventory generation. Select a Windows 11 Pro or
+Enterprise image for `FIN-WS01`; Home edition cannot join the exercise AD
+domain.
 
 ### Network, DNS, and time
 

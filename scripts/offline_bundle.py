@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build and verify portable Python runtime and dependency bundles."""
+"""Build and verify portable Python and Linux package bundles."""
 
 from __future__ import annotations
 
@@ -23,6 +23,20 @@ from pathlib import Path, PurePosixPath
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CHECKSUMS_NAME = "SHA256SUMS"
 UNKNOWN = "UNKNOWN (review required)"
+LINUX_PACKAGE_IMAGE = "ubuntu:26.04"
+LINUX_DOMAIN_PACKAGES = (
+    "adcli",
+    "chrony",
+    "libnss-sss",
+    "libpam-sss",
+    "packagekit",
+    "realmd",
+    "samba-common-bin",
+    "sssd",
+    "sssd-ad",
+    "sssd-tools",
+    "systemd-resolved",
+)
 SOURCE_DIRECTORIES = (
     "modules",
     "dashboard",
@@ -465,6 +479,114 @@ def _copy_ansible_collection_archives(
     return sorted(inventory, key=lambda item: item["name"].lower())
 
 
+def _download_linux_packages(package_dir: Path) -> None:
+    package_dir.mkdir(parents=True, exist_ok=True)
+    command = [
+        "docker",
+        "run",
+        "--rm",
+        "--volume",
+        f"{package_dir.resolve()}:/packages",
+        LINUX_PACKAGE_IMAGE,
+        "/bin/sh",
+        "-ec",
+        # Keep APT's root/_apt-owned cache directories off the host bind mount.
+        "apt-get update && apt-get install --download-only "
+        "--no-install-recommends --yes "
+        + " ".join(LINUX_DOMAIN_PACKAGES)
+        + " && install -m 0644 /var/cache/apt/archives/*.deb /packages/",
+    ]
+    completed = subprocess.run(command, cwd=REPO_ROOT, check=False)
+    if completed.returncode:
+        raise RuntimeError(
+            f"Linux domain package download failed with exit code {completed.returncode}"
+        )
+    if not list(package_dir.glob("*.deb")):
+        raise ValueError("apt produced no Linux domain package archives")
+
+
+def _copy_linux_package_archives(
+    package_dir: Path, bundle: Path, destination_vm: str = "CTRL01"
+) -> list[dict]:
+    destination = bundle / "destinations" / destination_vm / "linux-packages"
+    destination.mkdir(parents=True, exist_ok=True)
+    inventory = []
+    names = set()
+    archives = sorted(package_dir.glob("*.deb"))
+    if not archives:
+        raise ValueError("no Linux domain package archives were provided")
+
+    for source in archives:
+        completed = subprocess.run(
+            [
+                "dpkg-deb",
+                "--show",
+                "--showformat=${Package}\\n${Version}\\n${Architecture}\\n${Maintainer}\\n",
+                str(source),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        fields = completed.stdout.splitlines()
+        if len(fields) not in (3, 4) or not all(value.strip() for value in fields[:3]):
+            raise ValueError(f"invalid Debian package metadata: {source.name}")
+        name, version, architecture = (value.strip() for value in fields[:3])
+        maintainer = fields[3].strip() if len(fields) == 4 else UNKNOWN
+        if architecture not in {"amd64", "all"}:
+            raise ValueError(f"unsupported Linux package architecture: {architecture}")
+        if name in names:
+            raise ValueError(f"duplicate Linux package archive: {name}")
+        names.add(name)
+
+        bundled = destination / source.name
+        shutil.copyfile(source, bundled)
+        inventory.append(
+            {
+                "name": name,
+                "version": version,
+                "architecture": architecture,
+                "source": f"Ubuntu {LINUX_PACKAGE_IMAGE} package repositories",
+                "license": UNKNOWN,
+                "owner": maintainer or UNKNOWN,
+                "sha256": _sha256(bundled),
+                "destination_vm": destination_vm,
+                "offline_install_method": (
+                    "Install the bundled .deb files with apt-get --no-download; "
+                    "all package dependencies are included."
+                ),
+                "file": bundled.relative_to(bundle).as_posix(),
+            }
+        )
+    missing = set(LINUX_DOMAIN_PACKAGES) - names
+    if missing:
+        raise ValueError(
+            "Linux package download is missing requested packages: "
+            + ", ".join(sorted(missing))
+        )
+    return sorted(inventory, key=lambda item: item["name"].lower())
+
+
+def _verify_linux_packages_offline(bundle: Path, destination_vm: str) -> None:
+    package_dir = bundle / "destinations" / destination_vm / "linux-packages"
+    command = [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--volume",
+        f"{package_dir.resolve()}:/packages:ro",
+        LINUX_PACKAGE_IMAGE,
+        "/bin/sh",
+        "-ec",
+        "install -m 0644 /packages/*.deb /var/cache/apt/archives/ && "
+        "apt-get install --no-download --no-install-recommends --yes "
+        "/var/cache/apt/archives/*.deb",
+    ]
+    subprocess.run(command, check=True)
+
+
 def _write_checksums(root: Path) -> None:
     entries = []
     for path in sorted(root.rglob("*")):
@@ -531,6 +653,11 @@ def build_bundle(args: argparse.Namespace) -> None:
         if not wheels:
             raise ValueError("pip produced no wheels; refusing to create an empty bundle")
         artifacts = _write_lock_and_inventory(wheels, wheelhouse, destination, bundle)
+        linux_package_download = Path(temporary) / "linux-packages"
+        _download_linux_packages(linux_package_download)
+        linux_packages = _copy_linux_package_archives(
+            linux_package_download, bundle, destination
+        )
         source_artifacts = _copy_source_directories(bundle, revision, destination)
         ansible_collections = _copy_ansible_collection_archives(
             args.ansible_collection_archive, bundle, destination
@@ -549,6 +676,8 @@ def build_bundle(args: argparse.Namespace) -> None:
                 path.relative_to(REPO_ROOT).as_posix() for path in requirement_files
             ],
             "artifacts": artifacts,
+            "linux_package_target": "Ubuntu 26.04 amd64",
+            "linux_packages": linux_packages,
             "source_artifacts": source_artifacts,
             "ansible_collections": ansible_collections,
         }
@@ -561,7 +690,8 @@ def build_bundle(args: argparse.Namespace) -> None:
 
     print(
         f"Created {output} with {len(artifacts)} Python packages, "
-        f"{len(source_artifacts)} source trees, and {len(ansible_collections)} "
+        f"{len(linux_packages)} Linux packages, {len(source_artifacts)} source trees, "
+        f"and {len(ansible_collections)} "
         f"Ansible collections for {destination}."
     )
 
@@ -603,6 +733,7 @@ def _verify_inventory_artifacts(bundle: Path, inventory: dict) -> None:
     destination = _validate_destination(inventory["destination_vm"])
     artifacts = [inventory["python_runtime"]]
     artifacts.extend(inventory.get("artifacts", []))
+    artifacts.extend(inventory.get("linux_packages", []))
     artifacts.extend(inventory.get("source_artifacts", []))
     artifacts.extend(inventory.get("ansible_collections", []))
     required_fields = (
@@ -655,6 +786,18 @@ def verify_bundle(args: argparse.Namespace) -> None:
         inventory = json.loads((bundle / "inventory.json").read_text(encoding="utf-8"))
         _verify_inventory_artifacts(bundle, inventory)
         destination = _validate_destination(inventory["destination_vm"])
+        if inventory.get("linux_package_target") != "Ubuntu 26.04 amd64":
+            raise ValueError("bundle has no supported Linux domain package target")
+        linux_packages = inventory.get("linux_packages", [])
+        package_names = {package["name"] for package in linux_packages}
+        missing_packages = set(LINUX_DOMAIN_PACKAGES) - package_names
+        if missing_packages:
+            raise ValueError(
+                "bundle is missing Linux domain packages: "
+                + ", ".join(sorted(missing_packages))
+            )
+        _verify_linux_packages_offline(bundle, destination)
+
         destination_dir = bundle / "destinations" / destination
         runtime = inventory["python_runtime"]
         expected_version = runtime["version"]

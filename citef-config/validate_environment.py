@@ -12,7 +12,7 @@ from pathlib import Path, PurePosixPath
 from urllib.parse import urlparse
 
 
-REQUIRED_HOSTS = {"CTRL01", "DC01", "FIN-WS01", "SPLUNK01"}
+REQUIRED_HOSTS = {"CTRL01", "ANSIBLE01", "DC01", "FIN-WS01", "SPLUNK01"}
 KNOWN_ASSETS = REQUIRED_HOSTS | {"FILE01", "IDP01", "HELPDESK01", "CLOUD01"}
 PROJECT_SERVICES = {"IDP01", "HELPDESK01", "CLOUD01"}
 SECRET_KEY = re.compile(r"(password|token|secret|private.?key|credential)", re.I)
@@ -182,10 +182,16 @@ def _validate_cross_fields(manifest: dict) -> None:
         )
         _require(address not in addresses, f"duplicate host address: {address}")
         addresses.add(address)
+        dns_name = host["dns_name"].lower().rstrip(".")
         if name != "SPLUNK01":
             _require(
-                host["dns_name"].lower().rstrip(".") == f"{name.lower()}.{domain}",
+                dns_name == f"{name.lower()}.{domain}",
                 f"{field}.dns_name must be {name.lower()}.{domain}",
+            )
+        else:
+            _require(
+                dns_name.endswith(f".{domain}") and dns_name != domain,
+                f"{field}.dns_name must be a fully qualified name within {domain}",
             )
         expected_connection = "ssh" if host["os_family"] == "linux" else "winrm"
         _require(
@@ -199,7 +205,7 @@ def _validate_cross_fields(manifest: dict) -> None:
             logical_to_host[asset] = name
         hosts[name] = host
 
-    _require(REQUIRED_HOSTS.issubset(hosts), "assets must include CTRL01, DC01, FIN-WS01, and SPLUNK01")
+    _require(REQUIRED_HOSTS.issubset(hosts), "assets must include CTRL01, ANSIBLE01, DC01, FIN-WS01, and SPLUNK01")
     dc_address = hosts["DC01"]["address"]
     _require(dc_address in network["dns_servers"], "network.dns_servers must include the planned DC01 DNS service address")
     for name in REQUIRED_HOSTS:
@@ -334,6 +340,7 @@ def render_inventory(manifest: dict) -> str:
     file_store = next(host["name"] for host in manifest["assets"] if "FILE01" in host["logical_assets"])
     groups = (
         ("controllers", "CTRL01"),
+        ("ansible_controller", "ANSIBLE01"),
         ("domain_controllers", "DC01"),
         ("workstations", "FIN-WS01"),
         ("splunk", "SPLUNK01"),

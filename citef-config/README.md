@@ -1,9 +1,9 @@
 # CITEF topology and Ansible workflow
 
-**Status (2026-10-15):** Proposed configuration; not approved for CITEF
-deployment. A local provisioning rehearsal is recorded in
-[the October 15 report](../docs/20261015%20Offline%20Bundle%20and%20Provisioning%20Validation.md).
-It did not configure or restore a CITEF environment.
+**Status (2026-10-21):** The local VM layout and provisioning workflow are
+recorded in [the October 21 report](../docs/offline-bundle-provisioning-validation.md).
+They are not CITEF deployment approval. The local rehearsal did not establish
+range network policy or consecutive restore acceptance.
 
 ## Sources of truth
 
@@ -18,30 +18,75 @@ It did not configure or restore a CITEF environment.
   exercise-wide stop, snapshot, and admission rules. This guide covers the
   Ansible-specific manifest and playbooks only.
 
-## Proposed topology
+## Selected layout and example topology
 
 ![Proposed NetStrike CITEF example environment network diagram](../docs/network-diagram.png)
+
+The [local network diagram](../docs/network-diagram-local.png) reflects
+`environment.local.json`.
 
 The diagram and addresses below are planning examples, not approved host
 assignments, routes, firewall rules, or management interfaces. Confirm the
 images, network ranges, and access paths with CITEF before using the manifest.
 
-| Asset | Proposed placement | Example address and DNS | Purpose |
+| Asset | Selected placement | Example address and DNS | Purpose |
 |---|---|---|---|
-| `CTRL01` | Ubuntu Server 26.04 amd64 | `10.77.0.11`, `ctrl01.simcorp.test` | Staff controller, portal, event ledger, action adapters, and mock services |
-| `DC01` | Windows Server 2025 LTSC | `10.77.0.10`, `dc01.simcorp.test` | Synthetic AD, internal DNS, and isolated time source |
-| `FIN-WS01` | Windows 11 26H2 | `10.77.0.20`, `fin-ws01.simcorp.test` | Participant endpoint and telemetry |
-| `SPLUNK01` | CITEF-managed Splunk Enterprise 10.0.1 | `10.77.0.30`, `splunk01.simcorp.test` | SIEM; 10 GB/day ingestion and 300 GB disk limits |
-| `FILE01` | Logical service on `CTRL01`, or a separately approved Linux VM | Not assigned | Disposable fixtures and controller-managed known-good copy |
+| `CTRL01` | Ubuntu Server 26.04.1 LTS amd64 | `10.77.0.11`, `ctrl01.simcorp.test` | Staff controller, portal, event ledger, action adapters, and mock services |
+| `ANSIBLE01` | Ubuntu Server 26.04.1 LTS amd64 | `10.77.0.36`, `ansible01.simcorp.test` | Ansible execution host and offline-bundle staging |
+| `DC01` | Windows Server 2025 Evaluation Version, build 26100.32230 | `10.77.0.10`, `dc01.simcorp.test` | Synthetic AD, internal DNS, and isolated time source |
+| `FIN-WS01` | Windows 11 Pro 26H2, build 2300.9457 | `10.77.0.20`, `fin-ws01.simcorp.test` | Participant endpoint and telemetry |
+| `SPLUNK01` | Cyber Range-provided Splunk host | `10.77.0.30`, `splunk01.simcorp.test` | SIEM and forwarder receiver; range-provided, not a project-provisioned VM |
+| `FILE01` | Logical service on `CTRL01`; not a separate VM | `ctrl01.simcorp.test` | Disposable fixtures and controller-managed known-good copy |
 
-The local October 15 rehearsal used Ubuntu Server 26.04.1 for `CTRL01` and
-Windows 11 26H2 for `FIN-WS01`. Its personal-network addresses and credentials
-are intentionally omitted. `DC01` and the Splunk host were not configured in
-that rehearsal. The tested images do not establish CITEF image approval.
+`ANSIBLE01` stages the offline bundle and runs provisioning playbooks; it is
+excluded from Linux baseline provisioning so the playbook runner is not
+reconfigured as a target.
 
-Keep the controller, domain controller, participant endpoint, and Splunk on
-separate VMs. Project-owned Linux services may share `CTRL01`; `FILE01` may be
-separate only if CITEF approves the additional VM. The example exercise subnet
+`FIN-WS01` uses Windows Pro because it joins the exercise Active Directory
+domain; Windows Home cannot join a domain. The local rehearsal used the stated
+builds. Since application dependencies are bundled offline, other available
+images of the required operating systems may be used; the team also has its own
+ISOs if needed. Coordinate range image selection with Zian/Julien.
+
+Linux hosts managed by `linux_baseline` also join the exercise domain. The role
+installs the offline-bundled Ubuntu 26.04 `realmd`, `adcli`, and SSSD packages
+without network access, places the computer account in
+`identity_baseline.search_base_dn`, and uses the injected domain administrator
+credentials without logging the password.
+
+For Linux joins, bare administrator names and `DOMAIN\user` or `DOMAIN/user`
+names are passed to `realmd` as an unqualified account name so it selects the
+discovered Kerberos realm. The expression generates the backslash separator
+from its ASCII code (92), avoiding both helper-variable dependencies and
+Ansible's escaping of backslashes inside Jinja string literals.
+Both single and repeated backslash separators are accepted, so
+`SIMCORP\Administrator` is passed as `Administrator`, not as
+`SIMCORP\Administrator` or `SIMCORPAdministrator`.
+Explicit `user@REALM` names are preserved; their realm
+must match the directory's Kerberos configuration (normally the uppercase AD
+DNS domain). Appending a lowercase DNS domain to an account can cause
+`Couldn't get kerberos ticket: KDC reply did not match expectations`.
+The `Password for ...:` prompt is normal even when the password is supplied
+through stdin; it does not by itself indicate missing credentials. If a join
+still fails, inspect `sudo journalctl -u realmd --since '15 minutes ago' --no-pager`
+on the target for the underlying error rather than disabling password redaction.
+
+The same offline package bundle includes `systemd-resolved` and `chrony`.
+The role installs these prerequisites before configuring or starting DNS and time
+services; minimal images need not have them preinstalled. If provisioning reports
+`Could not find the requested service systemd-resolved`, use this updated role
+and rebuild and transfer the offline bundle so it contains both packages and
+their dependencies. Older bundles containing only membership packages are
+insufficient; no Internet-enabled package installation is required on the target.
+
+The October 21 local rehearsal exercised the stated OS builds on its
+personal-network addresses. It used Docker-hosted Splunk rather than a
+Cyber-Range-provided Splunk VM and does not establish CITEF image approval.
+
+Keep the portal/controller (`CTRL01`), Ansible runner (`ANSIBLE01`), domain
+controller, participant endpoint, and Cyber Range-provided Splunk host
+separate. `FILE01` is a logical service on `CTRL01`, not a separate VM.
+The example exercise subnet
 is `10.77.0.0/24`; `10.77.1.0/24` is a proposed management subnet. Confirm
 non-overlap and actual allocations with CITEF. Scenario VMs must not have an
 Internet path.
@@ -119,6 +164,19 @@ the Linux baseline, the controller portal, and controller telemetry.
 `SPLUNK01` is not configured by the project playbook. Do not treat the current
 playbook as complete range deployment.
 
+The domain-controller role always sets DC01's system clock from the Ansible
+controller's UTC clock before installing Active Directory, then configures
+DC01's time service according to the selected NTP settings. Keep the controller
+clock accurate before provisioning; this is a one-time clock set, not ongoing
+synchronization.
+
+The Windows Universal Forwarder restart handler waits up to 120 seconds for
+shutdown before starting the service, then up to 120 seconds for it to reach
+Running. This accommodates slow shutdowns that can otherwise report
+`Cannot stop SplunkForwarder service on computer` even though the service stops
+shortly afterward. Timeouts and service-control errors still fail provisioning;
+check the Windows Service Control Manager and Splunk logs if they persist.
+
 The controller application now defaults to the full-play scenario. Set
 `controller_scenario_scope=identity` or `cloud` only for an explicitly scoped
 test. The controller and all forwarders receive the same `exercise_run_id`;
@@ -132,10 +190,72 @@ Inject `controller_service_tokens`, `controller_readiness_token`,
 readiness token must be one of the service-token keys and must map to a
 facilitator role. Keep secrets outside Git or encrypt them with Ansible Vault.
 
-By default, the controller role reads the extracted bundle from
+The role renders the current [portal environment contract](../docs/application-deployment-contract.md):
+the persistent database, reviewed profile and selected scenario paths, scope
+guard, shared portal/host run ID, dedicated disposable impact root, audit key,
+exact SSO origin allowlist and role-token mapping. Set
+`controller.sso_allowed_origins` in the approved environment manifest to the
+actual browser-facing origin, including its scheme and port. This is a JSON
+array in the application environment, not a comma-separated string.
+
+### Portal startup and recovery
+
+Ansible writes all portal configuration, source, dependencies, certificates and
+the systemd unit **before** the first start, then starts the portal once. The
+role never restarts a portal: full-play startup creates the run fixture, and a
+second start with the same run ID would correctly fail `disposable_impact_root`
+validation. If the portal is already running, a rerun leaves it untouched and
+warns that changed configuration is not applied; if it is stopped and the run
+fixture already exists, the play fails with a request for a new run ID.
+The spool timer is enabled only after authenticated local readiness confirms
+the requested `exercise_run_id` and application baseline.
+
+The unit runs read-only preflight under the same service identity, working
+directory and protected environment as the application, then starts exactly
+one Uvicorn worker. Automatic process restart is disabled: neither full-play
+fixtures nor the retained SQLite ledger implement crash-resume. A failed
+process must not loop or erase evidence to manufacture a successful startup.
+Changing configuration/source on an existing run is not a supported live
+upgrade; use the approved clean-snapshot/new-run procedure.
+
+For a startup failure, inspect `sudo systemctl status netstrike-portal.service`
+and `sudo journalctl -u netstrike-portal.service -b --no-pager` on CTRL01.
+Preflight prints safe blocker IDs; do not print or copy
+`/etc/netstrike/controller.env` into diagnostics. In particular,
+`portal_credentials` with `invalid_or_unavailable` means the entire
+`NETSTRIKE_PORTAL_TOKENS` mapping was rejected, not necessarily that the
+facilitator token is wrong. Every token must map to exactly `actor_id` and a
+supported `role`; the generic role `participant` is not supported. Use
+`incident_lead`, `soc_analyst`, `identity_responder`, `endpoint_responder`, or
+`cloud_responder` for participant access. One unsupported role blocks startup
+even when the readiness token correctly maps to `facilitator`. Token values
+must contain 24–4096 characters without whitespace/control characters; the
+deployment readiness token requires at least 32 characters. Replace the
+placeholders in `secrets.example.yml` before use. Editing the local secrets
+file alone does not change the deployed systemd environment.
+
+Also,
+`disposable_impact_root` after an earlier startup can mean that the run fixture
+already exists, not that another environment variable is missing. Preserve the
+database, fixtures and spools, export available staff evidence, then follow the
+[coordinated restore and new-run handoff](../docs/full-play-deployment-binding.md#reset-and-next-run-admission).
+Do not remove state, reuse a run ID, or bypass preflight to force a restart.
+Local readiness still does not prove Splunk ingestion or authorize admission.
+
+### Bundle selection and provisioning command
+
+By default, the controller and Linux baseline roles read the extracted bundle from
 `<offline_artifacts.directory>/netstrike-offline-bundle`. If it is extracted
 elsewhere, set `controller_offline_bundle_root` to the absolute path containing
-`runtime/` and `destinations/`. Run Ansible from this directory so its pinned
+`runtime/` and `destinations/` on the machine running Ansible, for example
+`/srv/offline-bundle/netstrike-offline-bundle`. Both roles honor this override;
+Linux domain packages are read from
+`<controller_offline_bundle_root>/destinations/CTRL01/linux-packages/`.
+Keep `offline_artifacts.directory` pointing at the separately staged vendor
+artifacts (such as `offline-bundles/CITEF-RELEASE`); it need not be changed to
+select the extracted bundle. Supply the override in your extra-vars file or as
+`--extra-vars "controller_offline_bundle_root=/srv/offline-bundle/netstrike-offline-bundle"`.
+Run Ansible on `ANSIBLE01` from this directory so its pinned
 configuration, roles, collections, and local manifest are used:
 
 ```sh
@@ -178,8 +298,22 @@ and run-correlated Splunk probes. It excludes `DC01` and does not currently
 verify the AD identity baseline. The local application endpoint explicitly
 reports application-only scope; it is not a CITEF readiness certificate.
 
-After the approved snapshot restore, inject the secrets and use a new unique
-run ID:
+For transfer, download the reviewed offline bundle and `scripts/provision.sh`
+from GitHub on a connected staging machine, then transfer them by USB to
+`ANSIBLE01`. Copy `secrets.example.yml` to a private `secrets.yml`, replace all
+placeholders with approved values, and supply that file as the fourth
+positional argument to `provision.sh` (the wrapper passes it to Ansible as
+`--extra-vars "@secrets.yml"`). Do not commit the filled secrets file or put
+credentials in command-line values, shell history, or logs.
+
+Capture the clean snapshot after OS installation and SSH/WinRM setup, but
+before running the Ansible playbook. The snapshot intentionally does not wait
+for baseline or telemetry checks: those can vary between exercises and are
+re-applied and validated after restore. The Cyber Range operator restores the
+snapshot; Patrick coordinates the process and escalates a failed or unavailable
+restore/readiness result to Zian/Julien.
+
+After the snapshot restore, inject the secrets and use a new unique run ID:
 
 ```sh
 ansible-playbook \
@@ -192,8 +326,10 @@ ansible-playbook \
 Separately verify network policy, snapshot identity, and emergency-stop
 reachability with the range operator. A local manifest check, playbook result,
 or application readiness response cannot attest to those controls. The
-October 15 local rehearsal did not restore snapshots or establish CITEF
-readiness; see its [validation report](../docs/20261015%20Offline%20Bundle%20and%20Provisioning%20Validation.md).
+October 21 rehearsal restored and reprovisioned three times, but not
+consecutively because of shared-hardware resource constraints; this does not
+meet the consecutive-cycle acceptance criterion. See the
+[validation report](../docs/offline-bundle-provisioning-validation.md).
 
 ## Local tests
 

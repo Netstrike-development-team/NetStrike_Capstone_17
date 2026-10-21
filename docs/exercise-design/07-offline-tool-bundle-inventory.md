@@ -1,7 +1,7 @@
 # Offline tool bundle inventory and deployment decisions
 
 **Status (2026-10-15):** The merged CI workflow builds and verifies a
-versioned CTRL01 bundle containing the portable Python runtime, resolved wheels,
+versioned offline bundle containing the portable Python runtime, resolved wheels,
 project source trees, and pinned Ansible collections. `inventory.json` records
 per-artifact version, source, license, owner, SHA-256, destination VM, and offline
 installation method. A CI bundle is not Cyber Range deployment acceptance: compatible target images
@@ -22,7 +22,8 @@ Use [06-citef-requirements-and-approval.md](06-citef-requirements-and-approval.m
 for CITEF decisions and open environment requirements, the
 [CITEF configuration guide](../../citef-config/README.md) for Ansible commands,
 and the [offline bundle guide](../offline-bundle.md) for bundle build/install
-steps.
+steps. Stage and run the bundle on `ANSIBLE01`; `CTRL01` remains the portal and
+application host.
 
 ## Decision and approval gates
 
@@ -30,8 +31,8 @@ steps.
 |---|---|---|
 | Splunk Enterprise and capacity | CITEF-provided Splunk Enterprise 10.0.1; approved ingestion methods, index, limits, retention, and access boundary are recorded in the [CITEF decision log](06-citef-requirements-and-approval.md) | Patrick reports approximately 2 MB for 5,000 events over two hours. Application-event ingestion, one-day retention, and participant/facilitator RBAC are still being verified under [#102](https://github.com/Netstrike-development-team/NetStrike_Capstone_17/issues/102) |
 | Windows telemetry and forwarding | Selected Splunk Universal Forwarder 10.0.1 and Sysmon 15.22 | Patrick reports both staged archives matched the recorded hashes, and Sysmon events arrived in the `netstrike` index from Windows 11 26H2 (build 26300.9550, AMD64); screenshot evidence is linked in the test record. No additional licensing or transfer review is considered applicable per Patrick |
-| Controller, portal, and state | Python 3.11, FastAPI, SQLite; the bundle includes the declared dashboard, validator, controller, shared, and module wheels | Build inventory records exact wheel/runtime versions, license/author metadata, checksums, CTRL01 destination, and offline install method |
-| Ansible and remote configuration | `ansible-core` requirement `>=2.16,<3`; `ansible.windows` 3.8.0 and `microsoft.ad` 1.12.1 | The October 7 record reports an Ansible deployment and collection-checksum pass, but does not itemize host or readiness results. The October 15 rehearsal had two failures on hosts it did not configure; see the [dated report](../20261015%20Offline%20Bundle%20and%20Provisioning%20Validation.md) |
+| Controller, portal, and state | Python 3.11, FastAPI, SQLite; the bundle includes the declared dashboard, validator, controller, shared, and module wheels | Build inventory records exact wheel/runtime versions, license/author metadata, checksums, CTRL01 application destination, and offline install method |
+| Ansible and remote configuration | `ansible-core` requirement `>=2.16,<3`; `ansible.windows` 3.8.0 and `microsoft.ad` 1.12.1; run from `ANSIBLE01` | The October 7 record reports an Ansible deployment and collection-checksum pass, but does not itemize host or readiness results. The October 15 rehearsal had two failures on hosts it did not configure; see the [dated report](../20261015%20Offline%20Bundle%20and%20Provisioning%20Validation.md) |
 | Snapshot restoration and readiness | Snapshot restoration has not been demonstrated; the October 15 rehearsal created blank-state snapshots but did not restore them | Three restore/readiness cycles remain required under [#103](https://github.com/Netstrike-development-team/NetStrike_Capstone_17/issues/103) |
 | Commercial EDR | Not included in the MVP | Sysmon and Windows logs provide endpoint evidence; restricted NetStrike exercise controls simulate limited containment actions and must be described as exercise controls, not production EDR |
 | Mock cloud and impact | Project-owned stateful Python mock; safe marker files and reversible file moves | Keep the mock local; limit changes to allowlisted disposable fixtures; do not add real cloud APIs or encryption |

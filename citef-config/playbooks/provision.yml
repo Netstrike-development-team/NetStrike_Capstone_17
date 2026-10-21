@@ -24,17 +24,22 @@
           - "{{ playbook_dir }}/../environment.json"
       changed_when: false
 
-    # Windows Server (DC01) is unavailable; re-enable with the DC play below.
-    # - name: Require domain bootstrap and membership credentials
-    #   ansible.builtin.assert:
-    #     that:
-    #       - ad_safe_mode_password is defined
-    #       - ad_safe_mode_password | length >= 16
-    #       - domain_admin_user is defined
-    #       - domain_admin_password is defined
-    #       - domain_admin_password | length >= 16
-    #     fail_msg: "Inject domain bootstrap credentials using the approved Ansible Vault or secret manager."
-    #   no_log: true
+    - name: Require domain bootstrap and membership credentials
+      ansible.builtin.assert:
+        that:
+          - ad_safe_mode_password is defined
+          - ad_safe_mode_password | length >= 16
+          - ad_safe_mode_password is search('[A-Za-z]')
+          - ad_safe_mode_password is search('[0-9]')
+          - ad_safe_mode_password is search('[^A-Za-z0-9]')
+          - domain_admin_user is defined
+          - domain_admin_password is defined
+          - domain_admin_password | length >= 16
+          - domain_admin_password is search('[A-Za-z]')
+          - domain_admin_password is search('[0-9]')
+          - domain_admin_password is search('[^A-Za-z0-9]')
+        fail_msg: "Inject domain bootstrap credentials using the approved Ansible Vault or secret manager. Passwords must be 16+ characters with lowercase, numbers and symbols."
+      no_log: true
 
     - name: Validate all staged vendor artifacts before any host changes
       ansible.builtin.include_tasks: ../tasks/validate_artifacts.yml
@@ -64,14 +69,14 @@
       loop_control:
         label: "{{ item.item.name }}"
 
-# Windows Server (DC01) is unavailable; re-enable when it is.
-# - name: Install the domain controller and establish internal DNS/time
-#   hosts: domain_controllers
-#   gather_facts: false
-#   vars_files:
-#     - "{{ playbook_dir }}/../environment.json"
-#   roles:
-#     - domain_controller
+- name: Install the domain controller and establish internal DNS/time
+  hosts: domain_controllers
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/../environment.json"
+  roles:
+    - host_identity
+    - domain_controller
 
 - name: Configure domain clients and Windows security telemetry
   hosts: workstations
@@ -79,10 +84,11 @@
   vars_files:
     - "{{ playbook_dir }}/../environment.json"
   roles:
+    - host_identity
     - windows_client
 
 - name: Configure Windows security telemetry on domain hosts
-  hosts: windows_hosts:!domain_controllers
+  hosts: windows_hosts
   gather_facts: false
   vars_files:
     - "{{ playbook_dir }}/../environment.json"
@@ -90,8 +96,8 @@
     - windows_telemetry
 
 - name: Configure isolated DNS/time on Linux hosts
-  # SPLUNK01 is already provisioned; leave it out of host configuration.
-  hosts: linux_hosts:!splunk
+  # The Ansible runner and SPLUNK01 are managed separately from Linux targets.
+  hosts: linux_hosts:!splunk:!ansible_controller
   gather_facts: false
   become: true
   # su allocates a pty that merges stderr into module stdout; keep Python warnings out of the JSON stream
@@ -101,6 +107,7 @@
   vars_files:
     - "{{ playbook_dir }}/../environment.json"
   roles:
+    - host_identity
     - linux_baseline
   tasks:
     - name: Configure Splunk forwarder on the controller host
