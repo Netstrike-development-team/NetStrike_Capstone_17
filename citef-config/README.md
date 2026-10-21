@@ -22,6 +22,9 @@ It did not configure or restore a CITEF environment.
 
 ![Proposed NetStrike CITEF example environment network diagram](../docs/network-diagram.png)
 
+The [local network diagram](../docs/network-diagram-local.png) reflects
+`environment.local.json`.
+
 The diagram and addresses below are planning examples, not approved host
 assignments, routes, firewall rules, or management interfaces. Confirm the
 images, network ranges, and access paths with CITEF before using the manifest.
@@ -29,10 +32,15 @@ images, network ranges, and access paths with CITEF before using the manifest.
 | Asset | Proposed placement | Example address and DNS | Purpose |
 |---|---|---|---|
 | `CTRL01` | Ubuntu Server 26.04 amd64 | `10.77.0.11`, `ctrl01.simcorp.test` | Staff controller, portal, event ledger, action adapters, and mock services |
+| `ANSIBLE01` | Ubuntu Server 26.04 amd64, same OS as `CTRL01` | `10.77.0.36`, `ansible01.simcorp.test` | Ansible execution host and offline-bundle staging |
 | `DC01` | Windows Server 2025 LTSC | `10.77.0.10`, `dc01.simcorp.test` | Synthetic AD, internal DNS, and isolated time source |
 | `FIN-WS01` | Windows 11 Pro or Enterprise 26H2 | `10.77.0.20`, `fin-ws01.simcorp.test` | Participant endpoint and telemetry |
 | `SPLUNK01` | CITEF-managed Splunk Enterprise 10.0.1 | `10.77.0.30`, `splunk01.simcorp.test` | SIEM; 10 GB/day ingestion and 300 GB disk limits |
 | `FILE01` | Logical service on `CTRL01`, or a separately approved Linux VM | Not assigned | Disposable fixtures and controller-managed known-good copy |
+
+`ANSIBLE01` stages the offline bundle and runs provisioning playbooks; it is
+excluded from Linux baseline provisioning so the playbook runner is not
+reconfigured as a target.
 
 `FIN-WS01` must use Windows Pro or Enterprise because it joins the exercise
 Active Directory domain; Windows Home cannot join a domain.
@@ -67,9 +75,10 @@ Windows 11 26H2 for `FIN-WS01`. Its personal-network addresses and credentials
 are intentionally omitted. `DC01` and the Splunk host were not configured in
 that rehearsal. The tested images do not establish CITEF image approval.
 
-Keep the controller, domain controller, participant endpoint, and Splunk on
-separate VMs. Project-owned Linux services may share `CTRL01`; `FILE01` may be
-separate only if CITEF approves the additional VM. The example exercise subnet
+Keep the portal/controller (`CTRL01`), Ansible runner (`ANSIBLE01`), domain
+controller, participant endpoint, and Splunk on separate VMs. Project-owned
+Linux services may share `CTRL01`; `FILE01` may be separate only if CITEF
+approves the additional VM. The example exercise subnet
 is `10.77.0.0/24`; `10.77.1.0/24` is a proposed management subnet. Confirm
 non-overlap and actual allocations with CITEF. Scenario VMs must not have an
 Internet path.
@@ -225,7 +234,7 @@ Keep `offline_artifacts.directory` pointing at the separately staged vendor
 artifacts (such as `offline-bundles/CITEF-RELEASE`); it need not be changed to
 select the extracted bundle. Supply the override in your extra-vars file or as
 `--extra-vars "controller_offline_bundle_root=/srv/offline-bundle/netstrike-offline-bundle"`.
-Run Ansible from this directory so its pinned
+Run Ansible on `ANSIBLE01` from this directory so its pinned
 configuration, roles, collections, and local manifest are used:
 
 ```sh

@@ -64,7 +64,7 @@
           "required_services"
         ],
         "properties": {
-          "name": {"enum": ["CTRL01", "DC01", "FIN-WS01", "SPLUNK01", "FILE01"]},
+          "name": {"enum": ["CTRL01", "ANSIBLE01", "DC01", "FIN-WS01", "SPLUNK01", "FILE01"]},
           "address": {"type": "string", "format": "ipv4"},
           "dns_name": {"type": "string", "minLength": 1},
           "os_family": {"enum": ["linux", "windows"]},
@@ -75,7 +75,7 @@
             "minItems": 1,
             "uniqueItems": true,
             "items": {
-              "enum": ["CTRL01", "DC01", "FIN-WS01", "SPLUNK01", "FILE01", "IDP01", "HELPDESK01", "CLOUD01"]
+              "enum": ["CTRL01", "ANSIBLE01", "DC01", "FIN-WS01", "SPLUNK01", "FILE01", "IDP01", "HELPDESK01", "CLOUD01"]
             }
           },
           "required_services": {

@@ -13,6 +13,7 @@ SPEC.loader.exec_module(validate_environment)
 def valid_manifest():
     hosts = [
         ("CTRL01", "10.77.0.10", "linux", "ssh", ["CTRL01", "IDP01", "HELPDESK01", "CLOUD01", "FILE01"]),
+        ("ANSIBLE01", "10.77.0.14", "linux", "ssh", ["ANSIBLE01"]),
         ("DC01", "10.77.0.11", "windows", "winrm", ["DC01"]),
         ("FIN-WS01", "10.77.0.12", "windows", "winrm", ["FIN-WS01"]),
         ("SPLUNK01", "10.77.0.13", "linux", "ssh", ["SPLUNK01"]),
@@ -99,14 +100,14 @@ class ValidateEnvironmentTests(unittest.TestCase):
 
     def test_splunk_dns_name_can_be_customized(self):
         manifest = valid_manifest()
-        manifest["assets"][3]["dns_name"] = "splunk-lab.simcorp.test"
+        manifest["assets"][4]["dns_name"] = "splunk-lab.simcorp.test"
         manifest["splunk"]["forwarder_receiver"]["host"] = "splunk-lab.simcorp.test"
         manifest["splunk"]["rest_url"] = "https://splunk-lab.simcorp.test:8089"
         self.assertEqual(validate_environment.validate_manifest(manifest), manifest)
 
     def test_splunk_dns_name_must_be_in_the_authoritative_zone(self):
         manifest = valid_manifest()
-        manifest["assets"][3]["dns_name"] = "192.168.0.234"
+        manifest["assets"][4]["dns_name"] = "192.168.0.234"
         manifest["splunk"]["forwarder_receiver"]["host"] = "192.168.0.234"
         with self.assertRaisesRegex(validate_environment.ManifestError, "fully qualified name within"):
             validate_environment.validate_manifest(manifest)
@@ -144,7 +145,9 @@ class ValidateEnvironmentTests(unittest.TestCase):
     def test_inventory_is_generated_from_approved_targets(self):
         inventory = validate_environment.render_inventory(valid_manifest())
         self.assertIn("ctrl01 ansible_host=10.77.0.10", inventory)
+        self.assertIn("ansible01 ansible_host=10.77.0.14", inventory)
         self.assertIn("[file_store]\nctrl01", inventory)
+        self.assertIn("[ansible_controller]\nansible01", inventory)
         self.assertIn("[domain_controllers]\ndc01", inventory)
         self.assertIn(
             "ansible_connection=winrm ansible_winrm_transport=ntlm "

@@ -47,7 +47,12 @@ likewise configures its staged package directory as APT's archive cache.
 ## 2. Verify and install
 
 The GitHub artifact is released as a ZIP containing the bundle archive. Extract
-it into the approved staging area:
+it into the approved staging area on `ANSIBLE01`, the Ansible execution host:
+
+The bundle's `destinations/CTRL01/` paths remain the application payload for
+`CTRL01`; they do not identify where Ansible runs. Run provisioning from the
+approved `citef-config/` source tree on `ANSIBLE01`, using the extracted bundle
+for its offline runtime, dependencies, and collections.
 
 ```sh
 unzip netstrike-offline-bundle-CTRL01-RUN_ID.zip

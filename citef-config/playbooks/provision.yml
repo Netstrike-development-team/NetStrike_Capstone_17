@@ -96,8 +96,8 @@
     - windows_telemetry
 
 - name: Configure isolated DNS/time on Linux hosts
-  # SPLUNK01 is already provisioned; leave it out of host configuration.
-  hosts: linux_hosts:!splunk
+  # The Ansible runner and SPLUNK01 are managed separately from Linux targets.
+  hosts: linux_hosts:!splunk:!ansible_controller
   gather_facts: false
   become: true
   # su allocates a pty that merges stderr into module stdout; keep Python warnings out of the JSON stream

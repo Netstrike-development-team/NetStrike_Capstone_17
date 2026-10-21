@@ -20,6 +20,16 @@
       "required_services": ["ssh", "systemd-resolved", "chrony", "SplunkForwarder", "netstrike-portal.service"]
     },
     {
+      "name": "ANSIBLE01",
+      "address": "192.168.0.36",
+      "dns_name": "ansible01.simcorp.test",
+      "os_family": "linux",
+      "connection": "ssh",
+      "port": 22,
+      "logical_assets": ["ANSIBLE01"],
+      "required_services": ["ssh"]
+    },
+    {
       "name": "DC01",
       "address": "192.168.0.70",
       "dns_name": "dc01.simcorp.test",
