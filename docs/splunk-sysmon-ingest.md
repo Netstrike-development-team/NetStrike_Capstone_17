@@ -57,6 +57,15 @@ and SHA-256 values before provisioning. The manifest also records and verifies
 the published Universal Forwarder SHA-512 checksums for both the Linux DEB and
 Windows MSI.
 
+On a fresh Windows installation, the MSI uses `LAUNCHSPLUNK=0` so the forwarder
+does not start until its inputs, outputs, service account, event-channel access,
+and Sysmon setup are complete. The role then flushes the single, deduplicated
+forwarder handler before ensuring the service is enabled and running. This
+starts a stopped forwarder without stopping it first, or restarts an already
+running forwarder once if configuration changed. Unchanged runs do not restart
+the forwarder. The handler waits up to 120 seconds for each pending service
+transition; service-control errors and timeouts still fail provisioning.
+
 After provisioning, run the purpose-built ingestion check with a new run ID.
 It creates a harmless `cmd.exe` process marker on each approved Windows host,
 confirms that Sysmon recorded Event ID 1 locally, then searches Splunk for that
