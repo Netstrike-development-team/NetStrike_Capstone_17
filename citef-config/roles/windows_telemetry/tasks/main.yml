@@ -57,6 +57,7 @@
     arguments:
       - /quiet
       - AGREETOLICENSE=Yes
+      - LAUNCHSPLUNK=0
     creates_service: SplunkForwarder
 
 #- name: Stage the approved Splunk receiver CA
@@ -267,12 +268,6 @@
       }
   notify: Restart Windows Universal Forwarder
 
-- name: Ensure the Universal Forwarder service is enabled and running
-  ansible.windows.win_service:
-    name: SplunkForwarder
-    start_mode: auto
-    state: started
-
 - name: Ensure Sysmon service is enabled and running
   ansible.windows.win_service:
     name: Sysmon64
@@ -290,3 +285,12 @@
       - sysmon_service.services | length == 1
       - sysmon_service.services[0].state == "started"
     fail_msg: "Sysmon did not reach its required running state."
+
+- name: Apply all pending forwarder changes before ensuring the service is running
+  ansible.builtin.meta: flush_handlers
+
+- name: Ensure the Universal Forwarder service is enabled and running
+  ansible.windows.win_service:
+    name: SplunkForwarder
+    start_mode: auto
+    state: started

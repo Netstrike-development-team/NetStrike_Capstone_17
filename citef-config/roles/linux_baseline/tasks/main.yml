@@ -143,8 +143,9 @@
       - realm
       - join
       - --user
+      # ASCII 92 is a backslash; avoid Ansible's escaping of Jinja literals.
       - >-
-        {{ domain_admin_user | replace('\\', '/') | split('/') | last }}
+        {{ domain_admin_user | replace('%c' | format(92), '/') | split('/') | last }}
       - --computer-ou
       - "{{ identity_baseline.search_base_dn }}"
       - --client-software=sssd

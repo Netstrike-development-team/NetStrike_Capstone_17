@@ -79,11 +79,19 @@ Each exercise instance must have a versioned baseline manifest containing:
 
 ## Snapshot restoration and readiness procedure
 
-The Cyber Range will restore the scenario VMs from clean snapshots between
-runs. There is no custom 20-minute reset target. The student team owns the
-topology, snapshot preparation, and validation workflow, with Zian and Julien
-available to help. Ansible remains responsible for configuration and automated
-readiness checks, not for reconstructing every VM after each delivery.
+Capture the clean snapshots after the OS is installed and each target's remote
+management path (SSH/WinRM) is enabled, but before running the Ansible
+playbook. This preserves a usable management path while keeping exercise
+baseline and telemetry changes out of the clean starting point; snapshots do
+not wait for baseline or telemetry checks. There is no custom 20-minute reset
+target.
+
+The Cyber Range operator performs hypervisor snapshot restoration. Patrick
+coordinates snapshot preparation and the restore/readiness workflow; Zian and
+Julien are the escalation contacts for an unavailable or failed restore. The
+student team owns topology and validation. Ansible reapplies configuration and
+runs automated readiness checks; it does not reconstruct every VM after each
+delivery. A failed readiness result blocks participant admission.
 
 ### 1. Close and archive the run
 
@@ -100,12 +108,12 @@ readiness checks, not for reconstructing every VM after each delivery.
 
 ### 3. Restore infrastructure
 
-Restore every scenario VM from its approved clean snapshot. Ansible then
-validates configuration and may apply documented idempotent corrections. If a
-snapshot fails or is unavailable, stop the next delivery and escalate to the
-technical contacts rather than attempting an unapproved partial reset.
+Restore every scenario VM from its clean snapshot. Ansible then configures the
+environment and performs the documented readiness checks. If a snapshot fails
+or is unavailable, stop the next delivery and escalate to Zian/Julien rather
+than attempting an unapproved partial reset.
 
-Snapshot contents must already include or restore:
+After Ansible provisioning, readiness verifies the required baseline state:
 
 - reset SimCorp identity passwords, factors, and sessions;
 - remove `svc-print-sync` and restore group memberships;
@@ -124,7 +132,10 @@ Snapshot contents must already include or restore:
 
 ### 5. Validate readiness
 
-The automated readiness check must fail unless:
+Run the Ansible `readiness.yml` playbook and verify that portal startup passes
+its local preflight/readiness gate. A failed readiness check must block
+participant admission; use the actionable blocker evidence in the playbook or
+portal logs to diagnose and escalate. The automated checks must fail unless:
 
 - all logical assets resolve to approved targets;
 - required services respond;
@@ -136,6 +147,9 @@ The automated readiness check must fail unless:
 - emergency stop is reachable by exercise staff.
 
 The facilitator signs the readiness record before admitting participants.
+Local readiness is not itself a Cyber Range network-policy or admission
+certificate; staff must separately verify range-owned controls and emergency
+stop reachability.
 
 ## Dry-run requirements
 

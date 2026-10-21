@@ -16,6 +16,7 @@ ROLES = Path(__file__).resolve().parents[1] / "roles"
         ("Administrator", "Administrator"),
         ("SIMCORP/Administrator", "Administrator"),
         ("SIMCORP\\Administrator", "Administrator"),
+        ("SIMCORP\\\\Administrator", "Administrator"),
         ("Administrator@SIMCORP.TEST", "Administrator@SIMCORP.TEST"),
         ("admin@alternate.test", "admin@alternate.test"),
     ],
@@ -27,6 +28,9 @@ def test_linux_join_lets_realmd_select_realm_for_unqualified_accounts(username, 
         if task["name"] == "Join Linux host to the exercise domain"
     )
     command = task["ansible.builtin.command"]
+    user_template = command["argv"][command["argv"].index("--user") + 1]
+    # Plain Jinja does not reproduce Ansible's escaping of backslashes in literals.
+    assert "\\" not in user_template
     engine = Environment(undefined=StrictUndefined)
     engine.filters["split"] = lambda value, separator: value.split(separator)
     variables = {
