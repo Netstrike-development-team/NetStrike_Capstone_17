@@ -67,6 +67,21 @@ def _validator():
     )
 
 
+def validate_audit(event):
+    """Validate the emitted learner contract, not canonical or search-result data."""
+    try:
+        _validator().validate(event)
+    except ValidationError:
+        raise ValueError("learner audit contract failed") from None
+    choices = [fields for _producer, service, operation, fields in RULES.values()
+               if service == event["service"] and operation == event["event_type"]]
+    if (not choices or not any(set(event["facts"]) <= fields for fields in choices)
+            or any(not _fact(key, value) for key, value in event["facts"].items())
+            or any((name + "_id" in event) != (name + "_type" in event)
+                   for name in ("actor", "target"))):
+        raise ValueError("unreviewed learner audit shape")
+
+
 def project(event):
     """Return only reviewed observable facts, or None for all other records.
 
@@ -102,8 +117,5 @@ def project(event):
             if not _fact(key, value):
                 raise ValueError("invalid approved audit fact")
             result["facts"][key] = deepcopy(value)
-    try:
-        _validator().validate(result)
-    except ValidationError:
-        raise ValueError("learner audit contract failed") from None
+    validate_audit(result)
     return result

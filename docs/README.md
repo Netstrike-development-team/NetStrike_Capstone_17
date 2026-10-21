@@ -41,6 +41,7 @@ index](exercise-design/README.md).
 | [Synthetic profile contract v1](synthetic-profile-contract-v1.md) | Maintained synthetic identity input, validation, and runtime configuration |
 | [Application-event spool](event-spool.md) | Local export of the canonical event ledger and the separate Splunk/visibility acceptance work |
 | [Learner-safe Splunk audit](learner-splunk-audit.md) | Separate fact-only SimCorp application evidence, participant investigation workflow and live handoff |
+| [Learner audit/export comparison](learner-telemetry-comparison.md) | Read-only comparison of published learner evidence with an independently supplied Splunk Raw Events export |
 | [Application readiness](application-readiness.md) | Local preflight, guarded preparation/start, and the boundary from range approval |
 | [Application deployment inputs](application-deployment-contract.md) | Offline read-only configuration inspection before startup side effects; not runtime/range readiness |
 | [Full-play deployment binding](full-play-deployment-binding.md) | Full-exercise selection, shared portal/host run intent and safe next-run admission after reset |

@@ -33,6 +33,7 @@ def load_result(root, name):
 def test_all_full_play_paths_produce_only_reviewed_learner_facts(full_package, tmp_path):
     from dashboard import event_spool, learner_spool
     from dashboard.learner_audit import RULES, project
+    from dashboard.learner_check import compare
     from dashboard.store import PortalStore
 
     manifest = json.loads((full_package / "manifest.json").read_text())
@@ -42,6 +43,15 @@ def test_all_full_play_paths_produce_only_reviewed_learner_facts(full_package, t
         events = [json.loads(line) for line in (full_package / case["case_id"] / "events.jsonl").read_text().splitlines()]
         projections = [result for event in events if (result := project(event)) is not None]
         assert projections
+        root = tmp_path / case["case_id"]
+        root.mkdir()
+        expected, observed = root / "expected-learner.jsonl", root / "synthetic-observed.jsonl"
+        expected.write_text("".join(json.dumps(row) + "\n" for row in projections))
+        observed.write_text("".join(json.dumps(row) + "\n" for row in reversed(projections)))
+        scope = {"exercise_id": events[0]["exercise_id"], "run_id": events[0]["run_id"]}
+        assert compare(expected, observed, **scope)["supplied_files_match"]
+        observed.write_text("".join(json.dumps(row) + "\n" for row in projections[:-1]))
+        assert compare(expected, observed, **scope)["missing_events"] == 1
         original = {event["event_id"]: event for event in events}
         assert len(projections) == len({event["event_id"] for event in projections})
         for result in projections:
@@ -56,8 +66,6 @@ def test_all_full_play_paths_produce_only_reviewed_learner_facts(full_package, t
             assert "approved_policy_hash" not in result["facts"]
         # Exercise the real two-stage publication for both end-to-end extremes.
         if case["case_id"] in {"path-pass-pass-pass-pass", "path-miss-miss-miss-miss"}:
-            root = tmp_path / case["case_id"]
-            root.mkdir()
             store = PortalStore(root / "portal.sqlite3")
             try:
                 for event in events:
