@@ -68,12 +68,14 @@ index](exercise-design/README.md).
 |---|---|
 | [Offline bundle build and install](offline-bundle.md) | Building, verifying, installing, and smoke-testing the Python bundle |
 | [2026-10-21 offline bundle and provisioning validation](offline-bundle-provisioning-validation.md) | Local VM layout, offline provisioning, snapshot timing, readiness, and telemetry evidence with limitations; not CITEF acceptance |
+| [Actual offline full-play smoke](offline-fullplay-smoke.md) | Kernel-isolated packaged runtime/HTTP workflow gate and evidence boundaries |
 | [Splunk Sysmon ingestion](splunk-sysmon-ingest.md) | Configure the Splunk receiver and test Windows Sysmon forwarding |
 | [Application telemetry comparison](application-telemetry-comparison.md) | Read-only canonical ledger versus saved raw receiver-export comparison; not live ingestion or readiness proof |
 | [Offline application source check](offline-release-source-check.md) | Read-only selected-source comparison against a separately recorded commit/inventory digest, without Git or runtime dependencies |
 | [Milestone promotion checklist](milestone-release-checklist.md) | Strict main/dev checks, source-matched evidence and prototype versus accepted-release gates |
 | [Application security gate](application-security-gate.md) | Blocking maintained-code scans, informational legacy boundary and recorder loopback request controls |
 | [CI test and coverage evidence](ci-evidence-checks.md) | Strict module test outcomes, retained coverage, no-tests boundaries and pinned Node-24 actions/CI image |
+| [CI/CD quality trends](ci-cd-overview.md) | Weekly averages since September 1: coverage, test-count-weighted pass rate, tests per run, workflow success, and evidence gaps |
 | [CITEF topology and Ansible workflow](../citef-config/README.md) | Proposed topology, local manifest, provisioning, and post-restore Ansible checks; not deployment approval |
 
 ## Application and component guides

@@ -200,4 +200,8 @@ def test_official_node24_pins_permissions_runner_and_runtime_contracts(name):
     if name == "offline-bundle.yml":
         assert data["env"] == {"DESTINATION": "CTRL01", "PYTHON_VERSION": "3.11.16",
                                "PYTHON_BUILD": "20260924"}
-        assert data.get("on", data.get(True)) == {"workflow_dispatch": None}
+        assert data.get("on", data.get(True)) == {
+            "workflow_dispatch": None,
+            "pull_request": {"branches": ["dev", "main"]},
+            "push": {"branches": ["dev", "main"]},
+        }
