@@ -172,8 +172,51 @@ def publication(work):
     with (work.parent / "learner-audit.jsonl").open("x", encoding="utf-8") as handle:
         for event in public:
             handle.write(json.dumps(event, sort_keys=True) + "\n")
+    comparison_smoke(work, public)
     return {"canonical_events": len(canonical), "learner_events": len(public),
-            "publication_retry_verified": True, "splunk_ingestion_verified": False}
+            "publication_retry_verified": True, "splunk_ingestion_verified": False,
+            "learner_comparison_verified": True}
+
+
+def comparison_smoke(work, public):
+    """Synthetic local receiver fixtures exercise the tool, never a real export."""
+    from copy import deepcopy  # pylint: disable=import-outside-toplevel
+    from .learner_check import compare, LearnerCheckError  # pylint: disable=import-outside-toplevel
+
+    root = work / "synthetic-comparison"
+    root.mkdir(mode=0o700)
+    receipts, faults = [], []
+    for index, run_id in enumerate((INITIAL, FRESH)):
+        records = [event for event in public if event["run_id"] == run_id]
+        expected, observed = root / f"expected-{index}.jsonl", root / f"observed-{index}.jsonl"
+        expected.write_text("".join(json.dumps(row) + "\n" for row in records))
+
+        def check_records(rows):
+            observed.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows))
+            return compare(expected, observed, exercise_id=EXERCISE, run_id=run_id)
+
+        receipt = check_records(list(reversed(records)))
+        require(receipt["supplied_files_match"] and not receipt["live_splunk_verified"], "learner_comparison_match")
+        receipts.append(receipt)
+        require(check_records(records[:-1])["missing_events"] == 1, "learner_comparison_missing")
+        require(check_records(records + [records[0]])["duplicate_events"] == 1, "learner_comparison_duplicate")
+        changed = deepcopy(records)
+        changed[0]["outcome"] = "failure" if changed[0]["outcome"] == "success" else "success"
+        require(check_records(changed)["changed_events"] == 1, "learner_comparison_changed")
+        wrong = deepcopy(records)
+        wrong[0]["run_id"] = "wrong-run-fixture"
+        try:
+            check_records(wrong)
+        except LearnerCheckError as error:
+            require(str(error) == "outside_selected_scope", "learner_comparison_scope")
+        else:
+            raise CheckFailure("learner_comparison_accepted_wrong_run")
+        faults.append({"missing_detected": True, "duplicate_detected": True,
+                       "changed_detected": True, "wrong_scope_refused": True})
+    save(work.parent / "learner-comparison-smoke.json", {
+        "evidence_origin": "synthetic_local_receiver_fixtures_not_splunk_exports",
+        "matches": receipts, "fault_checks": faults, "live_splunk_verified": False,
+        "external_readiness_verified": False})
 
 
 def run(bundle, output, revision, inventory_sha256):

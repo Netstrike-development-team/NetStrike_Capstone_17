@@ -28,5 +28,7 @@ def test_representative_http_journey_and_both_publications(tmp_path, monkeypatch
     assert result["application_reset_verified"] and result["archive_preserved"]
     assert published["canonical_events"] > published["learner_events"] > 0
     assert published["publication_retry_verified"]
+    assert published["learner_comparison_verified"]
+    assert (tmp_path / "learner-comparison-smoke.json").is_file()
     assert not published["splunk_ingestion_verified"]
     assert (tmp_path / "learner-audit.jsonl").is_file()

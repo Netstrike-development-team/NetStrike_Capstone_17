@@ -83,8 +83,10 @@ Windows Security/PowerShell/Sysmon and Linux inputs already come from
 - [ ] `NetStrike Access - Role definitions` output saved as evidence.
 - [ ] Participant searches return rows and show no answer labels.
 - [ ] Learner audit searches preserve assigned exercise/run/event IDs and typed
-      application facts; compare with the separate local projection, not the
-      canonical-contract `dashboard.telemetry_check` helper.
+      application facts; compare independent Raw Events with the separate local
+      projection using [the learner checker](../docs/learner-telemetry-comparison.md),
+      not the canonical-contract `dashboard.telemetry_check` helper. A file match
+      is not live search/role/ingestion acceptance.
 - [ ] Check for duplicates/gaps and compare with `python -m dashboard.telemetry_check` (#158).
 - [ ] `NetStrike Health - Ingestion volume by source` measured during a rehearsal.
 - [ ] Redeploy to a clean Splunk from this directory and re-run the checks; save evidence outside reverted VMs.
