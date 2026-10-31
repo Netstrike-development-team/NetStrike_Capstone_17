@@ -113,15 +113,14 @@ environment and performs the documented readiness checks. If a snapshot fails
 or is unavailable, stop the next delivery and escalate to Zian/Julien rather
 than attempting an unapproved partial reset.
 
-After Ansible provisioning, readiness verifies the required baseline state:
-
-- reset SimCorp identity passwords, factors, and sessions;
-- remove `svc-print-sync` and restore group memberships;
-- restore endpoint connectivity, approved processes, and configuration;
-- rebuild mock-cloud principals, keys, buckets, objects, and policy;
-- restore disposable files from the known-good copy and remove marker/ransom artifacts;
-- clear run-specific portal tickets and submissions from the active view; and
-- create a new `run_id` without altering the archived prior run.
+The current Ansible provisioning/readiness workflow checks configured inventory
+host identity and architecture, DNS, clock state, required services, the
+configured AD domain and users' enabled state/group memberships, local
+application readiness, and run-correlated Splunk probes. It does not reset or
+verify all of the broader exercise state below, including sessions/factors,
+mock-cloud state, disposable-file hashes, active actions, or emergency-stop
+reachability. Those remain separate implementation and acceptance checks; do
+not treat a passing Ansible play as proof of them.
 
 ### 4. Handle Splunk data
 
@@ -135,21 +134,25 @@ After Ansible provisioning, readiness verifies the required baseline state:
 Run the Ansible `readiness.yml` playbook and verify that portal startup passes
 its local preflight/readiness gate. A failed readiness check must block
 participant admission; use the actionable blocker evidence in the playbook or
-portal logs to diagnose and escalate. The automated checks must fail unless:
+portal logs to diagnose and escalate. Current automated checks cover inventory
+host identity, OS family, DNS, clocks, required services, the configured
+portion of the AD user baseline, local application readiness, and configured
+run-correlated Splunk probes. Full delivery acceptance must also verify the
+following independently; the current playbooks do not establish all of them:
 
-- all logical assets resolve to approved targets;
-- required services respond;
-- baseline identities, groups, factors, sessions, keys, policies, and files match the manifest;
-- no prior run action remains active;
-- disposable file hashes match;
-- the event ledger accepts the new `run_id`;
-- Splunk receives a test event from every required source; and
-- emergency stop is reachable by exercise staff.
+- actual target allocation and network policy, including isolation;
+- identity/session/factor state, mock-cloud keys and policies, and disposable-file hashes;
+- no prior run action remains active and the new run ID preserves prior evidence;
+- live forwarder configuration, all-source freshness, and participant/facilitator Splunk access; and
+- emergency stop is reachable by exercise staff and behaves as required.
 
 The facilitator signs the readiness record before admitting participants.
-Local readiness is not itself a Cyber Range network-policy or admission
-certificate; staff must separately verify range-owned controls and emergency
-stop reachability.
+The October 21 local rehearsal passed restore/reprovision/readiness three times,
+but not consecutively, and used Docker-hosted Splunk rather than a range-managed
+Splunk VM. It therefore does not meet the consecutive-cycle acceptance
+criterion. Local readiness is not itself a Cyber Range network-policy or
+admission certificate; staff must separately verify range-owned controls and
+emergency-stop reachability.
 
 ## Dry-run requirements
 
