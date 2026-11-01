@@ -20,8 +20,8 @@ modules 04–07, dashboard, and Ansible controller/validator requirements;
 pinned Galaxy collections; project source trees; and Ubuntu 26.04 amd64
 domain-enrollment (`realmd`, `adcli`, SSSD) and DNS/time (`systemd-resolved`,
 `chrony`) packages. The Linux baseline installs these packages offline.
-Rebuild bundles made before these DNS/time dependencies and the complete
-dependency-update closure were included. Current
+Rebuild bundles made before target-baseline-aware dependency updates were
+included. Current
 pins are in `.github/workflows/offline-bundle.yml` and
 `citef-config/requirements.yml`. Local builds use
 `scripts/offline_bundle.py` as a normal user with Docker access; the builder
@@ -31,15 +31,46 @@ builder (including systemd, GLib, and Python libraries) are downloaded at the
 repository-selected versions rather than omitted. The bundle also includes
 `udev`, `systemd-cryptsetup`, `systemd-sysv`, `libnss-systemd`, and
 `libpam-systemd` to keep the Ubuntu Server baseline's version-locked systemd
-packages consistent. Verification checks dependency closure without relying
-on the container's installed packages or repository indexes, then installs
-the archives with networking disabled.
+packages consistent.
+
+The builder also resolves the downloaded archives against the checked-in
+CTRL01 installed-package baseline, captured from the supplied November 1,
+2026 Ubuntu 26.04 amd64 package status. This pulls in companion updates for
+installed packages whose exact dependencies would otherwise break when their
+libraries are upgraded (for example util-linux, Perl, GLib introspection, and
+libc development packages). It repeats target and forward resolution until no
+new archives are added. It does not request a full OS upgrade, and package
+removal is prohibited during resolution and deployment.
+
+Verification checks both the complete forward dependency set and compatibility
+with that target baseline using only local archives, without repository
+indexes or networking, then exercises an offline install in the Ubuntu
+container. The baseline's solver metadata is included separately in
+`destinations/CTRL01/linux-package-baseline.status` and hash-recorded as
+`linux_package_baseline` in `inventory.json`. It is not copied into the
+target's dpkg database.
+
+For a different image or changed installed-package set, copy
+`/var/lib/dpkg/status` from the target to the build machine, then refresh the
+baseline before running CI:
+
+```sh
+python scripts/offline_bundle.py capture-linux-baseline \
+  --status /path/to/ctrl01-dpkg-status.txt \
+  --output citef-config/files/ubuntu-26.04-amd64-package-baseline.status
+```
+
+This keeps package names, versions, selections, and dependency/conflict fields,
+not descriptions, maintainers, or conffile paths. Commit the refreshed
+baseline with the intended build revision. A local build can instead pass
+`--linux-package-status /path/to/ctrl01-dpkg-status.txt`. Capture each
+distinct Linux target baseline before assuming one bundle supports it.
 
 If Linux AD installation reports conflicting exact-version dependencies,
 rebuild and transfer a fresh bundle instead of mixing archives from different
 builds or downloading individual libraries on the offline VM. Use a bundle
 built from repositories at least as current as the target's installed baseline;
-this is a dependency update, not a full OS upgrade or support for arbitrary
+this is a baseline-specific dependency update, not support for arbitrary
 additional packages. Provisioning clears its staged package directory before
 copying the new bundle and installs without downloads or recommended packages.
 
