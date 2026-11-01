@@ -10,7 +10,14 @@
 
 **Additional environment constraints confirmed:** October 2, 2026
 
-**Status:** Scope, audience, objectives, and safety approach accepted with changes. Tool details, final topology/configuration, and dates coordinated with Latifa remain follow-up work.
+**Status:** Scope, audience, objectives, and safety approach accepted with changes. The Cyber Range has delegated full control of exercise VM allocation, images, sizing, addresses, DNS/NTP, firewall rules, management paths, and participant access to the team. These are team configuration decisions, not outstanding Cyber Range approvals. Delivery dates and final exercise acceptance remain separate.
+
+**Authority clarification (Patrick, 2026-10-31):** Do not reopen "confirm the
+actual range configuration" as a task. Patrick selects and records the deployed
+configuration under the delegated authority; checking that deployed targets match
+that configuration is validation, not a new permission request. Zian/Julien remain
+support and escalation contacts. This authority does not imply that an untested
+deployment has passed readiness or that the exercise has final delivery sign-off.
 
 ## Purpose
 
@@ -82,12 +89,12 @@ confirmed environment, and achievable in the available play time.
 | Question | CITEF answer | Owner or source | Confirm by |
 |---|---|---|---|
 | Who is the primary technical contact and delivery-day escalation contact? | Zian and Julien are technical/escalation contacts | Julien Cassagne email, 2026-09-24 | Confirm delivery-day channel with Latifa |
-| Who owns VM creation, snapshots, restoration, and deletion? | Student team owns topology/provisioning/snapshots/restoration; Zian and Julien can assist | Julien Cassagne email, 2026-09-24 | Before first deployment |
+| Who owns VM creation, snapshots, restoration, and deletion? | Student team owns topology/provisioning/snapshots/restoration; Zian and Julien can assist | Julien Cassagne email, 2026-09-24; Patrick clarification, 2026-10-31 | Authority established |
 | How will students access CITEF during development and exercise delivery? | Pending | — | — |
-| What approval is required before deploying services, agents, or Ansible changes? | Pending | — | — |
-| Are participant accounts persistent or created per event? | Pending | — | — |
+| What approval is required before deploying services, agents, or Ansible changes? | Team controls exercise configuration under delegated authority; no additional per-change range approval is required within the exercise scope | Patrick clarification, 2026-10-31 | Authority established |
+| Are participant accounts persistent or created per event? | Team chooses and documents the exercise account lifecycle | Team | Configuration decision, not range approval |
 | What dates are available for the first deployment, rehearsal, and final exercise? | Coordinate with Latifa | Ashley | M1 follow-up |
-| How much lead time does CITEF require for topology or software changes? | Pending | — | — |
+| How much lead time does CITEF require for topology or software changes? | No separate approval gate for team-controlled exercise changes; coordinate support or delivery scheduling when needed | Patrick clarification, 2026-10-31 | Authority established |
 
 ### Compute and logical-asset mapping
 
@@ -97,15 +104,15 @@ Splunk separate while consolidating project-owned services.
 
 | Logical asset | Preferred placement | Can consolidate with | Confirmed CITEF mapping/specification |
 |---|---|---|---|
-| `CTRL01` | Ubuntu Server 26.04.1 LTS amd64 controller and project services | `IDP01`, `HELPDESK01`, `CLOUD01`, `FILE01` | Selected local layout; range image approval and sizing remain pending |
+| `CTRL01` | Ubuntu Server 26.04.1 LTS amd64 controller and project services | `IDP01`, `HELPDESK01`, `CLOUD01`, `FILE01` | Team-selected layout; team controls image and sizing |
 | `IDP01`, `HELPDESK01`, `CLOUD01` | Project services, not separate VMs | `CTRL01` | Logical services on `CTRL01` |
 | `FILE01` | Disposable fixture service on `CTRL01` | `CTRL01` | Consolidated; no separate VM |
 | `ANSIBLE01` | Separate Ubuntu Server 26.04.1 LTS amd64 VM | None | Ansible execution and offline-bundle staging |
-| `DC01` | Separate Windows Server 2025 Evaluation Version amd64 VM, build 26100.32230 | None | Selected local build; range image approval and sizing remain pending; team configures AD, DNS, and telemetry |
-| `FIN-WS01` | Separate Windows 11 Pro 26H2 amd64 VM, build 2300.9457 | None | Selected local build; range image approval and sizing remain pending; joins exercise AD and receives telemetry |
-| `SPLUNK01` | Cyber Range-provided Splunk host | None | Range supplies the host; final platform details and deployment validation remain range-coordinated |
+| `DC01` | Separate Windows Server 2025 Evaluation Version amd64 VM, build 26100.32230 | None | Team-selected build and sizing; team configures AD, DNS, and telemetry |
+| `FIN-WS01` | Separate Windows 11 Pro 26H2 amd64 VM, build 2300.9457 | None | Team-selected build and sizing; joins exercise AD and receives telemetry |
+| `SPLUNK01` | Cyber Range-provided Splunk host | None | Range supplies the host; team configures exercise indexes, roles, and searches within recorded license/capacity limits |
 
-Confirm for every supplied VM:
+Record and validate for every deployed VM:
 
 - operating system and version;
 - vCPU, RAM, and available disk;
@@ -116,12 +123,13 @@ Confirm for every supplied VM:
 
 The Cyber Range confirmed on October 2 that the team may create amd64 VMs and
 that Windows 11, Windows Server, and multiple Linux distributions are
-available. Candidate images, proposed network values, and host assignments
+available. Selected images, example network values, and host assignments
 are maintained in the
 [`citef-config` topology guide](../../citef-config/README.md) and example
-manifest. They are planning values, not CITEF allocations; this questionnaire
-tracks confirmation of exact image/build, sizing, network overlap, and
-approved assignments before inventory generation. Select a Windows 11 Pro or
+manifest. The team controls the actual allocations; example values are not proof
+of what was deployed. Record exact image/build, sizing, and non-conflicting
+assignments before inventory generation; no further CITEF allocation approval
+is required. Select a Windows 11 Pro or
 Enterprise image for `FIN-WS01`; Home edition cannot join the exercise AD
 domain.
 
@@ -129,21 +137,21 @@ domain.
 
 | Requirement | CITEF answer | Evidence/owner |
 |---|---|---|
-| Planning address allocation | Candidate CIDRs, domain, and host assignments are in the `citef-config` topology guide and example manifest. Verify no conflict and obtain CITEF approval before use. | Team proposal, 2026-10-02 |
+| Address allocation | Team controls CIDRs, domain, and host assignments; record selected values in the private deployment manifest and verify no conflict | Delegated authority; Patrick clarification, 2026-10-31 |
 | Internet access | Scenario VMs do not have Internet access | Cyber Range confirmation, 2026-10-02 |
-| Egress policy enforcement point | Deny-by-default is the delivery design; record how the platform enforces it and who verifies it | Team/Cyber Range before deployment |
-| Management paths that remain reachable during endpoint isolation | Pending | — |
-| DNS service and exercise domain | Team configures DNS through Ansible; the candidate domain, host, and address are in the `citef-config` topology guide. Confirm assignments and permitted DNS paths | Team proposal, 2026-10-02 |
-| Firewall changes the project may request or automate | Pending | — |
-| NTP/time source for Windows, Linux, controller, and Splunk | Team configures NTP through Ansible; the candidate source and domain-time design are in the `citef-config` topology guide. Confirm assignments and permitted time-service paths | Team proposal, 2026-10-02 |
-| Maximum expected clock skew | Pending | — |
-| Reserved address to represent the fictitious threat source | `203.0.113.77` proposed | — |
+| Isolation evidence | October 21 DNS blocking is accepted as sufficient isolation evidence for #79; it is not a technical claim that all direct-IP or other egress paths were blocked | Patrick acceptance decision, 2026-10-31 |
+| Management paths that remain reachable during endpoint isolation | Team selects and validates SSH/WinRM and staff control paths | Team |
+| DNS service and exercise domain | Team configures DNS through Ansible; DC01 and `simcorp.test` are the selected design | Team; no further range approval required |
+| Firewall changes the project may request or automate | Team controls exercise firewall rules; record and validate the configured policy | Delegated authority; Patrick clarification, 2026-10-31 |
+| NTP/time source for Windows, Linux, controller, and Splunk | Team configures NTP through Ansible; DC01 is the selected internal source | Team; no further range approval required |
+| Maximum expected clock skew | Team sets and validates `network.max_clock_skew_seconds` in the deployment manifest | Team |
+| Reserved address to represent the fictitious threat source | `203.0.113.77` selected documentation-only address | Team |
 
 Scenario VMs have no Internet access per the Cyber Range. Any dependencies,
 updates, or licensed artifacts must be staged and transferred through the
-approved offline process. The proposed `10.77.1.0/24` management subnet is a
-planning value only; confirm its allocation and permitted control paths with
-CITEF. Participants and simulation modules must not be able to use management
+team-controlled offline process. The example `10.77.1.0/24` management subnet is
+not a deployed-value certificate; the team selects its allocation and control
+paths. Participants and simulation modules must not be able to use management
 access.
 
 ### Splunk
@@ -151,19 +159,19 @@ access.
 | Question | CITEF answer | Evidence/owner |
 |---|---|---|
 | Splunk product, edition, and exact version | Splunk Enterprise 10.0.1 | Cyber Range confirmation, 2026-10-02 |
-| License and capacity constraints | Cyber Range educational license; maximum 10 GB ingestion per day and 300 GB disk, confirmed 2026-10-02. Confirm administration, retention, and source allocation | Cyber Range/Patrick |
-| VM owner and Splunk administrator | Pending | — |
-| Allowed ingestion methods | HTTP Event Collector (HEC) and Universal Forwarder are permitted; syslog/file-monitor approval not established | Patrick relayed CITEF permission, 2026-10-04 |
-| Available indexes and whether a dedicated index is permitted | Dedicated index `netstrike` may be created | Patrick relayed CITEF permission, 2026-10-04; creation/configuration pending |
+| License and capacity constraints | Cyber Range educational license; maximum 10 GB ingestion per day and 300 GB disk, confirmed 2026-10-02; team configures exercise sources and retention within those limits | Cyber Range/Patrick |
+| VM owner and Splunk administrator | Cyber Range supplies SPLUNK01; team administers exercise content under delegated authority | Cyber Range/Patrick |
+| Allowed ingestion methods | HTTP Event Collector (HEC) and Universal Forwarder are permitted; team configures the approved exercise collection paths | Patrick relayed CITEF permission, 2026-10-04 |
+| Available indexes and whether a dedicated index is permitted | Team may create exercise indexes, including `netstrike` and staff-only `netstrike_staff` | Patrick relayed CITEF permission, 2026-10-04; October 16 #102 update confirms both indexes and fresh redeploy |
 | Index name and retention | Dedicated index `netstrike`, one-day retention | Patrick relayed CITEF decision, 2026-10-04; apply and verify during deployment |
-| Required naming convention for source, sourcetype, and host | Pending | — |
-| Installed or permitted add-ons, especially Windows/Sysmon | Pending | — |
+| Required naming convention for source, sourcetype, and host | Team-defined in versioned Splunk content and forwarder templates; `XmlWinEventLog` confirmed in the October 16 test | Team/Patrick |
+| Installed or permitted add-ons, especially Windows/Sysmon | Team selects exercise add-ons within licensing and capacity limits | Team |
 | Data retention and cleanup policy | `netstrike` retention is one day; broader cleanup procedure pending | Patrick relayed CITEF decision, 2026-10-04 |
-| Participant role/search permissions and export limits | Separate participant and facilitator access; participant can investigate permitted exercise telemetry but cannot manage the simulation; facilitator manages simulation and Splunk configuration | Patrick relayed CITEF access decision, 2026-10-04; exact Splunk roles, search restrictions, and export limits to configure and test |
-| Facilitator management privileges | Facilitator manages simulation; participant is restricted to the investigation surface and authorized telemetry | Patrick relayed CITEF access decision, 2026-10-04; implement least-privilege RBAC and verify denial cases |
-| Saved-search/dashboard deployment process | Pending | — |
-| Ingestion latency target and health-monitoring method | Pending | — |
-| Whether previous-run data may remain if isolated by `run_id` | Pending | — |
+| Participant role/search permissions and export limits | Separate participant and facilitator access; participant can investigate permitted exercise telemetry but cannot manage the simulation; facilitator manages simulation and Splunk configuration | October 16 #102 update records allowed `netstrike` and forbidden `netstrike_staff` searches after removing the built-in `user` role; export limits remain team-defined |
+| Facilitator management privileges | Facilitator manages simulation; participant is restricted to the investigation surface and authorized telemetry | Versioned roles and October 16 local access/redeploy evidence; validate changed configurations separately |
+| Saved-search/dashboard deployment process | Deploy versioned `splunk/` content; October 16 report records fresh redeploy reproducing indexes, roles, and searches | Patrick |
+| Ingestion latency target and health-monitoring method | Team defines expected-source freshness and data-health searches; October 16 report records missing/stale-source checks | Team/Patrick |
+| Whether previous-run data may remain if isolated by `run_id` | Preserve prior evidence; separate runs by shared `run_id`, with no destructive index deletion required | Team |
 
 The project will not build a competing SIEM. It will provide normalized event
 producers, Splunk field mappings, health queries, learner views, solution-guide
@@ -171,8 +179,9 @@ searches, and export validation.
 
 The selected Windows telemetry stack is Splunk Universal Forwarder 10.0.1 and
 Sysmon 15.22. Use Universal Forwarder for Windows event-channel collection;
-HEC is an approved ingestion option for project events. Send to index
-`netstrike` with one-day retention. Participant access is for permitted
+HEC is an approved ingestion option for project events. Send host telemetry and
+participant-safe projections to `netstrike`, and canonical staff application
+events to `netstrike_staff`, with one-day retention. Participant access is for permitted
 simulation investigation; facilitator access includes simulation management.
 The CITEF permission does not by itself configure HEC, create the index, or
 prove event delivery.
@@ -232,12 +241,12 @@ delivery baseline.
 | Early access to CITEF VMs | Use local containers/processes and synthetic event fixtures for the vertical slice | Development only; CITEF rehearsal remains mandatory | Pending |
 | VM snapshots | Stop delivery, escalate to Zian/Julien, and restore or recreate an approved clean snapshot before admitting participants | Delivery is delayed; readiness must still pass | Approved operating rule |
 | Splunk during early development | Validate JSONL events and searches against fixtures; avoid building a new dashboard/SIEM | Development only; Splunk acceptance remains mandatory | Pending |
-| Dedicated Splunk index | Create index `netstrike`, retain data for one day, and isolate content by mandatory `exercise_id` and `run_id`; separate participant investigation from facilitator management | RBAC must prevent participant access to facilitator-only simulation data/actions | Permitted by CITEF (relayed 2026-10-04); configuration pending |
-| Splunk ingestion | Use Universal Forwarder for Windows event channels and HEC as the permitted project-event ingestion path; syslog/file-monitor permission is not established | Configure field mappings and test source health without exceeding the approved capacity | HEC and Universal Forwarder permitted by CITEF (relayed 2026-10-04); implementation/testing pending |
+| Dedicated Splunk index | Create `netstrike` and staff-only `netstrike_staff`, retain data for one day, and isolate content by mandatory `exercise_id` and `run_id` | RBAC must prevent participant access to facilitator-only simulation data/actions | Index authority established; October 16 #102 update records indexes, participant separation, and fresh redeploy |
+| Splunk ingestion | Use Universal Forwarder for Windows event channels and HEC or the configured Universal Forwarder monitored-file input for project events | Configure field mappings and test source health without exceeding the approved capacity | Team configures collection under delegated authority; October 16 and October 21 evidence is recorded |
 | Participant AD privileges | Route allowlisted actions through the participant portal and action adapter | Learners demonstrate decisions through the exercise control instead of unrestricted admin access | Pending |
 | Endpoint isolation tooling | Simulate isolation in the network/action adapter while preserving observable state | Must be clearly disclosed as simulated | Pending |
 | Full Windows/AD telemetry | Generate deterministic surrogate events from the controlled adapter, labelled as simulated | Reduces platform realism; evaluator must not claim native coverage | Pending |
-| Internet access | Pre-stage dependencies and use CITEF-approved offline artifact transfer | No effect during delivery; preparation lead time increases | Pending |
+| Internet access | Pre-stage dependencies and use team-controlled offline artifact transfer | No effect during delivery; preparation lead time increases | October 21 provisioning and DNS-blocking evidence accepted for #79 by Patrick, 2026-10-31 |
 | Public-cloud services | Stateful Python mock already in scope | No scope change | Approved baseline |
 | Safe real encryption | Marker and reversible move simulation already in scope | No scope change | Approved baseline |
 
@@ -275,6 +284,9 @@ Record only decisions that change, constrain, or formally confirm the baseline.
 | D-005 | 2026-09-24 | Total exercise duration is 2h50 | Cyber Range delivery constraint includes briefing and hotwash | Cyber Range | Charter, MSEL, guides |
 | D-006 | 2026-09-24 | Clean VM snapshots replace the 20-minute Ansible reset target | Cyber Range platform already supplies reliable restoration | Cyber Range/team | #79, #86, safety guide |
 | D-007 | 2026-09-24 | No commercial EDR dependency in MVP | Sysmon/Windows logs plus Splunk and safe controls meet the exercise objectives without a paid/cloud dependency | Team proposal | #35, #79 |
+| D-008 | 2026-10-21 | Capture clean snapshots after OS/SSH/WinRM setup, before Ansible; restore, reprovision, then validate baseline and telemetry | [Patrick's #103 record](https://github.com/Netstrike-development-team/NetStrike_Capstone_17/issues/103#issuecomment-6319080151); supersedes post-validation snapshot wording | Patrick | #79, #103, safety/reset and provisioning guides |
+| D-009 | 2026-10-31 | Range configuration authority is already delegated to the team; no further VM/network/DNS/NTP approval task | Patrick explicitly reconfirmed full control; deployed-value validation and final exercise sign-off remain distinct | Patrick | #79, #103, topology and deployment guides |
+| D-010 | 2026-10-31 | Accept October 21 provisioning and DNS blocking as #79 offline provisioning/isolation evidence for the tested configuration | Owner acceptance decision, not proof of all-path Internet-egress blocking or blanket validation of later source revisions | Patrick | #79, offline validation and bundle guides |
 
 ## Backlog re-estimation record
 
@@ -316,8 +328,8 @@ representative; this document should then link to that evidence.
 - [ ] Team decisions table has no pending rows.
 - [x] All five learning objectives are approved or amended in the charter.
 - [x] Named Cyber Range contacts are recorded.
-- [ ] Logical assets are mapped to confirmed CITEF resources.
-- [ ] Network, DNS, time, access, and automation constraints are recorded.
+- [x] Logical-asset allocation authority is established; the team selects and records the deployed mapping.
+- [x] Network, DNS, time, access, and automation configuration authority is delegated to the team.
 - [ ] Splunk version, ingestion, indexes, roles, retention, and add-ons are confirmed.
 - [ ] Windows/AD and endpoint capabilities are confirmed.
 - [x] Snapshot/restoration ownership is confirmed; emergency-stop delivery channel remains to confirm.

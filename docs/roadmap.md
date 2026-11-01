@@ -137,13 +137,16 @@ This is application progress, not live Cyber Range acceptance.
    Current #171 extends the same gate to [private help, evaluator review and archives](ui-walkthrough.md#help-evaluator-and-archive-browser-journey-171).
    Synthetic test-only judgments are not learner evaluation/calibration; deployment,
    approved content and representative acceptance remain with their existing owners.
-2. Patrick proves offline deployment, identity-slice Splunk ingestion, privacy and
-   snapshot/readiness on the approved range topology.
+2. Patrick records complete baseline and consecutive snapshot/readiness evidence
+   on the team-controlled topology. Range VM/network authority is already
+   delegated, and October 21 provisioning and DNS blocking are accepted #79
+   evidence. Reuse the #103 ingestion screenshots and #102 access/health checks.
    His October 7 #101 record identifies the offline dashboard bundle/source
    (`5553a3fce81b4f59981460259a8f933b9d4d4b69`), reports successful Ansible
    provisioning, and includes Windows Sysmon-to-Splunk evidence. #101 is closed.
-   #102–#104 remain open for canonical application evidence, RBAC/retention,
-   snapshot/readiness and representative rehearsals. The older tested source
+   #102/#103 are closed with their recorded evidence; #79 retains consecutive-restore
+   acceptance and #104 remains open for representative rehearsals. Complete
+   delivery-run application evidence is separate. The older tested source
    is not blanket verification of subsequent dev changes.
 3. Anna finalizes content and records representative learner usability/timing and
    evaluator calibration; Aya integrates approved content and fixes application gaps.

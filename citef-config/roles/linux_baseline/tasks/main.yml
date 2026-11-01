@@ -40,9 +40,9 @@
 
 - name: Install Linux Active Directory packages without downloading
   ansible.builtin.shell: >-
-    apt-get --no-download
+    apt-get --no-download --no-install-recommends
     -o Dir::Cache::archives=/var/cache/netstrike-linux-domain-packages
-    install --yes /var/cache/netstrike-linux-domain-packages/*.deb
+    install --yes --no-remove /var/cache/netstrike-linux-domain-packages/*.deb
   args:
     chdir: /var/cache/netstrike-linux-domain-packages
   register: linux_domain_package_install

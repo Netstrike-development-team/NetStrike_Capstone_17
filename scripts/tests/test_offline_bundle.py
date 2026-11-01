@@ -1,6 +1,7 @@
 import io
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -29,6 +30,81 @@ from scripts.offline_bundle import (
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "offline_bundle.py"
+
+
+def test_linux_package_status_preserves_solver_fields_only(tmp_path: Path):
+    source = tmp_path / "status"
+    source.write_text(
+        "Package: util-linux\nStatus: install ok installed\nArchitecture: amd64\n"
+        "Version: 2.41.3-3ubuntu2\nEssential: yes\n"
+        "Pre-Depends: libmount1 (= 2.41.3-3ubuntu2),\n libuuid1 (= 2.41.3-3ubuntu2)\n"
+        "Breaks: example (<< 1.0)\nProvides: mount-tool\n"
+        "Maintainer: Example\nDescription: Not needed\nConffiles:\n /etc/example 123\n\n"
+        "Package: removed\nStatus: deinstall ok config-files\n\n"
+        "Package: held-package\nStatus: hold ok installed\nArchitecture: all\n"
+        "Version: 1:2.0-1\n"
+    )
+    content = offline_bundle._linux_package_status(source)
+    assert "Pre-Depends: libmount1 (= 2.41.3-3ubuntu2)," in content
+    assert "libuuid1 (= 2.41.3-3ubuntu2)" in content
+    assert "Essential: yes" in content
+    assert "Breaks: example (<< 1.0)" in content
+    assert "Provides: mount-tool" in content
+    assert "Status: hold ok installed" in content
+    assert "Maintainer" not in content
+    assert "Description" not in content
+    assert "Conffiles" not in content
+    assert "removed" not in content
+    source.write_text(content)
+    assert offline_bundle._linux_package_status(source) == content
+
+
+@pytest.mark.parametrize(
+    "record",
+    [
+        "",
+        "Package: removed\nStatus: deinstall ok config-files\n",
+        "Package: unsafe/name\nStatus: install ok installed\nArchitecture: amd64\nVersion: 1\n",
+        "Package: example\nStatus: install ok installed\nArchitecture: arm64\nVersion: 1\n",
+        "Package: example\nStatus: install ok installed\nArchitecture: amd64\n",
+        "Package: example\nStatus: install ok unpacked\nArchitecture: amd64\nVersion: 1\n",
+        "Package: example\nPackage: duplicate\nStatus: install ok installed\n"
+        "Architecture: amd64\nVersion: 1\n",
+        ("Package: example\nStatus: install ok installed\nArchitecture: amd64\nVersion: 1\n\n") * 2,
+    ],
+)
+def test_linux_package_status_rejects_invalid_baselines(tmp_path: Path, record: str):
+    source = tmp_path / "status"
+    source.write_text(record)
+    with pytest.raises(ValueError, match="baseline"):
+        offline_bundle._linux_package_status(source)
+
+
+def test_checked_in_baseline_covers_reported_reverse_dependency_conflicts():
+    content = offline_bundle._linux_package_status(offline_bundle.LINUX_PACKAGE_BASELINE)
+    records = {
+        record["Package"]: record
+        for block in content.strip().split("\n\n")
+        for record in [offline_bundle.BytesParser(policy=offline_bundle.default).parsebytes(
+            block.encode()
+        )]
+    }
+    expected = {
+        "util-linux": ("Pre-Depends", "libmount1 (= 2.41.3-3ubuntu2)"),
+        "bsdextrautils": ("Depends", "libsmartcols1 (= 2.41.3-3ubuntu2)"),
+        "eject": ("Depends", "libmount1 (= 2.41.3-3ubuntu2)"),
+        "fdisk": ("Depends", "libmount1 (= 2.41.3-3ubuntu2)"),
+        "libfdisk1": ("Depends", "libblkid1 (= 2.41.3-3ubuntu2)"),
+        "util-linux-extra": ("Depends", "libsmartcols1 (= 2.41.3-3ubuntu2)"),
+        "uuid-runtime": ("Depends", "libuuid1 (= 2.41.3-3ubuntu2)"),
+        "gir1.2-glib-2.0": ("Depends", "libglib2.0-0t64 (= 2.88.0-1)"),
+        "libgirepository-2.0-0": ("Depends", "libglib2.0-0t64 (= 2.88.0-1)"),
+        "libc6-dev": ("Depends", "libc6 (= 2.43-2ubuntu2.3)"),
+        "libpython3.14": ("Depends", "libpython3.14-stdlib (= 3.14.4-1ubuntu0.1)"),
+        "perl": ("Depends", "perl-base (= 5.40.1-7ubuntu0.1)"),
+    }
+    for name, (field, dependency) in expected.items():
+        assert dependency in str(records[name][field])
 
 
 def make_bundle(tmp_path: Path, *, tamper: bool = False) -> Path:
@@ -225,7 +301,20 @@ def test_inventory_verification_checks_required_fields_and_hashes(
         "source_artifacts": source_inventory,
         "ansible_collections": [],
     }
+    baseline = bundle / "destinations/CTRL01/linux-package-baseline.status"
+    baseline.write_bytes(b"baseline")
+    inventory["linux_package_baseline"] = {
+        **inventory["python_runtime"],
+        "name": "Linux package baseline",
+        "file": baseline.relative_to(bundle).as_posix(),
+        "sha256": hashlib.sha256(b"baseline").hexdigest(),
+    }
     offline_bundle._verify_inventory_artifacts(bundle, inventory)
+
+    baseline.write_bytes(b"tampered")
+    with pytest.raises(ValueError, match="inventory SHA-256 mismatch: Linux package baseline"):
+        offline_bundle._verify_inventory_artifacts(bundle, inventory)
+    baseline.write_bytes(b"baseline")
 
     bundled_package = bundle / package_inventory[0]["file"]
     bundled_package.write_bytes(b"tampered")
@@ -257,9 +346,23 @@ def test_downloads_linux_domain_packages_for_pinned_ubuntu_image(
     offline_bundle._download_linux_packages(package_dir)
 
     assert commands[0][0:2] == ["docker", "run"]
+    assert commands[0][commands[0].index("--platform") + 1] == "linux/amd64"
     assert offline_bundle.LINUX_PACKAGE_IMAGE in commands[0]
     assert "apt-get install --download-only" in commands[0][-1]
-    assert {"systemd-resolved", "chrony"} <= set(offline_bundle.LINUX_DOMAIN_PACKAGES)
+    assert commands[0][-1].startswith(": > /tmp/netstrike-empty-status && ")
+    assert "-o Dir::State::status=/tmp/netstrike-empty-status" in commands[0][-1]
+    assert "--no-install-recommends" in commands[0][-1]
+    assert f"{offline_bundle.LINUX_PACKAGE_BASELINE.resolve()}:/baseline.status:ro" in commands[0]
+    assert "--no-remove -o Dir::State::status=/baseline.status" in commands[0][-1]
+    assert 'while [ "$package_count" -ne "$previous_count" ]' in commands[0][-1]
+    assert commands[0][-1].count("|| exit $?;") == 2
+    assert commands[0][-1].count(
+        "-o Dir::State::status=/tmp/netstrike-empty-status"
+    ) == 2
+    assert {
+        "systemd-resolved", "chrony", "udev", "systemd-cryptsetup",
+        "systemd-sysv", "libnss-systemd", "libpam-systemd",
+    } <= set(offline_bundle.LINUX_DOMAIN_PACKAGES)
     assert "systemd-resolved" in commands[0][-1].split()
     assert "chrony" in commands[0][-1].split()
     assert "Dir::Cache::archives=/packages" not in commands[0][-1]
@@ -298,9 +401,82 @@ def test_linux_package_download_rejects_missing_archives(
         offline_bundle._download_linux_packages(tmp_path / "packages")
 
 
+@pytest.mark.parametrize("failure", [None, "baseline", "closure"])
+def test_linux_package_resolution_repeats_and_propagates_solver_failures(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str | None
+):
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    tools = tmp_path / "bin"
+    tools.mkdir()
+    apt = tools / "apt-get"
+    apt.write_text(
+        f"#!{sys.executable}\n"
+        "import os, sys\n"
+        "from pathlib import Path\n"
+        "cache = Path(os.environ['TEST_CACHE'])\n"
+        "args = sys.argv[1:]\n"
+        "if '--download-only' not in args:\n"
+        "    sys.exit(0)\n"
+        "target = '-o' in args and 'Dir::State::status=/baseline.status' in args\n"
+        "local = any(arg.endswith('.deb') for arg in args)\n"
+        "phase = 'baseline' if target else 'closure' if local else 'initial'\n"
+        "with Path(os.environ['TEST_LOG']).open('a') as log:\n"
+        "    log.write(phase + '\\n')\n"
+        "if phase == os.environ['TEST_FAILURE']:\n"
+        "    sys.exit(100)\n"
+        "if phase == 'initial':\n"
+        "    (cache / 'seed.deb').touch()\n"
+        "if phase == 'baseline':\n"
+        "    (cache / 'companion.deb').touch()\n"
+        "    if (cache / 'leaf.deb').exists():\n"
+        "        (cache / 'reverse-leaf.deb').touch()\n"
+        "if phase == 'closure':\n"
+        "    (cache / 'leaf.deb').touch()\n"
+    )
+    apt.chmod(0o755)
+    package_dir = tmp_path / "packages"
+    log = tmp_path / "log"
+    real_run = subprocess.run
+
+    def run(command, **kwargs):
+        # Exercise the actual loop without touching the host APT cache.
+        script = command[-1].replace("/var/cache/apt/archives", str(cache))
+        script = script.replace("/tmp/netstrike-empty-status", str(tmp_path / "empty-status"))
+        script = script.replace("/packages/", str(package_dir) + "/")
+        env = dict(os.environ)
+        env.update(
+            PATH=str(tools) + os.pathsep + env["PATH"],
+            TEST_CACHE=str(cache),
+            TEST_LOG=str(log),
+            TEST_FAILURE=failure or "",
+        )
+        return real_run(["/bin/sh", "-ec", script], env=env, capture_output=True)
+
+    monkeypatch.setattr(offline_bundle.subprocess, "run", run)
+    if failure:
+        with pytest.raises(RuntimeError, match="exit code 100"):
+            offline_bundle._download_linux_packages(package_dir)
+        assert not list(package_dir.glob("*.deb"))
+    else:
+        offline_bundle._download_linux_packages(package_dir)
+        assert {path.name for path in package_dir.glob("*.deb")} == {
+            "seed.deb", "companion.deb", "leaf.deb", "reverse-leaf.deb"
+        }
+        assert log.read_text().splitlines() == [
+            "initial", "baseline", "closure", "baseline", "closure", "baseline", "closure"
+        ]
+
+
 def test_linux_package_verification_stages_archives_in_container_cache(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
+    baseline = tmp_path / "destinations/CTRL01/linux-package-baseline.status"
+    baseline.parent.mkdir(parents=True)
+    baseline.write_text(
+        "Package: util-linux\nStatus: install ok installed\n"
+        "Architecture: amd64\nVersion: 2.41.3-3ubuntu2\n"
+    )
     commands = []
 
     def run(command, **kwargs):
@@ -314,15 +490,139 @@ def test_linux_package_verification_stages_archives_in_container_cache(
 
     command, = commands
     assert command[:3] == ["docker", "run", "--rm"]
+    assert command[command.index("--platform") + 1] == "linux/amd64"
     assert command[command.index("--network") + 1] == "none"
     assert command[command.index("--volume") + 1] == (
         f"{tmp_path}/destinations/CTRL01/linux-packages:/packages:ro"
     )
+    assert f"{baseline}:/baseline.status:ro" in command
     assert command[-1] == (
+        "mkdir -p /tmp/netstrike-empty-lists && : > /tmp/netstrike-empty-status && "
+        "apt-get install --simulate --no-download --no-install-recommends --yes "
+        "-o Dir::State::lists=/tmp/netstrike-empty-lists "
+        "-o Dir::Cache::pkgcache= -o Dir::Cache::srcpkgcache= "
+        "-o Dir::State::status=/tmp/netstrike-empty-status /packages/*.deb && "
+        "apt-get install --simulate --no-download --no-install-recommends --yes "
+        "--no-remove -o Dir::State::lists=/tmp/netstrike-empty-lists "
+        "-o Dir::Cache::pkgcache= -o Dir::Cache::srcpkgcache= "
+        "-o Dir::State::status=/baseline.status /packages/*.deb && "
         "install -m 0644 /packages/*.deb /var/cache/apt/archives/ && "
-        "apt-get install --no-download --no-install-recommends --yes "
+        "apt-get install --no-download --no-install-recommends --yes --no-remove "
         "/var/cache/apt/archives/*.deb"
     )
+
+
+def test_linux_package_verification_reports_incomplete_dependency_closure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    baseline = tmp_path / "destinations/CTRL01/linux-package-baseline.status"
+    baseline.parent.mkdir(parents=True)
+    baseline.write_text(
+        "Package: util-linux\nStatus: install ok installed\n"
+        "Architecture: amd64\nVersion: 2.41.3-3ubuntu2\n"
+    )
+    def run(command, **kwargs):
+        raise subprocess.CalledProcessError(100, command)
+
+    monkeypatch.setattr(offline_bundle.subprocess, "run", run)
+
+    with pytest.raises(subprocess.CalledProcessError):
+        offline_bundle._verify_linux_packages_offline(tmp_path, "CTRL01")
+
+
+@pytest.mark.skipif(
+    shutil.which("apt-get") is None or shutil.which("dpkg-deb") is None,
+    reason="APT and dpkg-deb are required for the reverse-dependency regression",
+)
+def test_real_apt_rejects_missing_target_companion_update(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    destination = tmp_path / "destinations/CTRL01"
+    packages = destination / "linux-packages"
+    packages.mkdir(parents=True)
+    (destination / "linux-package-baseline.status").write_text(
+        "Package: netstrike-test-library\nStatus: install ok installed\n"
+        "Architecture: amd64\nVersion: 1.0\n\n"
+        "Package: netstrike-test-consumer\nStatus: install ok installed\n"
+        "Architecture: amd64\nVersion: 1.0\n"
+        "Depends: netstrike-test-library (= 1.0)\n\n"
+    )
+    real_run = subprocess.run
+
+    def make_package(name, depends=""):
+        source = tmp_path / name
+        control = source / "DEBIAN"
+        control.mkdir(parents=True)
+        (control / "control").write_text(
+            f"Package: {name}\nVersion: 2.0\nArchitecture: amd64\n"
+            "Maintainer: Example <example@example.invalid>\n"
+            "Description: Synthetic dependency regression\n"
+            + (f"Depends: {depends}\n" if depends else "")
+        )
+        real_run(
+            ["dpkg-deb", "--build", str(source), str(packages / f"{name}_2.0_amd64.deb")],
+            check=True, capture_output=True,
+        )
+
+    make_package("netstrike-test-library")
+    make_package("netstrike-test-ad", "netstrike-test-library (>= 2.0)")
+
+    def simulate(command, **kwargs):
+        script = command[-1].split("install -m 0644", 1)[0].removesuffix(" && ")
+        script = script.replace("/packages/", str(packages) + "/")
+        script = script.replace("/baseline.status", str(destination / "linux-package-baseline.status"))
+        script = script.replace("/tmp/netstrike-empty-lists", str(tmp_path / "empty-lists"))
+        script = script.replace("/tmp/netstrike-empty-status", str(tmp_path / "empty-status"))
+        return real_run(["/bin/sh", "-ec", script], check=True, capture_output=True)
+
+    monkeypatch.setattr(offline_bundle.subprocess, "run", simulate)
+    with pytest.raises(subprocess.CalledProcessError):
+        offline_bundle._verify_linux_packages_offline(tmp_path, "CTRL01")
+    make_package("netstrike-test-consumer", "netstrike-test-library (= 2.0)")
+    offline_bundle._verify_linux_packages_offline(tmp_path, "CTRL01")
+
+
+def test_linux_package_inventory_preserves_dependency_updates(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    package_dir = tmp_path / "packages"
+    package_dir.mkdir()
+    versions = {name: "1.0" for name in offline_bundle.LINUX_DOMAIN_PACKAGES}
+    versions.update(
+        {
+            "systemd": "259.9-0ubuntu0.1",
+            "systemd-cryptsetup": "259.9-0ubuntu0.1",
+            "systemd-sysv": "259.9-0ubuntu0.1",
+            "libnss-systemd": "259.9-0ubuntu0.1",
+            "libpam-systemd": "259.9-0ubuntu0.1",
+            "udev": "259.9-0ubuntu0.1",
+            "libsystemd0": "259.9-0ubuntu0.1",
+            "libsystemd-shared": "259.9-0ubuntu0.1",
+            "gir1.2-glib-2.0": "2.88.0-1ubuntu0.1",
+            "libgirepository-2.0-0": "2.88.0-1ubuntu0.1",
+            "libglib2.0-0t64": "2.88.0-1ubuntu0.1",
+            "libpython3.14": "3.14.4-1ubuntu0.2",
+            "libpython3.14-stdlib": "3.14.4-1ubuntu0.2",
+        }
+    )
+    for name, version in versions.items():
+        (package_dir / f"{name}_{version}_amd64.deb").write_bytes(b"package")
+
+    def package_metadata(command, **kwargs):
+        name, version, _ = Path(command[-1]).name.split("_")
+        return subprocess.CompletedProcess(
+            command, 0, stdout=f"{name}\n{version}\namd64\nUbuntu Maintainers\n"
+        )
+
+    monkeypatch.setattr(offline_bundle.subprocess, "run", package_metadata)
+    bundle = tmp_path / "bundle"
+
+    inventory = _copy_linux_package_archives(package_dir, bundle)
+
+    assert {entry["name"]: entry["version"] for entry in inventory} == versions
+    for entry in inventory:
+        assert (bundle / entry["file"]).read_bytes() == b"package"
+        assert entry["sha256"] == hashlib.sha256(b"package").hexdigest()
 
 
 @pytest.mark.parametrize("architecture", ["amd64", "all"])

@@ -1,0 +1,5720 @@
+Package: 3cpio
+Status: install ok installed
+Architecture: amd64
+Version: 0.14.0-1ubuntu1
+Depends: libc6 (>= 2.39), libgcc-s1 (>= 4.2)
+Recommends: zstd
+Suggests: bzip2, lz4, lzop, xz-utils
+
+Package: adduser
+Status: install ok installed
+Architecture: all
+Version: 3.153ubuntu1
+Multi-Arch: foreign
+Depends: passwd (>= 1:4.17.2-5)
+Suggests: liblocale-gettext-perl, perl, cron, quota, ecryptfs-utils (>= 67-1)
+
+Package: amd64-microcode
+Status: install ok installed
+Architecture: amd64
+Version: 3.20251202.1ubuntu2
+Depends: 3cpio
+Breaks: intel-microcode (<< 2)
+Recommends: dracut (>= 044) | initramfs-tools (>= 0.113~) | tiny-initramfs
+
+Package: apparmor
+Status: install ok installed
+Architecture: amd64
+Version: 5.0.2-0ubuntu1~26.04.1
+Depends: debconf, debconf (>= 0.5) | debconf-2.0, libapparmor1 (>= 5.0.1), libc6 (>= 2.38), libgcc-s1 (>= 3.3.1), libstdc++6 (>= 14), libzstd1 (>= 1.5.5)
+Breaks: apparmor-profiles-extra (<< 1.21), fcitx-data (<< 1:4.2.9.1-1ubuntu2), snapd (<< 2.44.3+20.04~)
+Replaces: fcitx-data (<< 1:4.2.9.1-1ubuntu2)
+Suggests: apparmor-profiles-extra, apparmor-utils
+
+Package: apport
+Status: install ok installed
+Architecture: all
+Version: 2.34.1-0ubuntu0.1
+Depends: apport-core-dump-handler | python3-systemd, apport-core-dump-handler | python3-zstandard, apport-core-dump-handler | systemd-coredump, gir1.2-glib-2.0 (>= 1.29.17), python3, python3-apport (>= 2.34.1-0ubuntu0.1), python3-gi, sensible-utils
+Breaks: python-apport (<< 2.2-0ubuntu1)
+Replaces: python-apport (<< 2.2-0ubuntu1)
+Recommends: apport-symptoms, python3-systemd
+Suggests: apport-gtk | apport-kde, pkexec, polkitd
+
+Package: apport-core-dump-handler
+Status: install ok installed
+Architecture: all
+Version: 2.34.1-0ubuntu0.1
+Depends: apport (>= 2.27.0-0ubuntu7~)
+Breaks: apport (<< 2.27.0-0ubuntu7~)
+Conflicts: core-dump-handler
+Provides: core-dump-handler
+Replaces: apport (<< 2.27.0-0ubuntu7~), core-dump-handler
+
+Package: apport-symptoms
+Status: install ok installed
+Architecture: all
+Version: 0.25build1
+Recommends: apport
+
+Package: appstream
+Status: install ok installed
+Architecture: amd64
+Version: 1.1.2-1
+Multi-Arch: foreign
+Depends: shared-mime-info, libappstream5 (>= 1.0.0), libc6 (>= 2.34), libglib2.0-0t64 (>= 2.76.0)
+Suggests: apt-config-icons
+
+Package: apt
+Status: install ok installed
+Architecture: amd64
+Version: 3.2.0
+Depends: base-passwd (>= 3.6.1) | adduser, gpgv, libapt-pkg7.0 (>= 3.2.0), ubuntu-keyring, libc6 (>= 2.38), libgcc-s1 (>= 3.3.1), libseccomp2 (>= 2.4.2), libssl3t64 (>= 3.0.0), libstdc++6 (>= 13.1), libsystemd0
+Breaks: apt-transport-https (<< 1.5~alpha4~), apt-utils (<< 1.3~exp2~), aptitude (<< 0.8.10)
+Conflicts: apt-verify, libnettle8 (<< 3.9.1-2.2~)
+Provides: apt-transport-https (= 3.2.0)
+Replaces: apt-transport-https (<< 1.5~alpha4~), apt-utils (<< 1.3~exp2~)
+Recommends: ca-certificates
+Suggests: apt-doc, aptitude | synaptic | wajig, dpkg-dev (>= 1.17.2), gnupg | gnupg2 | gnupg1, powermgmt-base
+
+Package: base-files
+Status: install ok installed
+Architecture: amd64
+Version: 14ubuntu6.2
+Essential: yes
+Multi-Arch: foreign
+Depends: libc6 (>= 2.34), libcrypt1 (>= 1:4.4.10-10ubuntu3)
+Pre-Depends: awk
+Breaks: debian-security-support (<< 2019.04.25), initscripts (<< 2.88dsf-13.3), sendfile (<< 2.1b.20080616-5.2~), ubuntu-server (<< 1.453)
+Provides: base, usr-is-merged
+Replaces: base, dpkg (<= 1.15.0), miscutils
+
+Package: base-passwd
+Status: install ok installed
+Architecture: amd64
+Version: 3.6.8
+Essential: yes
+Multi-Arch: foreign
+Depends: libc6 (>= 2.34), libdebconfclient0 (>= 0.145), libselinux1 (>= 3.1~)
+Replaces: base
+Recommends: debconf (>= 0.5) | debconf-2.0
+
+Package: bash
+Status: install ok installed
+Architecture: amd64
+Version: 5.3-2ubuntu1
+Essential: yes
+Multi-Arch: foreign
+Depends: base-files (>= 2.1.12), debianutils (>= 5.6-0.1)
+Pre-Depends: libc6 (>= 2.38), libtinfo6 (>= 6)
+Recommends: bash-completion
+Suggests: bash-doc
+
+Package: bash-completion
+Status: install ok installed
+Architecture: all
+Version: 1:2.16.0-8build1
+Multi-Arch: foreign
+Provides: dh-sequence-bash-completion
+
+Package: bc
+Status: install ok installed
+Architecture: amd64
+Version: 1.07.1-4build1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libreadline8t64 (>= 6.0)
+
+Package: bcache-tools
+Status: install ok installed
+Architecture: amd64
+Version: 1.0.8-5ubuntu1
+Depends: libblkid1 (>= 2.17.2), libc6 (>= 2.38), libuuid1 (>= 2.16), gawk
+Recommends: dracut | linux-initramfs-tool
+
+Package: bind9-dnsutils
+Status: install ok installed
+Architecture: amd64
+Version: 1:9.20.24-1ubuntu0.2
+Multi-Arch: foreign
+Depends: bind9-host | host, bind9-libs (= 1:9.20.24-1ubuntu0.2), libc6 (>= 2.38), libedit2 (>= 2.11-20080614-0), libidn2-0 (>= 2.0.0), libjemalloc2 (>= 2.1.1), libkrb5-3 (>= 1.6.dfsg.2)
+Provides: dnsutils
+
+Package: bind9-host
+Status: install ok installed
+Architecture: amd64
+Version: 1:9.20.24-1ubuntu0.2
+Multi-Arch: foreign
+Depends: bind9-libs (= 1:9.20.24-1ubuntu0.2), libc6 (>= 2.38), libidn2-0 (>= 2.0.0)
+Breaks: bind-host (<< 1:9.13.6~)
+Provides: host
+Replaces: bind-host (<< 1:9.13.6~)
+
+Package: bind9-libs
+Status: install ok installed
+Architecture: amd64
+Version: 1:9.20.24-1ubuntu0.2
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libgssapi-krb5-2 (>= 1.17), libjemalloc2 (>= 4.0.0), libjson-c5 (>= 0.15), libkrb5-3 (>= 1.6.dfsg.2), liblmdb0 (>= 0.9.7), libmaxminddb0 (>= 1.3.0), libnghttp2-14 (>= 1.12.0), libssl3t64 (>= 3.4.0), liburcu8t64 (>= 0.13.0), libuv1t64 (>= 1.38.0), libxml2-16 (>= 2.14.1), zlib1g (>= 1:1.1.4)
+Breaks: bind-libs (<< 1:9.13.6~)
+Replaces: bind-libs (<< 1:9.13.6~)
+
+Package: binutils
+Status: install ok installed
+Architecture: amd64
+Version: 2.46-3ubuntu2
+Depends: libbinutils (= 2.46-3ubuntu2), libc6 (>= 2.38), libgcc-s1 (>= 3.0), libgprofng0 (>= 2.45.50), libstdc++6 (>= 13.1), binutils-common (= 2.46-3ubuntu2), binutils-x86-64-linux-gnu (= 2.46-3ubuntu2)
+Breaks: binutils-aarch64-linux-gnu (<< 2.43.90), binutils-i686-linux-gnu (<< 2.43.90), binutils-riscv64-linux-gnu (<< 2.43.90), binutils-x86-64-linux-gnu (<< 2.43.90), libc6-dev (<< 2.42-2ubuntu4)
+Conflicts: binutils-mingw-w64-i686 (<< 2.23.52.20130612-1+3), binutils-mingw-w64-x86-64 (<< 2.23.52.20130612-1+3), binutils-multiarch (<< 2.27-8), modutils (<< 2.4.19-1)
+Provides: elf-binutils
+Replaces: binutils-aarch64-linux-gnu (<< 2.43.90), binutils-common (<< 2.43.90), binutils-i686-linux-gnu (<< 2.43.90), binutils-riscv64-linux-gnu (<< 2.43.90), binutils-x86-64-linux-gnu (<< 2.43.90)
+Suggests: binutils-doc (>= 2.46-3ubuntu2), gprofng-gui, binutils-gold
+
+Package: binutils-common
+Status: install ok installed
+Architecture: amd64
+Version: 2.46-3ubuntu2
+Multi-Arch: same
+Breaks: binutils (<< 2.38.50.20220527-2), binutils-multiarch (<< 2.38.50.20220527-2)
+Replaces: binutils (<< 2.38.50.20220527-2), binutils-multiarch (<< 2.38.50.20220527-2)
+
+Package: binutils-x86-64-linux-gnu
+Status: install ok installed
+Architecture: amd64
+Version: 2.46-3ubuntu2
+Multi-Arch: allowed
+Depends: binutils-common (= 2.46-3ubuntu2), libbinutils (= 2.46-3ubuntu2), libc6 (>= 2.38), libctf-nobfd0 (>= 2.36), libctf0 (>= 2.36), libjansson4 (>= 2.14), libsframe3 (>= 2.45.50), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.1.4)
+Breaks: binutils (<< 2.29-6), binutils-dev (<< 2.38.50.20220609-2)
+Replaces: binutils (<< 2.29-6), binutils-dev (<< 2.38.50.20220609-2)
+Suggests: binutils-doc (= 2.46-3ubuntu2)
+
+Package: bolt
+Status: install ok installed
+Architecture: amd64
+Version: 0.9.10-1
+Depends: libc6 (>= 2.38), libglib2.0-0t64 (>= 2.80.0), libpolkit-gobject-1-0 (>= 0.99), libudev1 (>= 183)
+
+Package: bpfcc-tools
+Status: install ok installed
+Architecture: all
+Version: 0.35.0+ds-1ubuntu2
+Depends: python3-bpfcc (>= 0.35.0+ds-1ubuntu2), python3-netaddr, python3:any
+
+Package: bpftool
+Status: install ok installed
+Architecture: amd64
+Version: 7.7.0+7.0.0-30.30
+Depends: libc6 (>= 2.38), libcap2 (>= 1:2.10), libelf1t64 (>= 0.144), libssl3t64 (>= 3.0.0), zlib1g (>= 1:1.2.3.4)
+Breaks: linux-tools-common (<< 6.14.0-8~)
+Replaces: linux-tools-common (<< 6.14.0-8~)
+
+Package: bpftrace
+Status: install ok installed
+Architecture: amd64
+Version: 0.25.0-1ubuntu1
+Depends: libbpfcc (>= 0.35.0+ds), libc6 (>= 2.38), libclang-cpp21 (>= 1:21.1.8), libclang1-21 (>= 1:15.0.7), libdw1t64 (>= 0.161), libelf1t64 (>= 0.144), libgcc-s1 (>= 4.3), libllvm21 (>= 1:21.1.0), libsframe3 (>= 2.45.50), libstdc++6 (>= 15), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.2.11)
+Recommends: libc6-dev
+
+Package: bsdextrautils
+Status: install ok installed
+Architecture: amd64
+Version: 2.41.3-3ubuntu2
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libsmartcols1 (= 2.41.3-3ubuntu2), libtinfo6 (>= 6)
+Breaks: bsdmainutils (<< 12.1.3), util-linux (<< 2.41.2-2~)
+Replaces: bsdmainutils (<< 12.1.3), util-linux (<< 2.41.2-2~)
+
+Package: bsdutils
+Status: install ok installed
+Architecture: amd64
+Version: 1:2.41.3-3ubuntu2
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libsystemd0 (>= 254)
+Recommends: bsdextrautils
+
+Package: btrfs-progs
+Status: install ok installed
+Architecture: amd64
+Version: 6.17.1-1build1
+Multi-Arch: foreign
+Depends: libblkid1 (>= 2.17.2), libc6 (>= 2.38), libcom-err2 (>= 1.43.9), libext2fs2t64 (>= 1.42), liblzo2-2 (>= 2.02), libudev1 (>= 183), libuuid1 (>= 2.16), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.2.0)
+Suggests: duperemove
+
+Package: busybox-initramfs
+Status: install ok installed
+Architecture: amd64
+Version: 1:1.37.0-7ubuntu1
+Depends: libc6 (>= 2.42)
+
+Package: busybox-static
+Status: install ok installed
+Architecture: amd64
+Version: 1:1.37.0-7ubuntu1
+Conflicts: busybox
+Provides: busybox
+Replaces: busybox
+
+Package: ca-certificates
+Status: install ok installed
+Architecture: all
+Version: 20260601~26.04.1
+Multi-Arch: foreign
+Depends: openssl (>= 1.1.1), debconf (>= 0.5) | debconf-2.0
+Breaks: ca-certificates-java (<< 20121112+nmu1)
+Enhances: openssl
+
+Package: chrony
+Status: install ok installed
+Architecture: amd64
+Version: 4.8-2ubuntu1
+Depends: iproute2, debconf (>= 0.5), tzdata, libcap2-bin (>= 1:2.32-1), ucf, systemd | systemd-standalone-sysusers | systemd-sysusers, libc6 (>= 2.42), libcap2 (>= 1:2.10), libedit2 (>= 2.11-20080614-0), libgnutls30t64 (>= 3.8.1), libnettle8t64 (>= 3.9~), libseccomp2 (>= 2.5.5-2~)
+Pre-Depends: init-system-helpers (>= 1.54~)
+Breaks: network-manager (<< 1.20.0-1~)
+Conflicts: time-daemon
+Provides: time-daemon
+Replaces: time-daemon
+Recommends: networkd-dispatcher
+Suggests: dnsutils, gpsd
+
+Package: cloud-guest-utils
+Status: install ok installed
+Architecture: all
+Version: 0.33-1build1
+Multi-Arch: foreign
+Depends: e2fsprogs, fdisk, python3:any
+Recommends: gdisk
+Suggests: cloud-init
+
+Package: cloud-init
+Status: install ok installed
+Architecture: all
+Version: 26.1-0ubuntu3~26.04.1
+Depends: cloud-init-base (= 26.1-0ubuntu3~26.04.1), python3-serial, python3-passlib
+
+Package: cloud-init-base
+Status: install ok installed
+Architecture: all
+Version: 26.1-0ubuntu3~26.04.1
+Depends: cloud-guest-utils | cloud-utils, dhcpcd-base, iproute2, netcat-openbsd, netplan.io, procps, python3, python3-configobj, python3-debconf, python3-requests, python3-jinja2, python3-jsonpatch, python3-jsonschema, python3-oauthlib, python3-yaml, debconf (>= 0.5) | debconf-2.0, python3:any
+Breaks: cloud-init (<< 25.1.1-0ubuntu2~), cloud-init-base
+Replaces: cloud-init (<< 25.1.1-0ubuntu2~), cloud-init-base
+Recommends: eatmydata, gdisk, gnupg, python3-apt, software-properties-common
+Suggests: openssh-server, ssh-import-id
+
+Package: cloud-initramfs-copymods
+Status: install ok installed
+Architecture: all
+Version: 0.58ubuntu
+Depends: dracut (>= 109) | initramfs-tools
+Breaks: dracut-core (<< 109)
+
+Package: cloud-initramfs-dyn-netconf
+Status: install ok installed
+Architecture: all
+Version: 0.58ubuntu
+Depends: dracut (>= 110) | initramfs-tools, dracut-network (>= 110) | initramfs-tools, systemd | initramfs-tools
+
+Package: command-not-found
+Status: install ok installed
+Architecture: all
+Version: 23.04.0build1
+Depends: python3-commandnotfound (= 23.04.0build1)
+Suggests: snapd
+
+Package: console-setup
+Status: install ok installed
+Architecture: all
+Version: 1.237ubuntu3.1
+Multi-Arch: foreign
+Depends: console-setup-linux | hurd, xkb-data (>= 0.9), keyboard-configuration (= 1.237ubuntu3.1), debconf (>= 0.5) | debconf-2.0
+Pre-Depends: debconf | debconf-2.0
+Breaks: lsb (<< 2.0-6), lsb-base (<< 3.0-6), lsb-core (<< 2.0-6)
+Conflicts: console-setup-mini
+Suggests: lsb-base (>= 3.0-6), locales
+
+Package: console-setup-linux
+Status: install ok installed
+Architecture: all
+Version: 1.237ubuntu3.1
+Multi-Arch: foreign
+Depends: kbd (>= 0.99-12) | console-tools (>= 1:0.2.3-16), keyboard-configuration (= 1.237ubuntu3.1), init-system-helpers (>= 1.29~) | initscripts
+Breaks: console-cyrillic (<= 0.9-11), console-setup (<< 1.71), console-terminus
+Provides: console-terminus
+Replaces: console-setup (<< 1.71), console-terminus
+Suggests: console-setup
+
+Package: coreutils
+Status: install ok installed
+Architecture: all
+Version: 9.5-1ubuntu2+0.0.0~ubuntu25
+Essential: yes
+Multi-Arch: foreign
+Pre-Depends: coreutils-from-uutils | coreutils-from-gnu
+
+Package: coreutils-from-uutils
+Status: install ok installed
+Architecture: all
+Version: 0.0.0~ubuntu25
+Protected: yes
+Multi-Arch: foreign
+Pre-Depends: rust-coreutils (>> 0.1.0+git20250813), gnu-coreutils
+Breaks: coreutils (<< 9.5-1ubuntu2+0.0.0~ubuntu25), libdigest-sha3-perl (<< 1.05-1ubuntu3~)
+Conflicts: coreutils-from
+Provides: coreutils, coreutils-from
+Replaces: coreutils (<< 9.5-1ubuntu2+0.0.0~ubuntu25), coreutils-from, libdigest-sha3-perl (<< 1.05-1ubuntu3~)
+
+Package: cpio
+Status: install ok installed
+Architecture: amd64
+Version: 2.15+dfsg-2.1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38)
+Conflicts: cpio-mt, mt-st (<< 0.6)
+Replaces: cpio-mt
+Suggests: libarchive-dev
+
+Package: crash
+Status: install ok installed
+Architecture: amd64
+Version: 9.0.1+~16.3-1ubuntu1
+Depends: libc6 (>= 2.42), libgcc-s1 (>= 4.2), libgmp10 (>= 2:6.3.0+dfsg), liblzo2-2 (>= 2.02), libmpfr6 (>= 3.1.3), libncursesw6 (>= 6), libsnappy1v5 (>= 1.2.2), libstdc++6 (>= 14), libtinfo6 (>= 6), libzstd1 (>= 1.5.5), binutils
+Suggests: kexec-tools, makedumpfile
+
+Package: cron
+Status: install ok installed
+Architecture: amd64
+Version: 3.0pl1-200ubuntu1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libpam0g (>= 0.99.7.1), libselinux1 (>= 3.1~), sensible-utils, libpam-runtime
+Pre-Depends: init-system-helpers (>= 1.54~), cron-daemon-common
+Conflicts: bcron, cronie, systemd-cron
+Provides: cron-daemon
+Replaces: bcron, cronie, systemd-cron
+Suggests: anacron, logrotate, checksecurity, supercat, bat, default-mta | mail-transport-agent
+
+Package: cron-daemon-common
+Status: install ok installed
+Architecture: all
+Version: 3.0pl1-200ubuntu1
+Multi-Arch: foreign
+Depends: systemd | systemd-standalone-sysusers | systemd-sysusers, adduser
+Breaks: systemd-cron (<< 1.15.19-5~)
+Conflicts: bcron (<< 0.11-9.1), cron (<< 3.0pl1-140), cronie (<< 1.6.1-5), systemd-cron (<< 1.15.18-1.1)
+Replaces: bcron (<< 0.11-9.1), cron (<< 3.0pl1-140), cronie (<< 1.6.1-5), systemd-cron (<< 1.15.18-1.1)
+
+Package: cryptsetup
+Status: install ok installed
+Architecture: amd64
+Version: 2:2.8.4-1ubuntu4
+Multi-Arch: foreign
+Depends: cryptsetup-bin (>= 2:2.7.2-1), dmsetup, debconf (>= 0.5) | debconf-2.0, libc6 (>= 2.38)
+Conflicts: cryptsetup-nuke-password (<< 5~)
+Recommends: dracut | cryptsetup-initramfs
+Suggests: dosfstools, keyutils, liblocale-gettext-perl
+
+Package: cryptsetup-bin
+Status: install ok installed
+Architecture: amd64
+Version: 2:2.8.4-1ubuntu4
+Multi-Arch: foreign
+Depends: libblkid1 (>= 2.24.2), libc6 (>= 2.38), libcryptsetup12 (>= 2:2.8), libpopt0 (>= 1.14), libuuid1 (>= 2.16)
+
+Package: curl
+Status: install ok installed
+Architecture: amd64
+Version: 8.18.0-1ubuntu2.4
+Multi-Arch: foreign
+Depends: libcurl4t64 (= 8.18.0-1ubuntu2.4), libc6 (>= 2.34), zlib1g (>= 1:1.1.4)
+Recommends: bash-completion
+
+Package: dash
+Status: install ok installed
+Architecture: amd64
+Version: 0.5.12-12ubuntu3
+Essential: yes
+Multi-Arch: foreign
+Depends: debianutils (>= 5.6-0.1)
+Pre-Depends: libc6 (>= 2.38)
+
+Package: dbus
+Status: install ok installed
+Architecture: amd64
+Version: 1.16.2-2ubuntu4
+Multi-Arch: foreign
+Depends: dbus-bin (= 1.16.2-2ubuntu4), dbus-daemon (= 1.16.2-2ubuntu4), dbus-system-bus-common (>= 1.16.2-2ubuntu4), base-files (>= 13.4~), libc6 (>= 2.34), libdbus-1-3 (= 1.16.2-2ubuntu4), libexpat1 (>= 2.1~beta3)
+Provides: dbus-system-bus (= 1.16.2-2ubuntu4), default-dbus-system-bus
+Suggests: default-dbus-session-bus | dbus-session-bus
+
+Package: dbus-bin
+Status: install ok installed
+Architecture: amd64
+Version: 1.16.2-2ubuntu4
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libdbus-1-3 (= 1.16.2-2ubuntu4)
+Breaks: dbus (<< 1.13.18-2~)
+Replaces: dbus (<< 1.13.18-2~)
+
+Package: dbus-daemon
+Status: install ok installed
+Architecture: amd64
+Version: 1.16.2-2ubuntu4
+Multi-Arch: foreign
+Depends: dbus-bin (= 1.16.2-2ubuntu4), dbus-session-bus-common (>= 1.16.2-2ubuntu4), libapparmor1 (>= 2.8.94), libaudit1 (>= 1:2.2.1), libc6 (>= 2.34), libcap-ng0 (>= 0.7.9), libdbus-1-3 (= 1.16.2-2ubuntu4), libexpat1 (>= 2.1~beta3), libselinux1 (>= 3.1~), libsystemd0
+Breaks: dbus (<< 1.13.18-2~)
+Replaces: dbus (<< 1.13.18-2~)
+
+Package: dbus-session-bus-common
+Status: install ok installed
+Architecture: all
+Version: 1.16.2-2ubuntu4
+Multi-Arch: foreign
+Breaks: dbus (<< 1.13.18-2~)
+Replaces: dbus (<< 1.13.18-2~)
+
+Package: dbus-system-bus-common
+Status: install ok installed
+Architecture: all
+Version: 1.16.2-2ubuntu4
+Multi-Arch: foreign
+Depends: adduser (>= 3.130) | systemd-sysusers
+Breaks: dbus (<< 1.13.18-2~)
+Replaces: dbus (<< 1.13.18-2~)
+
+Package: dbus-user-session
+Status: install ok installed
+Architecture: amd64
+Version: 1.16.2-2ubuntu4
+Multi-Arch: foreign
+Depends: dbus-daemon (= 1.16.2-2ubuntu4) | dbus-broker, dbus-session-bus-common (>= 1.16.2-2ubuntu4), libpam-systemd, systemd
+Provides: dbus-session-bus, default-dbus-session-bus
+Recommends: systemd-sysv
+
+Package: debconf
+Status: install ok installed
+Architecture: all
+Version: 1.5.92
+Multi-Arch: foreign
+Conflicts: debconf-tiny, whiptail-utf8 (<= 0.50.17-13)
+Provides: debconf-2.0
+Replaces: debconf-tiny
+Recommends: apt (>= 2.9.11~) | apt-utils, debconf-i18n
+Suggests: debconf-doc, debconf-kde-helper, debconf-utils, libgtk3-perl, libnet-ldap-perl, libterm-readline-gnu-perl, perl, whiptail | dialog
+
+Package: debconf-i18n
+Status: install ok installed
+Architecture: all
+Version: 1.5.92
+Depends: debconf (= 1.5.92), liblocale-gettext-perl, libtext-charwidth-perl, libtext-iconv-perl, libtext-wrapi18n-perl
+Conflicts: debconf-english
+
+Package: debianutils
+Status: install ok installed
+Architecture: amd64
+Version: 5.23.2build1
+Essential: yes
+Multi-Arch: foreign
+Pre-Depends: libc6 (>= 2.38)
+Breaks: ifupdown (<< 0.8.36+nmu1), printer-driver-pnm2ppa (<< 1.13-12), x11-common (<< 1:7.7+23~)
+
+Package: dhcpcd-base
+Status: install ok installed
+Architecture: amd64
+Version: 1:10.3.0-7
+Depends: systemd | systemd-standalone-sysusers | systemd-sysusers, libc6 (>= 2.42), libssl3t64 (>= 3.0.0), libudev1 (>= 183)
+Breaks: dhcpcd5 (<< 1:10.3.0-7~)
+Provides: dhcp-client
+Replaces: dhcpcd5 (<< 1:10.3.0-7~)
+Suggests: openresolv | resolvconf | systemd-resolved
+
+Package: diffutils
+Status: install ok installed
+Architecture: amd64
+Version: 1:3.12-1
+Essential: yes
+Pre-Depends: libc6 (>= 2.38)
+Replaces: diff
+Suggests: diffutils-doc, wdiff, gnulib-l10n
+
+Package: dirmngr
+Status: install ok installed
+Architecture: amd64
+Version: 2.4.8-4ubuntu3
+Multi-Arch: foreign
+Depends: adduser, gpgconf (= 2.4.8-4ubuntu3), init-system-helpers (>= 1.52), libassuan9 (>= 2.5.0), libc6 (>= 2.38), libgcrypt20 (>= 1.11.1), libgnutls30t64 (>= 3.8.1), libgpg-error0 (>= 1.49), libksba8 (>= 1.6.3), libldap2 (>= 2.6.2), libnpth0t64 (>= 1.8)
+Suggests: gnupg (= 2.4.8-4ubuntu3), dbus-user-session, libpam-systemd, pinentry-gnome3, tor
+Enhances: gpg, gpgsm, squid
+
+Package: distro-info
+Status: install ok installed
+Architecture: amd64
+Version: 1.15
+Depends: distro-info-data (>= 0.59~), libc6 (>= 2.34)
+Suggests: shunit2
+
+Package: distro-info-data
+Status: install ok installed
+Architecture: all
+Version: 0.72-0ubuntu0.26.04.1
+Multi-Arch: foreign
+Breaks: distro-info (<< 1.0~)
+
+Package: dmeventd
+Status: install ok installed
+Architecture: amd64
+Version: 2:1.02.205-2ubuntu3
+Depends: libc6 (>= 2.38), libdevmapper-event1.02.1 (>= 2:1.02.110), libdevmapper1.02.1 (>= 2:1.02.197), liblvm2cmd2.03 (>= 2.03.31)
+
+Package: dmidecode
+Status: install ok installed
+Architecture: amd64
+Version: 3.6-2build1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38)
+
+Package: dmsetup
+Status: install ok installed
+Architecture: amd64
+Version: 2:1.02.205-2ubuntu3
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libdevmapper1.02.1 (>= 2:1.02.197)
+
+Package: dosfstools
+Status: install ok installed
+Architecture: amd64
+Version: 4.2-1.2build1
+Depends: libc6 (>= 2.38)
+
+Package: dpkg
+Status: install ok installed
+Architecture: amd64
+Version: 1.23.7ubuntu1
+Essential: yes
+Multi-Arch: foreign
+Depends: tar (>= 1.28-1)
+Pre-Depends: libbz2-1.0, libc6 (>= 2.38), liblzma5 (>= 5.4.0), libmd0 (>= 0.0.0), libselinux1 (>= 3.1~), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.1.4)
+Breaks: libapt-pkg5.0 (<< 1.7~b), lsb-base (<< 10.2019031300)
+Suggests: apt, debsig-verify
+
+Package: dracut
+Status: install ok installed
+Architecture: all
+Version: 110-11
+Multi-Arch: foreign
+Depends: dracut-core (<< 110-11+b+~), dracut-core (>= 110-11), linux-base
+Conflicts: initramfs-tools, live-tools
+Provides: linux-initramfs-tool
+Suggests: dracut-network
+
+Package: dracut-core
+Status: install ok installed
+Architecture: amd64
+Version: 110-11
+Multi-Arch: foreign
+Depends: 3cpio | cpio, dracut-install, e2fsprogs, kmod, systemd-sysv | initscripts | sysvinit-core, udev, libc6 (>= 2.38)
+Breaks: dracut-live (<< 109-10~), dracut-network (<< 057+157-2), dracut-squash, rust-coreutils (<< 0.5.0)
+Provides: dracut-live
+Replaces: dracut-live (<< 109-10~), dracut-network (<< 057+157-2), dracut-squash
+Recommends: binutils, console-setup, systemd, zstd
+Suggests: cryptsetup, dmsetup, isomd5sum, kpartx, lvm2, mdadm, parted, squashfs-tools, systemd-cryptsetup
+
+Package: dracut-install
+Status: install ok installed
+Architecture: amd64
+Version: 110-11
+Depends: libc6 (>= 2.38), libkmod2 (>= 33~), libsystemd0 (>= 257~rc1)
+Breaks: dracut-core (<< 060+5-7~)
+Replaces: dracut-core (<< 060+5-7~)
+
+Package: dracut-network
+Status: install ok installed
+Architecture: all
+Version: 110-11
+Multi-Arch: foreign
+Depends: dracut-core, iproute2, network-manager | systemd | connman
+Breaks: dracut-core (<< 105), dracut-live (<< 109-10~)
+Replaces: dracut-core (<< 105), dracut-live (<< 109-10~)
+Recommends: curl
+Suggests: iscsiuio, nbd-client, nfs-common, open-iscsi, systemd-container
+
+Package: e2fsprogs
+Status: install ok installed
+Architecture: amd64
+Version: 1.47.2-3ubuntu4
+Multi-Arch: foreign
+Depends: logsave
+Pre-Depends: libblkid1 (>= 2.36), libc6 (>= 2.38), libcom-err2 (>= 1.43.9), libext2fs2t64 (= 1.47.2-3ubuntu4), libss2 (>= 1.38), libuuid1 (>= 2.16)
+Recommends: e2fsprogs-l10n
+Suggests: gpart, parted, fuse2fs, e2fsck-static, libarchive13t64
+
+Package: eatmydata
+Status: install ok installed
+Architecture: all
+Version: 131-2build1
+Depends: libeatmydata1 (>= 131-2build1)
+
+Package: ed
+Status: install ok installed
+Architecture: amd64
+Version: 1.22.4-1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38)
+
+Package: efibootmgr
+Status: install ok installed
+Architecture: amd64
+Version: 18-4ubuntu1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libefiboot1t64 (>= 39), libefivar1t64 (>= 39), libpopt0 (>= 1.14)
+
+Package: eject
+Status: install ok installed
+Architecture: amd64
+Version: 2.41.3-3ubuntu2
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libmount1 (= 2.41.3-3ubuntu2)
+
+Package: ethtool
+Status: install ok installed
+Architecture: amd64
+Version: 1:6.19-1
+Depends: libc6 (>= 2.34), libmnl0 (>= 1.0.3-4~)
+
+Package: exfatprogs
+Status: install ok installed
+Architecture: amd64
+Version: 1.3.2-1
+Depends: libc6 (>= 2.38)
+
+Package: fdisk
+Status: install ok installed
+Architecture: amd64
+Version: 2.41.3-3ubuntu2
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libfdisk1 (= 2.41.3-3ubuntu2), libmount1 (= 2.41.3-3ubuntu2), libncursesw6 (>= 6), libreadline8t64 (>= 6.0), libsmartcols1 (= 2.41.3-3ubuntu2), libtinfo6 (>= 6)
+Recommends: sensible-utils
+
+Package: file
+Status: install ok installed
+Architecture: amd64
+Version: 1:5.46-5build2
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libmagic1t64 (= 1:5.46-5build2)
+Breaks: debhelper (<< 12.2~)
+
+Package: finalrd
+Status: install ok installed
+Architecture: all
+Version: 9build2
+Recommends: initramfs-tools-core
+
+Package: findutils
+Status: install ok installed
+Architecture: amd64
+Version: 4.10.0-3build2
+Essential: yes
+Multi-Arch: foreign
+Pre-Depends: libc6 (>= 2.38), libselinux1 (>= 3.1~)
+Breaks: binstats (<< 1.08-8.1), guilt (<< 0.36-0.2), libpython3.4-minimal (<< 3.4.4-2), libpython3.5-minimal (<< 3.5.1-3), lsat (<< 0.9.7.1-2.1), mc (<< 3:4.8.11-1), switchconf (<< 0.0.9-2.1)
+
+Package: firmware-sof-signed
+Status: install ok installed
+Architecture: all
+Version: 2025.12.2-1
+Pre-Depends: dpkg (>= 1.17.14)
+
+Package: fonts-ubuntu-console
+Status: install ok installed
+Architecture: all
+Version: 0.869+git20240321-0ubuntu2
+Multi-Arch: foreign
+
+Package: friendly-recovery
+Status: install ok installed
+Architecture: all
+Version: 0.2.42build1
+Depends: systemd-sysv, whiptail
+Breaks: grub2 (<< 1.99-12ubuntu4), initramfs-tools (<< 0.99ubuntu4), upstart (<< 1.3-0ubuntu9)
+Recommends: gettext-base, update-manager-core
+
+Package: ftp
+Status: install ok installed
+Architecture: all
+Version: 20260211-1
+Multi-Arch: foreign
+Depends: tnftp
+Replaces: ftp (<= 0.17-35)
+
+Package: fuse3
+Status: install ok installed
+Architecture: amd64
+Version: 3.18.2-1
+Depends: libc6 (>= 2.38), libfuse3-4 (= 3.18.2-1), adduser, mount (>= 2.19.1), sed (>= 4)
+Conflicts: fuse (<< 3.18.2-1)
+Provides: fuse (= 3.18.2-1)
+
+Package: fwupd
+Status: install ok installed
+Architecture: amd64
+Version: 2.1.1-1ubuntu3.1
+Multi-Arch: foreign
+Depends: systemd-sysusers, libblkid1 (>= 2.17.2), libc6 (>= 2.38), libcbor0.10 (>= 0.10.2), libcurl3t64-gnutls (>= 7.63.0), libdrm-amdgpu1 (>= 2.4.73), libdrm2 (>= 2.4.3), libflashrom1 (>= 1.6.0), libfwupd3 (= 2.1.1-1ubuntu3.1), libglib2.0-0t64 (>= 2.83.0), libgnutls30t64 (>= 3.7.3), libjcat1 (>= 0.2.0), liblzma5 (>= 5.1.1alpha+20120614), libmbim-glib4 (>= 1.28.0), libmbim-proxy, libmm-glib0 (>= 1.22.0), libmnl0 (>= 1.0.3-4~), libpolkit-gobject-1-0 (>= 0.99), libqmi-glib5 (>= 1.32.0), libqmi-proxy, libreadline8t64 (>= 6.0), libsqlite3-0 (>= 3.20.0), libsystemd0, libtss2-esys-3.0.2-0t64 (>= 2.3.1), libusb-1.0-0 (>= 2:1.0.27~rc1), libxmlb2 (>= 0.3.22), zlib1g (>= 1:1.2.11), shared-mime-info
+Breaks: fwupdate (<< 12-7), libdfu-dev (<< 0.9.7-1), libdfu1 (<< 0.9.7-1)
+Conflicts: fwupdate-amd64-signed, fwupdate-arm64-signed, fwupdate-armhf-signed, fwupdate-i386-signed
+Provides: fwupdate
+Replaces: fwupdate (<< 12-7), gir1.2-dfu-1.0 (<< 0.9.7-1), libdfu-dev (<< 0.9.7-1), libdfu1 (<< 0.9.7-1)
+Recommends: python3, bolt, default-dbus-system-bus | dbus-system-bus, secureboot-db, udisks2, fwupd-signed, jq
+Suggests: gir1.2-fwupd-2.0
+
+Package: fwupd-signed
+Status: install ok installed
+Architecture: amd64
+Version: 1.55+1.7-1
+Multi-Arch: foreign
+Recommends: secureboot-db, fwupd
+
+Package: gawk
+Status: install ok installed
+Architecture: amd64
+Version: 1:5.3.2-1ubuntu1.1
+Multi-Arch: foreign
+Pre-Depends: libc6 (>= 2.38), libgmp10 (>= 2:6.3.0+dfsg), libmpfr6 (>= 3.1.3), libreadline8t64 (>= 6.0)
+Provides: awk
+Suggests: gawk-doc
+
+Package: gcc-16-base
+Status: install ok installed
+Architecture: amd64
+Version: 16-20260322-1ubuntu1
+Multi-Arch: same
+Breaks: gnat (<< 7)
+
+Package: gdisk
+Status: install ok installed
+Architecture: amd64
+Version: 1.0.10-2build1
+Depends: libc6 (>= 2.38), libgcc-s1 (>= 3.3.1), libncursesw6 (>= 6), libpopt0 (>= 1.14), libstdc++6 (>= 13.1), libtinfo6 (>= 6), libuuid1 (>= 2.16)
+Recommends: groff-base
+
+Package: gettext-base
+Status: install ok installed
+Architecture: amd64
+Version: 0.23.2-1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38)
+
+Package: gir1.2-girepository-3.0
+Status: install ok installed
+Architecture: amd64
+Version: 2.88.0-1
+Multi-Arch: same
+Depends: gir1.2-glib-2.0 (= 2.88.0-1), libgirepository-2.0-0 (= 2.88.0-1)
+
+Package: gir1.2-glib-2.0
+Status: install ok installed
+Architecture: amd64
+Version: 2.88.0-1
+Multi-Arch: same
+Depends: libglib2.0-0t64 (= 2.88.0-1)
+Breaks: awesome (<< 4.3-8~), cinnamon (<< 6.4.12-1~), gnome-menus (<< 3.36.0-4~), gnome-shell (<< 48.5-3~), libgirepository-1.0-1 (<< 1.78.1-3~), libgjs0 (<< 1.87.2~), libgjs0g (<< 1.82.3-2~), python3-gi (<< 3.55.3~)
+Provides: gir1.2-gio-2.0 (= 2.88.0-1), gir1.2-giounix-2.0 (= 2.88.0-1), gir1.2-glibunix-2.0 (= 2.88.0-1), gir1.2-gmodule-2.0 (= 2.88.0-1), gir1.2-gobject-2.0 (= 2.88.0-1)
+
+Package: gir1.2-packagekitglib-1.0
+Status: install ok installed
+Architecture: amd64
+Version: 1.3.4-3ubuntu1.2
+Depends: gir1.2-gio-2.0, gir1.2-glib-2.0 (>= 1.36), gir1.2-gobject-2.0, libpackagekit-glib2-18 (>= 1.2.7)
+
+Package: git
+Status: install ok installed
+Architecture: amd64
+Version: 1:2.53.0-1ubuntu1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.42), libcurl3t64-gnutls (>= 8.3.0), libexpat1 (>= 2.0.1), libpcre2-8-0 (>= 10.34), zlib1g (>= 1:1.2.2), perl, liberror-perl, git-man (>> 1:2.53.0), git-man (<< 1:2.53.0-.)
+Breaks: bash-completion (<< 1:1.90-1), cogito (<= 0.18.2+), dgit (<< 5.1~), git-buildpackage (<< 0.6.5), git-el (<< 1:2.32.0~rc2-1~), gitosis (<< 0.2+20090917-7), gitpkg (<< 0.15), guilt (<< 0.33), openssh-client (<< 1:6.8), stgit (<< 0.15), stgit-contrib (<< 0.15)
+Provides: git-completion, git-core
+Recommends: ca-certificates, patch, less, ssh-client
+Suggests: gettext-base, git-doc, git-email, git-gui, gitk, gitweb, git-cvs, git-svn
+
+Package: git-man
+Status: install ok installed
+Architecture: all
+Version: 1:2.53.0-1ubuntu1
+Multi-Arch: foreign
+
+Package: gnu-coreutils
+Status: install ok installed
+Architecture: amd64
+Version: 9.7-3ubuntu2
+Multi-Arch: foreign
+Pre-Depends: libacl1 (>= 2.2.23), libattr1 (>= 1:2.4.48), libc6 (>= 2.42), libgmp10 (>= 2:6.3.0+dfsg), libselinux1 (>= 3.1~), libssl3t64 (>= 3.0.0), libsystemd0 (>= 254)
+Replaces: coreutils (<< 9.5-1ubuntu2~)
+
+Package: gnupg
+Status: install ok installed
+Architecture: all
+Version: 2.4.8-4ubuntu3
+Multi-Arch: foreign
+Depends: dirmngr (<< 2.4.8-4ubuntu3.1~), dirmngr (>= 2.4.8-4ubuntu3), gpg (<< 2.4.8-4ubuntu3.1~), gpg (>= 2.4.8-4ubuntu3), gpg-agent (<< 2.4.8-4ubuntu3.1~), gpg-agent (>= 2.4.8-4ubuntu3), gpgsm (<< 2.4.8-4ubuntu3.1~), gpgsm (>= 2.4.8-4ubuntu3)
+Breaks: debsig-verify (<< 0.15), dirmngr (<< 2.4.8-4ubuntu3), libgnupg-interface-perl (<< 0.52-3), libgnupg-perl (<= 0.19-1), libmail-gnupg-perl (<= 0.22-1), monkeysphere (<< 0.38~), php-crypt-gpg (<= 1.4.1-1), python-apt (<= 1.1.0~beta4), python-gnupg (<< 0.3.8-3), python3-apt (<= 1.1.0~beta4)
+Recommends: gnupg-l10n (= 2.4.8-4ubuntu3), gnupg-utils (<< 2.4.8-4ubuntu3.1~), gnupg-utils (>= 2.4.8-4ubuntu3), gpg-wks-client (<< 2.4.8-4ubuntu3.1~), gpg-wks-client (>= 2.4.8-4ubuntu3), gpgv (<< 2.4.8-4ubuntu3.1~), gpgv (>= 2.4.8-4ubuntu3)
+Suggests: gpg-wks-server (<< 2.4.8-4ubuntu3.1~), gpg-wks-server (>= 2.4.8-4ubuntu3), parcimonie, xloadimage
+
+Package: gnupg-l10n
+Status: install ok installed
+Architecture: all
+Version: 2.4.8-4ubuntu3
+Multi-Arch: foreign
+Enhances: dirmngr, gpg, gpg-agent
+
+Package: gnupg-utils
+Status: install ok installed
+Architecture: amd64
+Version: 2.4.8-4ubuntu3
+Multi-Arch: foreign
+Depends: libbz2-1.0, libc6 (>= 2.38), libgcrypt20 (>= 1.11.1), libgpg-error0 (>= 1.50), libksba8 (>= 1.6.3), zlib1g (>= 1:1.1.4)
+Breaks: gnupg (<< 2.1.21-4), gnupg-agent (<< 2.1.21-4)
+Replaces: gnupg (<< 2.1.21-4), gnupg-agent (<< 2.1.21-4)
+Recommends: gpg, gpg-agent, gpgconf, gpgsm
+
+Package: gpg
+Status: install ok installed
+Architecture: amd64
+Version: 2.4.8-4ubuntu3
+Multi-Arch: foreign
+Depends: gpgconf (= 2.4.8-4ubuntu3), init-system-helpers (>= 1.52), libassuan9 (>= 2.5.1), libbz2-1.0, libc6 (>= 2.38), libgcrypt20 (>= 1.11.1), libgpg-error0 (>= 1.49), libksba8 (>= 1.6.3), libnpth0t64 (>= 1.2), libreadline8t64 (>= 6.0), libsqlite3-0 (>= 3.14.0), zlib1g (>= 1:1.1.4)
+Breaks: gnupg (<< 2.1.21-4), keyboxd (<< 2.4.7-4)
+Provides: keyboxd (= 2.4.8-4ubuntu3)
+Replaces: gnupg (<< 2.1.21-4), keyboxd (<< 2.4.7-4)
+Recommends: dirmngr, gpg-agent
+Suggests: gnupg (= 2.4.8-4ubuntu3)
+
+Package: gpg-agent
+Status: install ok installed
+Architecture: amd64
+Version: 2.4.8-4ubuntu3
+Multi-Arch: foreign
+Depends: gpgconf (= 2.4.8-4ubuntu3), pinentry-curses | pinentry, init-system-helpers (>= 1.52), libassuan9 (>= 2.5.1), libc6 (>= 2.38), libgcrypt20 (>= 1.11.1), libgpg-error0 (>= 1.49), libnpth0t64 (>= 1.2)
+Breaks: gnupg-agent (<< 2.1.21-4)
+Provides: gnupg-agent
+Replaces: gnupg-agent (<< 2.1.21-4)
+Suggests: gnupg (= 2.4.8-4ubuntu3), dbus-user-session, libpam-systemd, pinentry-gnome3, scdaemon, tpm2daemon
+
+Package: gpg-wks-client
+Status: install ok installed
+Architecture: amd64
+Version: 2.4.8-4ubuntu3
+Multi-Arch: foreign
+Depends: dirmngr (= 2.4.8-4ubuntu3), gpg (= 2.4.8-4ubuntu3), gpg-agent (= 2.4.8-4ubuntu3), libassuan9 (>= 2.5.0), libc6 (>= 2.38), libgcrypt20 (>= 1.11.1), libgpg-error0 (>= 1.48)
+Suggests: gnupg (= 2.4.8-4ubuntu3)
+
+Package: gpgconf
+Status: install ok installed
+Architecture: amd64
+Version: 2.4.8-4ubuntu3
+Multi-Arch: foreign
+Depends: libassuan9 (>= 2.5.0), libc6 (>= 2.38), libgcrypt20 (>= 1.11.1), libgpg-error0 (>= 1.48), libreadline8t64 (>= 6.0)
+Breaks: gnupg (<< 2.1.21-4), gnupg-agent (<< 2.1.21-4)
+Replaces: gnupg (<< 2.1.21-4), gnupg-agent (<< 2.1.21-4)
+
+Package: gpgsm
+Status: install ok installed
+Architecture: amd64
+Version: 2.4.8-4ubuntu3
+Multi-Arch: foreign
+Depends: gpgconf (= 2.4.8-4ubuntu3), libassuan9 (>= 2.5.0), libc6 (>= 2.38), libgcrypt20 (>= 1.11.1), libgpg-error0 (>= 1.49), libksba8 (>= 1.6.3), libnpth0t64 (>= 1.2), libreadline8t64 (>= 6.0)
+Recommends: dirmngr, gpg-agent
+Suggests: gnupg (= 2.4.8-4ubuntu3)
+
+Package: gpgv
+Status: install ok installed
+Architecture: amd64
+Version: 2.4.8-4ubuntu3
+Multi-Arch: foreign
+Depends: libbz2-1.0, libc6 (>= 2.38), libgcrypt20 (>= 1.11.1), libgpg-error0 (>= 1.49), zlib1g (>= 1:1.1.4)
+Breaks: python-debian (<< 0.1.29)
+Suggests: gnupg
+
+Package: grep
+Status: install ok installed
+Architecture: amd64
+Version: 3.12-1
+Essential: yes
+Multi-Arch: foreign
+Pre-Depends: libc6 (>= 2.38), libpcre2-8-0 (>= 10.32)
+Conflicts: rgrep
+Provides: rgrep
+
+Package: groff-base
+Status: install ok installed
+Architecture: amd64
+Version: 1.23.0-10
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libgcc-s1 (>= 4.0), libstdc++6 (>= 4.1.1), libuchardet0 (>= 0.0.1)
+Suggests: groff
+
+Package: grub-efi-amd64
+Status: install ok installed
+Architecture: amd64
+Version: 2.14-2ubuntu1
+Multi-Arch: foreign
+Depends: debconf (>= 0.5) | debconf-2.0, grub-efi-amd64-bin (= 2.14-2ubuntu1), grub2-common (>= 2.02~beta2-9), ucf
+Conflicts: elilo, grub, grub-coreboot, grub-efi-ia32, grub-ieee1275, grub-legacy, grub-pc, grub-xen
+Replaces: grub, grub-coreboot, grub-efi-ia32, grub-ieee1275, grub-legacy, grub-pc, grub2 (<< 2.14-2ubuntu1)
+
+Package: grub-efi-amd64-bin
+Status: install ok installed
+Architecture: amd64
+Version: 2.14-2ubuntu1
+Multi-Arch: foreign
+Depends: grub-common (>= 2.02~beta2-9), grub-efi-amd64-unsigned
+Breaks: grub-efi-amd64-signed (<< 1+2.12~rc1)
+Replaces: grub2 (<< 2.14-2ubuntu1)
+Recommends: grub-efi-amd64-signed, efibootmgr
+
+Package: grub-efi-amd64-signed
+Status: install ok installed
+Architecture: amd64
+Version: 1.215+2.14-2ubuntu1
+Depends: debconf (>= 0.5) | debconf-2.0, grub-efi-amd64-bin (= 2.14-2ubuntu1), grub-efi-amd64 | grub-pc, grub2-common (>= 2.02+dfsg1-5)
+Recommends: secureboot-db
+
+Package: grub-efi-amd64-unsigned
+Status: install ok installed
+Architecture: amd64
+Version: 2.14-2ubuntu1
+Multi-Arch: foreign
+Depends: grub-common (>= 2.02~beta2-9)
+Breaks: grub-efi-amd64-bin (<< 2.12-3~)
+Replaces: grub-efi-amd64-bin (<< 2.12-3~)
+
+Package: grub-pc-bin
+Status: install ok installed
+Architecture: amd64
+Version: 2.14-2ubuntu2.1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libdevmapper1.02.1 (>= 2:1.02.197), grub2-common (= 2.14-2ubuntu2.1)
+Replaces: grub2 (<< 2.14-2ubuntu2.1)
+Suggests: desktop-base
+
+Package: grub2-common
+Status: install ok installed
+Architecture: amd64
+Version: 2.14-2ubuntu2.1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libdevmapper1.02.1 (>= 2:1.02.197), libefiboot1t64 (>= 39), libefivar1t64 (>= 39), libfreetype6 (>= 2.2.1), libfuse3-4 (>= 3.17.2), liblzma5 (>= 5.1.1alpha+20120614), debconf (>= 0.5) | debconf-2.0, gettext-base, python3, python3-apt
+Breaks: grub-common (<< 2.14~), grub-legacy (<< 0.97-83~)
+Provides: grub-common (= 2.14-2ubuntu2.1)
+Replaces: grub, grub-common, grub-legacy
+Recommends: os-prober
+Suggests: multiboot-doc, grub-emu, mtools, xorriso, desktop-base, console-setup
+
+Package: gzip
+Status: install ok installed
+Architecture: amd64
+Version: 1.14-1~exp2ubuntu1.1
+Essential: yes
+Pre-Depends: libc6 (>= 2.38)
+Conflicts: zutils (<< 1.13-2~)
+Suggests: less
+
+Package: hdparm
+Status: install ok installed
+Architecture: amd64
+Version: 9.65+ds-1.1build1
+Depends: libc6 (>= 2.38)
+Recommends: powermgmt-base
+
+Package: hostname
+Status: install ok installed
+Architecture: amd64
+Version: 3.25build1
+Essential: yes
+Pre-Depends: libc6 (>= 2.34)
+Breaks: nis (<< 3.17-30)
+Replaces: nis (<< 3.17-30)
+
+Package: htop
+Status: install ok installed
+Architecture: amd64
+Version: 3.4.1-5build2
+Depends: libc6 (>= 2.38), libncursesw6 (>= 6), libtinfo6 (>= 6)
+Suggests: lm-sensors, lsof, strace
+
+Package: hwctl
+Status: install ok installed
+Architecture: amd64
+Version: 0.11.0-0ubuntu1
+Multi-Arch: foreign
+Depends: kmod, libc6 (>= 2.39), libgcc-s1 (>= 4.2), libssl3t64 (>= 3.0.0)
+
+Package: hwdata
+Status: install ok installed
+Architecture: all
+Version: 0.394-1build1
+Multi-Arch: foreign
+Depends: pnp.ids (= 0.394-1build1), pci.ids, usb.ids
+
+Package: ibverbs-providers
+Status: install ok installed
+Architecture: amd64
+Version: 61.0-2ubuntu3
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libibverbs1 (>= 59)
+Breaks: libipathverbs1 (<< 15), libmlx4-1 (<< 15), libmlx5-1 (<< 15), libmthca1 (<< 15)
+Provides: libefa1, libipathverbs1, libmana1, libmlx4-1, libmlx5-1, libmthca1
+Replaces: libipathverbs1 (<< 15), libmlx4-1 (<< 15), libmlx5-1 (<< 15), libmthca1 (<< 15)
+
+Package: ieee-data
+Status: install ok installed
+Architecture: all
+Version: 20240722build1
+Depends: wget | libwww-perl | curl
+
+Package: inetutils-telnet
+Status: install ok installed
+Architecture: amd64
+Version: 2:2.7-2ubuntu1.1
+Depends: libc6 (>= 2.42), libcom-err2 (>= 1.43.9), libk5crypto3 (>= 1.6.dfsg.2), libkrb5-3 (>= 1.13~alpha1+dfsg), libtinfo6 (>= 6), netbase
+Provides: telnet, telnet-client
+
+Package: info
+Status: install ok installed
+Architecture: amd64
+Version: 7.2-5ubuntu2
+Multi-Arch: foreign
+Depends: libc6 (>= 2.42), libtinfo6 (>= 6), install-info
+Breaks: texinfo-doc-nonfree
+Provides: info-browser
+Replaces: texinfo-doc-nonfree
+
+Package: init
+Status: install ok installed
+Architecture: amd64
+Version: 1.69
+Protected: yes
+Multi-Arch: foreign
+Pre-Depends: systemd-sysv
+
+Package: init-system-helpers
+Status: install ok installed
+Architecture: all
+Version: 1.69
+Essential: yes
+Multi-Arch: foreign
+
+Package: initramfs-tools-bin
+Status: install ok installed
+Architecture: amd64
+Version: 0.151ubuntu1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libgcc-s1 (>= 3.0), libudev1 (>= 183)
+Breaks: initramfs-tools-core (<< 0.148~)
+Replaces: initramfs-tools-core (<< 0.148~)
+
+Package: initramfs-tools-core
+Status: install ok installed
+Architecture: all
+Version: 0.151ubuntu1
+Multi-Arch: foreign
+Depends: 3cpio (>= 0.7), coreutils (>= 8.24), dhcpcd-base, dracut-install, e2fsprogs, initramfs-tools-bin (>= 0.151ubuntu1), klibc-utils (>= 2.0.4-8~), kmod, logsave | e2fsprogs (<< 1.45.3-1~), udev, busybox-initramfs
+Breaks: amd64-microcode (<< 3.20250311.1ubuntu2~), miniramfs (<< 1.0.3~)
+Recommends: zstd
+Suggests: bash-completion
+
+Package: install-info
+Status: install ok installed
+Architecture: amd64
+Version: 7.2-5ubuntu2
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38)
+
+Package: intel-microcode
+Status: install ok installed
+Architecture: amd64
+Version: 3.20260210.1ubuntu2
+Depends: iucode-tool (>= 1.0)
+Conflicts: microcode.ctl (<< 0.18~0)
+Recommends: dracut (>= 044) | initramfs-tools (>= 0.113~) | tiny-initramfs
+
+Package: iproute2
+Status: install ok installed
+Architecture: amd64
+Version: 6.19.0-1ubuntu1.1
+Multi-Arch: foreign
+Depends: debconf (>= 0.5) | debconf-2.0, libbpf1 (>= 1:0.6.0), libc6 (>= 2.38), libcap2 (>= 1:2.10), libdb5.3t64, libelf1t64 (>= 0.131), libmnl0 (>= 1.0.3-4~), libselinux1 (>= 3.1~), libtirpc3t64 (>= 1.0.2), libxtables12 (>= 1.6.0+snapshot20161117), libcap2-bin
+Breaks: iproute2-doc
+Conflicts: arpd
+Provides: arpd
+Replaces: iproute2-doc
+Suggests: python3:any
+
+Package: iptables
+Status: install ok installed
+Architecture: amd64
+Version: 1.8.11-2ubuntu3
+Multi-Arch: foreign
+Depends: libip4tc2 (= 1.8.11-2ubuntu3), libip6tc2 (= 1.8.11-2ubuntu3), libxtables12 (= 1.8.11-2ubuntu3), netbase (>= 6.0), libc6 (>= 2.42), libmnl0 (>= 1.0.3-4~), libnetfilter-conntrack3 (>= 1.0.6), libnfnetlink0 (>= 1.0.2), libnftnl11 (>= 1.1.6)
+Recommends: nftables
+Suggests: firewalld, kmod
+
+Package: iputils-ping
+Status: install ok installed
+Architecture: amd64
+Version: 3:20250605-1ubuntu1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libcap2 (>= 1:2.10), libidn2-0 (>= 0.6)
+Provides: ping
+Recommends: linux-sysctl-defaults
+
+Package: iputils-tracepath
+Status: install ok installed
+Architecture: amd64
+Version: 3:20250605-1ubuntu1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38)
+Suggests: traceroute
+
+Package: iso-codes
+Status: install ok installed
+Architecture: all
+Version: 4.20.1-1
+Multi-Arch: foreign
+Suggests: isoquery
+
+Package: iucode-tool
+Status: install ok installed
+Architecture: amd64
+Version: 2.3.1-3build2
+Depends: libc6 (>= 2.38)
+Suggests: intel-microcode (>= 1)
+
+Package: jq
+Status: install ok installed
+Architecture: amd64
+Version: 1.8.1-4ubuntu2
+Multi-Arch: foreign
+Depends: libjq1 (= 1.8.1-4ubuntu2), libc6 (>= 2.38), libonig5 (>= 6.8.1)
+
+Package: kbd
+Status: install ok installed
+Architecture: amd64
+Version: 2.7.1-2ubuntu2
+Depends: libc6 (>= 2.38), console-setup | console-setup-mini
+Conflicts: console-utilities
+Provides: console-utilities
+
+Package: kdump-tools
+Status: install ok installed
+Architecture: amd64
+Version: 1:1.10.7ubuntu3
+Depends: bsdextrautils | bsdmainutils, busybox-static | busybox, debconf, file, linux-base, lsb-base (>= 3.0-6), ucf, kexec-tools (>= 1:2.0.10-2), debconf (>= 0.5) | debconf-2.0
+Pre-Depends: init-system-helpers (>= 1.54~)
+Recommends: initramfs-tools-core, makedumpfile
+
+Package: kexec-tools
+Status: install ok installed
+Architecture: amd64
+Version: 1:2.0.32-3ubuntu1
+Depends: libc6 (>= 2.38), libzstd1 (>= 1.5.5), debconf (>= 0.5) | debconf-2.0, debconf, dpkg (>= 1.15.7.2)
+Conflicts: bfh-container (<< 20211009-22~), molly-guard (<< 0.8.4~), progress-linux-container (<< 20221002-11~)
+
+Package: keyboard-configuration
+Status: install ok installed
+Architecture: all
+Version: 1.237ubuntu3.1
+Multi-Arch: foreign
+Depends: debconf (>= 0.5) | debconf-2.0, liblocale-gettext-perl, xkb-data (>= 2.46~), xkb-data (<< 2.46A)
+Pre-Depends: debconf | debconf-2.0
+Breaks: console-setup (<< 1.71), console-setup-mini (<< 1.47)
+Replaces: console-setup (<< 1.47), console-setup-mini (<< 1.47)
+
+Package: klibc-utils
+Status: install ok installed
+Architecture: amd64
+Version: 2.0.14-1ubuntu2
+Multi-Arch: foreign
+Depends: libklibc (= 2.0.14-1ubuntu2)
+
+Package: kmod
+Status: install ok installed
+Architecture: amd64
+Version: 34.2-2ubuntu2
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libssl3t64 (>= 3.0.0), libkmod2 (= 34.2-2ubuntu2)
+Breaks: bash-completion (<< 1:2.16.0-1)
+Replaces: bash-completion (<< 1:2.16.0-1)
+
+Package: kpartx
+Status: install ok installed
+Architecture: amd64
+Version: 0.14.3-2ubuntu1
+Depends: dmsetup (>= 2:1.02.196-1~), udev, libc6 (>= 2.38), libdevmapper1.02.1 (>= 2:1.02.197), libgcc-s1 (>= 3.3.1)
+
+Package: krb5-locales
+Status: install ok installed
+Architecture: all
+Version: 1.22.1-2ubuntu4.1
+Multi-Arch: foreign
+
+Package: landscape-common
+Status: install ok installed
+Architecture: amd64
+Version: 26.02.2-0ubuntu1
+Depends: python3:any, debconf (>= 0.5) | debconf-2.0, python3-twisted, python3-configobj, python3-apt, ca-certificates, python3-gdbm, python3-netifaces, lsb-release, adduser, bc, lshw, libpam-modules, python3-setuptools
+
+Package: less
+Status: install ok installed
+Architecture: amd64
+Version: 668-1build1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.42), libtinfo6 (>= 6)
+
+Package: libacl1
+Status: install ok installed
+Architecture: amd64
+Version: 2.3.2-2
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libaio1t64
+Status: install ok installed
+Architecture: amd64
+Version: 0.3.113-8build1
+Multi-Arch: same
+Depends: libc6 (>= 2.4)
+
+Package: libapparmor1
+Status: install ok installed
+Architecture: amd64
+Version: 5.0.2-0ubuntu1~26.04.1
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+Breaks: libapparmor-perl (<< 3.0.3-3)
+Replaces: libapparmor-perl (<< 3.0.3-3)
+
+Package: libappstream5
+Status: install ok installed
+Architecture: amd64
+Version: 1.1.2-1
+Multi-Arch: same
+Depends: libc6 (>= 2.33), libcurl3t64-gnutls (>= 7.63.0), libfyaml0 (>= 0.9), libglib2.0-0t64 (>= 2.80.0), libstemmer0d (>= 0+svn527), libsystemd0 (>= 242), libxml2-16 (>= 2.14.1), libxmlb2 (>= 0.3.13), libzstd1 (>= 1.5.5)
+
+Package: libapt-pkg7.0
+Status: install ok installed
+Architecture: amd64
+Version: 3.2.0
+Multi-Arch: same
+Depends: libbz2-1.0, libc6 (>= 2.38), libgcc-s1 (>= 3.3.1), liblz4-1 (>= 0.0~r127), liblzma5 (>= 5.1.1alpha+20120614), libssl3t64 (>= 3.0.0), libstdc++6 (>= 14), libsystemd0 (>= 221), libudev1 (>= 183), libxxhash0 (>= 0.8), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.2.2.3)
+Breaks: appstream (<< 0.9.0-3~), apt (<< 1.6~), aptitude (<< 0.8.9), dpkg (<< 1.20.8), libapt-inst1.5 (<< 0.9.9~)
+Conflicts: libnettle8 (<< 3.9.1-2.2~)
+Provides: libapt-pkg (= 3.2.0)
+Recommends: apt (>= 3.2.0)
+
+Package: libassuan9
+Status: install ok installed
+Architecture: amd64
+Version: 3.0.2-2build1
+Multi-Arch: same
+Depends: libc6 (>= 2.42), libgpg-error0 (>= 1.33)
+
+Package: libatasmart4
+Status: install ok installed
+Architecture: amd64
+Version: 0.19-6
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libudev1 (>= 183)
+
+Package: libatomic1
+Status: install ok installed
+Architecture: amd64
+Version: 16-20260322-1ubuntu1
+Multi-Arch: same
+Depends: gcc-16-base (= 16-20260322-1ubuntu1), libc6 (>= 2.14)
+
+Package: libattr1
+Status: install ok installed
+Architecture: amd64
+Version: 1:2.5.2-4
+Multi-Arch: same
+Depends: libc6 (>= 2.4)
+
+Package: libaudit-common
+Status: install ok installed
+Architecture: all
+Version: 1:4.1.2-1build1
+Multi-Arch: foreign
+
+Package: libaudit1
+Status: install ok installed
+Architecture: amd64
+Version: 1:4.1.2-1build1
+Multi-Arch: same
+Depends: libaudit-common (>= 1:4.1.2-1build1), libc6 (>= 2.38), libcap-ng0 (>= 0.7.9)
+
+Package: libbinutils
+Status: install ok installed
+Architecture: amd64
+Version: 2.46-3ubuntu2
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libsframe3, libzstd1 (>= 1.5.5), zlib1g (>= 1:1.2.11), binutils-common (= 2.46-3ubuntu2)
+Breaks: binutils (<< 2.29-6)
+Replaces: binutils (<< 2.29-6)
+
+Package: libblkid1
+Status: install ok installed
+Architecture: amd64
+Version: 2.41.3-3ubuntu2
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libblockdev-crypto3
+Status: install ok installed
+Architecture: amd64
+Version: 3.4.0-1
+Multi-Arch: same
+Depends: libblkid1 (>= 2.23.0), libblockdev-utils3 (>= 3.0), libc6 (>= 2.6), libcryptsetup12 (>= 2:2.7), libglib2.0-0t64 (>= 2.42.2), libkeyutils1 (>= 1.4), libnss3 (>= 2:3.13.4-2~), libvolume-key1 (>= 0.3.9)
+
+Package: libblockdev-fs3
+Status: install ok installed
+Architecture: amd64
+Version: 3.4.0-1
+Multi-Arch: same
+Depends: libblkid1 (>= 2.24.2), libblockdev-utils3 (>= 3.0), libc6 (>= 2.7), libext2fs2t64 (>= 1.42.11), libglib2.0-0t64 (>= 2.42.2), libmount1 (>= 2.30.2), libuuid1 (>= 2.16)
+Recommends: e2fsprogs
+
+Package: libblockdev-loop3
+Status: install ok installed
+Architecture: amd64
+Version: 3.4.0-1
+Multi-Arch: same
+Depends: libblockdev-utils3 (>= 2.14), libc6 (>= 2.27), libglib2.0-0t64 (>= 2.42.2)
+
+Package: libblockdev-mdraid3
+Status: install ok installed
+Architecture: amd64
+Version: 3.4.0-1
+Multi-Arch: same
+Depends: libblockdev-utils3 (>= 3.0), libbytesize1 (>= 2.6), libc6 (>= 2.27), libglib2.0-0t64 (>= 2.42.2)
+Suggests: mdadm
+
+Package: libblockdev-nvme3
+Status: install ok installed
+Architecture: amd64
+Version: 3.4.0-1
+Multi-Arch: same
+Depends: libblockdev-utils3 (>= 3.0), libc6 (>= 2.6), libglib2.0-0t64 (>= 2.42.2), libnvme1t64 (>= 1.15)
+
+Package: libblockdev-part3
+Status: install ok installed
+Architecture: amd64
+Version: 3.4.0-1
+Multi-Arch: same
+Depends: libblockdev-utils3 (>= 3.0), libc6 (>= 2.6), libfdisk1 (>= 2.31.1), libglib2.0-0t64 (>= 2.42.2)
+
+Package: libblockdev-smart3
+Status: install ok installed
+Architecture: amd64
+Version: 3.4.0-1
+Multi-Arch: same
+Depends: libatasmart4 (>= 0.13), libblockdev-utils3 (>= 3.0), libc6 (>= 2.6), libglib2.0-0t64 (>= 2.42.2)
+
+Package: libblockdev-swap3
+Status: install ok installed
+Architecture: amd64
+Version: 3.4.0-1
+Multi-Arch: same
+Depends: libblkid1 (>= 2.23.0), libblockdev-utils3 (>= 2.14), libc6 (>= 2.4), libglib2.0-0t64 (>= 2.42.2), libuuid1 (>= 2.16)
+
+Package: libblockdev-utils3
+Status: install ok installed
+Architecture: amd64
+Version: 3.4.0-1
+Multi-Arch: same
+Depends: libc6 (>= 2.14), libglib2.0-0t64 (>= 2.76.0), libkmod2 (>= 19), libudev1 (>= 216)
+
+Package: libblockdev3
+Status: install ok installed
+Architecture: amd64
+Version: 3.4.0-1
+Multi-Arch: same
+Depends: libblockdev-utils3 (>= 3.0), libc6 (>= 2.34), libglib2.0-0t64 (>= 2.42.2)
+
+Package: libbpf1
+Status: install ok installed
+Architecture: amd64
+Version: 1:1.6.3-1ubuntu1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libelf1t64 (>= 0.144), zlib1g (>= 1:1.2.3.4)
+
+Package: libbpfcc
+Status: install ok installed
+Architecture: amd64
+Version: 0.35.0+ds-1ubuntu2
+Multi-Arch: same
+Depends: libbpf1 (>= 1:1.2.0), libc6 (>= 2.38), libclang-cpp21 (>= 1:21.1.8), libelf1t64 (>= 0.144), libgcc-s1 (>= 3.3.1), libllvm21 (>= 1:21.1.0), liblzma5 (>= 5.1.1alpha+20120614), libstdc++6 (>= 13.1)
+
+Package: libbrotli1
+Status: install ok installed
+Architecture: amd64
+Version: 1.2.0-3build1
+Multi-Arch: same
+Depends: libc6 (>= 2.29)
+
+Package: libbsd0
+Status: install ok installed
+Architecture: amd64
+Version: 0.12.2-2build2
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libmd0 (>= 1.0.3-2)
+
+Package: libbytesize-common
+Status: install ok installed
+Architecture: all
+Version: 2.12-1
+Multi-Arch: foreign
+
+Package: libbytesize1
+Status: install ok installed
+Architecture: amd64
+Version: 2.12-1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libgmp10 (>= 2:6.3.0+dfsg), libmpfr6 (>= 3.1.3), libpcre2-8-0 (>= 10.22), libbytesize-common (= 2.12-1)
+
+Package: libbz2-1.0
+Status: install ok installed
+Architecture: amd64
+Version: 1.0.8-6build2
+Multi-Arch: same
+Depends: libc6 (>= 2.4)
+
+Package: libc-bin
+Status: install ok installed
+Architecture: amd64
+Version: 2.43-2ubuntu2.3
+Essential: yes
+Multi-Arch: foreign
+Depends: libc6 (>> 2.43), libc6 (<< 2.44)
+Suggests: manpages
+
+Package: libc-dev-bin
+Status: install ok installed
+Architecture: amd64
+Version: 2.43-2ubuntu2.3
+Multi-Arch: foreign
+Depends: libc6 (>> 2.43), libc6 (<< 2.44)
+Recommends: manpages, manpages-dev
+Suggests: libc-devtools (>> 2.43)
+
+Package: libc-gconv-modules-extra
+Status: install ok installed
+Architecture: amd64
+Version: 2.43-2ubuntu2.3
+Multi-Arch: same
+Breaks: libc6 (<< 2.42-1)
+Replaces: libc6 (<< 2.42-1)
+
+Package: libc6
+Status: install ok installed
+Architecture: amd64
+Version: 2.43-2ubuntu2.3
+Multi-Arch: same
+Depends: libgcc-s1, libc-gconv-modules-extra (= 2.43-2ubuntu2.3)
+Breaks: base-files (<< 13.3~), dhcpcd (<< 1:10.1.0-7~), libamdhip64-5 (<< 5.7.1-5+b1), libhiprtc-builtins5 (<< 5.7.1-5+b1), librccl1 (<< 5.4.3-3build1), libswupdate0.1 (<< 2024.12.1+dfsg-1+b3), locales (<< 2.43), locales-all (<< 2.43), lua-swupdate (<< 2024.12.1+dfsg-1+b3), nscd (<< 2.43), pd-scaf (<< 1:0.14.1+darcs20180201-6build5), postgresql-15-pllua (<< 1:2.0.12-4), postgresql-17-pllua (<< 1:2.0.12-3+b2), python3-mrgingham (<< 1.25-1), python3-onnxruntime (<< 1.20.1+dfsg-2~), sysvinit (<< 3.09-2~), sysvinit-core (<< 3.09-2~), uwsgi-plugin-pypy3 (<< 0.0.2+b1)
+Replaces: libc6-amd64
+Recommends: libidn2-0 (>= 2.0.5~)
+Suggests: glibc-doc, debconf | debconf-2.0, locales, libnss-nis, libnss-nisplus
+
+Package: libc6-dev
+Status: install ok installed
+Architecture: amd64
+Version: 2.43-2ubuntu2.3
+Multi-Arch: same
+Depends: libc6 (= 2.43-2ubuntu2.3), libc-dev-bin (= 2.43-2ubuntu2.3), linux-libc-dev, rpcsvc-proto
+Breaks: catch (<< 1.12.2-0.1), libc6-dev-amd64-cross (<< 2.43~), libdpkg-perl (<< 1.22.22), libmysqlclient-dev (<= 8.0.29-1)
+Conflicts: libc0.3-dev, libc6.1-dev
+Provides: libc-dev (= 2.43-2ubuntu2.3)
+Suggests: glibc-doc, manpages-dev
+
+Package: libcap-ng0
+Status: install ok installed
+Architecture: amd64
+Version: 0.8.5-4build5
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libcap2
+Status: install ok installed
+Architecture: amd64
+Version: 1:2.75-10ubuntu2
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libcap2-bin
+Status: install ok installed
+Architecture: amd64
+Version: 1:2.75-10ubuntu2
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libcap2 (>= 1:2.63)
+Breaks: libcap-bin
+Replaces: libcap-bin
+Recommends: libpam-cap
+
+Package: libcbor0.10
+Status: install ok installed
+Architecture: amd64
+Version: 0.10.2-2ubuntu3
+Multi-Arch: same
+Depends: libc6 (>= 2.14)
+
+Package: libclang-cpp21
+Status: install ok installed
+Architecture: amd64
+Version: 1:21.1.8-6ubuntu1
+Depends: libc6 (>= 2.38), libgcc-s1 (>= 3.0), libllvm21 (= 1:21.1.8-6ubuntu1), libstdc++6 (>= 12)
+
+Package: libclang1-21
+Status: install ok installed
+Architecture: amd64
+Version: 1:21.1.8-6ubuntu1
+Depends: libc6 (>= 2.38), libgcc-s1 (>= 3.0), libllvm21 (>= 1:21.1.0), libstdc++6 (>= 11)
+
+Package: libcom-err2
+Status: install ok installed
+Architecture: amd64
+Version: 1.47.2-3ubuntu4
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+Breaks: libcom-err2t64 (<< 1.47.0-2.4~exp1~), libcomerr2 (<< 1.43.9-1~)
+Provides: libcom-err2t64 (= 1.47.2-3ubuntu4), libcomerr2 (= 1.47.2-3ubuntu4)
+Replaces: libcom-err2t64, libcomerr2 (<< 1.43.9-1~)
+
+Package: libcrypt1
+Status: install ok installed
+Architecture: amd64
+Version: 1:4.5.1-1
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+Conflicts: libpam0g (<< 1.4.0-10)
+Replaces: libc6 (<< 2.29-4)
+
+Package: libcryptsetup12
+Status: install ok installed
+Architecture: amd64
+Version: 2:2.8.4-1ubuntu4
+Multi-Arch: same
+Depends: libblkid1 (>= 2.17.2), libc6 (>= 2.38), libdevmapper1.02.1 (>= 2:1.02.197), libjson-c5 (>= 0.15), libssl3t64 (>= 3.2.0), libuuid1 (>= 2.16)
+
+Package: libctf-nobfd0
+Status: install ok installed
+Architecture: amd64
+Version: 2.46-3ubuntu2
+Multi-Arch: same
+Depends: libc6 (>= 2.14), zlib1g (>= 1:1.2.0)
+Breaks: libbinutils (<< 2.33.50.20191128-1~)
+Replaces: libbinutils (<< 2.33.50.20191128-1~)
+
+Package: libctf0
+Status: install ok installed
+Architecture: amd64
+Version: 2.46-3ubuntu2
+Multi-Arch: same
+Depends: libbinutils (= 2.46-3ubuntu2), libc6 (>= 2.33), zlib1g (>= 1:1.2.0)
+
+Package: libcurl3t64-gnutls
+Status: install ok installed
+Architecture: amd64
+Version: 8.18.0-1ubuntu2.4
+Multi-Arch: same
+Depends: libbrotli1 (>= 0.6.0), libc6 (>= 2.34), libgnutls30t64 (>= 3.8.6), libgssapi-krb5-2 (>= 1.17), libidn2-0 (>= 2.0.0), libldap2 (>= 2.6.2), libnettle8t64, libnghttp2-14 (>= 1.50.0), libpsl5t64 (>= 0.16.0), librtmp1 (>= 2.3), libssh2-1t64 (>= 1.11.1), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.2.3.4)
+Breaks: libcurl3-gnutls (<< 8.18.0-1ubuntu2.4)
+Provides: libcurl3-gnutls (= 8.18.0-1ubuntu2.4)
+Replaces: libcurl3-gnutls
+Recommends: ca-certificates
+
+Package: libcurl4t64
+Status: install ok installed
+Architecture: amd64
+Version: 8.18.0-1ubuntu2.4
+Multi-Arch: same
+Depends: libbrotli1 (>= 0.6.0), libc6 (>= 2.34), libgssapi-krb5-2 (>= 1.17), libidn2-0 (>= 2.0.0), libldap2 (>= 2.6.2), libnghttp2-14 (>= 1.50.0), libpsl5t64 (>= 0.16.0), librtmp1 (>= 2.3), libssh2-1t64 (>= 1.11.1), libssl3t64 (>= 3.2.0), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.2.3.4)
+Breaks: libcurl4 (<< 8.18.0-1ubuntu2.4)
+Conflicts: libcurl3
+Provides: libcurl4 (= 8.18.0-1ubuntu2.4)
+Replaces: libcurl3, libcurl4
+Recommends: ca-certificates
+
+Package: libdb5.3t64
+Status: install ok installed
+Architecture: amd64
+Version: 5.3.28+dfsg2-10ubuntu1
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+Breaks: libdb5.3 (<< 5.3.28+dfsg2-10ubuntu1)
+Provides: libdb5.3 (= 5.3.28+dfsg2-10ubuntu1)
+Replaces: libdb5.3
+
+Package: libdbus-1-3
+Status: install ok installed
+Architecture: amd64
+Version: 1.16.2-2ubuntu4
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libsystemd0
+Recommends: dbus
+
+Package: libdebconfclient0
+Status: install ok installed
+Architecture: amd64
+Version: 0.280ubuntu1
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libdebuginfod-common
+Status: install ok installed
+Architecture: all
+Version: 0.194-4
+Multi-Arch: foreign
+Depends: debconf (>= 0.5) | debconf-2.0, ucf
+Pre-Depends: debconf
+
+Package: libdebuginfod1t64
+Status: install ok installed
+Architecture: amd64
+Version: 0.194-4
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libcurl3t64-gnutls (>= 7.28.0), libelf1t64 (= 0.194-4), libjson-c5 (>= 0.15), libdw1t64 (= 0.194-4), libdebuginfod-common (>= 0.194-4)
+Breaks: libdebuginfod1 (<< 0.194-4)
+Provides: libdebuginfod1 (= 0.194-4)
+Replaces: libdebuginfod1
+
+Package: libdevmapper-event1.02.1
+Status: install ok installed
+Architecture: amd64
+Version: 2:1.02.205-2ubuntu3
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libdevmapper1.02.1 (>= 2:1.02.197)
+
+Package: libdevmapper1.02.1
+Status: install ok installed
+Architecture: amd64
+Version: 2:1.02.205-2ubuntu3
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libselinux1 (>= 3.1~), libudev1 (>= 183)
+Recommends: dmsetup (>= 2:1.02.205-2ubuntu3~)
+
+Package: libdrm-amdgpu1
+Status: install ok installed
+Architecture: amd64
+Version: 2.4.131-1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libdrm2 (>= 2.4.108)
+
+Package: libdrm-common
+Status: install ok installed
+Architecture: all
+Version: 2.4.131-1
+Multi-Arch: foreign
+
+Package: libdrm2
+Status: install ok installed
+Architecture: amd64
+Version: 2.4.131-1
+Multi-Arch: same
+Depends: libdrm-common (>= 2.4.131-1), libc6 (>= 2.38)
+
+Package: libduktape207
+Status: install ok installed
+Architecture: amd64
+Version: 2.7.0+tests-0ubuntu4
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libdw1t64
+Status: install ok installed
+Architecture: amd64
+Version: 0.194-4
+Multi-Arch: same
+Depends: libbz2-1.0, libc6 (>= 2.38), libelf1t64 (= 0.194-4), liblzma5 (>= 5.1.1alpha+20120614), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.2.2.3)
+Breaks: libdw1 (<< 0.194-4)
+Provides: libdw1 (= 0.194-4)
+Replaces: libdw1
+
+Package: libeatmydata1
+Status: install ok installed
+Architecture: amd64
+Version: 131-2build1
+Multi-Arch: same
+Depends: libc6 (>= 2.34)
+
+Package: libedit2
+Status: install ok installed
+Architecture: amd64
+Version: 3.1-20251016-1
+Multi-Arch: same
+Depends: libbsd0 (>= 0.1.3), libc6 (>= 2.42), libtinfo6 (>= 6)
+Replaces: libedit-dev (<< 3.1-20180525-2~)
+
+Package: libefiboot1t64
+Status: install ok installed
+Architecture: amd64
+Version: 39-2
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libefivar1t64 (>= 39)
+Breaks: libefiboot1 (<< 39-2)
+Provides: libefiboot1 (= 39-2)
+Replaces: libefiboot1
+
+Package: libefivar1t64
+Status: install ok installed
+Architecture: amd64
+Version: 39-2
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+Breaks: libefivar1 (<< 39-2)
+Provides: libefivar1 (= 39-2)
+Replaces: libefivar1
+
+Package: libelf1t64
+Status: install ok installed
+Architecture: amd64
+Version: 0.194-4
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.1.4)
+Breaks: libelf1 (<< 0.194-4)
+Provides: libelf1 (= 0.194-4)
+Replaces: libelf1
+
+Package: liberror-perl
+Status: install ok installed
+Architecture: all
+Version: 0.17030-1
+Multi-Arch: foreign
+Depends: perl:any
+
+Package: libestr0
+Status: install ok installed
+Architecture: amd64
+Version: 0.1.11-2build1
+Multi-Arch: same
+Depends: libc6 (>= 2.14)
+
+Package: libevdev2
+Status: install ok installed
+Architecture: amd64
+Version: 1.13.6+dfsg-1
+Multi-Arch: same
+Depends: libc6 (>= 2.33)
+
+Package: libevent-core-2.1-7t64
+Status: install ok installed
+Architecture: amd64
+Version: 2.1.12-stable-10build2
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+Breaks: libevent-core-2.1-7 (<< 2.1.12-stable-10build2)
+Provides: libevent-core-2.1-7 (= 2.1.12-stable-10build2)
+Replaces: libevent-core-2.1-7
+
+Package: libexpat1
+Status: install ok installed
+Architecture: amd64
+Version: 2.7.4-1
+Multi-Arch: same
+Pre-Depends: libc6 (>= 2.38)
+
+Package: libext2fs2t64
+Status: install ok installed
+Architecture: amd64
+Version: 1.47.2-3ubuntu4
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+Breaks: e2fslibs (<< 1.43.9-1~), libext2fs2 (<< 1.47.2-3ubuntu4)
+Provides: e2fslibs (= 1.47.2-3ubuntu4), libext2fs2 (= 1.47.2-3ubuntu4)
+Replaces: e2fslibs (<< 1.43.9-1~), libext2fs2
+
+Package: libfastjson4
+Status: install ok installed
+Architecture: amd64
+Version: 1.2304.0-2build1
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libfdisk1
+Status: install ok installed
+Architecture: amd64
+Version: 2.41.3-3ubuntu2
+Multi-Arch: same
+Depends: libblkid1 (= 2.41.3-3ubuntu2), libc6 (>= 2.38), libuuid1 (= 2.41.3-3ubuntu2)
+
+Package: libffi8
+Status: install ok installed
+Architecture: amd64
+Version: 3.5.2-4
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+Breaks: libffi8ubuntu1 (<< 3.4.2-1)
+Provides: libffi8ubuntu1 (= 3.5.2-4)
+Replaces: libffi8ubuntu1 (<< 3.4.2-1)
+
+Package: libfido2-1
+Status: install ok installed
+Architecture: amd64
+Version: 1.16.0-2build1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libcbor0.10 (>= 0.10.2), libssl3t64 (>= 3.0.0), libudev1 (>= 183), zlib1g (>= 1:1.1.4)
+
+Package: libflashrom1
+Status: install ok installed
+Architecture: amd64
+Version: 1.6.0-2ubuntu1
+Multi-Arch: same
+Depends: libc6 (>= 2.42), libftdi1-2 (>= 1.2), libpci3 (>= 1:3.13.0), libusb-1.0-0 (>= 2:1.0.22)
+
+Package: libfreetype6
+Status: install ok installed
+Architecture: amd64
+Version: 2.14.2+dfsg-1ubuntu0.1
+Multi-Arch: same
+Depends: libbrotli1 (>= 0.6.0), libbz2-1.0, libc6 (>= 2.38), libpng16-16t64 (>= 1.6.46), zlib1g (>= 1:1.1.4)
+
+Package: libfribidi0
+Status: install ok installed
+Architecture: amd64
+Version: 1.0.16-5
+Multi-Arch: same
+Depends: libc6 (>= 2.4)
+
+Package: libftdi1-2
+Status: install ok installed
+Architecture: amd64
+Version: 1.6~rc1-1build1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libusb-1.0-0 (>= 2:1.0.16)
+
+Package: libfuse3-4
+Status: install ok installed
+Architecture: amd64
+Version: 3.18.2-1
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+Suggests: fuse3
+
+Package: libfwupd3
+Status: install ok installed
+Architecture: amd64
+Version: 2.1.1-1ubuntu3.1
+Multi-Arch: same
+Depends: libc6 (>= 2.32), libcurl3t64-gnutls (>= 7.63.0), libglib2.0-0t64 (>= 2.80.0), libjcat1 (>= 0.1.0)
+
+Package: libfyaml0
+Status: install ok installed
+Architecture: amd64
+Version: 0.9.4-1
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libgcc-s1
+Status: install ok installed
+Architecture: amd64
+Version: 16-20260322-1ubuntu1
+Protected: yes
+Multi-Arch: same
+Depends: gcc-16-base (= 16-20260322-1ubuntu1), libc6 (>= 2.35)
+Provides: libgcc1 (= 1:16-20260322-1ubuntu1)
+Replaces: libgcc1 (<< 1:10)
+
+Package: libgcrypt20
+Status: install ok installed
+Architecture: amd64
+Version: 1.12.0-2ubuntu1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libgpg-error0 (>= 1.56)
+Suggests: rng-tools
+
+Package: libgdbm-compat4t64
+Status: install ok installed
+Architecture: amd64
+Version: 1.26-1build1
+Multi-Arch: same
+Depends: libc6 (>= 2.33), libgdbm6t64 (>= 1.16)
+Breaks: libgdbm-compat4 (<< 1.26-1build1)
+Provides: libgdbm-compat4 (= 1.26-1build1)
+Replaces: libgdbm-compat4
+
+Package: libgdbm6t64
+Status: install ok installed
+Architecture: amd64
+Version: 1.26-1build1
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+Breaks: libgdbm6 (<< 1.26-1build1)
+Provides: libgdbm6 (= 1.26-1build1)
+Replaces: libgdbm6
+Suggests: gdbm-l10n (= 1.26-1build1)
+
+Package: libgirepository-2.0-0
+Status: install ok installed
+Architecture: amd64
+Version: 2.88.0-1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libffi8 (>= 3.4), libglib2.0-0t64 (= 2.88.0-1)
+Provides: libgirepository-2.0-0-with-libffi8 (= 2.88.0-1)
+
+Package: libglib2.0-0t64
+Status: install ok installed
+Architecture: amd64
+Version: 2.88.0-1
+Multi-Arch: same
+Depends: libatomic1 (>= 4.8), libc6 (>= 2.43), libffi8 (>= 3.4), libmount1 (>= 2.40~rc2), libpcre2-8-0 (>= 10.22), libselinux1 (>= 3.1~), zlib1g (>= 1:1.2.2)
+Breaks: gnome-shell (<< 44.9-2~), libglib2.0-0 (<< 2.80.0-7~)
+Provides: libgio-2.0-0 (= 2.88.0-1), libglib-2.0-0 (= 2.88.0-1), libglib2.0-0 (= 2.88.0-1), libgmodule-2.0-0 (= 2.88.0-1), libgobject-2.0-0 (= 2.88.0-1), libgthread-2.0-0 (= 2.88.0-1)
+Replaces: libglib2.0-0 (<< 2.80.0-7~)
+Recommends: libglib2.0-data, shared-mime-info, xdg-user-dirs
+Suggests: low-memory-monitor
+
+Package: libglib2.0-bin
+Status: install ok installed
+Architecture: amd64
+Version: 2.88.0-1
+Multi-Arch: foreign
+Depends: libglib2.0-data, libc6 (>= 2.38), libelf1t64 (>= 0.142), libglib2.0-0t64 (= 2.88.0-1)
+
+Package: libglib2.0-data
+Status: install ok installed
+Architecture: all
+Version: 2.88.0-1
+Multi-Arch: foreign
+
+Package: libgmp10
+Status: install ok installed
+Architecture: amd64
+Version: 2:6.3.0+dfsg-5ubuntu2
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+Breaks: postgresql-pgmp (<< 1.0.3-1)
+
+Package: libgnutls30t64
+Status: install ok installed
+Architecture: amd64
+Version: 3.8.12-2ubuntu1.1
+Multi-Arch: same
+Depends: libc6 (>= 2.43), libgmp10 (>= 2:6.3.0+dfsg), libhogweed6t64 (>= 3.10), libidn2-0 (>= 2.0.0), libnettle8t64 (>= 3.10), libp11-kit0 (>= 0.25.1), libtasn1-6 (>= 4.14), libunistring5 (>= 1.1)
+Breaks: libgnutls30 (<< 3.8.12-2ubuntu1.1)
+Provides: libgnutls30 (= 3.8.12-2ubuntu1.1)
+Replaces: libgnutls30
+Suggests: gnutls-bin
+
+Package: libgpg-error-l10n
+Status: install ok installed
+Architecture: all
+Version: 1.58-2
+Multi-Arch: foreign
+Breaks: libgpg-error0 (<< 1.32-1.1~)
+Replaces: libgpg-error0 (<< 1.32-1.1~)
+Enhances: libgpg-error0
+
+Package: libgpg-error0
+Status: install ok installed
+Architecture: amd64
+Version: 1.58-2
+Multi-Arch: same
+Depends: libc6 (>= 2.42)
+Recommends: libgpg-error-l10n
+
+Package: libgpgme45
+Status: install ok installed
+Architecture: amd64
+Version: 2.0.1-2build1
+Multi-Arch: same
+Depends: gnupg (>= 2.1.21-4) | gpg, libassuan9 (>= 2.4.2), libc6 (>= 2.38), libgpg-error0 (>= 1.50)
+Recommends: dirmngr, gpg-agent, gpg-wks-client, gpgsm
+
+Package: libgpm2
+Status: install ok installed
+Architecture: amd64
+Version: 1.20.7-12build1
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+Suggests: gpm
+
+Package: libgprofng0
+Status: install ok installed
+Architecture: amd64
+Version: 2.46-3ubuntu2
+Multi-Arch: same
+Depends: libbinutils (= 2.46-3ubuntu2), libc6 (>= 2.38), libgcc-s1 (>= 3.3.1), libstdc++6 (>= 14), zlib1g (>= 1:1.1.4)
+
+Package: libgssapi-krb5-2
+Status: install ok installed
+Architecture: amd64
+Version: 1.22.1-2ubuntu4.1
+Multi-Arch: same
+Depends: libkrb5-3 (= 1.22.1-2ubuntu4.1), libc6 (>= 2.38), libcom-err2 (>= 1.43.9), libk5crypto3 (>= 1.20), libkrb5support0 (= 1.22.1-2ubuntu4.1)
+Suggests: krb5-doc, krb5-user
+
+Package: libgstreamer1.0-0
+Status: install ok installed
+Architecture: amd64
+Version: 1.28.2-1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libcap2 (>= 1:2.10), libgcc-s1 (>= 4.2), libglib2.0-0t64 (>= 2.81.1), libcap2-bin
+Suggests: gstreamer1.0-tools
+
+Package: libgudev-1.0-0
+Status: install ok installed
+Architecture: amd64
+Version: 1:238-7build1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libglib2.0-0t64 (>= 2.80.0), libudev1 (>= 251)
+
+Package: libhogweed6t64
+Status: install ok installed
+Architecture: amd64
+Version: 3.10.2-1
+Multi-Arch: same
+Depends: libc6 (>= 2.14), libgmp10 (>= 2:6.3.0+dfsg), libnettle8t64
+Breaks: libhogweed6 (<< 3.10.2-1)
+Provides: libhogweed6 (= 3.10.2-1)
+Replaces: libhogweed6
+
+Package: libibverbs1
+Status: install ok installed
+Architecture: amd64
+Version: 61.0-2ubuntu3
+Multi-Arch: same
+Depends: adduser, libc6 (>= 2.38), libnl-3-200 (>= 3.11.0), libnl-route-3-200 (>= 3.11.0)
+Breaks: ibverbs-providers (<< 59~)
+Recommends: ibverbs-providers
+
+Package: libicu78
+Status: install ok installed
+Architecture: amd64
+Version: 78.2-2ubuntu1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libgcc-s1 (>= 3.3.1), libstdc++6 (>= 14)
+
+Package: libidn2-0
+Status: install ok installed
+Architecture: amd64
+Version: 2.3.8-4build1
+Multi-Arch: same
+Depends: libc6 (>= 2.14), libunistring5 (>= 1.1)
+
+Package: libimobiledevice-1.0-6
+Status: install ok installed
+Architecture: amd64
+Version: 1.4.0-1build1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libimobiledevice-glue-1.0-0 (>= 1.3.0), libplist-2.0-4 (>= 2.5.0), libssl3t64 (>= 3.0.0), libusbmuxd-2.0-7 (>= 2.1.0)
+Breaks: libimobiledevice6 (<< 1.3.0-9)
+Replaces: libimobiledevice6 (<< 1.3.0-9)
+Recommends: usbmuxd
+Suggests: libusbmuxd-tools
+
+Package: libimobiledevice-glue-1.0-0
+Status: install ok installed
+Architecture: amd64
+Version: 1.3.2-2build1
+Depends: libc6 (>= 2.38), libplist-2.0-4 (>= 2.7.0)
+
+Package: libinih1
+Status: install ok installed
+Architecture: amd64
+Version: 61-1ubuntu1
+Multi-Arch: same
+Depends: libc6 (>= 2.4)
+
+Package: libintl-perl
+Status: install ok installed
+Architecture: all
+Version: 1.37-1
+Multi-Arch: foreign
+Depends: perl:any
+Recommends: libintl-xs-perl
+
+Package: libintl-xs-perl
+Status: install ok installed
+Architecture: amd64
+Version: 1.37-1
+Depends: perl (>= 5.40.1-6build1), perlapi-5.40.1, libc6 (>= 2.3), libintl-perl (= 1.37-1)
+
+Package: libip4tc2
+Status: install ok installed
+Architecture: amd64
+Version: 1.8.11-2ubuntu3
+Multi-Arch: same
+Depends: libc6 (>= 2.4)
+
+Package: libip6tc2
+Status: install ok installed
+Architecture: amd64
+Version: 1.8.11-2ubuntu3
+Multi-Arch: same
+Depends: libc6 (>= 2.4)
+
+Package: libisns0t64
+Status: install ok installed
+Architecture: amd64
+Version: 0.101-2.1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libssl3t64 (>= 3.0.0)
+Breaks: libisns0 (<< 0.101-2.1)
+Provides: libisns0 (= 0.101-2.1)
+Replaces: libisns0
+Recommends: netbase
+
+Package: libjansson4
+Status: install ok installed
+Architecture: amd64
+Version: 2.14-2build4
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libjcat1
+Status: install ok installed
+Architecture: amd64
+Version: 0.2.5-1build1
+Multi-Arch: same
+Depends: libc6 (>= 2.14), libglib2.0-0t64 (>= 2.80.0), libgnutls30t64 (>= 3.8.4), libgpg-error0 (>= 1.14), libgpgme45 (>= 1.2.0), libjson-glib-1.0-0 (>= 1.5.2)
+
+Package: libjemalloc2
+Status: install ok installed
+Architecture: amd64
+Version: 5.3.0-4
+Multi-Arch: same
+Depends: libc6 (>= 2.34), libgcc-s1 (>= 3.3), libstdc++6 (>= 4.4)
+
+Package: libjq1
+Status: install ok installed
+Architecture: amd64
+Version: 1.8.1-4ubuntu2
+Multi-Arch: same
+Depends: libc6 (>= 2.43), libonig5 (>= 6.8.1)
+
+Package: libjs-sphinxdoc
+Status: install ok installed
+Architecture: all
+Version: 8.2.3-12
+Multi-Arch: foreign
+
+Package: libjson-c5
+Status: install ok installed
+Architecture: amd64
+Version: 0.18+ds-3
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libjson-glib-1.0-0
+Status: install ok installed
+Architecture: amd64
+Version: 1.10.8+ds-2
+Multi-Arch: same
+Depends: libjson-glib-1.0-common (>= 1.10.8+ds-2), libc6 (>= 2.14), libglib2.0-0t64 (>= 2.80.0)
+
+Package: libjson-glib-1.0-common
+Status: install ok installed
+Architecture: all
+Version: 1.10.8+ds-2
+Multi-Arch: foreign
+
+Package: libk5crypto3
+Status: install ok installed
+Architecture: amd64
+Version: 1.22.1-2ubuntu4.1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libkrb5support0 (= 1.22.1-2ubuntu4.1)
+Breaks: libgssapi-krb5-2 (<= 1.18~), libkrb5-3 (<= 1.18~)
+Suggests: krb5-doc, krb5-user
+
+Package: libkeyutils1
+Status: install ok installed
+Architecture: amd64
+Version: 1.6.3-6ubuntu3
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libklibc
+Status: install ok installed
+Architecture: amd64
+Version: 2.0.14-1ubuntu2
+Multi-Arch: same
+
+Package: libkmod2
+Status: install ok installed
+Architecture: amd64
+Version: 34.2-2ubuntu2
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libssl3t64 (>= 3.0.0)
+
+Package: libkrb5-3
+Status: install ok installed
+Architecture: amd64
+Version: 1.22.1-2ubuntu4.1
+Multi-Arch: same
+Depends: libkrb5support0 (= 1.22.1-2ubuntu4.1), libc6 (>= 2.38), libcom-err2 (>= 1.43.9), libk5crypto3 (>= 1.20), libkeyutils1 (>= 1.5.9), libssl3t64 (>= 3.0.0)
+Breaks: libapache2-mod-auth-kerb (<= 5.4-2.4)
+Recommends: krb5-locales
+Suggests: krb5-doc, krb5-user
+
+Package: libkrb5support0
+Status: install ok installed
+Architecture: amd64
+Version: 1.22.1-2ubuntu4.1
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+Breaks: krb5-admin-server (<< 1.20.1-4~), krb5-kdc (<< 1.20.1-4~), krb5-pkinit (<< 1.20.1-4~), krb5-user (<< 1.20.1-4~), libgssapi-krb5-2 (<< 1.20), libk5crypto3 (<< 1.20.1-4~), libkadm5clnt-mit9 (<< 1.13~alpha1-1), libkadm5srv-mit12 (<< 1.20.1-4~), libkadm5srv-mit9 (<< 1.13~alpha1-1), libkdb5-10t64 (<< 1.20.1-4~), libkdb5-8 (<< 1.16), libkrb5-3 (<< 1.20.1-4~)
+
+Package: libksba8
+Status: install ok installed
+Architecture: amd64
+Version: 1.6.7-2build1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libgpg-error0 (>= 1.46)
+
+Package: liblastlog2-2
+Status: install ok installed
+Architecture: amd64
+Version: 2.41.3-3ubuntu2
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libsqlite3-0 (>= 3.5.9)
+
+Package: libldap-common
+Status: install ok installed
+Architecture: all
+Version: 2.6.10+dfsg-1ubuntu5
+Multi-Arch: foreign
+
+Package: libldap2
+Status: install ok installed
+Architecture: amd64
+Version: 2.6.10+dfsg-1ubuntu5
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libsasl2-2 (>= 2.1.28+dfsg1), libssl3t64 (>= 3.0.0), libldap-common
+
+Package: libllvm21
+Status: install ok installed
+Architecture: amd64
+Version: 1:21.1.8-6ubuntu1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libedit2 (>= 2.11-20080614-0), libffi8 (>= 3.4), libgcc-s1 (>= 4.3), libstdc++6 (>= 12), libxml2-16 (>= 2.14.1), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.2.0)
+
+Package: liblmdb0
+Status: install ok installed
+Architecture: amd64
+Version: 0.9.31-1build2
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: liblocale-gettext-perl
+Status: install ok installed
+Architecture: amd64
+Version: 1.07-8
+Depends: libc6 (>= 2.3)
+Pre-Depends: perl-base (>= 5.40.1-6build1), perlapi-5.40.1
+
+Package: liblsof0
+Status: install ok installed
+Architecture: amd64
+Version: 4.99.4+dfsg-2build2
+Depends: libc6 (>= 2.38), libselinux1 (>= 3.1~)
+
+Package: liblvm2cmd2.03
+Status: install ok installed
+Architecture: amd64
+Version: 2.03.31-2ubuntu3
+Multi-Arch: same
+Depends: libaio1t64 (>= 0.3.93), libblkid1 (>= 2.24.2), libc6 (>= 2.38), libdevmapper-event1.02.1 (>= 2:1.02.74), libselinux1 (>= 3.1~), libsystemd0 (>= 233), libudev1 (>= 183), dmeventd
+
+Package: liblz4-1
+Status: install ok installed
+Architecture: amd64
+Version: 1.10.0-8
+Multi-Arch: same
+Depends: libc6 (>= 2.14), libxxhash0 (>= 0.6.5)
+Breaks: liblz4-1a
+Replaces: liblz4-1a
+
+Package: liblzma5
+Status: install ok installed
+Architecture: amd64
+Version: 5.8.3-1
+Multi-Arch: same
+Depends: libc6 (>= 2.34)
+Breaks: liblzma2 (<< 5.1.1alpha+20110809-3~)
+
+Package: liblzo2-2
+Status: install ok installed
+Architecture: amd64
+Version: 2.10-3build2
+Multi-Arch: same
+Depends: libc6 (>= 2.14)
+
+Package: libmagic-mgc
+Status: install ok installed
+Architecture: amd64
+Version: 1:5.46-5build2
+Multi-Arch: foreign
+
+Package: libmagic1t64
+Status: install ok installed
+Architecture: amd64
+Version: 1:5.46-5build2
+Multi-Arch: same
+Depends: libbz2-1.0, libc6 (>= 2.38), liblzma5 (>= 5.1.1alpha+20120614), zlib1g (>= 1:1.1.4), libmagic-mgc (= 1:5.46-5build2)
+Breaks: libmagic1 (<< 1:5.46-5build2)
+Provides: libmagic1 (= 1:5.46-5build2)
+Replaces: libmagic1
+Suggests: file
+
+Package: libmaxminddb0
+Status: install ok installed
+Architecture: amd64
+Version: 1.12.2-1build2
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+Suggests: mmdb-bin
+
+Package: libmbim-glib4
+Status: install ok installed
+Architecture: amd64
+Version: 1.32.0-2ubuntu1
+Multi-Arch: same
+Depends: libc6 (>= 2.14), libglib2.0-0t64 (>= 2.56)
+
+Package: libmbim-proxy
+Status: install ok installed
+Architecture: amd64
+Version: 1.32.0-2ubuntu1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.34), libglib2.0-0t64 (>= 2.56), libmbim-glib4 (= 1.32.0-2ubuntu1)
+
+Package: libmbim-utils
+Status: install ok installed
+Architecture: amd64
+Version: 1.32.0-2ubuntu1
+Depends: libc6 (>= 2.34), libglib2.0-0t64 (>= 2.56), libmbim-glib4 (>= 1.32.0-1ubuntu1~), libmbim-proxy
+
+Package: libmd0
+Status: install ok installed
+Architecture: amd64
+Version: 1.1.0-2build4
+Multi-Arch: same
+Depends: libc6 (>= 2.33)
+
+Package: libmm-glib0
+Status: install ok installed
+Architecture: amd64
+Version: 1.25.95-1ubuntu1
+Multi-Arch: same
+Depends: libc6 (>= 2.14), libglib2.0-0t64 (>= 2.62.0)
+Recommends: modemmanager (>= 1.25.95-1ubuntu1)
+
+Package: libmnl0
+Status: install ok installed
+Architecture: amd64
+Version: 1.0.5-3build1
+Multi-Arch: same
+Depends: libc6 (>= 2.14)
+
+Package: libmodule-find-perl
+Status: install ok installed
+Architecture: all
+Version: 0.17-1
+Multi-Arch: foreign
+Depends: perl:any
+
+Package: libmount1
+Status: install ok installed
+Architecture: amd64
+Version: 2.41.3-3ubuntu2
+Multi-Arch: same
+Depends: libblkid1 (= 2.41.3-3ubuntu2), libc6 (>= 2.38), libselinux1 (>= 3.1~)
+Suggests: cryptsetup-bin
+
+Package: libmpathcmd0
+Status: install ok installed
+Architecture: amd64
+Version: 0.14.3-2ubuntu1
+Depends: libc6 (>= 2.28)
+Breaks: multipath-tools (<< 0.11.1-3~)
+Replaces: multipath-tools (<< 0.11.1-3~)
+
+Package: libmpathpersist0
+Status: install ok installed
+Architecture: amd64
+Version: 0.14.3-2ubuntu1
+Depends: libc6 (>= 2.38), libdevmapper1.02.1 (>= 2:1.02.20), libgcc-s1 (>= 3.3.1), libmpathcmd0 (= 0.14.3-2ubuntu1), libmultipath0 (= 0.14.3-2ubuntu1)
+Breaks: multipath-tools (<< 0.11.1-3~)
+Replaces: multipath-tools (<< 0.11.1-3~)
+
+Package: libmpfr6
+Status: install ok installed
+Architecture: amd64
+Version: 4.2.2-3
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libgmp10 (>= 2:6.3.0+dfsg)
+Breaks: libgmp3 (<< 4.1.4-3), libmpc3 (<< 1.1.0-1~)
+
+Package: libmspack0t64
+Status: install ok installed
+Architecture: amd64
+Version: 0.11-1.1build2
+Multi-Arch: same
+Depends: libc6 (>= 2.14)
+Breaks: libmspack0 (<< 0.11-1.1build2)
+Provides: libmspack0 (= 0.11-1.1build2)
+Replaces: libmspack0
+
+Package: libmultipath0
+Status: install ok installed
+Architecture: amd64
+Version: 0.14.3-2ubuntu1
+Depends: libaio1t64 (>= 0.3.93), libc6 (>= 2.38), libdevmapper1.02.1 (>= 2:1.02.197), libgcc-s1 (>= 3.3.1), libmount1 (>= 2.24.2), libmpathcmd0 (= 0.14.3-2ubuntu1), libudev1 (>= 199), liburcu8t64 (>= 0.13.0)
+Breaks: multipath-tools (<< 0.11.1-3~)
+Replaces: multipath-tools (<< 0.11.1-3~)
+
+Package: libncurses6
+Status: install ok installed
+Architecture: amd64
+Version: 6.6+20251231-1
+Multi-Arch: same
+Depends: libtinfo6 (= 6.6+20251231-1), libc6 (>= 2.38)
+Breaks: cowdancer (<< 0.89~)
+Recommends: libgpm2
+
+Package: libncursesw6
+Status: install ok installed
+Architecture: amd64
+Version: 6.6+20251231-1
+Multi-Arch: same
+Depends: libtinfo6 (= 6.6+20251231-1), libc6 (>= 2.38)
+Recommends: libgpm2
+
+Package: libnetfilter-conntrack3
+Status: install ok installed
+Architecture: amd64
+Version: 1.1.1-1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libmnl0 (>= 1.0.3-4~), libnfnetlink0 (>= 1.0.2)
+
+Package: libnetplan1
+Status: install ok installed
+Architecture: amd64
+Version: 1.2-1ubuntu5
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libglib2.0-0t64 (>= 2.76.0), libuuid1 (>= 2.16), libyaml-0-2
+
+Package: libnettle8t64
+Status: install ok installed
+Architecture: amd64
+Version: 3.10.2-1
+Multi-Arch: same
+Depends: libc6 (>= 2.17)
+Breaks: libnettle8 (<< 3.10.2-1)
+Provides: libnettle8 (= 3.10.2-1)
+Replaces: libnettle8
+
+Package: libnewt0.52
+Status: install ok installed
+Architecture: amd64
+Version: 0.52.25-1ubuntu3
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libslang2 (>= 2.2.4)
+Recommends: libfribidi0
+
+Package: libnfnetlink0
+Status: install ok installed
+Architecture: amd64
+Version: 1.0.2-3build1
+Multi-Arch: same
+Depends: libc6 (>= 2.14)
+
+Package: libnftables1
+Status: install ok installed
+Architecture: amd64
+Version: 1.1.6-1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libgmp10 (>= 2:6.3.0+dfsg), libjansson4 (>= 2.14), libmnl0 (>= 1.0.3-4~), libnftnl11 (>= 1.3.1), libxtables12 (>= 1.6.0+snapshot20161117)
+
+Package: libnftnl11
+Status: install ok installed
+Architecture: amd64
+Version: 1.3.1-1
+Multi-Arch: same
+Depends: libc6 (>= 2.34), libmnl0 (>= 1.0.3-4~)
+
+Package: libnghttp2-14
+Status: install ok installed
+Architecture: amd64
+Version: 1.68.0-2ubuntu0.2
+Multi-Arch: same
+Depends: libc6 (>= 2.17)
+
+Package: libnl-3-200
+Status: install ok installed
+Architecture: amd64
+Version: 3.12.0-2
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libnl-genl-3-200
+Status: install ok installed
+Architecture: amd64
+Version: 3.12.0-2
+Multi-Arch: same
+Depends: libnl-3-200 (= 3.12.0-2), libc6 (>= 2.4)
+
+Package: libnl-route-3-200
+Status: install ok installed
+Architecture: amd64
+Version: 3.12.0-2
+Multi-Arch: same
+Depends: libnl-3-200 (= 3.12.0-2), libc6 (>= 2.38)
+
+Package: libnpth0t64
+Status: install ok installed
+Architecture: amd64
+Version: 1.8-3build1
+Multi-Arch: same
+Depends: libc6 (>= 2.34)
+Breaks: libnpth0 (<< 1.8-3build1)
+Provides: libnpth0 (= 1.8-3build1)
+Replaces: libnpth0
+
+Package: libnspr4
+Status: install ok installed
+Architecture: amd64
+Version: 2:4.38.2-1ubuntu1
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libnss-systemd
+Status: install ok installed
+Architecture: amd64
+Version: 259.5-0ubuntu3.4
+Multi-Arch: same
+Depends: libc6 (>= 2.39)
+Recommends: libblkid1, libmount1, libselinux1
+Suggests: libcryptsetup12, libidn2-0, libp11-kit0, libtss2-esys-3.0.2-0t64, libtss2-mu-4.0.1-0t64, libtss2-rc0t64, systemd-userdbd
+
+Package: libnss3
+Status: install ok installed
+Architecture: amd64
+Version: 2:3.120-1ubuntu2.1
+Multi-Arch: same
+Depends: libc6 (>= 2.34), libnspr4 (>= 2:4.34), libsqlite3-0 (>= 3.5.9)
+
+Package: libntfs-3g89t64
+Status: install ok installed
+Architecture: amd64
+Version: 1:2022.10.3-5ubuntu1.1
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+Conflicts: libntfs-3g89 (<< 1:2022.10.3-5ubuntu1.1)
+Provides: libntfs-3g89 (= 1:2022.10.3-5ubuntu1.1)
+Replaces: libntfs-3g89
+
+Package: libnuma1
+Status: install ok installed
+Architecture: amd64
+Version: 2.0.19-1build1
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libnvme1t64
+Status: install ok installed
+Architecture: amd64
+Version: 1.16.1-4
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libjson-c5 (>= 0.15), libkeyutils1 (>= 1.5.9), libssl3t64 (>= 3.0.0)
+Breaks: libnvme1 (<< 1.16.1-4)
+Provides: libnvme1 (= 1.16.1-4)
+Replaces: libnvme1
+Suggests: nvme-cli
+
+Package: libonig5
+Status: install ok installed
+Architecture: amd64
+Version: 6.9.10-1build1
+Multi-Arch: same
+Depends: libc6 (>= 2.14)
+
+Package: libopeniscsiusr
+Status: install ok installed
+Architecture: amd64
+Version: 2.1.11-3ubuntu3
+Depends: libc6 (>= 2.38), libkmod2 (>= 5~)
+Enhances: open-iscsi
+
+Package: libp11-kit0
+Status: install ok installed
+Architecture: amd64
+Version: 0.26.2-2
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libffi8 (>= 3.4)
+
+Package: libpackagekit-glib2-18
+Status: install ok installed
+Architecture: amd64
+Version: 1.3.4-3ubuntu1.2
+Multi-Arch: same
+Depends: libc6 (>= 2.14), libglib2.0-0t64 (>= 2.80.0)
+
+Package: libpam-cap
+Status: install ok installed
+Architecture: amd64
+Version: 1:2.75-10ubuntu2
+Multi-Arch: same
+Depends: libpam-runtime (>= 1.1.3-2~), libc6 (>= 2.33), libcap2 (>= 1:2.63), libpam0g (>= 0.99.7.1)
+Breaks: libcap2-bin (<< 1:2.66-1)
+Replaces: libcap2-bin (<< 1:2.66-1)
+
+Package: libpam-modules
+Status: install ok installed
+Architecture: amd64
+Version: 1.7.0-5ubuntu3.1
+Multi-Arch: same
+Pre-Depends: libaudit1 (>= 1:2.2.1), libc6 (>= 2.43), libcrypt1 (>= 1:4.3.0), libdb5.3t64, libpam0g (>= 1.4.1), libselinux1 (>= 3.1~), libsystemd0 (>= 254), debconf (>= 0.5) | debconf-2.0, libpam-modules-bin (= 1.7.0-5ubuntu3.1)
+Conflicts: libpam-mkhomedir, libpam-motd, libpam-umask
+Provides: libpam-mkhomedir, libpam-motd, libpam-umask
+Replaces: libpam-umask, libpam0g-util
+
+Package: libpam-modules-bin
+Status: install ok installed
+Architecture: amd64
+Version: 1.7.0-5ubuntu3.1
+Multi-Arch: foreign
+Depends: libaudit1 (>= 1:2.2.1), libc6 (>= 2.43), libcrypt1 (>= 1:4.3.0), libpam0g (>= 0.99.7.1), libselinux1 (>= 3.1~), libsystemd0 (>= 254)
+Replaces: libpam-modules (<< 1.5.2-5~)
+
+Package: libpam-runtime
+Status: install ok installed
+Architecture: all
+Version: 1.7.0-5ubuntu3.1
+Multi-Arch: foreign
+Depends: debconf (>= 0.5) | debconf-2.0, debconf (>= 1.5.19) | cdebconf, libpam-modules (>= 1.0.1-6)
+Breaks: libpam-modules (<< 1.7.0), libpam-modules-bin (<< 1.7.0)
+Replaces: libpam-modules (<< 1.7.0), libpam-modules-bin (<< 1.7.0)
+
+Package: libpam-systemd
+Status: install ok installed
+Architecture: amd64
+Version: 259.5-0ubuntu3.4
+Multi-Arch: same
+Depends: libc6 (>= 2.39), libpam0g (>= 0.99.7.1), systemd (= 259.5-0ubuntu3.4), libpam-runtime, default-dbus-system-bus | dbus-system-bus, systemd-sysv
+Conflicts: libpam-elogind-compat
+Provides: default-logind (= 259.5-0ubuntu3.4), logind (= 259.5-0ubuntu3.4)
+Recommends: dbus-user-session, libblkid1, libmount1, libselinux1
+Suggests: libcryptsetup12, libidn2-0, libp11-kit0, libtss2-esys-3.0.2-0t64, libtss2-mu-4.0.1-0t64, libtss2-rc0t64
+
+Package: libpam0g
+Status: install ok installed
+Architecture: amd64
+Version: 1.7.0-5ubuntu3.1
+Multi-Arch: same
+Depends: libaudit1 (>= 1:2.2.1), libc6 (>= 2.43), debconf (>= 0.5) | debconf-2.0
+Breaks: libpam0t64 (<< 1.5.3-5)
+Replaces: libpam0g-util, libpam0t64 (<< 1.5.3-5)
+Suggests: libpam-doc
+
+Package: libparted2t64
+Status: install ok installed
+Architecture: amd64
+Version: 3.6-6
+Multi-Arch: same
+Depends: dmidecode, libblkid1 (>= 2.17.2), libc6 (>= 2.38), libdevmapper1.02.1 (>= 2:1.02.197), libuuid1 (>= 2.16)
+Conflicts: libparted2 (<< 3.6-6)
+Provides: libparted, libparted2 (= 3.6-6)
+Replaces: libparted2
+Suggests: libparted-dev, libparted-i18n (= 3.6-6), parted
+
+Package: libpcap0.8t64
+Status: install ok installed
+Architecture: amd64
+Version: 1.10.6-1ubuntu1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libdbus-1-3 (>= 1.10), libibverbs1 (>= 1.1.6)
+Breaks: libpcap0.8 (<< 1.10.6-1ubuntu1)
+Provides: libpcap0.8 (= 1.10.6-1ubuntu1)
+Replaces: libpcap0.8, libpcap0.8-dev (<< 1.10.4-3)
+
+Package: libpci3
+Status: install ok installed
+Architecture: amd64
+Version: 1:3.14.0-1build2
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libudev1 (>= 196), zlib1g (>= 1:1.1.4), pci.ids (>= 0.0~2019.11.10-2)
+
+Package: libpcre2-8-0
+Status: install ok installed
+Architecture: amd64
+Version: 10.46-1build1
+Multi-Arch: same
+Depends: libc6 (>= 2.34)
+
+Package: libperl5.40
+Status: install ok installed
+Architecture: amd64
+Version: 5.40.1-7ubuntu0.1
+Multi-Arch: same
+Depends: libbz2-1.0, libc6 (>= 2.43), libcrypt1 (>= 1:4.1.0), libdb5.3t64, libgdbm-compat4t64 (>= 1.18-3), libgdbm6t64 (>= 1.21), zlib1g (>= 1:1.2.3.4), perl-modules-5.40 (>= 5.40.1-7ubuntu0.1)
+Breaks: libcompress-raw-bzip2-perl (<< 2.212), libcompress-raw-zlib-perl (<< 2.212), libcompress-zlib-perl (<< 2.212), libdigest-md5-perl (<< 2.58.01), libdigest-sha-perl (<< 6.04), libencode-perl (<< 3.21), libfilter-perl (<< 1.64), libio-compress-base-perl (<< 2.212), libio-compress-bzip2-perl (<< 2.212), libio-compress-perl (<< 2.212), libio-compress-zlib-perl (<< 2.212), libmime-base64-perl (<< 3.16.01), libstorable-perl (<< 3.32), libsys-syslog-perl (<< 0.36), libthreads-perl (<< 2.40), libthreads-shared-perl (<< 1.69), libtime-hires-perl (<< 1.9777), libtime-piece-perl (<< 1.3401.01)
+Replaces: libarchive-tar-perl (<= 1.38-2), libcompress-raw-bzip2-perl (<< 2.212), libcompress-raw-zlib-perl (<< 2.212), libcompress-zlib-perl (<< 2.212), libdigest-md5-perl (<< 2.58.01), libdigest-sha-perl (<< 6.04), libencode-perl (<< 3.21), libio-compress-base-perl (<< 2.212), libio-compress-bzip2-perl (<< 2.212), libio-compress-perl (<< 2.212), libio-compress-zlib-perl (<< 2.212), libmime-base64-perl (<< 3.16.01), libmodule-corelist-perl (<< 2.14-2), libstorable-perl (<< 3.32), libsys-syslog-perl (<< 0.36), libthreads-perl (<< 2.40), libthreads-shared-perl (<< 1.69), libtime-hires-perl (<< 1.9777), libtime-piece-perl (<< 1.3401.01), perl (<< 5.22.0~), perl-base (<< 5.22.0~)
+Suggests: sensible-utils
+
+Package: libpipeline1
+Status: install ok installed
+Architecture: amd64
+Version: 1.5.8-2
+Multi-Arch: same
+Depends: libc6 (>= 2.32)
+
+Package: libplist-2.0-4
+Status: install ok installed
+Architecture: amd64
+Version: 2.7.0+git20250820-1build1
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libplymouth5
+Status: install ok installed
+Architecture: amd64
+Version: 24.004.60+git20250831.4a3c171d-0ubuntu8
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libevdev2 (>= 0.9.1), libpng16-16t64 (>= 1.6.46), libudev1 (>= 183), libxkbcommon0 (>= 0.5.0)
+Breaks: plymouth (<< 0.9.2-1~)
+Replaces: plymouth (<< 0.9.2-1~)
+
+Package: libpng16-16t64
+Status: install ok installed
+Architecture: amd64
+Version: 1.6.57-1
+Multi-Arch: same
+Depends: libc6 (>= 2.29), zlib1g (>= 1:1.2.3.4)
+Breaks: libpng16-16 (<< 1.6.57-1)
+Provides: libpng16-16 (= 1.6.57-1)
+Replaces: libpng16-16
+
+Package: libpolkit-agent-1-0
+Status: install ok installed
+Architecture: amd64
+Version: 127-2ubuntu1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libglib2.0-0t64 (>= 2.38.0), libpolkit-gobject-1-0 (= 127-2ubuntu1)
+
+Package: libpolkit-gobject-1-0
+Status: install ok installed
+Architecture: amd64
+Version: 127-2ubuntu1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libglib2.0-0t64 (>= 2.38.0), libsystemd0 (>= 213)
+
+Package: libpopt0
+Status: install ok installed
+Architecture: amd64
+Version: 1.19+dfsg-2build1
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libproc-processtable-perl
+Status: install ok installed
+Architecture: amd64
+Version: 0.637-1
+Multi-Arch: same
+Depends: perl (>= 5.40.1-6build1), perlapi-5.40.1, libc6 (>= 2.38)
+
+Package: libproc2-0
+Status: install ok installed
+Architecture: amd64
+Version: 2:4.0.4-9ubuntu1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libsystemd0
+Replaces: procps (<< 1:3.3.2-1)
+
+Package: libpsl5t64
+Status: install ok installed
+Architecture: amd64
+Version: 0.21.2-1.1build2
+Multi-Arch: same
+Depends: libidn2-0 (>= 0.16), libc6 (>= 2.38), libunistring5 (>= 1.1)
+Breaks: libpsl5 (<< 0.21.2-1.1build2)
+Provides: libpsl5 (= 0.21.2-1.1build2)
+Replaces: libpsl5
+Recommends: publicsuffix (>= 20150507)
+
+Package: libpython3-stdlib
+Status: install ok installed
+Architecture: amd64
+Version: 3.14.3-0ubuntu2
+Multi-Arch: same
+Depends: libpython3.14-stdlib (>= 3.14.3)
+
+Package: libpython3.14
+Status: install ok installed
+Architecture: amd64
+Version: 3.14.4-1ubuntu0.1
+Multi-Arch: same
+Depends: libpython3.14-stdlib (= 3.14.4-1ubuntu0.1), libc6 (>= 2.38), libexpat1 (>= 2.7.2), zlib1g (>= 1:1.2.0)
+Replaces: libpython3.14
+
+Package: libpython3.14-minimal
+Status: install ok installed
+Architecture: amd64
+Version: 3.14.4-1ubuntu0.1
+Multi-Arch: same
+Depends: libc6 (>= 2.14), libssl3t64 (>= 3.4.0)
+Breaks: libpython3.14-stdlib (<< 3.13.1-3~)
+Conflicts: binfmt-support (<< 1.1.2)
+Replaces: libpython3.14-stdlib (<< 3.13.1-3~)
+Recommends: libpython3.14-stdlib
+
+Package: libpython3.14-stdlib
+Status: install ok installed
+Architecture: amd64
+Version: 3.14.4-1ubuntu0.1
+Multi-Arch: same
+Depends: libpython3.14-minimal (= 3.14.4-1ubuntu0.1), media-types | mime-support, netbase, tzdata, libbz2-1.0, libc6 (>= 2.42), libdb5.3t64, libffi8 (>= 3.4), liblzma5 (>= 5.1.1alpha+20120614), libncursesw6 (>= 6.1), libreadline8t64 (>= 7.0~beta), libsqlite3-0 (>= 3.36.0), libtinfo6 (>= 6), libuuid1 (>= 2.20.1), libzstd1 (>= 1.5.5)
+
+Package: libqmi-glib5
+Status: install ok installed
+Architecture: amd64
+Version: 1.38.0-1
+Multi-Arch: same
+Depends: libc6 (>= 2.14), libglib2.0-0t64 (>= 2.54.0), libmbim-glib4 (>= 1.14.0), libmbim-proxy, libqrtr-glib0 (>= 1.0.0)
+
+Package: libqmi-proxy
+Status: install ok installed
+Architecture: amd64
+Version: 1.38.0-1
+Multi-Arch: foreign
+Depends: libqmi-glib5 (= 1.38.0-1), libc6 (>= 2.34), libglib2.0-0t64 (>= 2.30.0)
+
+Package: libqmi-utils
+Status: install ok installed
+Architecture: amd64
+Version: 1.38.0-1
+Depends: libc6 (>= 2.42), libglib2.0-0t64 (>= 2.62.0), libgudev-1.0-0 (>= 146), libmbim-glib4 (>= 1.28.0), libmbim-proxy, libqmi-glib5 (>= 1.38.0), libqmi-proxy, libqrtr-glib0 (>= 1.0.0)
+
+Package: libqrtr-glib0
+Status: install ok installed
+Architecture: amd64
+Version: 1.2.2-2ubuntu1
+Multi-Arch: same
+Depends: libc6 (>= 2.4), libglib2.0-0t64 (>= 2.56)
+
+Package: libreadline8t64
+Status: install ok installed
+Architecture: amd64
+Version: 8.3-4
+Multi-Arch: same
+Depends: readline-common, libc6 (>= 2.38), libtinfo6 (>= 6)
+Breaks: libreadline8 (<< 8.3-4)
+Provides: libreadline8 (= 8.3-4)
+Replaces: libreadline8
+
+Package: librtmp1
+Status: install ok installed
+Architecture: amd64
+Version: 2.4+20151223.gitfa8646d.1-3
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libgmp10 (>= 2:6.3.0+dfsg), libgnutls30t64 (>= 3.8.1), libhogweed6t64, libnettle8t64, zlib1g (>= 1:1.1.4)
+
+Package: libsasl2-2
+Status: install ok installed
+Architecture: amd64
+Version: 2.1.28+dfsg1-9ubuntu3
+Multi-Arch: same
+Depends: libsasl2-modules-db (>= 2.1.28+dfsg1-9ubuntu3), libc6 (>= 2.38), libssl3t64 (>= 3.0.0)
+Replaces: libsasl2
+Recommends: libsasl2-modules (>= 2.1.28+dfsg1-9ubuntu3)
+
+Package: libsasl2-modules
+Status: install ok installed
+Architecture: amd64
+Version: 2.1.28+dfsg1-9ubuntu3
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libssl3t64 (>= 3.0.0)
+Breaks: libsasl2-modules-gssapi-mit (<< 2.1.28+dfsg-4)
+Replaces: libsasl2-modules-gssapi-mit (<< 2.1.28+dfsg-4)
+Suggests: libsasl2-modules-gssapi-mit | libsasl2-modules-gssapi-heimdal, libsasl2-modules-ldap, libsasl2-modules-otp, libsasl2-modules-sql
+
+Package: libsasl2-modules-db
+Status: install ok installed
+Architecture: amd64
+Version: 2.1.28+dfsg1-9ubuntu3
+Multi-Arch: same
+Depends: libc6 (>= 2.14), libdb5.3t64
+
+Package: libseccomp2
+Status: install ok installed
+Architecture: amd64
+Version: 2.6.0-2ubuntu5
+Multi-Arch: same
+Depends: libc6 (>= 2.14)
+
+Package: libselinux1
+Status: install ok installed
+Architecture: amd64
+Version: 3.9-4build1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libpcre2-8-0 (>= 10.22)
+
+Package: libsemanage-common
+Status: install ok installed
+Architecture: all
+Version: 3.9-1build1
+Multi-Arch: foreign
+
+Package: libsemanage2
+Status: install ok installed
+Architecture: amd64
+Version: 3.9-1build1
+Multi-Arch: same
+Depends: libsemanage-common (>= 3.9-1build1), libaudit1 (>= 1:2.2.1), libbz2-1.0, libc6 (>= 2.38), libselinux1 (>= 3.1~), libsepol2 (>= 3.9)
+
+Package: libsensors-config
+Status: install ok installed
+Architecture: all
+Version: 1:3.6.2-2build1
+Multi-Arch: foreign
+Suggests: lm-sensors
+
+Package: libsensors5
+Status: install ok installed
+Architecture: amd64
+Version: 1:3.6.2-2build1
+Multi-Arch: same
+Depends: libsensors-config, libc6 (>= 2.38)
+Suggests: lm-sensors
+
+Package: libsepol2
+Status: install ok installed
+Architecture: amd64
+Version: 3.9-2
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libsframe3
+Status: install ok installed
+Architecture: amd64
+Version: 2.46-3ubuntu2
+Multi-Arch: same
+Depends: libc6 (>= 2.14)
+
+Package: libsgutils2-1.48
+Status: install ok installed
+Architecture: amd64
+Version: 1.48-3ubuntu3.1
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+Suggests: sg3-utils
+
+Package: libslang2
+Status: install ok installed
+Architecture: amd64
+Version: 2.3.3-5build1
+Multi-Arch: same
+Depends: libc6 (>= 2.42)
+
+Package: libsmartcols1
+Status: install ok installed
+Architecture: amd64
+Version: 2.41.3-3ubuntu2
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libsnappy1v5
+Status: install ok installed
+Architecture: amd64
+Version: 1.2.2-2
+Multi-Arch: same
+Depends: libc6 (>= 2.14), libstdc++6 (>= 5.2)
+Conflicts: libsnappy1
+
+Package: libsodium23
+Status: install ok installed
+Architecture: amd64
+Version: 1.0.18-2
+Multi-Arch: same
+Depends: libc6 (>= 2.34)
+
+Package: libsort-naturally-perl
+Status: install ok installed
+Architecture: all
+Version: 1.03-4
+Multi-Arch: foreign
+Depends: perl:any
+
+Package: libsqlite3-0
+Status: install ok installed
+Architecture: amd64
+Version: 3.46.1-9ubuntu0.2
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+Breaks: crowdsec (<< 1.4), python-migrate (<< 0.11.0-4~), python3-migrate (<< 0.11.0-4~)
+
+Package: libss2
+Status: install ok installed
+Architecture: amd64
+Version: 1.47.2-3ubuntu4
+Multi-Arch: same
+Depends: libcom-err2, libc6 (>= 2.34)
+Breaks: libss2t64 (<< 1.47.0-2.4~exp1~)
+Provides: libss2t64 (= 1.47.2-3ubuntu4)
+Replaces: e2fsprogs (<< 1.34-1), libss2t64
+
+Package: libssh2-1t64
+Status: install ok installed
+Architecture: amd64
+Version: 1.11.1-1ubuntu0.26.04.3
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libssl3t64 (>= 3.0.0), zlib1g (>= 1:1.1.4)
+Breaks: libssh2-1 (<< 1.11.1-1ubuntu0.26.04.3)
+Provides: libssh2-1 (= 1.11.1-1ubuntu0.26.04.3)
+Replaces: libssh2-1
+
+Package: libssl3t64
+Status: install ok installed
+Architecture: amd64
+Version: 3.5.5-1ubuntu3.4
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.1.4), openssl-provider-legacy
+Breaks: libssl3 (<< 3.5.5-1ubuntu3.4), openssh-client (<< 1:9.4p1), openssh-server (<< 1:9.4p1), python3-m2crypto (<< 0.38.0-4)
+Provides: libssl3 (= 3.5.5-1ubuntu3.4)
+Replaces: libssl3
+
+Package: libstdc++6
+Status: install ok installed
+Architecture: amd64
+Version: 16-20260322-1ubuntu1
+Multi-Arch: same
+Depends: gcc-16-base (= 16-20260322-1ubuntu1), libc6 (>= 2.38), libgcc-s1 (>= 4.3)
+Breaks: gcc-4.3 (<< 4.3.6-1), gcc-4.4 (<< 4.4.6-4), gcc-4.5 (<< 4.5.3-2)
+Conflicts: scim (<< 1.4.2-1)
+Replaces: libstdc++6-16-dbg (<< 4.9.0-3)
+
+Package: libstemmer0d
+Status: install ok installed
+Architecture: amd64
+Version: 3.0.1-1
+Multi-Arch: same
+Depends: libc6 (>= 2.4)
+
+Package: libsystemd-shared
+Status: install ok installed
+Architecture: amd64
+Version: 259.5-0ubuntu3.4
+Multi-Arch: same
+Depends: libc6 (>= 2.39), libcrypt1 (>= 1:4.4.0), libssl3t64 (>= 3.4.0)
+Recommends: libacl1, libapparmor1, libaudit1, libblkid1, libkmod2, libmount1, libpam0g, libseccomp2, libselinux1, libzstd1
+Suggests: libarchive13t64, libbpf1, libcryptsetup12, libdw1t64, libelf1t64, libfido2-1, libgcrypt20, libidn2-0, liblz4-1, liblzma5, libp11-kit0, libpcre2-8-0, libpwquality1, libqrencode4, libtss2-esys-3.0.2-0t64, libtss2-mu-4.0.1-0t64, libtss2-rc0t64
+
+Package: libsystemd0
+Status: install ok installed
+Architecture: amd64
+Version: 259.5-0ubuntu3.4
+Multi-Arch: same
+Depends: libc6 (>= 2.39)
+Recommends: libzstd1
+Suggests: libgcrypt20, liblz4-1, liblzma5
+
+Package: libtasn1-6
+Status: install ok installed
+Architecture: amd64
+Version: 4.21.0-2
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libtcl8.6
+Status: install ok installed
+Architecture: amd64
+Version: 8.6.17+dfsg-1build1
+Multi-Arch: same
+Depends: tzdata, libc6 (>= 2.42), zlib1g (>= 1:1.2.2)
+Breaks: nsf (<< 2.2.0)
+Conflicts: tcl74 (<= 7.4p3-2), tcl8.6 (<< 8.6.0-2)
+Provides: libtcl
+Replaces: tcl8.6 (<< 8.6.0-2)
+Suggests: tcl8.6
+
+Package: libterm-readkey-perl
+Status: install ok installed
+Architecture: amd64
+Version: 2.38-2build5
+Depends: perl (>= 5.40.0-6), perlapi-5.40.0, libc6 (>= 2.28)
+
+Package: libtext-charwidth-perl
+Status: install ok installed
+Architecture: amd64
+Version: 0.04-11build4
+Multi-Arch: same
+Depends: libc6 (>= 2.4), perl-base (>= 5.40.0-6), perlapi-5.40.0
+
+Package: libtext-iconv-perl
+Status: install ok installed
+Architecture: amd64
+Version: 1.7-8.1
+Multi-Arch: same
+Depends: libc6 (>= 2.4), perl-base (>= 5.40.1-6build1), perlapi-5.40.1
+
+Package: libtext-wrapi18n-perl
+Status: install ok installed
+Architecture: all
+Version: 0.06-10
+Depends: libtext-charwidth-perl
+
+Package: libtinfo6
+Status: install ok installed
+Architecture: amd64
+Version: 6.6+20251231-1
+Multi-Arch: same
+Depends: libc6 (>= 2.42)
+Breaks: tmux (<< 3.3a-4)
+
+Package: libtirpc-common
+Status: install ok installed
+Architecture: all
+Version: 1.3.7-0.1
+Multi-Arch: foreign
+Breaks: libtirpc1, libtirpc3t64 (<< 1.1.4-0.1~)
+Replaces: libtirpc1, libtirpc3t64 (<< 1.1.4-0.1~)
+
+Package: libtirpc3t64
+Status: install ok installed
+Architecture: amd64
+Version: 1.3.7-0.1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libgssapi-krb5-2 (>= 1.17), libtirpc-common (>= 1.3.7-0.1)
+Breaks: libtirpc3 (<< 1.3.7-0.1), nfs-common (<< 1:1.2.8-7), nfs-kernel-server (<< 1:1.2.8-7)
+Provides: libtirpc3 (= 1.3.7-0.1)
+Replaces: libtirpc3
+
+Package: libtraceevent1
+Status: install ok installed
+Architecture: amd64
+Version: 1:1.8.7-1
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libtraceevent1-plugin
+Status: install ok installed
+Architecture: amd64
+Version: 1:1.8.7-1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libtraceevent1 (= 1:1.8.7-1)
+
+Package: libtracefs1
+Status: install ok installed
+Architecture: amd64
+Version: 1.8.2-1ubuntu1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libtraceevent1 (>= 1:1.8.1)
+
+Package: libtss2-esys-3.0.2-0t64
+Status: install ok installed
+Architecture: amd64
+Version: 4.1.3-6
+Multi-Arch: same
+Depends: libtss2-tcti-cmd0t64, libtss2-tcti-device0t64, libtss2-tcti-mssim0t64, libtss2-tcti-swtpm0t64, tpm-udev (>= 4.1.3-6), libc6 (>= 2.34), libssl3t64 (>= 3.0.0), libtss2-mu-4.0.1-0t64 (>= 3.0.1), libtss2-sys1t64 (>= 4.0.1)
+Breaks: libtss2-esys-3.0.2-0 (<< 4.1.3-6), libtss2-esys0 (<< 3.0.2-1)
+Provides: libtss2-esys-3.0.2-0 (= 4.1.3-6)
+Replaces: libtss2-esys-3.0.2-0, libtss2-esys0 (<< 3.0.2-1)
+
+Package: libtss2-mu-4.0.1-0t64
+Status: install ok installed
+Architecture: amd64
+Version: 4.1.3-6
+Multi-Arch: same
+Depends: tpm-udev (>= 4.1.3-6), libc6 (>= 2.14)
+Breaks: libtss2-esys0 (<< 3.0.1-2), libtss2-mu-4.0.1-0 (<< 4.1.3-6)
+Conflicts: libtss2-mu0
+Provides: libtss2-mu-4.0.1-0 (= 4.1.3-6)
+Replaces: libtss2-esys0 (<< 3.0.1-2), libtss2-mu-4.0.1-0, libtss2-mu0 (<< 4.0.1-4)
+
+Package: libtss2-sys1t64
+Status: install ok installed
+Architecture: amd64
+Version: 4.1.3-6
+Multi-Arch: same
+Depends: tpm-udev (>= 4.1.3-6), libc6 (>= 2.14), libtss2-mu-4.0.1-0t64 (>= 3.0.1)
+Breaks: libtss2-esys0 (<< 3.0.1-2), libtss2-sys1 (<< 4.1.3-6)
+Provides: libtss2-sys1 (= 4.1.3-6)
+Replaces: libtss2-esys0 (<< 3.0.1-2), libtss2-sys1
+
+Package: libtss2-tcti-cmd0t64
+Status: install ok installed
+Architecture: amd64
+Version: 4.1.3-6
+Multi-Arch: same
+Depends: tpm-udev (>= 4.1.3-6), libc6 (>= 2.4), libtss2-mu-4.0.1-0t64 (>= 3.0.1)
+Breaks: libtss2-esys0 (<< 3.0.1-2), libtss2-tcti-cmd0 (<< 4.1.3-6)
+Provides: libtss2-tcti-cmd0 (= 4.1.3-6)
+Replaces: libtss2-esys0 (<< 3.0.1-2), libtss2-tcti-cmd0
+
+Package: libtss2-tcti-device0t64
+Status: install ok installed
+Architecture: amd64
+Version: 4.1.3-6
+Multi-Arch: same
+Depends: tpm-udev (>= 4.1.3-6), libc6 (>= 2.4), libtss2-mu-4.0.1-0t64 (>= 3.0.1)
+Breaks: libtss2-esys0 (<< 3.0.1-2), libtss2-tcti-device0 (<< 4.1.3-6)
+Provides: libtss2-tcti-device0 (= 4.1.3-6)
+Replaces: libtss2-esys0 (<< 3.0.1-2), libtss2-tcti-device0
+
+Package: libtss2-tcti-mssim0t64
+Status: install ok installed
+Architecture: amd64
+Version: 4.1.3-6
+Multi-Arch: same
+Depends: tpm-udev (>= 4.1.3-6), libc6 (>= 2.38), libtss2-mu-4.0.1-0t64 (>= 3.0.1)
+Breaks: libtss2-esys0 (<< 3.0.1-2), libtss2-tcti-mssim0 (<< 4.1.3-6)
+Provides: libtss2-tcti-mssim0 (= 4.1.3-6)
+Replaces: libtss2-esys0 (<< 3.0.1-2), libtss2-tcti-mssim0
+
+Package: libtss2-tcti-swtpm0t64
+Status: install ok installed
+Architecture: amd64
+Version: 4.1.3-6
+Multi-Arch: same
+Depends: tpm-udev (>= 4.1.3-6), libc6 (>= 2.38), libtss2-mu-4.0.1-0t64 (>= 3.0.1)
+Breaks: libtss2-esys0 (<< 3.0.1-2), libtss2-tcti-swtpm0 (<< 4.1.3-6)
+Provides: libtss2-tcti-swtpm0 (= 4.1.3-6)
+Replaces: libtss2-esys0 (<< 3.0.1-2), libtss2-tcti-swtpm0
+
+Package: libuchardet0
+Status: install ok installed
+Architecture: amd64
+Version: 0.0.8-2
+Multi-Arch: same
+Depends: libc6 (>= 2.14), libgcc-s1 (>= 3.3.1), libstdc++6 (>= 4.1.1)
+
+Package: libudev1
+Status: install ok installed
+Architecture: amd64
+Version: 259.5-0ubuntu3.4
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libudisks2-0
+Status: install ok installed
+Architecture: amd64
+Version: 2.10.91-1ubuntu2
+Multi-Arch: same
+Depends: libc6 (>= 2.14), libglib2.0-0t64 (>= 2.83.0)
+
+Package: libunistring5
+Status: install ok installed
+Architecture: amd64
+Version: 1.3-2build1
+Multi-Arch: same
+Depends: libc6 (>= 2.34)
+
+Package: libunwind8
+Status: install ok installed
+Architecture: amd64
+Version: 1.8.3-0ubuntu1
+Multi-Arch: same
+Depends: libc6 (>= 2.34), liblzma5 (>= 5.1.1alpha+20110809)
+Conflicts: libunwind1-dev
+Replaces: libgcc1 (<< 1:4.0.0-2)
+
+Package: libupower-glib3
+Status: install ok installed
+Architecture: amd64
+Version: 1.91.1-1
+Multi-Arch: same
+Depends: libc6 (>= 2.4), libglib2.0-0t64 (>= 2.76.0)
+Breaks: gir1.2-upowerglib-1.0 (<< 0.99.18), upower (<< 0.99.18)
+Recommends: upower
+
+Package: liburcu8t64
+Status: install ok installed
+Architecture: amd64
+Version: 0.15.6-1
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+Breaks: liburcu8 (<< 0.15.6-1)
+Provides: liburcu8 (= 0.15.6-1)
+Replaces: liburcu8
+
+Package: libusb-1.0-0
+Status: install ok installed
+Architecture: amd64
+Version: 2:1.0.29-2build1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libudev1 (>= 183)
+
+Package: libusbmuxd-2.0-7
+Status: install ok installed
+Architecture: amd64
+Version: 2.1.1-1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libimobiledevice-glue-1.0-0 (>= 1.3.0), libplist-2.0-4 (>= 2.3.0)
+
+Package: libuuid1
+Status: install ok installed
+Architecture: amd64
+Version: 2.41.3-3ubuntu2
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+Breaks: libuuid1t64 (<< 2.41.3-3ubuntu2)
+Provides: libuuid1t64 (= 2.41.3-3ubuntu2)
+Replaces: libuuid1t64
+Suggests: uuid-runtime
+
+Package: libuv1t64
+Status: install ok installed
+Architecture: amd64
+Version: 1.51.0-2ubuntu1
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+Breaks: libuv1 (<< 1.48.0-1.1)
+Provides: libuv1 (= 1.51.0-2ubuntu1)
+Replaces: libuv1
+
+Package: libvolume-key1
+Status: install ok installed
+Architecture: amd64
+Version: 0.3.12-10build2
+Multi-Arch: same
+Depends: libblkid1 (>= 2.16), libc6 (>= 2.38), libcryptsetup12 (>= 2:2.0), libglib2.0-0t64 (>= 2.18.0), libgpgme45 (>= 1.23.2), libnspr4 (>= 2:4.9-2~), libnss3 (>= 2:3.13.4-2~)
+
+Package: libwrap0
+Status: install ok installed
+Architecture: amd64
+Version: 7.6.q-36build2
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libx11-6
+Status: install ok installed
+Architecture: amd64
+Version: 2:1.8.13-1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libxcb1 (>= 1.11.1), libx11-data
+Breaks: libx11-xcb1 (<< 2:1.7.0-2)
+
+Package: libx11-data
+Status: install ok installed
+Architecture: all
+Version: 2:1.8.13-1
+Multi-Arch: foreign
+
+Package: libxau6
+Status: install ok installed
+Architecture: amd64
+Version: 1:1.0.11-1build2
+Multi-Arch: same
+Depends: libc6 (>= 2.33)
+
+Package: libxcb1
+Status: install ok installed
+Architecture: amd64
+Version: 1.17.0-2ubuntu1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libxau6 (>= 1:1.0.11), libxdmcp6 (>= 1:1.1.5)
+
+Package: libxdmcp6
+Status: install ok installed
+Architecture: amd64
+Version: 1:1.1.5-2
+Multi-Arch: same
+Depends: libc6 (>= 2.36)
+
+Package: libxext6
+Status: install ok installed
+Architecture: amd64
+Version: 2:1.3.4-1build3
+Multi-Arch: same
+Depends: libc6 (>= 2.14), libx11-6 (>= 2:1.6.0)
+
+Package: libxkbcommon0
+Status: install ok installed
+Architecture: amd64
+Version: 1.13.1-1
+Multi-Arch: same
+Depends: xkb-data, libc6 (>= 2.38)
+
+Package: libxml2-16
+Status: install ok installed
+Architecture: amd64
+Version: 2.15.2+dfsg-0.1ubuntu0.1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), zlib1g (>= 1:1.2.2.3)
+Breaks: libxml-libxml-perl (<< 2.0207+dfsg+really+2.0134-3~)
+Conflicts: w3c-dtd-xhtml
+
+Package: libxmlb2
+Status: install ok installed
+Architecture: amd64
+Version: 0.3.24-2
+Multi-Arch: same
+Depends: libc6 (>= 2.14), libglib2.0-0t64 (>= 2.54.0), liblzma5 (>= 5.1.1alpha+20120614), libzstd1 (>= 1.5.5)
+
+Package: libxmlsec1-1
+Status: install ok installed
+Architecture: amd64
+Version: 1.3.9-1
+Multi-Arch: same
+Depends: libc6 (>= 2.14), libxml2-16 (>= 2.14.1), libxslt1.1 (>= 1.1.25)
+Breaks: libxmlsec1 (<< 1.3.9-1), libxmlsec1t64 (<< 1.3.9-1)
+Conflicts: libxmlsec1, libxmlsec1t64
+Replaces: libxmlsec1, libxmlsec1t64
+
+Package: libxmlsec1-openssl1
+Status: install ok installed
+Architecture: amd64
+Version: 1.3.9-1
+Multi-Arch: same
+Depends: libc6 (>= 2.14), libssl3t64 (>= 3.0.0), libxml2-16 (>= 2.14.1), libxmlsec1-1 (>= 1.3.9)
+Breaks: libxmlsec1-openssl (<< 1.3.9-1), libxmlsec1t64-openssl (<< 1.3.9-1)
+Conflicts: libxmlsec1-openssl, libxmlsec1t64-openssl
+Replaces: libxmlsec1-openssl, libxmlsec1t64-openssl
+
+Package: libxmuu1
+Status: install ok installed
+Architecture: amd64
+Version: 2:1.1.3-4
+Multi-Arch: same
+Depends: libc6 (>= 2.4), libx11-6
+
+Package: libxslt1.1
+Status: install ok installed
+Architecture: amd64
+Version: 1.1.45-0.1
+Multi-Arch: same
+Depends: libc6 (>= 2.38), libgcrypt20 (>= 1.12.0), libxml2-16 (>= 2.14.1)
+
+Package: libxtables12
+Status: install ok installed
+Architecture: amd64
+Version: 1.8.11-2ubuntu3
+Multi-Arch: same
+Depends: libc6 (>= 2.38)
+
+Package: libxxhash0
+Status: install ok installed
+Architecture: amd64
+Version: 0.8.3-2build1
+Multi-Arch: same
+Depends: libc6 (>= 2.14)
+
+Package: libyaml-0-2
+Status: install ok installed
+Architecture: amd64
+Version: 0.2.5-2build3
+Multi-Arch: same
+Depends: libc6 (>= 2.14)
+
+Package: libzstd1
+Status: install ok installed
+Architecture: amd64
+Version: 1.5.7+dfsg-3
+Multi-Arch: same
+Depends: libc6 (>= 2.34)
+
+Package: linux-base
+Status: install ok installed
+Architecture: all
+Version: 4.15ubuntu5
+Multi-Arch: foreign
+Depends: debconf (>= 0.5) | debconf-2.0
+Breaks: apport (<< 2.30.0-0ubuntu5~), kernel-common (<= 13.018+nmu1), linux-perf (<< 5.16.2-1~exp1)
+Replaces: apport (<< 2.30.0-0ubuntu5~), kernel-common (<= 13.018+nmu1)
+
+Package: linux-firmware
+Status: install ok installed
+Architecture: all
+Version: 20260319.git217ca6e4.1ubuntu
+Depends: linux-firmware-amd-graphics, linux-firmware-amd-misc, linux-firmware-broadcom-wireless, linux-firmware-intel-graphics, linux-firmware-intel-misc, linux-firmware-intel-wireless, linux-firmware-marvell-prestera, linux-firmware-marvell-wireless, linux-firmware-mediatek, linux-firmware-mellanox-spectrum, linux-firmware-misc, linux-firmware-netronome, linux-firmware-nvidia-graphics, linux-firmware-qlogic, linux-firmware-qualcomm-graphics, linux-firmware-qualcomm-misc, linux-firmware-qualcomm-wireless, linux-firmware-realtek
+Recommends: firmware-sof-signed
+
+Package: linux-firmware-amd-graphics
+Status: install ok installed
+Architecture: all
+Version: 20260319.git217ca6e4-0ubuntu3.1
+Breaks: initramfs-tools (<< 0.142ubuntu8~), linux-firmware (<< 20260113)
+Replaces: linux-firmware (<< 20260113)
+
+Package: linux-firmware-amd-misc
+Status: install ok installed
+Architecture: all
+Version: 20260319.git217ca6e4-0ubuntu1.1
+Breaks: initramfs-tools (<< 0.142ubuntu8~), linux-firmware (<< 20260113), linux-firmware-amd-graphics (<= 20260319.git217ca6e4-0ubuntu1)
+Replaces: linux-firmware (<< 20260113), linux-firmware-amd-graphics (<= 20260319.git217ca6e4-0ubuntu1)
+
+Package: linux-firmware-broadcom-wireless
+Status: install ok installed
+Architecture: all
+Version: 20260319.git217ca6e4-0ubuntu1.1
+Breaks: initramfs-tools (<< 0.142ubuntu8~), linux-firmware (<< 20260113), linux-firmware-raspi2 (<= 1.20190819-0ubuntu2)
+Replaces: linux-firmware (<< 20260113)
+
+Package: linux-firmware-intel-graphics
+Status: install ok installed
+Architecture: all
+Version: 20260319.git217ca6e4-0ubuntu2.1
+Breaks: initramfs-tools (<< 0.142ubuntu8~), linux-firmware (<< 20260113)
+Replaces: linux-firmware (<< 20260113)
+
+Package: linux-firmware-intel-misc
+Status: install ok installed
+Architecture: all
+Version: 20260319.git217ca6e4-0ubuntu1.2
+Breaks: initramfs-tools (<< 0.142ubuntu8~), linux-firmware (<< 20260113)
+Replaces: linux-firmware (<< 20260113)
+
+Package: linux-firmware-intel-wireless
+Status: install ok installed
+Architecture: all
+Version: 20260319.git217ca6e4-0ubuntu2.1
+Breaks: initramfs-tools (<< 0.142ubuntu8~), linux-firmware (<< 20260113)
+Replaces: linux-firmware (<< 20260113)
+
+Package: linux-firmware-marvell-prestera
+Status: install ok installed
+Architecture: all
+Version: 20260319.git217ca6e4-0ubuntu1.2
+Breaks: initramfs-tools (<< 0.142ubuntu8~), linux-firmware (<< 20260113)
+Replaces: linux-firmware (<< 20260113)
+
+Package: linux-firmware-marvell-wireless
+Status: install ok installed
+Architecture: all
+Version: 20260319.git217ca6e4-0ubuntu1.1
+Breaks: initramfs-tools (<< 0.142ubuntu8~), linux-firmware (<< 20260113)
+Replaces: linux-firmware (<< 20260113)
+
+Package: linux-firmware-mediatek
+Status: install ok installed
+Architecture: all
+Version: 20260319.git217ca6e4-0ubuntu1.2
+Breaks: initramfs-tools (<< 0.142ubuntu8~), linux-firmware (<< 20260113)
+Replaces: linux-firmware (<< 20260113)
+
+Package: linux-firmware-mellanox-spectrum
+Status: install ok installed
+Architecture: all
+Version: 20260319.git217ca6e4-0ubuntu1.1
+Breaks: initramfs-tools (<< 0.142ubuntu8~), linux-firmware (<< 20260113)
+Replaces: linux-firmware (<< 20260113)
+
+Package: linux-firmware-misc
+Status: install ok installed
+Architecture: all
+Version: 20260319.git217ca6e4-0ubuntu2.2
+Breaks: initramfs-tools (<< 0.142ubuntu8~), linux-firmware (<< 20260113)
+Replaces: linux-firmware (<< 20260113)
+
+Package: linux-firmware-netronome
+Status: install ok installed
+Architecture: all
+Version: 20260319.git217ca6e4-0ubuntu1.1
+Breaks: initramfs-tools (<< 0.142ubuntu8~), linux-firmware (<< 20260113)
+Replaces: linux-firmware (<< 20260113)
+
+Package: linux-firmware-nvidia-graphics
+Status: install ok installed
+Architecture: all
+Version: 20260319.git217ca6e4-0ubuntu1.1
+Breaks: initramfs-tools (<< 0.142ubuntu8~), linux-firmware (<< 20260113)
+Replaces: linux-firmware (<< 20260113)
+
+Package: linux-firmware-qlogic
+Status: install ok installed
+Architecture: all
+Version: 20260319.git217ca6e4-0ubuntu1.1
+Breaks: initramfs-tools (<< 0.142ubuntu8~), linux-firmware (<< 20260113)
+Replaces: linux-firmware (<< 20260113)
+
+Package: linux-firmware-qualcomm-graphics
+Status: install ok installed
+Architecture: all
+Version: 20260319.git217ca6e4-0ubuntu1.1
+Breaks: initramfs-tools (<< 0.142ubuntu8~), linux-firmware (<< 20260113), linux-firmware-snapdragon (<= 1.2-0ubuntu1)
+Replaces: linux-firmware (<< 20260113), linux-firmware-snapdragon (<= 1.2-0ubuntu1)
+
+Package: linux-firmware-qualcomm-misc
+Status: install ok installed
+Architecture: all
+Version: 20260319.git217ca6e4-0ubuntu2.1
+Breaks: initramfs-tools (<< 0.142ubuntu8~), linux-firmware (<< 20260113), linux-firmware-snapdragon (<= 1.2-0ubuntu1)
+Replaces: linux-firmware (<< 20260113), linux-firmware-snapdragon (<= 1.2-0ubuntu1)
+
+Package: linux-firmware-qualcomm-wireless
+Status: install ok installed
+Architecture: all
+Version: 20260319.git217ca6e4-0ubuntu1.2
+Breaks: initramfs-tools (<< 0.142ubuntu8~), linux-firmware (<< 20260113)
+Replaces: linux-firmware (<< 20260113)
+
+Package: linux-firmware-realtek
+Status: install ok installed
+Architecture: all
+Version: 20260319.git217ca6e4-0ubuntu1.2
+Breaks: initramfs-tools (<< 0.142ubuntu8~), linux-firmware (<< 20260113)
+Replaces: linux-firmware (<< 20260113)
+
+Package: linux-generic
+Status: install ok installed
+Architecture: amd64
+Version: 7.0.0-30.30
+Depends: linux-image-generic (= 7.0.0-30.30), linux-headers-generic (= 7.0.0-30.30)
+Recommends: linux-tools-7.0.0-30-generic, ubuntu-kernel-accessories
+
+Package: linux-headers-7.0.0-30
+Status: install ok installed
+Architecture: all
+Version: 7.0.0-30.30
+Multi-Arch: foreign
+Depends: coreutils
+
+Package: linux-headers-7.0.0-30-generic
+Status: install ok installed
+Architecture: amd64
+Version: 7.0.0-30.30
+Depends: linux-headers-7.0.0-30, libc6 (>= 2.38), libdw1t64 (>= 0.171), libelf1t64 (>= 0.144), libgcc-s1 (>= 4.2), libssl3t64 (>= 3.0.0), zlib1g (>= 1:1.2.3.4)
+Provides: linux-headers, linux-headers-3.0
+
+Package: linux-headers-generic
+Status: install ok installed
+Architecture: amd64
+Version: 7.0.0-30.30
+Depends: linux-headers-7.0.0-30-generic
+
+Package: linux-image-7.0.0-30-generic
+Status: install ok installed
+Architecture: amd64
+Version: 7.0.0-30.30
+Depends: kmod, linux-base (>= 4.5ubuntu1~16.04.1), linux-modules-7.0.0-30-generic
+Conflicts: linux-image-unsigned-7.0.0-30-generic
+Provides: fuse-module, ivtv-modules, kvm-api-4, linux-image, redhat-cluster-modules, virtualbox-guest-modules
+Recommends: grub-pc | grub-efi-amd64 | grub-efi-ia32 | grub | lilo, dracut | linux-initramfs-tool
+Suggests: bpftool, linux-perf, linux-tools, linux-headers-7.0.0-30-generic
+
+Package: linux-image-generic
+Status: install ok installed
+Architecture: amd64
+Version: 7.0.0-30.30
+Depends: linux-image-7.0.0-30-generic, linux-modules-7.0.0-30-generic, linux-main-modules-zfs-7.0.0-30-generic, linux-firmware, intel-microcode, amd64-microcode
+Conflicts: linux-image-fb-generic
+Provides: ivsc-modules (= 0~git202311021215.73a044d9), virtualbox-guest-modules (= 7.0.0-30), wireguard-modules (= 1.0.0)
+Recommends: thermald
+
+Package: linux-libc-dev
+Status: install ok installed
+Architecture: amd64
+Version: 7.0.0-30.30
+Multi-Arch: same
+Conflicts: linux-kernel-headers
+Provides: aufs-dev, linux-kernel-headers
+Replaces: linux-kernel-headers
+
+Package: linux-main-modules-zfs-7.0.0-30-generic
+Status: install ok installed
+Architecture: amd64
+Version: 7.0.0-30.30
+Depends: kmod, linux-image-7.0.0-30-generic | linux-image-unsigned-7.0.0-30-generic
+Provides: spl-dkms, spl-modules, zfs-dkms, zfs-modules
+
+Package: linux-modules-7.0.0-30-generic
+Status: install ok installed
+Architecture: amd64
+Version: 7.0.0-30.30
+Depends: linux-main-modules-zfs-7.0.0-30-generic, wireless-regdb
+
+Package: linux-perf
+Status: install ok installed
+Architecture: amd64
+Version: 7.0.0-30.30
+Depends: libc6 (>= 2.39), libdebuginfod1t64 (>= 0.180), libdw1t64 (>= 0.161), libelf1t64 (>= 0.144), libgcc-s1 (>= 4.2), libllvm21 (>= 1:21.1.0), liblzma5 (>= 5.1.1alpha+20120614), libnuma1 (>= 2.0.11), libpython3.14 (>= 3.14.1), libslang2 (>= 2.2.4), libstdc++6 (>= 12), libtraceevent1 (>= 1:1.3.0), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.2.3.4)
+Breaks: linux-tools-common (<< 6.14.0-8~)
+Replaces: linux-tools-common (<< 6.14.0-8~)
+
+Package: linux-sysctl-defaults
+Status: install ok installed
+Architecture: all
+Version: 4.15ubuntu5
+Multi-Arch: foreign
+
+Package: linux-tools-7.0.0-30
+Status: install ok installed
+Architecture: amd64
+Version: 7.0.0-30.30
+Depends: libc6 (>= 2.38), libcap2 (>= 1:2.10), libnl-3-200 (>= 3.11.0), libnl-genl-3-200 (>= 3.11.0), libpci3 (>= 1:3.8.0), libudev1 (>= 183), linux-tools-common
+
+Package: linux-tools-7.0.0-30-generic
+Status: install ok installed
+Architecture: amd64
+Version: 7.0.0-30.30
+Depends: linux-tools-7.0.0-30
+
+Package: linux-tools-common
+Status: install ok installed
+Architecture: all
+Version: 7.0.0-30.30
+Multi-Arch: foreign
+Depends: lsb-release, hwdata
+Provides: linux-cpupower
+Recommends: bpftool (>= 7.6.0+6.14.0-8~), linux-perf
+
+Package: locales
+Status: install ok installed
+Architecture: all
+Version: 2.43-2ubuntu2.3
+Depends: libc-bin (>> 2.43), debconf (>= 0.5) | debconf-2.0
+
+Package: login
+Status: install ok installed
+Architecture: amd64
+Version: 1:4.16.0-2+really2.41.3-3ubuntu2
+Multi-Arch: foreign
+Depends: libpam-modules, libpam-runtime, libaudit1 (>= 1:2.2.1), libc6 (>= 2.38), libpam0g (>= 0.99.7.1)
+Pre-Depends: login.defs (>= 1:4.16.0-1~)
+Recommends: util-linux-extra
+
+Package: login.defs
+Status: install ok installed
+Architecture: all
+Version: 1:4.17.4-2ubuntu3
+Multi-Arch: foreign
+Replaces: login (<< 1:4.16.0-2~)
+
+Package: logrotate
+Status: install ok installed
+Architecture: amd64
+Version: 3.22.0-1build1
+Multi-Arch: foreign
+Depends: cron | anacron | cron-daemon | systemd-sysv, libacl1 (>= 2.2.23), libc6 (>= 2.38), libpopt0 (>= 1.14), libselinux1 (>= 3.1~)
+Suggests: bsd-mailx | mailx
+
+Package: logsave
+Status: install ok installed
+Architecture: amd64
+Version: 1.47.2-3ubuntu4
+Multi-Arch: foreign
+Depends: libc6 (>= 2.34)
+Breaks: e2fsprogs (<< 1.45.3-1)
+Replaces: e2fsprogs (<< 1.45.3-1)
+
+Package: lsb-base
+Status: install ok installed
+Architecture: all
+Version: 11.6build1
+Multi-Arch: foreign
+Depends: sysvinit-utils (>= 3.05-4~)
+
+Package: lsb-release
+Status: install ok installed
+Architecture: all
+Version: 12.1-2build1
+Multi-Arch: foreign
+
+Package: lshw
+Status: install ok installed
+Architecture: amd64
+Version: 02.19.git.2021.06.19.996aaad9c7-2.1ubuntu3
+Depends: libc6 (>= 2.38), libgcc-s1 (>= 3.3.1), libstdc++6 (>= 13.1)
+Recommends: pci.ids, usb.ids
+
+Package: lsof
+Status: install ok installed
+Architecture: amd64
+Version: 4.99.4+dfsg-2build2
+Depends: liblsof0 (= 4.99.4+dfsg-2build2), libc6 (>= 2.38), libselinux1 (>= 3.1~), libtirpc3t64 (>= 1.0.2)
+
+Package: lvm2
+Status: install ok installed
+Architecture: amd64
+Version: 2.03.31-2ubuntu3
+Multi-Arch: foreign
+Depends: libaio1t64 (>= 0.3.93), libblkid1 (>= 2.24.2), libc6 (>= 2.38), libdevmapper-event1.02.1 (>= 2:1.02.74), libedit2 (>= 2.11-20080614-0), libselinux1 (>= 3.1~), libsystemd0 (>= 233), libudev1 (>= 183), dmsetup (>= 2:1.02.205-2ubuntu3~), dmeventd (>= 2:1.02.205-2ubuntu3~)
+Recommends: thin-provisioning-tools
+
+Package: lxd-agent-loader
+Status: install ok installed
+Architecture: all
+Version: 0.13ubuntu0
+
+Package: lxd-installer
+Status: install ok installed
+Architecture: all
+Version: 14ubuntu0
+Conflicts: lxd
+
+Package: makedumpfile
+Status: install ok installed
+Architecture: amd64
+Version: 1:1.7.7-1
+Depends: perl:any, libc6 (>= 2.38), libdw1t64 (>= 0.143), libelf1t64 (>= 0.142), liblzo2-2 (>= 2.02), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.2.0)
+Replaces: kdump-tools (<< 1.3.4-1~)
+Recommends: crash, kexec-tools
+
+Package: man-db
+Status: install ok installed
+Architecture: amd64
+Version: 2.13.1-1build1
+Multi-Arch: foreign
+Depends: bsdextrautils | bsdmainutils (<< 12.1.1~), groff-base, debconf (>= 0.5) | debconf-2.0, libc6 (>= 2.38), libgdbm6t64 (>= 1.16), libpipeline1 (>= 1.5.0), libseccomp2 (>= 2.1.0), zlib1g (>= 1:1.1.4)
+Conflicts: man
+Provides: man, man-browser
+Replaces: man
+Suggests: apparmor, groff, less, www-browser
+
+Package: manpages
+Status: install ok installed
+Architecture: all
+Version: 6.17-1
+Multi-Arch: foreign
+Breaks: initscripts (<< 3.0.0-1), inn2-dev (<< 2.6.5-1), manpages-dev (<< 5.09-2)
+Replaces: initscripts (<< 3.0.0-1), inn2-dev (<< 2.6.5-1), manpages-dev (<< 5.09-2)
+Suggests: man-browser
+
+Package: manpages-dev
+Status: install ok installed
+Architecture: all
+Version: 6.17-1
+Multi-Arch: foreign
+Depends: manpages
+Breaks: glibc-doc (<< 2.37-16), inn2-dev (<< 2.7.0-1), manpages (<< 6.7-1)
+Replaces: glibc-doc (<< 2.37-16), inn2-dev (<< 2.7.0-1), manpages (<< 6.7-1)
+Suggests: man-browser
+
+Package: mawk
+Status: install ok installed
+Architecture: amd64
+Version: 1.3.4.20260129-1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38)
+Provides: awk
+
+Package: mdadm
+Status: install ok installed
+Architecture: amd64
+Version: 4.5-5ubuntu1
+Depends: udev, debconf (>= 0.5) | debconf-2.0, libc6 (>= 2.38), libudev1 (>= 183)
+Recommends: finalrd (>= 3~), kmod
+Suggests: default-mta | mail-transport-agent
+
+Package: media-types
+Status: install ok installed
+Architecture: all
+Version: 14.0.0build1
+Multi-Arch: foreign
+Breaks: mime-support (<< 3.65)
+Replaces: mime-support (<< 3.65)
+
+Package: modemmanager
+Status: install ok installed
+Architecture: amd64
+Version: 1.25.95-1ubuntu1
+Depends: libc6 (>= 2.42), libglib2.0-0t64 (>= 2.56.0), libgudev-1.0-0 (>= 212), libmbim-glib4 (>= 1.32~), libmbim-proxy, libmm-glib0 (>= 1.25.1), libpolkit-gobject-1-0 (>= 0.99), libqmi-glib5 (>= 1.37.95), libqmi-proxy, libqrtr-glib0 (>= 1.0.0), libsystemd0 (>= 209), polkitd
+Recommends: libmbim-utils, libqmi-utils, usb-modeswitch
+
+Package: mokutil
+Status: install ok installed
+Architecture: amd64
+Version: 0.7.2-2
+Multi-Arch: foreign
+Depends: libc6 (>= 2.34), libcrypt1 (>= 1:4.1.0), libefivar1t64 (>= 39), libkeyutils1 (>= 1.5.9), libssl3t64 (>= 3.0.0)
+
+Package: motd-news-config
+Status: install ok installed
+Architecture: all
+Version: 14ubuntu6.2
+Breaks: base-files (<< 11ubuntu11)
+Replaces: base-files (<< 11ubuntu11)
+
+Package: mount
+Status: install ok installed
+Architecture: amd64
+Version: 2.41.3-3ubuntu2
+Multi-Arch: foreign
+Pre-Depends: libblkid1 (= 2.41.3-3ubuntu2), libc6 (>= 2.38), libmount1 (= 2.41.3-3ubuntu2), libselinux1 (>= 3.1~), libsmartcols1 (= 2.41.3-3ubuntu2)
+Suggests: nfs-common
+
+Package: mtr-tiny
+Status: install ok installed
+Architecture: amd64
+Version: 0.95-1.1ubuntu2
+Depends: libc6 (>= 2.38), libjansson4 (>= 2.14), libncurses6 (>= 6), libtinfo6 (>= 6)
+Breaks: mtr, suidmanager (<< 0.50)
+Replaces: mtr
+
+Package: multipath-tools
+Status: install ok installed
+Architecture: amd64
+Version: 0.14.3-2ubuntu1
+Depends: kpartx (>= 0.14.3-2ubuntu1), sg3-utils-udev, systemd (>= 245~), udev, libaio1t64 (>= 0.3.93), libc6 (>= 2.38), libdevmapper1.02.1 (>= 2:1.02.98), libedit2 (>= 2.11-20080614-0), libgcc-s1 (>= 3.3.1), libmpathcmd0 (= 0.14.3-2ubuntu1), libmpathpersist0 (= 0.14.3-2ubuntu1), libmultipath0 (= 0.14.3-2ubuntu1), libsystemd0, libudev1 (>= 183), liburcu8t64 (>= 0.13.0)
+Suggests: multipath-tools-boot
+
+Package: nano
+Status: install ok installed
+Architecture: amd64
+Version: 8.7.1-1ubuntu0.1
+Depends: libc6 (>= 2.38), libncursesw6 (>= 6), libtinfo6 (>= 6)
+Breaks: nano-tiny (<< 2.8.6-2)
+Conflicts: pico
+Replaces: nano-tiny (<< 2.8.6-2), pico
+Suggests: hunspell
+
+Package: ncurses-base
+Status: install ok installed
+Architecture: all
+Version: 6.6+20251231-1
+Essential: yes
+Multi-Arch: foreign
+Breaks: cryptsetup-initramfs (<< 2:2.6.1), ncurses-term (<< 6.4+20230625), neovim (<< 0.6.0), vim-common (<< 2:9.0.1000-2)
+Provides: ncurses-runtime
+Replaces: ncurses-term (<< 6.4+20230603)
+
+Package: ncurses-bin
+Status: install ok installed
+Architecture: amd64
+Version: 6.6+20251231-1
+Essential: yes
+Multi-Arch: foreign
+Pre-Depends: libc6 (>= 2.42), libtinfo6 (>= 6.6)
+
+Package: ncurses-term
+Status: install ok installed
+Architecture: all
+Version: 6.6+20251231-1
+Multi-Arch: foreign
+Depends: ncurses-base (= 6.6+20251231-1)
+Breaks: foot-terminfo (<< 1.15.1-2), vim-common (<< 2:9.0.1000-2)
+Provides: foot-terminfo (= 6.6+20251231-1)
+Replaces: alacritty (<< 0.3.4~), foot-terminfo (<< 1.15.1-2), jfbterm (<< 0.4.7-10), kon2 (<< 0.3.9b-21), libiterm1 (<< 0.5-9), ncurses-base (<< 6.4+20230625), tn5250 (<< 0.17.4-3)
+
+Package: needrestart
+Status: install ok installed
+Architecture: all
+Version: 3.11-1ubuntu2
+Depends: perl:any, dpkg (>= 1.16.0), gettext-base, libintl-perl, libproc-processtable-perl, libsort-naturally-perl, libterm-readkey-perl, libmodule-find-perl, procps, xz-utils
+Recommends: libpam-systemd | sysvinit-core, systemd | libimvirt-perl
+Suggests: needrestart-session | libnotify-bin, iucode-tool
+Enhances: intel-microcode
+
+Package: netbase
+Status: install ok installed
+Architecture: all
+Version: 6.5build1
+Multi-Arch: foreign
+Breaks: ebtables (<< 2.0.11-2)
+Replaces: ebtables (<< 2.0.11-2)
+
+Package: netcat-openbsd
+Status: install ok installed
+Architecture: amd64
+Version: 1.234-1
+Depends: libbsd0 (>= 0.2.0), libc6 (>= 2.38)
+Provides: netcat
+
+Package: netplan-generator
+Status: install ok installed
+Architecture: amd64
+Version: 1.2-1ubuntu5
+Multi-Arch: foreign
+Depends: libc6 (>= 2.34), libglib2.0-0t64 (>= 2.16.0), libnetplan1 (= 1.2-1ubuntu5), systemd (>= 258~)
+Breaks: netplan.io (<< 0.106.1-8~)
+Replaces: netplan.io (<< 0.106.1-8~)
+Suggests: network-manager | wpasupplicant, openvswitch-switch, iw
+
+Package: netplan.io
+Status: install ok installed
+Architecture: amd64
+Version: 1.2-1ubuntu5
+Multi-Arch: foreign
+Depends: python3:any, libc6 (>= 2.34), libglib2.0-0t64 (>= 2.76.0), libnetplan1 (= 1.2-1ubuntu5), libsystemd0 (>= 243), ethtool, iproute2, netplan-generator, python3-netplan, python3-yaml, systemd (>= 258~), udev
+Recommends: python3-rich
+Suggests: systemd-resolved
+
+Package: networkd-dispatcher
+Status: install ok installed
+Architecture: all
+Version: 2.2.4-1.1ubuntu1
+Depends: dbus, gir1.2-glib-2.0, python3-dbus, python3-gi, python3:any
+Suggests: iw | wireless-tools
+
+Package: nftables
+Status: install ok installed
+Architecture: amd64
+Version: 1.1.6-1
+Depends: libnftables1 (= 1.1.6-1), libc6 (>= 2.34), libedit2 (>= 3.1-20130611-0)
+Recommends: netbase
+Suggests: firewalld
+
+Package: ntfs-3g
+Status: install ok installed
+Architecture: amd64
+Version: 1:2022.10.3-5ubuntu1.1
+Depends: libc6 (>= 2.38), libgcrypt20 (>= 1.12.0), libgnutls30t64 (>= 3.7.2), libntfs-3g89t64 (= 1:2022.10.3-5ubuntu1.1), fuse3
+Suggests: fdisk
+
+Package: numactl
+Status: install ok installed
+Architecture: amd64
+Version: 2.0.19-1build1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libnuma1 (>= 2.0.19)
+
+Package: open-iscsi
+Status: install ok installed
+Architecture: amd64
+Version: 2.1.11-3ubuntu3
+Multi-Arch: foreign
+Depends: libopeniscsiusr (= 2.1.11-3ubuntu3), udev, debconf (>= 0.5) | debconf-2.0, libc6 (>= 2.38), libisns0t64, libkmod2 (>= 5~), libmount1 (>= 2.24.2), libssl3t64 (>= 3.0.0), libsystemd0
+Pre-Depends: debconf | debconf-2.0
+Recommends: busybox-initramfs, finalrd (>= 3)
+
+Package: open-vm-tools
+Status: install ok installed
+Architecture: amd64
+Version: 2:13.0.10-1ubuntu1
+Depends: libc6 (>= 2.42), libdrm2 (>= 2.4.3), libfuse3-4 (>= 3.17.2), libgcc-s1 (>= 3.3), libglib2.0-0t64 (>= 2.32.0), libmspack0t64 (>= 0.4), libssl3t64 (>= 3.0.0), libtirpc3t64 (>= 1.0.2), libudev1 (>= 183), libxml2-16 (>= 2.14.1), libxmlsec1-1 (>= 1.2.31), libxmlsec1-openssl1 (>= 1.2.31), pciutils, iproute2, lsb-release
+Breaks: open-vm-tools-sdmp (<< 2:12.1.0-2~)
+Replaces: open-vm-tools-sdmp (<< 2:12.1.0-2~)
+Recommends: ethtool, zerofree, fuse3
+Suggests: open-vm-tools-desktop, cloud-init, open-vm-tools-containerinfo, open-vm-tools-salt-minion
+
+Package: openssh-client
+Status: install ok installed
+Architecture: amd64
+Version: 1:10.2p1-2ubuntu3.5
+Multi-Arch: foreign
+Depends: adduser, init-system-helpers (>= 1.66~), passwd, libc6 (>= 2.42), libedit2 (>= 2.11-20080614-0), libfido2-1 (>= 1.8.0), libgssapi-krb5-2 (>= 1.17), libselinux1 (>= 3.1~), libssl3t64 (>= 3.0.0), zlib1g (>= 1:1.1.4)
+Breaks: openssh-sk-helper
+Provides: ssh-client
+Replaces: openssh-sk-helper, ssh, ssh-krb5
+Recommends: xauth
+Suggests: keychain, libpam-ssh, monkeysphere, ssh-askpass
+
+Package: openssh-server
+Status: install ok installed
+Architecture: amd64
+Version: 1:10.2p1-2ubuntu3.5
+Multi-Arch: foreign
+Depends: libpam-modules, libpam-runtime, lsb-base, openssh-client (= 1:10.2p1-2ubuntu3.5), openssh-sftp-server, procps, ucf, debconf (>= 0.5) | debconf-2.0, systemd | systemd-standalone-sysusers | systemd-sysusers, libaudit1 (>= 1:2.2.1), libc6 (>= 2.42), libcom-err2 (>= 1.43.9), libcrypt1 (>= 1:4.1.0), libgssapi-krb5-2 (>= 1.17), libkrb5-3 (>= 1.13~alpha1+dfsg), libpam0g (>= 0.99.7.1), libselinux1 (>= 3.1~), libssl3t64 (>= 3.0.0), libwrap0 (>= 7.6-4~), zlib1g (>= 1:1.1.4)
+Provides: ssh-server
+Replaces: openssh-client (<< 1:7.9p1-8), ssh, ssh-krb5
+Recommends: default-logind | logind | libpam-systemd, ncurses-term, xauth, ssh-import-id
+Suggests: molly-guard, monkeysphere, ssh-askpass, ufw
+
+Package: openssh-sftp-server
+Status: install ok installed
+Architecture: amd64
+Version: 1:10.2p1-2ubuntu3.5
+Multi-Arch: foreign
+Depends: openssh-client (= 1:10.2p1-2ubuntu3.5), libc6 (>= 2.38)
+Breaks: openssh-server (<< 1:6.5p1-5)
+Replaces: openssh-server (<< 1:6.5p1-5)
+Recommends: openssh-server | ssh-server
+Enhances: openssh-server, ssh-server
+
+Package: openssl
+Status: install ok installed
+Architecture: amd64
+Version: 3.5.5-1ubuntu3.4
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libssl3t64 (>= 3.5.0)
+Suggests: ca-certificates
+
+Package: openssl-provider-legacy
+Status: install ok installed
+Architecture: amd64
+Version: 3.5.5-1ubuntu3.4
+Multi-Arch: foreign
+Depends: libc6 (>= 2.14), libssl3t64 (>= 3.0.3)
+Breaks: libssl3 (<< 3.3.1-5), libssl3t64 (<< 3.3.1-5)
+Replaces: libssl3 (<< 3.3.1-5), libssl3t64 (<< 3.3.1-5)
+
+Package: os-prober
+Status: install ok installed
+Architecture: amd64
+Version: 1.84ubuntu1
+Depends: grub-common, mount
+Recommends: util-linux (>> 2.37.2)
+
+Package: overlayroot
+Status: install ok installed
+Architecture: all
+Version: 0.58ubuntu
+Depends: cryptsetup, cryptsetup-bin, dracut (>= 110) | initramfs-tools
+Breaks: dracut-core (<< 110)
+Suggests: haveged
+
+Package: packagekit
+Status: install ok installed
+Architecture: amd64
+Version: 1.3.4-3ubuntu1.2
+Multi-Arch: foreign
+Depends: libglib2.0-bin, polkitd, libappstream5 (>= 1.0.0), libapt-pkg7.0 (>= 1.9.2), libc6 (>= 2.38), libgcc-s1 (>= 3.3.1), libglib2.0-0t64 (>= 2.80.0), libgstreamer1.0-0 (>= 1.0.0), libjansson4 (>= 2.14), libpackagekit-glib2-18 (>= 1.3.3), libpolkit-gobject-1-0 (>= 0.99), libsqlite3-0 (>= 3.5.9), libstdc++6 (>= 13.1), libsystemd0 (>= 214)
+Breaks: plymouth (<< 0.9.5)
+Recommends: appstream
+
+Package: parted
+Status: install ok installed
+Architecture: amd64
+Version: 3.6-6
+Multi-Arch: foreign
+Depends: libparted2t64 (= 3.6-6), libc6 (>= 2.38), libreadline8t64 (>= 6.0), libtinfo6 (>= 6), libuuid1 (>= 2.16)
+Conflicts: parted-doc (<< 3.5-2~)
+Suggests: parted-doc
+
+Package: passwd
+Status: install ok installed
+Architecture: amd64
+Version: 1:4.17.4-2ubuntu3
+Multi-Arch: foreign
+Depends: base-passwd (>= 3.6.4), libpam-modules, login.defs, libacl1 (>= 2.2.23), libaudit1 (>= 1:2.2.1), libbsd0 (>= 0.11.0), libc6 (>= 2.38), libcrypt1 (>= 1:4.1.0), libpam0g (>= 0.99.7.1), libselinux1 (>= 3.1~), libsemanage2 (>= 2.0.32)
+Replaces: login (<< 1:4.16.0-2~)
+Recommends: sensible-utils
+
+Package: patch
+Status: install ok installed
+Architecture: amd64
+Version: 2.8-2build1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.34)
+Suggests: ed, diffutils-doc
+
+Package: pci.ids
+Status: install ok installed
+Architecture: all
+Version: 0.0~2026.02.12-1
+Multi-Arch: foreign
+
+Package: pciutils
+Status: install ok installed
+Architecture: amd64
+Version: 1:3.14.0-1build2
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libkmod2 (>= 5~), libpci3 (= 1:3.14.0-1build2)
+Suggests: bzip2, wget | curl | lynx
+
+Package: perl
+Status: install ok installed
+Architecture: amd64
+Version: 5.40.1-7ubuntu0.1
+Multi-Arch: allowed
+Depends: perl-base (= 5.40.1-7ubuntu0.1), perl-modules-5.40 (>= 5.40.1-7ubuntu0.1), libperl5.40 (= 5.40.1-7ubuntu0.1)
+Breaks: apt-show-versions (<< 0.22.10), libdist-inkt-perl (<< 0.024-5), libmarc-charset-perl (<< 1.35-3), libperl-dev (<< 5.24.0~), perl-doc (<< 5.40.1-1), perl-modules-5.22, perl-modules-5.24, perl-modules-5.26 (<< 5.26.2-5)
+Conflicts: libjson-pp-perl (<< 2.27200-2)
+Provides: libansicolor-perl (= 5.01), libarchive-tar-perl (= 3.02.001), libattribute-handlers-perl (= 1.03), libautodie-perl (= 2.37), libcompress-raw-bzip2-perl (= 2.212), libcompress-raw-zlib-perl (= 2.212), libcompress-zlib-perl (= 2.212), libcpan-meta-perl (= 2.150010), libcpan-meta-requirements-perl (= 2.143), libcpan-meta-yaml-perl (= 0.018), libdigest-md5-perl (= 2.58.01), libdigest-perl (= 1.20), libdigest-sha-perl (= 6.04), libencode-perl (= 3.21), libexperimental-perl (= 0.032), libextutils-cbuilder-perl (= 0.280240), libextutils-command-perl (= 7.70), libextutils-install-perl (= 2.22), libextutils-parsexs-perl (= 3.510000), libfile-spec-perl (= 3.9100), libhttp-tiny-perl (= 0.088), libi18n-langtags-perl (= 0.45), libio-compress-base-perl (= 2.212), libio-compress-bzip2-perl (= 2.212), libio-compress-perl (= 2.212), libio-compress-zlib-perl (= 2.212), libio-zlib-perl (= 1.15), libjson-pp-perl (= 4.16000), liblocale-maketext-perl (= 1.33), liblocale-maketext-simple-perl (= 0.21.01), libmath-bigint-perl (= 2.003002), libmath-complex-perl (= 1.6200), libmime-base64-perl (= 3.16.01), libmodule-corelist-perl (= 5.20250118.40), libmodule-load-conditional-perl (= 0.74), libmodule-load-perl (= 0.36), libmodule-metadata-perl (= 1.000038), libnet-perl (= 1:3.15), libnet-ping-perl (= 2.76), libparams-check-perl (= 0.38), libparent-perl (= 0.241), libparse-cpan-meta-perl (= 2.150010), libperl-ostype-perl (= 1.010), libpod-escapes-perl (= 1.07), libpod-simple-perl (= 3.45), libstorable-perl (= 3.32), libsys-syslog-perl (= 0.36), libterm-table-perl (= 0.018), libtest-harness-perl (= 3.48), libtest-simple-perl (= 1.302199), libtest-tester-perl (= 1.302199), libtest-use-ok-perl (= 1.302199), libtext-balanced-perl (= 2.06), libthread-queue-perl (= 3.14), libthreads-perl (= 2.40), libthreads-shared-perl (= 1.69), libtime-hires-perl (= 1.9777), libtime-local-perl (= 1.3500), libtime-piece-perl (= 1.3401.01), libunicode-collate-perl (= 1.31), libversion-perl (= 1:0.9930), libversion-requirements-perl, podlators-perl (= 5.01.02)
+Replaces: perl-base (<< 5.36.0-2), perl-modules (<< 5.22.0~)
+Recommends: netbase
+Suggests: perl-doc, libterm-readline-gnu-perl | libterm-readline-perl-perl, make, libtap-harness-archive-perl
+
+Package: perl-base
+Status: install ok installed
+Architecture: amd64
+Version: 5.40.1-7ubuntu0.1
+Essential: yes
+Pre-Depends: libc6 (>= 2.43), libcrypt1 (>= 1:4.1.0)
+Breaks: amanda-common (<< 1:3.3.9-2), backuppc (<< 4.4.0-7~), bucardo (<< 5.5.0-1.1), debconf (<< 1.5.61), dh-haskell (<< 0.3), duck (<< 0.14.1), intltool (<< 0.51.0-4), kio-perldoc (<< 20.04.1-1), latexml (<< 0.8.4-2), libdevel-mat-dumper-perl (<< 0.42-3), libencode-arabic-perl (<< 14.2-2), libexception-class-perl (<< 1.42), libfile-path-perl (<< 2.18), libfile-spec-perl (<< 3.9100), libfile-temp-perl (<< 0.2311), libgnupg-interface-perl (<< 1.02-4), libio-socket-ip-perl (<< 0.42), liblexical-failure-perl (<< 0.001000), libmp3-tag-perl (<< 1.13-1.2), libnumber-format-perl (<< 1.76), libsbuild-perl (<< 0.67.0-1), libscalar-list-utils-perl (<< 1:1.63), libsocket-perl (<< 2.038), libur-perl (<< 0.470+ds-3), libxsloader-perl (<< 0.32), mailagent (<< 1:3.1-81-2), perl (<< 5.40.1~), perl-modules (<< 5.40.1~), pod2pdf (<< 0.42-5.1), slic3r (<< 1.2.9+dfsg-6.1), slic3r-prusa (<< 1.37.0+dfsg-1.1), texinfo (<< 6.1.0.dfsg.1-8)
+Conflicts: defoma (<< 0.11.12), doc-base (<< 0.10.3), mono-gac (<< 2.10.8.1-3), safe-rm (<< 0.8), update-inetd (<< 4.41)
+Provides: libfile-path-perl (= 2.18), libfile-temp-perl (= 0.2311), libio-socket-ip-perl (= 0.42), libscalar-list-utils-perl (= 1:1.63), libsocket-perl (= 2.038), libxsloader-perl (= 0.32), perlapi-5.40.0, perlapi-5.40.1
+Replaces: libfile-path-perl (<< 2.18), libfile-temp-perl (<< 0.2311), libio-socket-ip-perl (<< 0.42), libscalar-list-utils-perl (<< 1:1.63), libsocket-perl (<< 2.038), libxsloader-perl (<< 0.32), perl (<< 5.10.1-12), perl-modules (<< 5.20.1-3)
+Suggests: perl, sensible-utils
+
+Package: perl-modules-5.40
+Status: install ok installed
+Architecture: all
+Version: 5.40.1-7ubuntu0.1
+Multi-Arch: foreign
+Depends: perl-base (>= 5.40.1-1)
+Breaks: libansicolor-perl (<< 5.01), libarchive-tar-perl (<< 3.02.001), libattribute-handlers-perl (<< 1.03), libautodie-perl (<< 2.37), libcpan-meta-perl (<< 2.150010), libcpan-meta-requirements-perl (<< 2.143), libcpan-meta-yaml-perl (<< 0.018), libdigest-perl (<< 1.20), libexperimental-perl (<< 0.032), libextutils-cbuilder-perl (<< 0.280240), libextutils-command-perl (<< 7.70), libextutils-install-perl (<< 2.22), libextutils-parsexs-perl (<< 3.510000), libfile-spec-perl (<< 3.9100), libhttp-tiny-perl (<< 0.088), libi18n-langtags-perl (<< 0.45), libio-zlib-perl (<< 1.15), libjson-pp-perl (<< 4.16000), liblocale-maketext-perl (<< 1.33), liblocale-maketext-simple-perl (<< 0.21.01), libmath-bigint-perl (<< 2.003002), libmath-complex-perl (<< 1.6200), libmodule-corelist-perl (<< 5.20250118.40), libmodule-load-conditional-perl (<< 0.74), libmodule-load-perl (<< 0.36), libmodule-metadata-perl (<< 1.000038), libnet-perl (<< 1:3.15), libnet-ping-perl (<< 2.76), libparams-check-perl (<< 0.38), libparent-perl (<< 0.241), libparse-cpan-meta-perl (<< 2.150010), libperl-ostype-perl (<< 1.010), libpod-escapes-perl (<< 1.07), libpod-simple-perl (<< 3.45), libterm-table-perl (<< 0.018), libtest-harness-perl (<< 3.48), libtest-simple-perl (<< 1.302199), libtest-tester-perl (<< 1.302199), libtest-use-ok-perl (<< 1.302199), libtest2-suite-perl (<< 0.000162), libtext-balanced-perl (<< 2.06), libthread-queue-perl (<< 3.14), libtime-local-perl (<< 1.3500), libunicode-collate-perl (<< 1.31), libversion-perl (<< 1:0.9930), maildirsync (<< 1.2-2.1), perl (<< 5.40.1~), podlators-perl (<< 5.01.02)
+Conflicts: perl-modules (<< 5.22.0~)
+Provides: perl-modules
+Replaces: libansicolor-perl (<< 5.01), libarchive-tar-perl (<< 3.02.001), libattribute-handlers-perl (<< 1.03), libautodie-perl (<< 2.37), libcpan-meta-perl (<< 2.150010), libcpan-meta-requirements-perl (<< 2.143), libcpan-meta-yaml-perl (<< 0.018), libdigest-perl (<< 1.20), libexperimental-perl (<< 0.032), libextutils-cbuilder-perl (<< 0.280240), libextutils-command-perl (<< 7.70), libextutils-install-perl (<< 2.22), libextutils-parsexs-perl (<< 3.510000), libfile-spec-perl (<< 3.9100), libhttp-tiny-perl (<< 0.088), libi18n-langtags-perl (<< 0.45), libio-zlib-perl (<< 1.15), libjson-pp-perl (<< 4.16000), liblocale-maketext-perl (<< 1.33), liblocale-maketext-simple-perl (<< 0.21.01), libmath-bigint-perl (<< 2.003002), libmath-complex-perl (<< 1.6200), libmodule-corelist-perl (<< 5.20250118.40), libmodule-load-conditional-perl (<< 0.74), libmodule-load-perl (<< 0.36), libmodule-metadata-perl (<< 1.000038), libnet-perl (<< 1:3.15), libnet-ping-perl (<< 2.76), libparams-check-perl (<< 0.38), libparent-perl (<< 0.241), libparse-cpan-meta-perl (<< 2.150010), libperl-ostype-perl (<< 1.010), libpod-escapes-perl (<< 1.07), libpod-simple-perl (<< 3.45), libterm-table-perl (<< 0.018), libtest-harness-perl (<< 3.48), libtest-simple-perl (<< 1.302199), libtest-tester-perl (<< 1.302199), libtest-use-ok-perl (<< 1.302199), libtest2-suite-perl (<< 0.000162), libtext-balanced-perl (<< 2.06), libthread-queue-perl (<< 3.14), libtime-local-perl (<< 1.3500), libunicode-collate-perl (<< 1.31), libversion-perl (<< 1:0.9930), perl-base (<< 5.22.0~), perl-modules, podlators-perl (<< 5.01.02)
+Recommends: perl (>= 5.40.1-1)
+
+Package: pinentry-curses
+Status: install ok installed
+Architecture: amd64
+Version: 1.3.2-3ubuntu1
+Multi-Arch: foreign
+Depends: libassuan9 (>= 2.0.1), libc6 (>= 2.38), libgpg-error0 (>= 1.14), libncursesw6 (>= 6), libtinfo6 (>= 6)
+Provides: pinentry
+Suggests: pinentry-doc
+Enhances: gnupg-agent
+
+Package: plymouth
+Status: install ok installed
+Architecture: amd64
+Version: 24.004.60+git20250831.4a3c171d-0ubuntu8
+Depends: init-system-helpers (>= 1.18), sysvinit-utils (>= 3.05-4), systemd (>= 232-8~) | elogind, udev (>= 232-8~), libc6 (>= 2.38), libdrm2 (>= 2.4.47), libplymouth5 (>= 24.004.60+git20250831.4a3c171d-0ubuntu8)
+Breaks: plymouth-drm (<< 0.9.0-6~), plymouth-themes (<< 0.9.0-8~)
+Conflicts: console-common
+Replaces: plymouth-drm (<< 0.9.0-6~), plymouth-themes (<< 0.9.0-8~)
+Recommends: plymouth-theme-ubuntu-text | plymouth-theme
+Suggests: desktop-base, plymouth-themes
+
+Package: plymouth-theme-ubuntu-text
+Status: install ok installed
+Architecture: amd64
+Version: 24.004.60+git20250831.4a3c171d-0ubuntu8
+Depends: libc6 (>= 2.38), libplymouth5 (>= 0.9.2), plymouth (= 24.004.60+git20250831.4a3c171d-0ubuntu8), lsb-release
+Provides: plymouth-theme
+
+Package: pnp.ids
+Status: install ok installed
+Architecture: all
+Version: 0.394-1build1
+Multi-Arch: foreign
+Breaks: hwdata (<< 0.393-2~)
+Replaces: hwdata (<< 0.393-2~)
+
+Package: polkitd
+Status: install ok installed
+Architecture: amd64
+Version: 127-2ubuntu1
+Multi-Arch: foreign
+Depends: systemd | systemd-standalone-sysusers | systemd-sysusers, default-dbus-system-bus | dbus-system-bus, default-logind | logind, xml-core (>= 0.14), libc6 (>= 2.38), libduktape207 (>= 2.0.3), libexpat1 (>= 2.0.1), libglib2.0-0t64 (>= 2.38.0), libpam0g (>= 0.99.7.1), libpolkit-agent-1-0 (= 127-2ubuntu1), libpolkit-gobject-1-0 (= 127-2ubuntu1), libsystemd0 (>= 253)
+Breaks: policykit-1 (<< 0.120-4~), polkitd-javascript (<< 121+compat0.1-3~)
+Replaces: policykit-1 (<< 0.120-4~), polkitd-javascript (<< 121+compat0.1-3~)
+
+Package: powermgmt-base
+Status: install ok installed
+Architecture: all
+Version: 1.38ubuntu2
+Multi-Arch: foreign
+
+Package: procps
+Status: install ok installed
+Architecture: amd64
+Version: 2:4.0.4-9ubuntu1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.42), libncursesw6 (>= 6), libproc2-0 (>= 2:4.0.4), libsystemd0 (>= 254), libtinfo6 (>= 6), init-system-helpers (>= 1.29~)
+Breaks: manpages-de (<< 4.9.1-2), manpages-fr (<< 4.9.1-2), manpages-fr-extra (<< 20151231+nmu1), manpages-pl (<< 1:4.9.1-2)
+Provides: watch
+Replaces: manpages-de (<< 4.9.1-2), manpages-fr (<< 4.9.1-2), manpages-fr-extra (<< 20151231+nmu1), manpages-pl (<< 1:4.9.1-2)
+Recommends: psmisc, linux-sysctl-defaults
+
+Package: psmisc
+Status: install ok installed
+Architecture: amd64
+Version: 23.7-2ubuntu2
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libtinfo6 (>= 6)
+Breaks: manpages-de (<< 4.9.1-1)
+Replaces: manpages-de (<< 4.9.1-1)
+
+Package: publicsuffix
+Status: install ok installed
+Architecture: all
+Version: 20260129.1928-1
+Multi-Arch: foreign
+Provides: publicsuffix-dafsa
+
+Package: python-apt-common
+Status: install ok installed
+Architecture: all
+Version: 3.1.0ubuntu1
+Multi-Arch: foreign
+Breaks: python-apt (<< 0.7.98+nmu1)
+Replaces: python-apt (<< 0.7.98+nmu1)
+Enhances: python-apt, python3-apt
+
+Package: python-babel-localedata
+Status: install ok installed
+Architecture: all
+Version: 2.17.0-2
+Multi-Arch: foreign
+
+Package: python3
+Status: install ok installed
+Architecture: amd64
+Version: 3.14.3-0ubuntu2
+Multi-Arch: allowed
+Depends: python3.14 (>= 3.14.3), libpython3-stdlib (= 3.14.3-0ubuntu2)
+Pre-Depends: python3-minimal (= 3.14.3-0ubuntu2)
+Conflicts: python3-distutils
+Provides: python3-profiler, python3-supported-max (= 3.14), python3-supported-min (= 3.14)
+Replaces: python3-minimal (<< 3.1.2-2)
+Suggests: python3-doc (>= 3.14.3-0ubuntu2), python3-tk (>= 3.14.3), python3-venv (>= 3.14.3-0ubuntu2)
+
+Package: python3-apport
+Status: install ok installed
+Architecture: all
+Version: 2.34.1-0ubuntu0.1
+Depends: python3-apt (>= 0.7.9), python3-httplib2, python3-launchpadlib, python3-problem-report (>= 2.28), python3-yaml, python3:any
+Breaks: apport (<< 2.23.1), apport-gtk (<< 2.23.1), apport-kde (<< 2.23.1)
+Recommends: apport
+
+Package: python3-apt
+Status: install ok installed
+Architecture: amd64
+Version: 3.1.0ubuntu1
+Multi-Arch: allowed
+Depends: python3 (<< 3.15), python3 (>= 3.14~), python3:any, libapt-pkg7.0 (>= 2.9.27+exp1), libc6 (>= 2.33), libgcc-s1 (>= 3.3.1), libstdc++6 (>= 13.1), python-apt-common, distro-info-data
+Breaks: apt-xapian-index (<< 0.51~), kthresher (<= 1.4.0-1), python-apt (<< 0.7.98+nmu1)
+Replaces: python-apt (<< 0.7.98+nmu1)
+Recommends: lsb-release, iso-codes
+Suggests: python-apt-doc, apt
+
+Package: python3-attr
+Status: install ok installed
+Architecture: all
+Version: 25.4.0-1build1
+Depends: python3:any
+Suggests: python-attr-doc
+
+Package: python3-autocommand
+Status: install ok installed
+Architecture: all
+Version: 2.2.2-4
+Depends: python3:any
+
+Package: python3-automat
+Status: install ok installed
+Architecture: all
+Version: 25.4.16-1build1
+Depends: python3:any
+
+Package: python3-babel
+Status: install ok installed
+Architecture: all
+Version: 2.17.0-2
+Depends: python-babel-localedata (= 2.17.0-2), python3:any
+
+Package: python3-bcrypt
+Status: install ok installed
+Architecture: amd64
+Version: 5.0.0-3build1
+Depends: python3 (<< 3.15), python3 (>= 3.14~), python3:any, libc6 (>= 2.34), libgcc-s1 (>= 4.2)
+Breaks: python3-passlib (<< 1.9.3-1~)
+
+Package: python3-blinker
+Status: install ok installed
+Architecture: all
+Version: 1.9.0-2build1
+Depends: python3:any
+Suggests: python-blinker-doc
+
+Package: python3-boto3
+Status: install ok installed
+Architecture: all
+Version: 1.40.72-1build1
+Depends: python3-botocore (>= 1.40.72), python3-requests, python3-s3transfer (>= 0.14.0), python3-jmespath (>= 0.7.1), python3:any
+
+Package: python3-botocore
+Status: install ok installed
+Architecture: all
+Version: 1.40.72+repack-1build1
+Depends: python3-dateutil (>= 2.1), python3-jmespath (>= 0.7.1), python3-urllib3, python3:any, python3-requests, python3-six
+Breaks: awscli (<< 1.18.140)
+
+Package: python3-bpfcc
+Status: install ok installed
+Architecture: all
+Version: 0.35.0+ds-1ubuntu2
+Depends: libbpfcc (>= 0.35.0+ds-1ubuntu2), python3:any
+
+Package: python3-certifi
+Status: install ok installed
+Architecture: all
+Version: 2026.1.4+ds-1
+Multi-Arch: foreign
+Depends: ca-certificates, python3:any
+
+Package: python3-cffi-backend
+Status: install ok installed
+Architecture: amd64
+Version: 2.0.0-3build1
+Multi-Arch: same
+Depends: python3 (<< 3.15), python3 (>= 3.14~), libc6 (>= 2.38), libffi8 (>= 3.4)
+Provides: python3-cffi-backend-api-9729, python3-cffi-backend-api-max (= 10495), python3-cffi-backend-api-min (= 9729)
+
+Package: python3-chardet
+Status: install ok installed
+Architecture: all
+Version: 5.2.0+dfsg-2build1
+Multi-Arch: foreign
+Depends: python3:any
+Breaks: python-chardet (<< 3.0.4-6)
+Replaces: python-chardet (<< 3.0.4-6)
+
+Package: python3-click
+Status: install ok installed
+Architecture: all
+Version: 8.2.0+0.really.8.1.8-1build1
+Depends: python3:any
+Breaks: python3-click-threading (<< 0.5.0)
+
+Package: python3-commandnotfound
+Status: install ok installed
+Architecture: all
+Version: 23.04.0build1
+Depends: lsb-release, python3-apt, python3-gdbm, python3:any
+Replaces: command-not-found (<< 0.3ubuntu7)
+
+Package: python3-configobj
+Status: install ok installed
+Architecture: all
+Version: 5.0.9-1build1
+Multi-Arch: foreign
+Depends: python3:any
+Suggests: python-configobj-doc
+
+Package: python3-constantly
+Status: install ok installed
+Architecture: all
+Version: 23.10.4-2build1
+Depends: python3:any
+
+Package: python3-cryptography
+Status: install ok installed
+Architecture: amd64
+Version: 46.0.5-1ubuntu2
+Depends: python3-bcrypt, python3, python3-cffi-backend-api-min (<= 9729), python3-cffi-backend-api-max (>= 9729), python3-supported-min (>= 3.11.0) | python3-typing-extensions, python3:any, libc6 (>= 2.34), libgcc-s1 (>= 4.2), libssl3t64 (>= 3.3.0)
+Suggests: python-cryptography-doc, python3-cryptography-vectors
+
+Package: python3-dateutil
+Status: install ok installed
+Architecture: all
+Version: 2.9.0-4build1
+Multi-Arch: foreign
+Depends: python3:any, tzdata
+
+Package: python3-dbus
+Status: install ok installed
+Architecture: amd64
+Version: 1.4.0-1build2
+Depends: python3 (<< 3.15), python3 (>= 3.14~), python3:any, libc6 (>= 2.4), libdbus-1-3 (>= 1.10), libglib2.0-0t64 (>= 2.16.0)
+Recommends: python3-gi
+Suggests: python-dbus-doc
+
+Package: python3-debconf
+Status: install ok installed
+Architecture: all
+Version: 1.5.92
+Depends: debconf (= 1.5.92), python3:any
+
+Package: python3-debian
+Status: install ok installed
+Architecture: all
+Version: 1.0.1ubuntu2
+Depends: python3:any
+Suggests: gpgv, python3-apt, python3-charset-normalizer, zstd
+
+Package: python3-distro
+Status: install ok installed
+Architecture: all
+Version: 1.9.0-1build1
+Multi-Arch: foreign
+Depends: lsb-release, python3:any
+
+Package: python3-distro-info
+Status: install ok installed
+Architecture: all
+Version: 1.15
+Depends: distro-info-data (>= 0.46), python3:any
+
+Package: python3-distupgrade
+Status: install ok installed
+Architecture: all
+Version: 1:26.04.23
+Depends: gpgv, lsb-release, procps, python3-apt (>= 0.8.5~), python3-dbus, python3-distro-info, python3-update-manager (>= 1:19.04.2~), sensible-utils, python3:any
+Breaks: python3-update-manager (<< 1:0.165)
+Replaces: python3-update-manager (<< 1:0.165)
+
+Package: python3-gdbm
+Status: install ok installed
+Architecture: amd64
+Version: 3.14.3-0ubuntu2
+Multi-Arch: allowed
+Depends: python3.14 (>= 3.14.3), python3.14-gdbm
+Provides: python3-gdbm-dbg
+
+Package: python3-gi
+Status: install ok installed
+Architecture: amd64
+Version: 3.56.2-1
+Multi-Arch: allowed
+Depends: gir1.2-glib-2.0 (>= 2.86.0-7~), gir1.2-girepository-3.0 (>= 2.86.0-7~), python3 (<< 3.15), python3 (>= 3.14~), python3:any, libc6 (>= 2.14), libffi8 (>= 3.4), libgirepository-2.0-0 (>= 2.86.0-7~), libgirepository-2.0-0-with-libffi8 (>= 2.86.0-7~), libglib2.0-0t64 (>= 2.86.0-7~)
+Breaks: autoradio (<< 3.6.4-1.1~), blueprint-compiler (<< 0.16.0), budgie-desktop (<< 10.9.3-1.1~), entangle (<< 3.0-5.1~), eog (<< 47.0-4~), eom (<< 1.28.0-1.1~), exaile (<< 4.1.4), gedit (<< 48.1-8~), gir1.2-peas-1.0 (<< 1.36.0-6~), gnome-music (<< 48.0), liferea (<< 1.16.1+ds-2.1~), pluma (<< 1.28.0-1.1~), rednotebook (<< 2.39), rhythmbox (<< 3.4.9-2~), streamtuner2 (<< 2.2.2+dfsg-2.3~), totem (<< 43.2-7~)
+
+Package: python3-hamcrest
+Status: install ok installed
+Architecture: all
+Version: 2.1.0-3
+Depends: python3:any
+
+Package: python3-httplib2
+Status: install ok installed
+Architecture: all
+Version: 0.22.0-1ubuntu0.1
+Depends: ca-certificates, python3-pyparsing, python3:any
+Breaks: python3-wsgi-intercept (<< 1.9.0)
+
+Package: python3-hyperlink
+Status: install ok installed
+Architecture: all
+Version: 21.0.0-6build1
+Depends: python3-idna, python3:any
+
+Package: python3-idna
+Status: install ok installed
+Architecture: all
+Version: 3.11-1ubuntu0.1
+Multi-Arch: foreign
+Depends: python3:any
+
+Package: python3-incremental
+Status: install ok installed
+Architecture: all
+Version: 24.7.2-4
+Depends: python3-packaging, python3:any
+Recommends: python3-click, python3-twisted
+
+Package: python3-inflect
+Status: install ok installed
+Architecture: all
+Version: 7.5.0-1build1
+Depends: python3-more-itertools, python3-typeguard, python3:any
+
+Package: python3-jaraco.context
+Status: install ok installed
+Architecture: all
+Version: 6.0.1-2
+Depends: python3:any
+
+Package: python3-jaraco.functools
+Status: install ok installed
+Architecture: all
+Version: 4.1.0-1build1
+Depends: python3-more-itertools, python3:any
+
+Package: python3-jaraco.text
+Status: install ok installed
+Architecture: all
+Version: 4.0.0-1build1
+Depends: python3-autocommand, python3-jaraco.context, python3-jaraco.functools, python3-more-itertools, python3:any, python3-inflect
+
+Package: python3-jinja2
+Status: install ok installed
+Architecture: all
+Version: 3.1.6-1build1
+Depends: python3-markupsafe (>= 2.0), python3:any
+Breaks: python-jinja2 (<< 2.11.1-1)
+Replaces: python-jinja2 (<< 2.11.1-1)
+Recommends: python3-babel
+Suggests: python-jinja2-doc
+
+Package: python3-jmespath
+Status: install ok installed
+Architecture: all
+Version: 1.0.1-1build1
+Depends: python3:any
+
+Package: python3-json-pointer
+Status: install ok installed
+Architecture: all
+Version: 2.4-4
+Multi-Arch: foreign
+Depends: python3:any
+
+Package: python3-jsonpatch
+Status: install ok installed
+Architecture: all
+Version: 1.32-6
+Depends: python3-json-pointer, python3:any
+
+Package: python3-jsonschema
+Status: install ok installed
+Architecture: all
+Version: 4.19.2-6ubuntu2
+Depends: python3-attr, python3-jsonschema-specifications, python3-referencing, python3-rpds-py, python3:any
+Recommends: python3-idna, python3-json-pointer
+Suggests: python-jsonschema-doc, python3-fqdn, python3-isoduration, python3-rfc3339-validator, python3-rfc3986-validator, python3-rfc3987, python3-uritemplate, python3-webcolors
+
+Package: python3-jsonschema-specifications
+Status: install ok installed
+Architecture: all
+Version: 2023.12.1-4
+Depends: python3-referencing, python3-rpds-py, python3:any
+
+Package: python3-jwt
+Status: install ok installed
+Architecture: all
+Version: 2.10.1-4ubuntu1
+Multi-Arch: foreign
+Depends: python3:any
+Recommends: python3-cryptography
+Suggests: python-jwt-doc, python3-crypto
+
+Package: python3-launchpadlib
+Status: install ok installed
+Architecture: all
+Version: 2.1.0-1build1
+Depends: python3-httplib2, python3-lazr.restfulclient, python3-lazr.uri, init-system-helpers (>= 1.52), python3:any
+Suggests: python3-keyring, python3-pkg-resources, python3-testresources
+
+Package: python3-lazr.restfulclient
+Status: install ok installed
+Architecture: all
+Version: 0.14.6-3build1
+Depends: python3-httplib2 (>= 0.7.7), python3-lazr.uri, python3-wadllib (>= 1.1.4), python3-distro, python3-oauthlib, python3-setuptools, python3:any
+
+Package: python3-lazr.uri
+Status: install ok installed
+Architecture: all
+Version: 1.0.6-7build1
+Depends: python3:any
+
+Package: python3-linkify-it
+Status: install ok installed
+Architecture: all
+Version: 2.0.3-1ubuntu3
+Depends: python3-uc-micro, python3:any, python3
+
+Package: python3-magic
+Status: install ok installed
+Architecture: all
+Version: 2:0.4.27-3build1
+Depends: python3:any, libmagic1t64
+
+Package: python3-markdown-it
+Status: install ok installed
+Architecture: all
+Version: 3.0.0-3build1
+Depends: python3-mdurl, python3:any, python3-linkify-it
+Breaks: python3-mdit-py-plugins (<< 0.4.0-1)
+
+Package: python3-markupsafe
+Status: install ok installed
+Architecture: amd64
+Version: 3.0.3-1build1
+Depends: python3 (<< 3.15), python3 (>= 3.14~), python3:any, libc6 (>= 2.14)
+
+Package: python3-mdurl
+Status: install ok installed
+Architecture: all
+Version: 0.1.2-1build1
+Depends: python3:any
+
+Package: python3-minimal
+Status: install ok installed
+Architecture: amd64
+Version: 3.14.3-0ubuntu2
+Multi-Arch: allowed
+Pre-Depends: python3.14-minimal (>= 3.14.3)
+
+Package: python3-more-itertools
+Status: install ok installed
+Architecture: all
+Version: 10.8.0-1build1
+Depends: python3:any
+
+Package: python3-netaddr
+Status: install ok installed
+Architecture: all
+Version: 1.3.0-1build1
+Depends: ieee-data, python3:any
+Suggests: ipython3, python-netaddr-docs
+
+Package: python3-netifaces
+Status: install ok installed
+Architecture: amd64
+Version: 0.11.0-2build7
+Multi-Arch: same
+Depends: python3 (<< 3.15), python3 (>= 3.14~), libc6 (>= 2.4)
+
+Package: python3-netplan
+Status: install ok installed
+Architecture: amd64
+Version: 1.2-1ubuntu5
+Multi-Arch: foreign
+Depends: python3, python3:any, libc6 (>= 2.4), libnetplan1 (= 1.2-1ubuntu5), python3-cffi-backend
+Breaks: netplan.io (<< 0.107-3~)
+Replaces: netplan.io (<< 0.107-3~)
+
+Package: python3-oauthlib
+Status: install ok installed
+Architecture: all
+Version: 3.3.1-1build1
+Depends: python3:any, python3-blinker, python3-cryptography, python3-jwt
+
+Package: python3-openssl
+Status: install ok installed
+Architecture: all
+Version: 25.3.0-1ubuntu1
+Depends: python3-typing-extensions | python3-supported-min (>= 3.13), python3-cryptography (<< 47), python3-cryptography (>= 45.0.7), python3:any
+Suggests: python-openssl-doc
+
+Package: python3-packaging
+Status: install ok installed
+Architecture: all
+Version: 26.0-1
+Multi-Arch: foreign
+Depends: python3:any
+
+Package: python3-passlib
+Status: install ok installed
+Architecture: all
+Version: 1.9.3-1ubuntu1
+Depends: python3:any, libjs-sphinxdoc (>= 8.2)
+Suggests: python3-legacycrypt
+
+Package: python3-pexpect
+Status: install ok installed
+Architecture: all
+Version: 4.9-4
+Depends: python3-ptyprocess, python3:any
+Suggests: python-pexpect-doc
+
+Package: python3-pkg-resources
+Status: install ok installed
+Architecture: all
+Version: 78.1.1-0.1build1
+Multi-Arch: foreign
+Depends: python3-autocommand, python3-inflect, python3-jaraco.context, python3-jaraco.functools, python3-more-itertools, python3:any
+Breaks: python3-setuptools (<< 75.2)
+Replaces: python3-setuptools (<< 75.2)
+Suggests: python3-setuptools
+
+Package: python3-problem-report
+Status: install ok installed
+Architecture: all
+Version: 2.34.1-0ubuntu0.1
+Depends: python3:any
+Suggests: python3-zstandard
+
+Package: python3-ptyprocess
+Status: install ok installed
+Architecture: all
+Version: 0.7.0-6build1
+Depends: python3:any
+
+Package: python3-pyasn1
+Status: install ok installed
+Architecture: all
+Version: 0.6.3-1
+Depends: python3:any
+
+Package: python3-pyasn1-modules
+Status: install ok installed
+Architecture: all
+Version: 0.4.1-2build1
+Depends: python3-pyasn1 (>= 0.4.6), python3-pyasn1 (<< 0.7.0), python3:any
+
+Package: python3-pygments
+Status: install ok installed
+Architecture: all
+Version: 2.19.2+dfsg-1
+Multi-Arch: foreign
+Depends: python3:any
+Breaks: python-pygments (<< 2.3.1+dfsg-4~)
+Replaces: python-pygments (<< 2.3.1+dfsg-4~)
+Suggests: python-pygments-doc, ttf-bitstream-vera
+
+Package: python3-pyparsing
+Status: install ok installed
+Architecture: all
+Version: 3.3.2-2
+Multi-Arch: foreign
+Depends: python3:any
+Suggests: python-pyparsing-doc
+
+Package: python3-referencing
+Status: install ok installed
+Architecture: all
+Version: 0.36.2-1ubuntu2
+Depends: python3-attr, python3-rpds-py, python3-supported-min (>= 3.13) | python3-typing-extensions, python3:any
+
+Package: python3-requests
+Status: install ok installed
+Architecture: all
+Version: 2.32.5+dfsg-1ubuntu1
+Multi-Arch: foreign
+Depends: python3-certifi, python3-chardet (>= 3.0.2), python3-idna, python3-urllib3 (>= 1.21.1), python3:any, ca-certificates
+Breaks: awscli (<< 1.11.139)
+Suggests: python3-cryptography, python3-idna (>= 2.5), python3-openssl, python3-socks, python-requests-doc
+
+Package: python3-rich
+Status: install ok installed
+Architecture: all
+Version: 13.9.4-1.2
+Depends: python3-markdown-it, python3-pygments (>= 2.19.0), python3:any
+Breaks: python3-textual (<< 2.1.2-1.1~)
+
+Package: python3-rpds-py
+Status: install ok installed
+Architecture: amd64
+Version: 0.27.1-2ubuntu3
+Depends: python3 (<< 3.15), python3 (>= 3.14~), python3:any, libc6 (>= 2.34), libgcc-s1 (>= 4.2)
+
+Package: python3-s3transfer
+Status: install ok installed
+Architecture: all
+Version: 0.14.0-1build1
+Depends: python3-botocore (>= 1.37.4+repack-1~), python3:any
+
+Package: python3-serial
+Status: install ok installed
+Architecture: all
+Version: 3.5-2build1
+Depends: python3:any
+Suggests: python3-wxgtk3.0 | python3-wxgtk
+
+Package: python3-service-identity
+Status: install ok installed
+Architecture: all
+Version: 24.2.0-1build1
+Depends: python3-attr, python3-cryptography, python3-pyasn1, python3-pyasn1-modules, python3:any
+Recommends: python3-idna
+
+Package: python3-setuptools
+Status: install ok installed
+Architecture: all
+Version: 78.1.1-0.1build1
+Multi-Arch: foreign
+Depends: python3-pkg-resources (= 78.1.1-0.1build1), python3-jaraco.text, python3-more-itertools, python3-typeguard, python3-typing-extensions, python3-zipp, python3:any
+Breaks: python3-wheel (<< 0.46.0)
+Suggests: python-setuptools-doc
+
+Package: python3-six
+Status: install ok installed
+Architecture: all
+Version: 1.17.0-2build1
+Multi-Arch: foreign
+Depends: python3:any
+
+Package: python3-software-properties
+Status: install ok installed
+Architecture: all
+Version: 0.120.1
+Depends: gpg | sq, iso-codes, lsb-release, python3, python3-apt (>= 2.7.1~), python3-gi, python3-launchpadlib, python3:any
+Recommends: unattended-upgrades
+
+Package: python3-systemd
+Status: install ok installed
+Architecture: amd64
+Version: 235-1build9
+Depends: python3 (<< 3.15), python3 (>= 3.14~), python3:any, libc6 (>= 2.38), libsystemd0 (>= 246)
+
+Package: python3-twisted
+Status: install ok installed
+Architecture: all
+Version: 25.5.0-5ubuntu0.1
+Depends: python3-bcrypt (>= 3.0.0), python3-cryptography (>= 2.5), python3-hamcrest, python3-idna, python3-openssl, python3-service-identity (>= 18.1.0), python3-attr (>= 22.2.0), python3-automat (>= 24.8.0), python3-constantly, python3-hyperlink, python3-incremental (>= 24.7.0), python3-zope.interface (>= 5), python3:any
+Conflicts: python3-twisted-experimental
+Replaces: python3-twisted-experimental
+Suggests: python3-pampy, python3-serial, python3-tk, python3-wsproto, python3-wxgtk4.0
+
+Package: python3-typeguard
+Status: install ok installed
+Architecture: all
+Version: 4.4.4-2
+Multi-Arch: foreign
+Depends: python3-typing-extensions (>= 4.14.0), python3:any
+
+Package: python3-typing-extensions
+Status: install ok installed
+Architecture: all
+Version: 4.15.0-2
+Multi-Arch: foreign
+Depends: python3:any
+
+Package: python3-uc-micro
+Status: install ok installed
+Architecture: all
+Version: 1.0.3-1build1
+Depends: python3:any
+
+Package: python3-update-manager
+Status: install ok installed
+Architecture: all
+Version: 1:26.04.5
+Depends: python3-apt (>= 0.8.5~), python3-distro-info, python3-distupgrade, python3:any
+Breaks: python3-distupgrade (<< 1:16.10.10), update-manager-core (<< 1:0.163)
+Replaces: update-manager-core (<< 1:0.163)
+Suggests: python3-launchpadlib
+
+Package: python3-urllib3
+Status: install ok installed
+Architecture: all
+Version: 2.6.3-1ubuntu1.1
+Multi-Arch: foreign
+Depends: python3:any
+Recommends: ca-certificates
+Suggests: python3-brotli (>= 1.2.0), python3-supported-min (>= 3.14), python3-cryptography, python3-idna, python3-openssl, python3-socks
+
+Package: python3-wadllib
+Status: install ok installed
+Architecture: all
+Version: 2.0.0-3
+Depends: python3-lazr.uri, python3:any
+
+Package: python3-xkit
+Status: install ok installed
+Architecture: all
+Version: 0.5.0ubuntu8
+Depends: python3:any (>= 3.2~)
+
+Package: python3-yaml
+Status: install ok installed
+Architecture: amd64
+Version: 6.0.3-1build1
+Multi-Arch: allowed
+Depends: python3 (<< 3.15), python3 (>= 3.14~), python3:any, libc6 (>= 2.14), libyaml-0-2
+
+Package: python3-zipp
+Status: install ok installed
+Architecture: all
+Version: 3.23.0-1build1
+Multi-Arch: foreign
+Depends: python3:any
+
+Package: python3-zope.interface
+Status: install ok installed
+Architecture: amd64
+Version: 8.2-1build1
+Depends: python3 (<< 3.15), python3 (>= 3.14~), python3:any, libc6 (>= 2.4)
+Provides: python3-zope
+
+Package: python3.14
+Status: install ok installed
+Architecture: amd64
+Version: 3.14.4-1ubuntu0.1
+Multi-Arch: allowed
+Depends: python3.14-minimal (= 3.14.4-1ubuntu0.1), libpython3.14-stdlib (= 3.14.4-1ubuntu0.1), media-types | mime-support, tzdata
+Breaks: python3-all (<< 3.6.5~rc1-1), python3-dev (<< 3.6.5~rc1-1), python3-venv (<< 3.6.5-2)
+Recommends: ca-certificates
+Suggests: python3.14-venv, python3.14-doc, binutils
+
+Package: python3.14-gdbm
+Status: install ok installed
+Architecture: amd64
+Version: 3.14.4-1ubuntu0.1
+Depends: libc6 (>= 2.2.5), libgdbm6t64 (>= 1.16)
+Breaks: python3-gdbm (<< 3.12.5-2~)
+Replaces: python3-gdbm (<< 3.12.5-2~)
+Enhances: python3.14
+
+Package: python3.14-minimal
+Status: install ok installed
+Architecture: amd64
+Version: 3.14.4-1ubuntu0.1
+Multi-Arch: allowed
+Depends: libpython3.14-minimal (= 3.14.4-1ubuntu0.1), libexpat1 (>= 2.7.2), zlib1g (>= 1:1.2.0)
+Pre-Depends: libc6 (>= 2.38)
+Conflicts: binfmt-support (<< 1.1.2)
+Recommends: python3.14
+Suggests: binfmt-support
+
+Package: readline-common
+Status: install ok installed
+Architecture: all
+Version: 8.3-4
+Multi-Arch: foreign
+Conflicts: libreadline-common, libreadline5 (<< 5.0-11)
+Replaces: libreadline-common, libreadline4 (<< 4.3-16), libreadline5 (<< 5.0-11)
+Suggests: readline-doc
+
+Package: rpcsvc-proto
+Status: install ok installed
+Architecture: amd64
+Version: 1.4.3-1build1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38)
+Breaks: libc-dev-bin (<< 2.31-14), libc6-dev (<< 2.31-14)
+Replaces: libc-dev-bin (<< 2.31-14), libc6-dev (<< 2.31-14)
+
+Package: rsync
+Status: install ok installed
+Architecture: amd64
+Version: 3.4.1+ds1-7ubuntu0.3
+Multi-Arch: foreign
+Depends: libacl1 (>= 2.2.23), libc6 (>= 2.38), liblz4-1 (>= 0.0~r130), libpopt0 (>= 1.14), libssl3t64 (>= 3.0.0), libxxhash0 (>= 0.8.0), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.1.4)
+Suggests: openssh-client, openssh-server, python3, python3-braceexpand
+
+Package: rsyslog
+Status: install ok installed
+Architecture: amd64
+Version: 8.2512.0-1ubuntu4.1
+Depends: libc6 (>= 2.38), libestr0 (>= 0.1.9), libfastjson4 (>= 0.99.8), libsystemd0 (>= 256~rc1), libuuid1 (>= 2.16), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.1.4), adduser, ucf
+Conflicts: linux-kernel-log-daemon, system-log-daemon
+Provides: linux-kernel-log-daemon, system-log-daemon
+Recommends: logrotate
+Suggests: rsyslog-doc, rsyslog-mysql, rsyslog-pgsql, rsyslog-mongodb, rsyslog-elasticsearch, rsyslog-kafka, rsyslog-hiredis, rsyslog-snmp, rsyslog-kubernetes, rsyslog-docker, rsyslog-clickhouse, rsyslog-openssl | rsyslog-gnutls, rsyslog-gssapi, rsyslog-relp, apparmor (>= 2.8.96~2541-0ubuntu4~)
+
+Package: rust-coreutils
+Status: install ok installed
+Architecture: amd64
+Version: 0.8.0-0ubuntu3
+Multi-Arch: allowed
+Depends: libc6 (>= 2.43), libgcc-s1 (>= 4.2), libselinux1 (>= 3.1~)
+Conflicts: coreutils-from-uutils (<< 0.0.0~ubuntu22~)
+
+Package: sbsigntool
+Status: install ok installed
+Architecture: amd64
+Version: 0.9.4-3.1ubuntu9
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libssl3t64 (>= 3.0.0), libuuid1 (>= 2.16)
+
+Package: screen
+Status: install ok installed
+Architecture: amd64
+Version: 4.9.1-3ubuntu2
+Depends: libc6 (>= 2.42), libcrypt1 (>= 1:4.1.0), libpam0g (>= 0.99.7.1), libtinfo6 (>= 6), debianutils (>= 5.3-1~)
+Suggests: byobu | screenie | iselect (>= 1.4.0-1), ncurses-term
+
+Package: secureboot-db
+Status: install ok installed
+Architecture: amd64
+Version: 1.9build2
+Depends: sbsigntool
+
+Package: sed
+Status: install ok installed
+Architecture: amd64
+Version: 4.9-2ubuntu1
+Essential: yes
+Multi-Arch: foreign
+Pre-Depends: libacl1 (>= 2.2.23), libc6 (>= 2.38), libselinux1 (>= 3.1~)
+
+Package: sensible-utils
+Status: install ok installed
+Architecture: all
+Version: 0.0.26build1
+Multi-Arch: foreign
+
+Package: sg3-utils
+Status: install ok installed
+Architecture: amd64
+Version: 1.48-3ubuntu3.1
+Depends: libc6 (>= 2.38), libsgutils2-1.48 (>= 1.48)
+Conflicts: cdwrite, sg-utils
+Replaces: sg-utils
+
+Package: sg3-utils-udev
+Status: install ok installed
+Architecture: all
+Version: 1.48-3ubuntu3.1
+Depends: sg3-utils, dracut | linux-initramfs-tool
+
+Package: sgml-base
+Status: install ok installed
+Architecture: all
+Version: 1.31+nmu1build1
+Multi-Arch: foreign
+Suggests: sgml-base-doc
+
+Package: shared-mime-info
+Status: install ok installed
+Architecture: amd64
+Version: 2.4-5build3
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libgcc-s1 (>= 3.3.1), libglib2.0-0t64 (>= 2.76.0), libstdc++6 (>= 12), libxml2-16 (>= 2.14.1)
+
+Package: shim-signed
+Status: install ok installed
+Architecture: amd64
+Version: 1.59+15.8-0ubuntu2
+Protected: yes
+Depends: debconf (>= 0.5) | debconf-2.0, grub-efi-amd64-signed (>= 1.204~) | grub-efi-arm64-signed (>= 1.204~), grub2-common (>= 2.04-1ubuntu24), mokutil (>= 0.3.0+1538710437.fb6250f-0ubuntu2), sbsigntool
+Breaks: fwupd-signed (<< 1.44.1~), grub-common (= 2.12-1ubuntu3), shim (<< 15.3)
+Replaces: shim (<< 15.3)
+Recommends: secureboot-db
+
+Package: snapd
+Status: install ok installed
+Architecture: amd64
+Version: 2.76.3+ubuntu26.04
+Depends: adduser, apparmor, ca-certificates, fuse3, libcap2-bin, openssh-client, squashfs-tools, systemd, udev, default-dbus-session-bus | dbus-session-bus, libblkid1 (>= 2.17.2), libc6 (>= 2.38), libfuse3-4 (>= 3.17.2), liblzma5 (>= 5.1.1alpha+20120614), liblzo2-2 (>= 2.02), libudev1 (>= 183), zlib1g (>= 1:1.1.4)
+Recommends: gnupg
+Suggests: zenity | kdialog
+
+Package: software-properties-common
+Status: install ok installed
+Architecture: all
+Version: 0.120.1
+Depends: ca-certificates, gir1.2-glib-2.0, gir1.2-packagekitglib-1.0 (>= 1.1.0-2), packagekit, python-apt-common (>= 0.9), python3, python3-dbus, python3-gi, python3-software-properties (= 0.120.1), python3:any
+Breaks: python-software-properties (<< 0.85), python3-software-properties (<< 0.85)
+Replaces: python-software-properties (<< 0.85), python3-software-properties (<< 0.85)
+
+Package: sos
+Status: install ok installed
+Architecture: all
+Version: 4.10.2-1
+Depends: python3-magic, python3-packaging, python3-pexpect, python3-yaml, python3:any
+Breaks: sosreport (<< 4.8.2-4~)
+Replaces: sosreport (<< 4.8.2-4~)
+Recommends: e2fsprogs, gpg, lsof, mount, python3-boto3, util-linux-extra
+
+Package: squashfs-tools
+Status: install ok installed
+Architecture: amd64
+Version: 1:4.7.5-1
+Depends: libc6 (>= 2.38), liblz4-1 (>= 0.0~r130), liblzma5 (>= 5.1.1alpha+20120614), liblzo2-2 (>= 2.02), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.1.4)
+
+Package: ssh-import-id
+Status: install ok installed
+Architecture: all
+Version: 5.11-0ubuntu4
+Depends: ca-certificates, openssh-client, python3-distro, python3-launchpadlib, wget, python3:any
+Recommends: openssh-server
+
+Package: strace
+Status: install ok installed
+Architecture: amd64
+Version: 6.19+ds-0ubuntu5
+Depends: libc6 (>= 2.38), libtinfo6 (>= 6), libunwind8
+
+Package: sudo
+Status: install ok installed
+Architecture: amd64
+Version: 1.9.17p2-1ubuntu3
+Multi-Arch: foreign
+Depends: libpam-modules, libapparmor1 (>= 2.7.0~beta1+bzr1772), libaudit1 (>= 1:2.2.1), libc6 (>= 2.42), libpam0g (>= 0.99.7.1), libselinux1 (>= 3.1~), libssl3t64 (>= 3.0.0), zlib1g (>= 1:1.2.0.2)
+Pre-Depends: sudo-common
+Conflicts: sudo-ldap
+Replaces: sudo-ldap
+Recommends: sudo-rs
+
+Package: sudo-common
+Status: install ok installed
+Architecture: all
+Version: 1.2ubuntu
+Multi-Arch: foreign
+Breaks: sudo (<< 1.9.17p2-1ubuntu2~)
+Replaces: sudo (<< 1.9.17p2-1ubuntu2~)
+
+Package: sudo-rs
+Status: install ok installed
+Architecture: amd64
+Version: 0.2.13-0ubuntu1
+Depends: python3:any, sudo-common, libc6 (>= 2.39), libgcc-s1 (>= 4.2), libpam0g (>= 0.99.7.1)
+Recommends: libapparmor1
+
+Package: sysstat
+Status: install ok installed
+Architecture: amd64
+Version: 12.7.7-0ubuntu2
+Depends: ucf (>= 2.003), xz-utils, debconf (>= 0.5) | debconf-2.0, libc6 (>= 2.38), libsensors5 (>= 1:3.5.0)
+Recommends: systemd
+Suggests: isag
+
+Package: systemd
+Status: install ok installed
+Architecture: amd64
+Version: 259.5-0ubuntu3.4
+Multi-Arch: foreign
+Depends: libc6 (>= 2.41), libssl3t64 (>= 3.4.0), libsystemd0 (= 259.5-0ubuntu3.4), mount
+Pre-Depends: libc6 (>= 2.38), libsystemd-shared (= 259.5-0ubuntu3.4)
+Breaks: dracut-core (<< 102-2~), less (<< 563), sicherboot (<< 0.1.6)
+Conflicts: consolekit, elogind, libpam-ck-connector, opensysusers (<< 0.7.3-4.1~), systemctl, systemd-shim
+Provides: systemd-sysusers (= 259.5-0ubuntu3.4), systemd-tmpfiles (= 259.5-0ubuntu3.4)
+Recommends: default-dbus-system-bus | dbus-system-bus, linux-sysctl-defaults, login, systemd-timesyncd | time-daemon, systemd-resolved, systemd-cryptsetup
+Suggests: systemd-container, systemd-homed, systemd-userdbd, systemd-boot, systemd-repart, libtss2-tcti-device0, polkitd
+
+Package: systemd-cryptsetup
+Status: install ok installed
+Architecture: amd64
+Version: 259.5-0ubuntu3.4
+Depends: libc6 (>= 2.38), libcryptsetup12 (>= 2:2.7), libssl3t64 (>= 3.0.0), libsystemd-shared (= 259.5-0ubuntu3.4)
+Conflicts: systemd (<< 256-2~)
+
+Package: systemd-hwe-hwdb
+Status: install ok installed
+Architecture: all
+Version: 259.5.3ubuntu
+Depends: udev
+
+Package: systemd-resolved
+Status: install ok installed
+Architecture: amd64
+Version: 259.5-0ubuntu3.4
+Multi-Arch: foreign
+Depends: libc6 (>= 2.34), libssl3t64 (>= 3.0.0), libsystemd-shared (= 259.5-0ubuntu3.4), systemd (= 259.5-0ubuntu3.4), default-dbus-system-bus | dbus-system-bus
+Conflicts: openresolv, resolvconf, systemd (<< 257.4-4~)
+Provides: resolvconf
+Replaces: resolvconf
+Recommends: libidn2-0
+Suggests: polkitd
+
+Package: systemd-sysv
+Status: install ok installed
+Architecture: amd64
+Version: 259.5-0ubuntu3.4
+Protected: yes
+Multi-Arch: foreign
+Depends: systemd (= 259.5-0ubuntu3.4)
+Pre-Depends: systemd
+Conflicts: bfh-container (<< 20211009-22~), file-rc, finit-sysv, initscripts, insserv, molly-guard (<< 0.8.2~), orphan-sysvinit-scripts, runit-init, startpar, systemd-shim, sysv-rc, sysvinit-core
+Replaces: sysvinit-core
+Recommends: libpam-systemd, libnss-systemd
+
+Package: sysvinit-utils
+Status: install ok installed
+Architecture: amd64
+Version: 3.15-5ubuntu1
+Essential: yes
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38)
+Conflicts: lsb-base (<< 11.3~)
+Provides: lsb-base (= 11.1.0)
+Replaces: lsb-base
+
+Package: tar
+Status: install ok installed
+Architecture: amd64
+Version: 1.35+dfsg-4ubuntu0.4
+Essential: yes
+Multi-Arch: foreign
+Pre-Depends: libacl1 (>= 2.2.23), libc6 (>= 2.43), libselinux1 (>= 3.1~)
+Breaks: dpkg-dev (<< 1.14.26)
+Conflicts: cpio (<= 2.4.2-38)
+Replaces: cpio (<< 2.4.2-39)
+Suggests: bzip2, ncompress, xz-utils, tar-scripts, tar-doc
+
+Package: tcl
+Status: install ok installed
+Architecture: amd64
+Version: 8.6.16build1
+Multi-Arch: foreign
+Depends: tcl8.6 (>= 8.6.16+dfsg-1~)
+Breaks: tcl8.3 (<< 8.3.5-15), tcl8.4 (<< 8.4.20-2), tcl8.5 (<< 8.5.14-3), tcl8.6 (<< 8.6.0-2)
+Provides: tclsh
+
+Package: tcl8.6
+Status: install ok installed
+Architecture: amd64
+Version: 8.6.17+dfsg-1build1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.34), libtcl8.6 (>= 8.6.0)
+Conflicts: tcl74 (<= 7.4p3-2)
+Suggests: tcl-tclreadline
+
+Package: tcpdump
+Status: install ok installed
+Architecture: amd64
+Version: 4.99.6-1
+Multi-Arch: foreign
+Depends: systemd | systemd-standalone-sysusers | systemd-sysusers, libc6 (>= 2.38), libpcap0.8t64 (>= 1.9.0), libssl3t64 (>= 3.0.0)
+Breaks: apparmor-profiles-extra (<< 1.12~)
+Replaces: apparmor-profiles-extra (<< 1.12~)
+Suggests: apparmor (>= 2.3)
+
+Package: telnet
+Status: install ok installed
+Architecture: all
+Version: 0.17+2.7-2ubuntu1.1
+Multi-Arch: foreign
+Depends: inetutils-telnet
+
+Package: thermald
+Status: install ok installed
+Architecture: amd64
+Version: 2.5.11-0ubuntu1
+Depends: libc6 (>= 2.38), libevdev2 (>= 0.9.1), libgcc-s1 (>= 3.3.1), libglib2.0-0t64 (>= 2.80.0), libstdc++6 (>= 14), libupower-glib3 (>= 0.99.0), libxml2-16 (>= 2.14.1)
+
+Package: thin-provisioning-tools
+Status: install ok installed
+Architecture: amd64
+Version: 1.1.0-4ubuntu2
+Depends: libc6 (>= 2.34), libgcc-s1 (>= 4.2), libudev1 (>= 183)
+
+Package: time
+Status: install ok installed
+Architecture: amd64
+Version: 1.9-0.4
+Multi-Arch: foreign
+Depends: libc6 (>= 2.34)
+
+Package: tmux
+Status: install ok installed
+Architecture: amd64
+Version: 3.6a-2ubuntu0.1
+Depends: libc6 (>= 2.42), libevent-core-2.1-7t64 (>= 2.1.8-stable), libjemalloc2 (>= 2.1.1), libsystemd0 (>= 237), libtinfo6 (>= 6.5)
+
+Package: tnftp
+Status: install ok installed
+Architecture: amd64
+Version: 20260211-1
+Depends: libc6 (>= 2.38), libedit2 (>= 2.11-20080614-0), libssl3t64 (>= 3.0.0)
+Conflicts: lukemftp
+Provides: ftp
+Replaces: lukemftp
+
+Package: tpm-udev
+Status: install ok installed
+Architecture: all
+Version: 4.1.3-6
+Multi-Arch: foreign
+Depends: systemd | systemd-standalone-sysusers | systemd-sysusers
+Breaks: libtss2-fapi1t64 (<< 4.1.3-6)
+Replaces: libtss2-fapi1t64 (<< 4.1.3-6)
+Enhances: udev
+
+Package: trace-cmd
+Status: install ok installed
+Architecture: amd64
+Version: 3.3.3-1ubuntu2
+Depends: libc6 (>= 2.38), libtraceevent1 (>= 1:1.5.1), libtracefs1 (>= 1.8.0), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.2.0), libtraceevent1-plugin
+Suggests: kernelshark
+
+Package: tzdata
+Status: install ok installed
+Architecture: all
+Version: 2026c-0ubuntu0.26.04.1
+Multi-Arch: foreign
+Depends: debconf (>= 0.5) | debconf-2.0
+Breaks: rust-coreutils (<< 0.5.0), tzdata-legacy (= 2023c-8), tzdata-legacy (= 2023c-9)
+Provides: tzdata-forky
+Replaces: tzdata-legacy (= 2023c-8), tzdata-legacy (= 2023c-9)
+
+Package: ubuntu-drivers-common
+Status: install ok installed
+Architecture: amd64
+Version: 1:0.10.9
+Depends: python3:any, debconf (>= 0.5) | debconf-2.0, libc6 (>= 2.38), libdrm2 (>= 2.3.1), libkmod2 (>= 5~), libpci3 (>= 1:3.13.0), mokutil, python3-apt, python3-xkit, python3-click, udev, pciutils, usbutils, kmod | module-init-tools
+Suggests: python3-aptdaemon.pkcompat
+
+Package: ubuntu-kernel-accessories
+Status: install ok installed
+Architecture: amd64
+Version: 1.570.3
+Recommends: bpfcc-tools, bpftrace
+
+Package: ubuntu-keyring
+Status: install ok installed
+Architecture: all
+Version: 2023.11.28.1build1
+Multi-Arch: foreign
+Breaks: ubuntu-cloudimage-keyring (<< 2018.02.05)
+Replaces: ubuntu-cloudimage-keyring (<< 2018.02.05)
+
+Package: ubuntu-minimal
+Status: install ok installed
+Architecture: amd64
+Version: 1.570.3
+Depends: adduser, apt, bsdutils, chrony | time-daemon, console-setup, debconf, debconf-i18n, dhcpcd-base, e2fsprogs, eject, init, iproute2, iputils-ping, kbd, kmod, less, locales, login, lsb-release, mawk, mount, netbase, netcat-openbsd, netplan.io, passwd, procps, python3, sensible-utils, sudo, sudo-rs, tzdata, ubuntu-keyring, ubuntu-pro-client, udev, vim-tiny, whiptail
+Breaks: initramfs-tools (<< 0.142ubuntu9~)
+Recommends: rsyslog
+
+Package: ubuntu-pro-client
+Status: install ok installed
+Architecture: amd64
+Version: 37.2ubuntu0.1
+Depends: python3-yaml, python3:any, libapt-pkg7.0 (>= 1.9~), libc6 (>= 2.38), libgcc-s1 (>= 3.3.1), libjson-c5 (>= 0.15), libstdc++6 (>= 13.1), python3-apt, distro-info (>= 0.18ubuntu0.18.04.1)
+Breaks: ubuntu-advantage-tools (<< 31~)
+Replaces: ubuntu-advantage-tools (<< 31~)
+Recommends: ubuntu-pro-client-l10n
+
+Package: ubuntu-pro-client-l10n
+Status: install ok installed
+Architecture: amd64
+Version: 37.2ubuntu0.1
+Depends: ubuntu-pro-client (= 37.2ubuntu0.1)
+
+Package: ubuntu-release-upgrader-core
+Status: install ok installed
+Architecture: all
+Version: 1:26.04.23
+Depends: ca-certificates, python3-distupgrade (= 1:26.04.23), python3:any, screen
+Breaks: software-properties (<< 0.9.27), update-manager (<< 1:0.165), update-manager-core (<< 1:0.165)
+Replaces: update-manager (<< 1:0.165), update-manager-core (<< 1:0.165)
+Recommends: libpam-modules (>= 1.0.1-9ubuntu3)
+
+Package: ubuntu-server
+Status: install ok installed
+Architecture: amd64
+Version: 1.570.3
+Depends: apport, bcache-tools, btrfs-progs, cloud-initramfs-copymods, cloud-initramfs-dyn-netconf, curl, fonts-ubuntu-console, git, gnupg, htop, lvm2, lxd-installer, mdadm, motd-news-config, multipath-tools, overlayroot, patch, software-properties-common, sos, tmux, update-notifier-common, vim, xfsprogs
+Recommends: fwupd, landscape-common, lxd-agent-loader, needrestart, open-iscsi, open-vm-tools, snapd, unattended-upgrades
+
+Package: ubuntu-server-minimal
+Status: install ok installed
+Architecture: amd64
+Version: 1.570.3
+Depends: apparmor, apport, apt, bcache-tools, btrfs-progs, chrony | time-daemon, cloud-init, cryptsetup, curl, dbus, e2fsprogs, lvm2, mdadm, multipath-tools, netbase, open-iscsi, snapd, sudo, sudo-rs, systemd, systemd-resolved, systemd-sysv, ubuntu-drivers-common, ubuntu-release-upgrader-core, udev, unminimize, xfsprogs
+Recommends: hwctl, kdump-tools, needrestart, unattended-upgrades
+
+Package: ubuntu-standard
+Status: install ok installed
+Architecture: amd64
+Version: 1.570.3
+Depends: bind9-dnsutils, busybox-static, cpio, cron, dmidecode, dosfstools, ed, file, ftp, hdparm, info, libpam-systemd, logrotate, lshw, lsof, man-db, media-types, nftables, parted, pciutils, psmisc, rsync, strace, time, usbutils, wget, xz-utils
+Recommends: apparmor, bash-completion, command-not-found, ethtool, friendly-recovery, iptables, iputils-tracepath, manpages, mtr-tiny, nano, ntfs-3g, numactl, openssh-client, plymouth, plymouth-theme-ubuntu-text, sysstat, tcpdump, telnet, trace-cmd, ufw, update-manager-core, uuid-runtime
+
+Package: ucf
+Status: install ok installed
+Architecture: all
+Version: 3.0052ubuntu1
+Multi-Arch: foreign
+Depends: debconf (>= 0.5) | debconf-2.0, libtext-wrapi18n-perl, procps, sensible-utils
+
+Package: udev
+Status: install ok installed
+Architecture: amd64
+Version: 259.5-0ubuntu3.4
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libsystemd-shared (= 259.5-0ubuntu3.4), systemd | systemd-standalone-sysusers | systemd-sysusers, libkmod2, libudev1 (= 259.5-0ubuntu3.4)
+Breaks: systemd (<< 259.5-0ubuntu3.4)
+Conflicts: systemd (<< 255~rc1-4~)
+Replaces: systemd (<< 255~rc1-4~)
+Recommends: systemd-hwe-hwdb
+
+Package: udisks2
+Status: install ok installed
+Architecture: amd64
+Version: 2.10.91-1ubuntu2
+Multi-Arch: foreign
+Depends: libudisks2-0 (= 2.10.91-1ubuntu2), libblockdev-crypto3, libblockdev-fs3, libblockdev-loop3, libblockdev-mdraid3, libblockdev-nvme3, libblockdev-part3, libblockdev-swap3, libblockdev-smart3, default-dbus-system-bus | dbus-system-bus, parted, udev, libacl1 (>= 2.2.23), libblkid1 (>= 2.16), libblockdev-utils3 (>= 3.0), libblockdev3 (>= 3.2.0), libc6 (>= 2.38), libglib2.0-0t64 (>= 2.80.0), libgudev-1.0-0 (>= 212), libmount1 (>= 2.30), libpolkit-agent-1-0 (>= 0.102), libpolkit-gobject-1-0 (>= 0.102), libsystemd0 (>= 209), libuuid1 (>= 2.16)
+Recommends: dosfstools, e2fsprogs, eject, ntfs-3g, polkitd, libpam-systemd, exfatprogs
+Suggests: btrfs-progs, f2fs-tools, mdadm, nilfs-tools, reiserfsprogs, udftools, udisks2-btrfs, udisks2-lvm2, xfsprogs
+
+Package: ufw
+Status: install ok installed
+Architecture: all
+Version: 0.36.2-9build1
+Depends: iptables, procps, ucf, python3:any, debconf (>= 0.5) | debconf-2.0
+Breaks: iptables-persistent, netfilter-persistent
+Suggests: rsyslog
+
+Package: unattended-upgrades
+Status: install ok installed
+Architecture: all
+Version: 2.12ubuntu9
+Depends: debconf (>= 0.5) | debconf-2.0, debconf, python3, python3-apt (>= 1.9.6~), python3-dbus, python3-distro-info, ucf, lsb-release, lsb-base, xz-utils
+Recommends: systemd-sysv | cron | cron-daemon | anacron
+Suggests: bsd-mailx, default-mta | mail-transport-agent, needrestart, powermgmt-base, python3-gi
+
+Package: unminimize
+Status: install ok installed
+Architecture: amd64
+Version: 0.5build1
+
+Package: update-manager-core
+Status: install ok installed
+Architecture: all
+Version: 1:26.04.5
+Depends: distro-info-data, python3-distro-info, python3-update-manager (= 1:26.04.5), ubuntu-pro-client, ubuntu-release-upgrader-core (>= 1:18.04.9), python3:any
+Breaks: computer-janitor (<= 1.11-0ubuntu1), update-manager (<< 1:0.146.2)
+Replaces: update-manager (<< 1:0.146.2)
+Recommends: libpam-modules (>= 1.0.1-9ubuntu3)
+
+Package: update-notifier-common
+Status: install ok installed
+Architecture: all
+Version: 3.207.2
+Depends: lsb-release, patch, python3-apt, python3-dbus, python3-debconf | debconf (<< 1.5.64~), python3-debian, python3-distro-info, python3:any, update-manager-core (>= 1:17.04.2)
+Pre-Depends: apt (>= 1.1~), dpkg (>= 1.15.7.2)
+Replaces: update-notifier (<< 0.75.1)
+Recommends: libpam-modules (>= 1.0.1-9ubuntu3)
+
+Package: upower
+Status: install ok installed
+Architecture: amd64
+Version: 1.91.1-1
+Multi-Arch: foreign
+Depends: default-dbus-system-bus | dbus-system-bus, udev, libupower-glib3 (= 1.91.1-1), libc6 (>= 2.42), libglib2.0-0t64 (>= 2.76.0), libgudev-1.0-0 (>= 238), libimobiledevice-1.0-6 (>= 1.3.0), libplist-2.0-4 (>= 2.3.0), libpolkit-gobject-1-0 (>= 0.99)
+Recommends: polkitd
+
+Package: usb-modeswitch
+Status: install ok installed
+Architecture: amd64
+Version: 2.6.2-1ubuntu1
+Depends: tcl, usb-modeswitch-data, libc6 (>= 2.38), libusb-1.0-0 (>= 2:1.0.9)
+Suggests: comgt, wvdial
+
+Package: usb-modeswitch-data
+Status: install ok installed
+Architecture: all
+Version: 20191128-7build1
+Breaks: usb-modeswitch (<< 2.4.0)
+Conflicts: usb-modeswitch-data-packed
+Provides: usb-modeswitch-data-packed
+Replaces: usb-modeswitch-data-packed
+Recommends: udev, usb-modeswitch (>= 2.4.0)
+
+Package: usb.ids
+Status: install ok installed
+Architecture: all
+Version: 2025.12.13-1
+Multi-Arch: foreign
+
+Package: usbmuxd
+Status: install ok installed
+Architecture: amd64
+Version: 1.1.1-7
+Depends: libc6 (>= 2.38), libimobiledevice-1.0-6 (>= 1.3.0+git20240701), libplist-2.0-4 (>= 2.6), libusb-1.0-0 (>= 2:1.0.22), adduser
+
+Package: usbutils
+Status: install ok installed
+Architecture: amd64
+Version: 1:019-1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.34), libudev1 (>= 196), libusb-1.0-0 (>= 2:1.0.22)
+Suggests: usbutils-py
+
+Package: util-linux
+Status: install ok installed
+Architecture: amd64
+Version: 2.41.3-3ubuntu2
+Essential: yes
+Multi-Arch: foreign
+Pre-Depends: libpam-modules, libpam-runtime, libblkid1 (= 2.41.3-3ubuntu2), libc6 (>= 2.42), libcap-ng0 (>= 0.7.9), libcrypt1 (>= 1:4.1.0), libmount1 (= 2.41.3-3ubuntu2), libpam0g (>= 0.99.7.1), libselinux1 (>= 3.1~), libsmartcols1 (= 2.41.3-3ubuntu2), libsystemd0, libtinfo6 (>= 6), libudev1 (>= 183), libuuid1 (= 2.41.3-3ubuntu2)
+Breaks: bsdutils (<< 1:2.41.1-4~), dracut (<< 108-6~)
+Conflicts: hardlink
+Provides: hardlink
+Replaces: bsdutils (<< 1:2.41.1-4~), hardlink
+Recommends: sensible-utils
+Suggests: dosfstools, kbd, util-linux-extra, util-linux-locales, wtmpdb
+
+Package: util-linux-extra
+Status: install ok installed
+Architecture: amd64
+Version: 2.41.3-3ubuntu2
+Multi-Arch: foreign
+Depends: libaudit1 (>= 1:2.2.1), libc6 (>= 2.42), libcrypt1 (>= 1:4.1.0), liblastlog2-2 (= 2.41.3-3ubuntu2), libselinux1 (>= 3.1~), libsmartcols1 (= 2.41.3-3ubuntu2), libsystemd0, zlib1g (>= 1:1.1.4)
+Breaks: initscripts (<< 3.08-2~), login (<< 1:4.16.0-2+really2.41.1-4~), util-linux (<< 2.41.2-2~)
+Replaces: login (<< 1:4.16.0-2+really2.41.1-4~), util-linux (<< 2.41.2-2~)
+
+Package: uuid-runtime
+Status: install ok installed
+Architecture: amd64
+Version: 2.41.3-3ubuntu2
+Multi-Arch: foreign
+Depends: adduser, systemd | systemd-standalone-sysusers | systemd-sysusers, libc6 (>= 2.38), libsmartcols1 (= 2.41.3-3ubuntu2), libsystemd0, libuuid1 (= 2.41.3-3ubuntu2)
+Pre-Depends: libuuid1
+
+Package: vim
+Status: install ok installed
+Architecture: amd64
+Version: 2:9.1.2141-1ubuntu4.8
+Depends: vim-common (= 2:9.1.2141-1ubuntu4.8), vim-runtime (= 2:9.1.2141-1ubuntu4.8), libacl1 (>= 2.2.23), libc6 (>= 2.38), libgpm2 (>= 1.20.7), libpython3.14 (>= 3.14.1), libselinux1 (>= 3.1~), libsodium23 (>= 1.0.14), libtinfo6 (>= 6)
+Provides: editor
+Suggests: ctags, vim-doc, vim-scripts
+
+Package: vim-common
+Status: install ok installed
+Architecture: all
+Version: 2:9.1.2141-1ubuntu4.8
+Multi-Arch: foreign
+Breaks: vim-runtime (<< 2:9.0.1658-1~)
+Replaces: vim-runtime (<< 2:9.0.1658-1~)
+Recommends: xxd, vim | vim-gtk3 | vim-motif | vim-nox | vim-tiny
+
+Package: vim-runtime
+Status: install ok installed
+Architecture: all
+Version: 2:9.1.2141-1ubuntu4.8
+Multi-Arch: foreign
+Breaks: vim-tiny (<< 2:9.1.2141-1ubuntu4.8)
+Recommends: vim | vim-gtk3 | vim-motif | vim-nox | vim-tiny
+Enhances: vim-tiny
+
+Package: vim-tiny
+Status: install ok installed
+Architecture: amd64
+Version: 2:9.1.2141-1ubuntu4.8
+Depends: vim-common (= 2:9.1.2141-1ubuntu4.8), libacl1 (>= 2.2.23), libc6 (>= 2.38), libselinux1 (>= 3.1~), libtinfo6 (>= 6)
+Provides: editor
+Suggests: indent
+
+Package: wget
+Status: install ok installed
+Architecture: amd64
+Version: 1.25.0-2ubuntu4.4
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libgnutls30t64 (>= 3.8.1), libidn2-0 (>= 0.6), libnettle8t64, libpcre2-8-0 (>= 10.22), libpsl5t64 (>= 0.16.0), libuuid1 (>= 2.16), zlib1g (>= 1:1.1.4)
+Conflicts: wget-ssl
+Recommends: ca-certificates
+
+Package: whiptail
+Status: install ok installed
+Architecture: amd64
+Version: 0.52.25-1ubuntu3
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libnewt0.52 (>= 0.52.25), libpopt0 (>= 1.14), libslang2 (>= 2.2.4)
+
+Package: wireless-regdb
+Status: install ok installed
+Architecture: all
+Version: 2026.02.04-0ubuntu1
+Multi-Arch: foreign
+Conflicts: boot-managed-by-snapd (<< 5~)
+
+Package: xauth
+Status: install ok installed
+Architecture: amd64
+Version: 1:1.1.2-1.1build1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libx11-6, libxau6 (>= 1:1.0.11), libxext6, libxmuu1 (>= 2:1.1.3)
+
+Package: xdg-user-dirs
+Status: install ok installed
+Architecture: amd64
+Version: 0.19-1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.34), init-system-helpers (>= 1.52)
+
+Package: xfsprogs
+Status: install ok installed
+Architecture: amd64
+Version: 6.18.0-3
+Depends: libblkid1 (>= 2.17.2), libc6 (>= 2.38), libdevmapper1.02.1 (>= 2:1.02.197), libedit2 (>= 2.11-20080614-0), libicu78 (>= 78.1-1~), libinih1 (>= 53), liburcu8t64 (>= 0.13.0), libuuid1 (>= 2.16), python3-dbus, python3:any
+Breaks: xfsdump (<< 3.0.0)
+Provides: fsck-backend
+Replaces: xfsdump (<< 3.0.0)
+Suggests: xfsdump, acl, attr, quota
+
+Package: xkb-data
+Status: install ok installed
+Architecture: all
+Version: 2.46-2
+Multi-Arch: foreign
+Breaks: x11-xkb-utils (<< 7.7+5)
+
+Package: xml-core
+Status: install ok installed
+Architecture: all
+Version: 0.19build1
+Multi-Arch: foreign
+Depends: sed (>= 4.1.2-8), sgml-base (>= 1.28)
+Suggests: debhelper (>= 9.20120909)
+
+Package: xxd
+Status: install ok installed
+Architecture: amd64
+Version: 2:9.1.2141-1ubuntu4.8
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38)
+
+Package: xz-utils
+Status: install ok installed
+Architecture: amd64
+Version: 5.8.3-1
+Multi-Arch: foreign
+Depends: libc6 (>= 2.34), liblzma5 (>= 5.6.2)
+Breaks: lzip (<< 1.8~rc2), manpages-de (<< 4.17.0-2~bpo11+1), manpages-fr (<< 4.17.0-2~bpo11+1), pristine-tar (<< 1.50+nmu1)
+Conflicts: lzma (<< 9.22-1), xz-lzma
+Provides: lzma
+Replaces: lzip (<< 1.8~rc2), manpages-de (<< 4.17.0-2~bpo11+1), manpages-fr (<< 4.17.0-2~bpo11+1), xz-lzma
+
+Package: zerofree
+Status: install ok installed
+Architecture: amd64
+Version: 1.1.1-1build6
+Depends: libc6 (>= 2.38), libext2fs2t64 (>= 1.42)
+
+Package: zlib1g
+Status: install ok installed
+Architecture: amd64
+Version: 1:1.3.dfsg+really1.3.1-1ubuntu3
+Multi-Arch: same
+Depends: libc6 (>= 2.14)
+Breaks: libxml2 (<< 2.7.6.dfsg-2), texlive-binaries (<< 2023.20230311.66589-8)
+Conflicts: zlib1 (<= 1:1.0.4-7)
+Provides: libz1
+
+Package: zstd
+Status: install ok installed
+Architecture: amd64
+Version: 1.5.7+dfsg-3
+Multi-Arch: foreign
+Depends: libc6 (>= 2.38), libgcc-s1 (>= 3.3.1), liblz4-1 (>= 1.8.0), liblzma5 (>= 5.1.1alpha+20120614), libstdc++6 (>= 14), zlib1g (>= 1:1.1.4)
+

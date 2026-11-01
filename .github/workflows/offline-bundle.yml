@@ -87,6 +87,7 @@ jobs:
           output="offline-bundles/netstrike-${DESTINATION}-${RUN_ID}.tar.gz"
           python scripts/offline_bundle.py build \
             "${requirements[@]}" \
+            --linux-package-status citef-config/files/ubuntu-26.04-amd64-package-baseline.status \
             --python-runtime-archive "$RUNNER_TEMP/python-runtime.tar.gz" \
             --output "$output"
 

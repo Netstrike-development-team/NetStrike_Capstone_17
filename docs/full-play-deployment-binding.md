@@ -93,6 +93,8 @@ runtime dependency. CI runs these and the static Splunk configuration tests.
 
 These are automated local tests, not learner/range acceptance. Patrick retains
 live Splunk/forwarder, Windows/AD, TLS, network, clean provisioning and snapshot
-validation. In particular the existing disabled AD plays and relaxed local-test
-infrastructure checks are **not fixed or approved by this change**. Anna owns
-participant wording/usability and calibration; Ashley coordinates acceptance.
+validation. The current provisioning and readiness playbooks include DC01
+provisioning and a configured AD-user baseline check; passing those local checks
+does not establish Cyber Range acceptance or cover every identity, safety, and
+network requirement. Anna owns participant wording/usability and calibration;
+Ashley coordinates acceptance.

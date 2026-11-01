@@ -75,7 +75,7 @@
     ]
   },
   "offline_artifacts": {
-    "directory": "offline-bundles/CITEF-RELEASE",
+    "directory": "licensed-installers/CITEF-RELEASE",
     "universal_forwarder": {
       "version": "10.0.1",
       "linux_deb": {

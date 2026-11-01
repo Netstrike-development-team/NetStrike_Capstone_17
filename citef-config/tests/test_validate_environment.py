@@ -53,7 +53,7 @@ def valid_manifest():
             }],
         },
         "offline_artifacts": {
-            "directory": "offline-bundles/test",
+            "directory": "licensed-installers/test",
             "universal_forwarder": {
                 "version": "10.0.1",
                 "linux_deb": {"file": "forwarder.deb", "sha512": "a" * 128},

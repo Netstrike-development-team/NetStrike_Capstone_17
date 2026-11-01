@@ -74,6 +74,8 @@ def test_linux_prerequisites_are_installed_before_dns_and_time_configuration():
         assert install_index < names.index(name)
     install = tasks[install_index]["ansible.builtin.shell"]
     assert "--no-download" in install
+    assert "--no-install-recommends" in install
+    assert "--no-remove" in install
     assert "Dir::Cache::archives=/var/cache/netstrike-linux-domain-packages" in install
 
 
@@ -82,7 +84,7 @@ def test_linux_packages_follow_controller_bundle_selection(tmp_path, override):
     playbook_dir = tmp_path / "citef-config" / "playbooks"
     variables = {
         "playbook_dir": str(playbook_dir),
-        "offline_artifacts": {"directory": "offline-bundles/CITEF-RELEASE"},
+        "offline_artifacts": {"directory": "licensed-installers/CITEF-RELEASE"},
     }
     if override is not None:
         variables["controller_offline_bundle_root"] = override
@@ -103,9 +105,9 @@ def test_linux_packages_follow_controller_bundle_selection(tmp_path, override):
     ).render(variables)
     expected = (
         Path(override) if override is not None
-        else tmp_path / "offline-bundles/CITEF-RELEASE/netstrike-offline-bundle"
+        else tmp_path / "licensed-installers/CITEF-RELEASE/netstrike-offline-bundle"
     )
 
     assert Path(bundle).resolve() == expected
     assert Path(source).resolve() == expected / "destinations/CTRL01/linux-packages"
-    assert variables["offline_artifacts"]["directory"] == "offline-bundles/CITEF-RELEASE"
+    assert variables["offline_artifacts"]["directory"] == "licensed-installers/CITEF-RELEASE"
