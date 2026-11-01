@@ -20,11 +20,28 @@ modules 04–07, dashboard, and Ansible controller/validator requirements;
 pinned Galaxy collections; project source trees; and Ubuntu 26.04 amd64
 domain-enrollment (`realmd`, `adcli`, SSSD) and DNS/time (`systemd-resolved`,
 `chrony`) packages. The Linux baseline installs these packages offline.
-Rebuild bundles made before these DNS/time dependencies were included. Current
+Rebuild bundles made before these DNS/time dependencies and the complete
+dependency-update closure were included. Current
 pins are in `.github/workflows/offline-bundle.yml` and
 `citef-config/requirements.yml`. Local builds use
 `scripts/offline_bundle.py` as a normal user with Docker access; the builder
-keeps APT's cache inside its disposable container.
+keeps APT's cache inside its disposable amd64 container. APT resolves against an
+empty installed-package status file so dependencies already present in the
+builder (including systemd, GLib, and Python libraries) are downloaded at the
+repository-selected versions rather than omitted. The bundle also includes
+`udev`, `systemd-cryptsetup`, `systemd-sysv`, `libnss-systemd`, and
+`libpam-systemd` to keep the Ubuntu Server baseline's version-locked systemd
+packages consistent. Verification checks dependency closure without relying
+on the container's installed packages or repository indexes, then installs
+the archives with networking disabled.
+
+If Linux AD installation reports conflicting exact-version dependencies,
+rebuild and transfer a fresh bundle instead of mixing archives from different
+builds or downloading individual libraries on the offline VM. Use a bundle
+built from repositories at least as current as the target's installed baseline;
+this is a dependency update, not a full OS upgrade or support for arbitrary
+additional packages. Provisioning clears its staged package directory before
+copying the new bundle and installs without downloads or recommended packages.
 
 ## Extract and deploy
 
@@ -168,7 +185,9 @@ The bundle includes the portable CPython runtime, locked wheels, selected source
 trees and dependencies, pinned Ansible collection archives, and `inventory.json`
 metadata. It excludes general OS packages, VM images, credentials, and licensed
 products such as Splunk, Universal Forwarder, and Sysmon. It includes the
-Ubuntu 26.04 domain/DNS/time packages, which `linux_baseline` installs offline.
+Ubuntu 26.04 domain/DNS/time packages and their required dependency updates,
+including version-matched systemd baseline packages, which `linux_baseline`
+installs offline.
 Targets require Linux x86_64/glibc; these OS packages require Ubuntu 26.04.
 Review python-build-standalone terms before redistribution. The temporary
 Actions artifact is not a delivery-readiness certificate. The team controls

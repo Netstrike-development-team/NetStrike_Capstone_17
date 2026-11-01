@@ -28,14 +28,20 @@ LINUX_DOMAIN_PACKAGES = (
     "adcli",
     "chrony",
     "libnss-sss",
+    "libnss-systemd",
     "libpam-sss",
+    "libpam-systemd",
     "packagekit",
     "realmd",
     "samba-common-bin",
     "sssd",
     "sssd-ad",
     "sssd-tools",
+    # Server baseline packages tied to the same version as systemd's libraries.
+    "systemd-cryptsetup",
     "systemd-resolved",
+    "systemd-sysv",
+    "udev",
 )
 SOURCE_DIRECTORIES = (
     "modules",
@@ -485,13 +491,19 @@ def _download_linux_packages(package_dir: Path) -> None:
         "docker",
         "run",
         "--rm",
+        "--platform",
+        "linux/amd64",
         "--volume",
         f"{package_dir.resolve()}:/packages",
         LINUX_PACKAGE_IMAGE,
         "/bin/sh",
         "-ec",
         # Keep APT's root/_apt-owned cache directories off the host bind mount.
+        # An empty status file prevents installed container packages from
+        # satisfying dependencies that must be carried to an older target.
+        ": > /tmp/netstrike-empty-status && "
         "apt-get update && apt-get install --download-only "
+        "-o Dir::State::status=/tmp/netstrike-empty-status "
         "--no-install-recommends --yes "
         + " ".join(LINUX_DOMAIN_PACKAGES)
         + " && install -m 0644 /var/cache/apt/archives/*.deb /packages/",
@@ -573,6 +585,8 @@ def _verify_linux_packages_offline(bundle: Path, destination_vm: str) -> None:
         "docker",
         "run",
         "--rm",
+        "--platform",
+        "linux/amd64",
         "--network",
         "none",
         "--volume",
@@ -580,6 +594,13 @@ def _verify_linux_packages_offline(bundle: Path, destination_vm: str) -> None:
         LINUX_PACKAGE_IMAGE,
         "/bin/sh",
         "-ec",
+        # Neither installed packages nor repository indexes may mask missing
+        # archives during the closure check.
+        "mkdir -p /tmp/netstrike-empty-lists && : > /tmp/netstrike-empty-status && "
+        "apt-get install --simulate --no-download --no-install-recommends --yes "
+        "-o Dir::State::lists=/tmp/netstrike-empty-lists "
+        "-o Dir::Cache::pkgcache= -o Dir::Cache::srcpkgcache= "
+        "-o Dir::State::status=/tmp/netstrike-empty-status /packages/*.deb && "
         "install -m 0644 /packages/*.deb /var/cache/apt/archives/ && "
         "apt-get install --no-download --no-install-recommends --yes "
         "/var/cache/apt/archives/*.deb",

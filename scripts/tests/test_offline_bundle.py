@@ -257,9 +257,16 @@ def test_downloads_linux_domain_packages_for_pinned_ubuntu_image(
     offline_bundle._download_linux_packages(package_dir)
 
     assert commands[0][0:2] == ["docker", "run"]
+    assert commands[0][commands[0].index("--platform") + 1] == "linux/amd64"
     assert offline_bundle.LINUX_PACKAGE_IMAGE in commands[0]
     assert "apt-get install --download-only" in commands[0][-1]
-    assert {"systemd-resolved", "chrony"} <= set(offline_bundle.LINUX_DOMAIN_PACKAGES)
+    assert commands[0][-1].startswith(": > /tmp/netstrike-empty-status && ")
+    assert "-o Dir::State::status=/tmp/netstrike-empty-status" in commands[0][-1]
+    assert "--no-install-recommends" in commands[0][-1]
+    assert {
+        "systemd-resolved", "chrony", "udev", "systemd-cryptsetup",
+        "systemd-sysv", "libnss-systemd", "libpam-systemd",
+    } <= set(offline_bundle.LINUX_DOMAIN_PACKAGES)
     assert "systemd-resolved" in commands[0][-1].split()
     assert "chrony" in commands[0][-1].split()
     assert "Dir::Cache::archives=/packages" not in commands[0][-1]
@@ -314,15 +321,76 @@ def test_linux_package_verification_stages_archives_in_container_cache(
 
     command, = commands
     assert command[:3] == ["docker", "run", "--rm"]
+    assert command[command.index("--platform") + 1] == "linux/amd64"
     assert command[command.index("--network") + 1] == "none"
     assert command[command.index("--volume") + 1] == (
         f"{tmp_path}/destinations/CTRL01/linux-packages:/packages:ro"
     )
     assert command[-1] == (
+        "mkdir -p /tmp/netstrike-empty-lists && : > /tmp/netstrike-empty-status && "
+        "apt-get install --simulate --no-download --no-install-recommends --yes "
+        "-o Dir::State::lists=/tmp/netstrike-empty-lists "
+        "-o Dir::Cache::pkgcache= -o Dir::Cache::srcpkgcache= "
+        "-o Dir::State::status=/tmp/netstrike-empty-status /packages/*.deb && "
         "install -m 0644 /packages/*.deb /var/cache/apt/archives/ && "
         "apt-get install --no-download --no-install-recommends --yes "
         "/var/cache/apt/archives/*.deb"
     )
+
+
+def test_linux_package_verification_reports_incomplete_dependency_closure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    def run(command, **kwargs):
+        raise subprocess.CalledProcessError(100, command)
+
+    monkeypatch.setattr(offline_bundle.subprocess, "run", run)
+
+    with pytest.raises(subprocess.CalledProcessError):
+        offline_bundle._verify_linux_packages_offline(tmp_path, "CTRL01")
+
+
+def test_linux_package_inventory_preserves_dependency_updates(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    package_dir = tmp_path / "packages"
+    package_dir.mkdir()
+    versions = {name: "1.0" for name in offline_bundle.LINUX_DOMAIN_PACKAGES}
+    versions.update(
+        {
+            "systemd": "259.9-0ubuntu0.1",
+            "systemd-cryptsetup": "259.9-0ubuntu0.1",
+            "systemd-sysv": "259.9-0ubuntu0.1",
+            "libnss-systemd": "259.9-0ubuntu0.1",
+            "libpam-systemd": "259.9-0ubuntu0.1",
+            "udev": "259.9-0ubuntu0.1",
+            "libsystemd0": "259.9-0ubuntu0.1",
+            "libsystemd-shared": "259.9-0ubuntu0.1",
+            "gir1.2-glib-2.0": "2.88.0-1ubuntu0.1",
+            "libgirepository-2.0-0": "2.88.0-1ubuntu0.1",
+            "libglib2.0-0t64": "2.88.0-1ubuntu0.1",
+            "libpython3.14": "3.14.4-1ubuntu0.2",
+            "libpython3.14-stdlib": "3.14.4-1ubuntu0.2",
+        }
+    )
+    for name, version in versions.items():
+        (package_dir / f"{name}_{version}_amd64.deb").write_bytes(b"package")
+
+    def package_metadata(command, **kwargs):
+        name, version, _ = Path(command[-1]).name.split("_")
+        return subprocess.CompletedProcess(
+            command, 0, stdout=f"{name}\n{version}\namd64\nUbuntu Maintainers\n"
+        )
+
+    monkeypatch.setattr(offline_bundle.subprocess, "run", package_metadata)
+    bundle = tmp_path / "bundle"
+
+    inventory = _copy_linux_package_archives(package_dir, bundle)
+
+    assert {entry["name"]: entry["version"] for entry in inventory} == versions
+    for entry in inventory:
+        assert (bundle / entry["file"]).read_bytes() == b"package"
+        assert entry["sha256"] == hashlib.sha256(b"package").hexdigest()
 
 
 @pytest.mark.parametrize("architecture", ["amd64", "all"])

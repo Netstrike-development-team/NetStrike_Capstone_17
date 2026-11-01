@@ -74,6 +74,7 @@ def test_linux_prerequisites_are_installed_before_dns_and_time_configuration():
         assert install_index < names.index(name)
     install = tasks[install_index]["ansible.builtin.shell"]
     assert "--no-download" in install
+    assert "--no-install-recommends" in install
     assert "Dir::Cache::archives=/var/cache/netstrike-linux-domain-packages" in install
 
 
