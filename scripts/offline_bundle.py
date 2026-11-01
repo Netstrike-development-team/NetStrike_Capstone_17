@@ -44,7 +44,7 @@ SOURCE_DIRECTORIES = (
     "shared",
     "orchestrator",
     "schemas",
-    "offline-bundles",
+    "licensed-installers",
     "splunk"
 )
 

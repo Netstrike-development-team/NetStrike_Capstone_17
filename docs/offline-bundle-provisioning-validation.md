@@ -53,16 +53,16 @@ Git, screenshots, logs, and issue comments. The local rehearsal used `scp`;
 USB is the planned range transfer method.
 
 For this rehearsal, the licensed Sysmon and Universal Forwarder installers
-were packaged in `offline-bundles.tar.gz`; `local.environment.json` and the
+were packaged in `licensed-installers.tar.gz`; `local.environment.json` and the
 private secrets file were prepared from their examples and adapted to the
 personal network and Docker-hosted Splunk.
 
-The script was run with the offline bundle, licensed-artifact archive,
+The script was run with the offline bundle, licensed-installers archive,
 environment file, private secrets file, a test deployment version, and a test
 exercise run ID:
 
 ```sh
-./provision.sh <offline-bundle.tar.gz> offline-bundles.tar.gz \
+./provision.sh <offline-bundle.tar.gz> licensed-installers.tar.gz \
   environment.json secrets.yml <deployment-version> <exercise-run-id>
 ```
 
@@ -167,16 +167,16 @@ deployment acceptance.
 
 Downloaded the CTRL01 offline bundle and `scripts/provision.sh` from GitHub,
 packaged the licensed Sysmon and Universal Forwarder installers in
-`offline-bundles.tar.gz`, and prepared local `environment.json` and `secrets.yml`
-from the example files. The environment values were adjusted for the personal
-network and Docker-hosted Splunk. The files were copied to the Ansible host with
-`scp`; USB is the planned transfer method in the Cyber Range.
+`licensed-installers.tar.gz`, and prepared local `environment.json` and
+`secrets.yml` from the example files. The environment values were adjusted for
+the personal network and Docker-hosted Splunk. The files were copied to the
+Ansible host with `scp`; USB is the planned transfer method in the Cyber Range.
 
-Ran the script with the offline bundle, licensed-artifact archive, environment
+Ran the script with the offline bundle, licensed-installers archive, environment
 file, secrets file, a test deployment version, a test exercise run ID, and `external-ntp=true`:
 
 ```sh
-./provision.sh <offline-bundle.tar.gz> offline-bundles.tar.gz \
+./provision.sh <offline-bundle.tar.gz> licensed-installers.tar.gz \
   environment.json secrets.yml <deployment-version> <exercise-run-id> true
 ```
 

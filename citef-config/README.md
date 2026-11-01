@@ -33,13 +33,13 @@ Copy `environment.example.json` to the ignored `environment.json` and fill it wi
 
 Keep credentials in a private `secrets.yml` managed through an approved secret process; never commit it or put secret values in command arguments or logs. The wrapper copies this file into its extracted work directory, so use a fresh, access-restricted directory and a restrictive umask.
 
-From the repository root on `ANSIBLE01`, run the wrapper with the two reviewed archives, manifest, secrets file, deployment version, unique run ID, and optional work directory, in that order:
+From the repository root on `ANSIBLE01`, run the wrapper with the application bundle, licensed-installers archive, manifest, secrets file, deployment version, unique run ID, and optional work directory, in that order:
 
 ```sh
 umask 077
 ./provision.sh \
   netstrike-CTRL01-39599988130.tar.gz \
-  offline-bundles.tar.gz \
+  licensed-installers.tar.gz \
   environment.json \
   secrets.yml \
   DASHBOARD_VERSION \

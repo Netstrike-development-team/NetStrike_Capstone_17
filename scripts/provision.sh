@@ -2,21 +2,21 @@
 set -Eeuo pipefail
 
 usage() {
-  echo "Usage: $0 <netstrike-bundle.tar.gz> <offline-bundles.tar.gz> <environment.json> <secrets.yml> <deployment-version> <exercise-run-id> [work-dir]" >&2
+  echo "Usage: $0 <netstrike-bundle.tar.gz> <licensed-installers.tar.gz> <environment.json> <secrets.yml> <deployment-version> <exercise-run-id> [work-dir]" >&2
   exit 2
 }
 
 [[ $# -ge 6 && $# -le 7 ]] || usage
 
 bundle_archive=$(realpath "$1")
-offline_archive=$(realpath "$2")
+licensed_installers_archive=$(realpath "$2")
 environment_file=$(realpath "$3")
 secrets_file=$(realpath "$4")
 deployment_version=$5
 exercise_run_id=$6
 work_dir=${7:-"$PWD/offline-bundle"}
 
-for file in "$bundle_archive" "$offline_archive" "$environment_file" "$secrets_file"; do
+for file in "$bundle_archive" "$licensed_installers_archive" "$environment_file" "$secrets_file"; do
   [[ -f "$file" ]] || { echo "File not found: $file" >&2; exit 1; }
 done
 
@@ -51,7 +51,7 @@ ansible_playbook="$bundle_root/python/bin/ansible-playbook"
   --collections-path source/citef-config/collections \
   ansible/collections/*.tar.gz
 
-tar -xzf "$offline_archive" -C source/
+tar -xzf "$licensed_installers_archive" -C source/
 
 cp "$environment_file" source/citef-config/environment.json
 cp "$secrets_file" source/citef-config/secrets.yml

@@ -59,8 +59,9 @@ not a replacement for approved evidence handling.
 Inventory bytes must match the externally supplied digest before JSON parsing.
 Duplicate fields, unknown/malformed commit identifiers, missing/extra/duplicate
 source records, unexpected paths, inconsistent revisions/destinations and invalid
-hashes fail. The seven source trees are exactly those from the current builder:
-`modules`, `dashboard`, `citef-config`, `shared`, `orchestrator`, `schemas`, `offline-bundles`.
+hashes fail. The eight source trees are exactly those from the current builder:
+`modules`, `dashboard`, `citef-config`, `shared`, `orchestrator`, `schemas`,
+`licensed-installers`, `splunk`.
 The source root may contain no other entries.
 
 For each tree, the helper independently reproduces the builder's sorted relative

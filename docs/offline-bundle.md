@@ -44,7 +44,7 @@ from the repository root on `ANSIBLE01` using [`citef-config/README.md`](../cite
 and `provision.sh`. The wrapper verifies the bundle, extracts the runtime,
 installs hash-locked Python dependencies and pinned collections offline, then
 provisions from its extracted source tree. Pass the application bundle,
-licensed-artifact archive, environment, private secrets file, deployment
+licensed-installers archive, environment, private secrets file, deployment
 version, and unique run ID in the documented order. Use approved secret
 management and a fresh restricted work directory; never put credentials in
 Git, command arguments, or logs. `SPLUNK01` is Cyber-Range managed and is not
@@ -55,6 +55,31 @@ controller/readiness credentials. `provision.sh` runs provisioning and its
 validation; it does **not** run the separate `readiness.yml` playbook. Verify
 readiness, snapshot identity, network isolation, emergency-stop reachability,
 Splunk ingestion, and admission independently with range staff.
+
+## Licensed artifact archive layout
+
+The separate `licensed-installers.tar.gz` argument to `provision.sh` is the
+licensed product archive, not the CI-built application dependency bundle
+described above. Its entries must include this directory structure so extraction under
+the application bundle's `source/` directory places files where `environment.json`
+and artifact validation expect them:
+
+```text
+licensed-installers/
+└── CITEF-RELEASE/
+    ├── linux/
+    │   └── splunkforwarder-10.0.1-c486717c322b-linux-amd64.deb
+    ├── sysmon/
+    │   └── Sysmon.zip
+    └── windows/
+        └── splunkforwarder-10.0.1-c486717c322b-windows-x64.msi
+```
+
+In particular, archive paths are rooted at `licensed-installers/CITEF-RELEASE/`;
+do not add an extra enclosing directory. The Linux and Windows Universal
+Forwarder installers and Sysmon ZIP are checked against the approved hashes in
+`environment.json`. The Sysmon configuration is maintained separately at
+`citef-config/files/sysmon-config.xml`, not inside this archive.
 
 The optional [source checker](offline-release-source-check.md) compares pristine
 source trees with a trusted revision and inventory digest. Run it before

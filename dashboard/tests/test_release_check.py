@@ -318,6 +318,10 @@ def test_real_source_copy_contains_a_dependency_free_runnable_checker(tmp_path, 
     (root / "inventory.json").write_text(json.dumps({
         "repository_revision": REVISION, "destination_vm": "CTRL01", "source_artifacts": records,
     }))
+    assert release_check.SOURCE_TREES == offline_bundle.SOURCE_DIRECTORIES
+    assert "offline-bundles" not in offline_bundle.SOURCE_DIRECTORIES
+    for directory in ("linux", "sysmon", "windows"):
+        assert (root / "source/licensed-installers/CITEF-RELEASE" / directory / ".gitkeep").is_file()
     assert (root / "source/dashboard/release_check.py").is_file()
     result = subprocess.run(
         [sys.executable, "-B", "-S", "-m", "dashboard.release_check",
