@@ -68,7 +68,7 @@ index](exercise-design/README.md).
 | Document | What it covers |
 |---|---|
 | [Offline bundle build and install](offline-bundle.md) | Building, verifying, installing, and smoke-testing the Python bundle |
-| [2026-10-21 offline bundle and provisioning validation](offline-bundle-provisioning-validation.md) | Accepted #79 offline provisioning/DNS-blocking evidence, existing screenshots, remaining baseline captures, and consecutive-restore limits; not final exercise sign-off |
+| [Offline bundle and provisioning validation](offline-bundle-provisioning-validation.md) | November 1, 2026 screenshot evidence, accepted DNS-blocking evidence, observed readiness and provisioning limits; not final exercise sign-off |
 | [Actual offline full-play smoke](offline-fullplay-smoke.md) | Kernel-isolated packaged runtime/HTTP workflow gate and evidence boundaries |
 | [Splunk Sysmon ingestion](splunk-sysmon-ingest.md) | Configure the Splunk receiver and test Windows Sysmon forwarding |
 | [Application telemetry comparison](application-telemetry-comparison.md) | Read-only canonical ledger versus saved raw receiver-export comparison; not live ingestion or readiness proof |

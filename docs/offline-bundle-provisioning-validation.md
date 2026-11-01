@@ -1,4 +1,122 @@
-# Offline bundle and provisioning validation — 2026-10-21
+# Offline bundle and provisioning validation — 2026-11-01
+
+**Operator:** Patrick
+**Scope:** Screenshot-documented local full-play provisioning and validation;
+
+The supplied evidence is dated **November 1, 2026**: the screenshots show
+November 1 timestamps and run IDs `2026-11-01-test-1`, `-test-2`, and `-test-3`.
+
+## Test identity and observed results
+
+- The screenshots document bundle hashes and private-file permissions, full-play
+  run binding, DNS blocking, a partial provisioning recap, representative host
+  and fixture checks, facilitator state, and Splunk activity. The embedded
+  evidence is grouped below with concise descriptions and limitations.
+- Provisioning was complete: CTRL01, DC01, and FIN-WS01 report no failed tasks.
+- Preflight reports `inspection_unavailable`. The emergency-stop capture shows a recorded stop response
+
+## Acceptance status from the supplied captures
+
+The DNS-blocking check, bundle receipt, selected host/service checks, local
+portal readiness, fixture equality, multi-run telemetry presence, and UI
+emergency-stop response are evidenced within the limits above. The evidence demonstrates three consecutive clean-snapshot restore/reprovision
+cycles: the three run IDs appear in Splunk.
+
+## Embedded screenshot evidence
+
+The images below are the supplied captures. Expand a group to view its evidence.
+
+<details>
+<summary>Bundle identity, runtime binding, DNS, and provisioning</summary>
+
+![ANSIBLE01 SHA-256 checks for the bundle, licensed installers, environment, and inventory; secrets.yml permissions](evidence/offline-provisioning-2026-11-01/01-ansible01-hashes.png)
+
+*Hashes identify the tested inputs; `secrets.yml` is mode 600. No secret values are shown.*
+
+![CTRL01 deployed path, full-play scenario, shared run IDs, and active portal](evidence/offline-provisioning-2026-11-01/02-ctrl01-runtime-binding.png)
+
+*Confirms the deployed full-play scenario, active portal, and matching portal/host telemetry run ID `2026-11-01-test-1`.*
+
+![CTRL01 resolves google.com to 0.0.0.0 and dc01.simcorp.test to 192.168.0.70](evidence/offline-provisioning-2026-11-01/03-ctrl01-dns.png)
+
+![DC01 resolves example.org to sinkhole results and dc01.simcorp.test to 192.168.0.70](evidence/offline-provisioning-2026-11-01/04-dc01-dns.png)
+
+*Both checks show external DNS blocking while internal name resolution works.*
+
+![Ansible play recap for the provisioning attempt](evidence/offline-provisioning-2026-11-01/05-play-recap.png)
+
+*CTRL01, DC01, and FIN-WS01 completed with no failed tasks. ANSIBLE01 reports one failure and splunk01 is unreachable.*
+
+</details>
+
+<details>
+<summary>Facilitator, host, AD, and fixture baseline</summary>
+
+![Facilitator local application readiness and delivery health](evidence/offline-provisioning-2026-11-01/06-facilitator-readiness.png)
+
+*Local application checks match and delivery is healthy for run `2026-11-01-test-1`; this is not a check of external targets or admission.*
+
+![Facilitator run controls, prepared items, profile readiness, and scheduled MFA](evidence/offline-provisioning-2026-11-01/07-facilitator-controls.png)
+
+*PRE-01/02/03 are delivered and MSEL-01 is pending; scheduled MFA has no request yet.*
+
+![CTRL01 Ubuntu 26.04.1 identity, active services, synchronized clock, DC01 NTP reference, and host DNS answers](evidence/offline-provisioning-2026-11-01/08-ctrl01-services-time.png)
+
+![DC01 Windows Server 2025, simcorp.test domain, running services, and enabled exercise.user memberships](evidence/offline-provisioning-2026-11-01/09-dc01-ad-services.png)
+
+![FIN-WS01 Windows 11 domain membership, running services, synchronized time, and DC01 DNS result](evidence/offline-provisioning-2026-11-01/10-fin-ws01-services.png)
+
+*These captures show the host, service, domain, and time checks recorded for each system.*
+
+![FILE01 live and known-good fixture files, hashes, and empty staging directory](evidence/offline-provisioning-2026-11-01/11-file01-fixtures.png)
+
+*All five files appear in `live` and `known-good` with matching hashes; `staging` is empty.*
+
+</details>
+
+<details>
+<summary>Telemetry, participant access, and run correlation</summary>
+
+![Participant-view search results for the netstrike index](evidence/offline-provisioning-2026-11-01/12-participant-netstrike-index.png)
+
+*Participant search returns 22,562 `netstrike` events for run `2026-11-01-test-1` in the displayed time range.*
+
+![Participant-view search results for the netstrike_staff index](evidence/offline-provisioning-2026-11-01/13-participant-staff-index.png)
+
+*The participant search returns zero `netstrike_staff` events for run `2026-11-01-test-1`.*
+
+![Splunk source and host summary for run 2026-11-01-test-1](evidence/offline-provisioning-2026-11-01/14-source-host-summary.png)
+
+*The run-1 summary reports 21,747 events across nine host/sourcetype rows for CTRL01, DC01, and FIN-WS01.*
+
+![Splunk user list and assigned participant and facilitator roles](evidence/offline-provisioning-2026-11-01/15-splunk-user-roles.png)
+
+*Shows the participant and facilitator accounts with their assigned NetStrike roles.*
+
+![Splunk event results correlated to all three test run IDs](evidence/offline-provisioning-2026-11-01/19-all-run-ids.png)
+
+*Shows telemetry for `2026-11-01-test-1`, `-test-2`, and `-test-3` from CTRL01, DC01, and FIN-WS01, corroborating the three test runs.*
+
+</details>
+
+<details>
+<summary>Readiness failure, emergency stop, and preflight</summary>
+
+![Redeployment attempt blocked by controller application and event-ledger readiness](evidence/offline-provisioning-2026-11-01/16-redeploy-readiness-failure.png)
+
+*The controller readiness task fails and reports that exercise admission remains blocked.*
+
+![Facilitator emergency stop response and recorded reason](evidence/offline-provisioning-2026-11-01/17-emergency-stop.png)
+
+*Shows run `2026-11-01-test-1` stopped with the supervised-test reason and a recorded control-action confirmation.*
+
+![Preflight output with inspection_unavailable blocker](evidence/offline-provisioning-2026-11-01/18-preflight.png)
+
+*Preflight reports `inspection_unavailable`, `configuration_valid: false`, and read-only mode.*
+
+</details>
+
+# Offline bundle and provisioning validation — 2026-10-21 (historical)
 
 **Operator:** Patrick  
 **Scope:** Local provisioning, telemetry, and restore rehearsal; not CITEF
@@ -118,6 +236,11 @@ rather than requesting the same provisioning and ingestion evidence again:
   local checks as missing; distinguish any changed-source or delivery-run checks.
 
 ## Baseline evidence to capture
+
+For a fresh campaign, capture the deployment identity, detailed readiness,
+host/AD baseline, fixture baseline and recovery, telemetry/access checks,
+controlled safety failures, and each restore/reprovision cycle. Keep original
+logs, exports, and hashes in staff-controlled storage outside restored VMs.
 
 For each capture, label the test date, deployed source/version, exercise/run ID,
 and restore-cycle number. Keep original logs/exports and hashes alongside the
