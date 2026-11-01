@@ -41,7 +41,9 @@ end note
 note bottom
   Based on citef-config/environment.example.json.
   Connections represent manifest endpoints and configured
-  services and ports; actual firewall enforcement, participant
-  access policy, and external routes require Cyber Range approval.
+  services and ports. The team controls VM allocations, addresses,
+  DNS/NTP, firewall rules, and access paths under delegated range
+  authority; no further configuration approval is required.
+  Validate deployed values and controls against the team manifest.
 end note
 @enduml

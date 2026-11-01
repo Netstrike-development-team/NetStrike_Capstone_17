@@ -258,12 +258,15 @@ file/host metadata separately from the JSON payload.
 | `checkpoint_id` | `ns_checkpoint_id` | Decision-point evidence |
 | `safety.*` | `ns_safety_*` | Safety monitoring |
 
-CITEF will confirm the index, ingestion method, retention, and field-extraction
-deployment. Those choices must not change the v1 event payload.
+The team configures exercise indexes, ingestion, retention, and field extraction
+under delegated CITEF authority within the recorded capacity/license limits.
+Those choices must not change the v1 event payload.
 
 ### CITEF-neutral SPL examples
 
-Replace `<citef_index>` after the Cyber Range confirms it.
+Replace `<citef_index>` with the configured index for the event visibility:
+canonical staff events belong in `netstrike_staff`, participant-safe telemetry
+in `netstrike`. No further range index-creation approval is outstanding.
 
 Data health by producer:
 

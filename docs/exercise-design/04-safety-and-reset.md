@@ -8,8 +8,8 @@ Operation Silent Spider must create useful evidence and response decisions witho
 
 ### Environment isolation
 
-- Run only inside a Cyber Range-approved isolated exercise network.
-- Deny Internet egress by default. Any package mirror or management access is configured separately by the Cyber Range.
+- Run only inside the isolated exercise network selected and configured by the team under delegated Cyber Range authority; further range allocation approval is not required.
+- Keep delivery independent of Internet access. Patrick accepts the October 21 DNS-blocking setup as sufficient #79 isolation evidence. That acceptance does not claim every direct-IP or other egress path is blocked; unexpected external connectivity still requires emergency stop. The team controls exercise network and management configuration.
 - Maintain an explicit allowlist of target host IDs, addresses, accounts, service names, and writable directories.
 - Refuse to start when the resolved targets do not match the approved environment manifest.
 - Keep `CTRL01`, `SPLUNK01`, the hypervisor, and snapshot controls outside participant and attack-module administration.
@@ -93,6 +93,11 @@ student team owns topology and validation. Ansible reapplies configuration and
 runs automated readiness checks; it does not reconstruct every VM after each
 delivery. A failed readiness result blocks participant admission.
 
+VM allocation, images, sizing, addresses, DNS/NTP, firewall rules, and access paths
+are already delegated to the team. Validate deployed controls against the team's
+manifest, not against an outstanding range permission request. Zian/Julien
+remain assistance and escalation contacts; final exercise sign-off is separate.
+
 ### 1. Close and archive the run
 
 - Stop the scenario through the controller.
@@ -140,7 +145,7 @@ portion of the AD user baseline, local application readiness, and configured
 run-correlated Splunk probes. Full delivery acceptance must also verify the
 following independently; the current playbooks do not establish all of them:
 
-- actual target allocation and network policy, including isolation;
+- deployed targets and network/access controls matching the team-selected manifest (allocation authority is established and October 21 DNS blocking is accepted #79 isolation evidence);
 - identity/session/factor state, mock-cloud keys and policies, and disposable-file hashes;
 - no prior run action remains active and the new run ID preserves prior evidence;
 - live forwarder configuration, all-source freshness, and participant/facilitator Splunk access; and
@@ -150,9 +155,10 @@ The facilitator signs the readiness record before admitting participants.
 The October 21 local rehearsal passed restore/reprovision/readiness three times,
 but not consecutively, and used Docker-hosted Splunk rather than a range-managed
 Splunk VM. It therefore does not meet the consecutive-cycle acceptance
-criterion. Local readiness is not itself a Cyber Range network-policy or
-admission certificate; staff must separately verify range-owned controls and
-emergency-stop reachability.
+criterion. Reuse its provisioning and telemetry evidence. Local readiness is
+not itself an admission certificate; staff must separately verify deployed
+access controls and emergency-stop reachability. See the
+[baseline screenshot checklist](../offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
 
 ## Dry-run requirements
 

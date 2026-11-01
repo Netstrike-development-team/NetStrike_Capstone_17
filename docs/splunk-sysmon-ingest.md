@@ -1,13 +1,16 @@
 # Configure Splunk to receive Sysmon Windows events
 
 This guide covers receiver prerequisites and the Windows Sysmon ingestion
-check. `SPLUNK01` is Cyber-Range managed; do not install or change Splunk there
-without range-administrator approval. Keep credentials, private keys, and
+check. The Cyber Range supplies `SPLUNK01`; the team controls exercise receiver,
+index, role, and search configuration under delegated authority within the
+recorded license/capacity limits. No additional per-change configuration approval
+is outstanding; involve Zian/Julien for platform assistance or escalation, not a
+new permission gate. Keep credentials, private keys, and
 licensed installers outside Git.
 
 ## Receiver prerequisites
 
-Coordinate the receiver with range staff. The current manifest requires Splunk
+Configure and validate the receiver as exercise staff. The current manifest requires Splunk
 Enterprise 10.0.1, a Windows event index, and TCP 9997. In Splunk Web, create
 the configured index under **Settings → Indexes** and apply approved retention
 and access controls. Configure receiving under **Settings → Forwarding and

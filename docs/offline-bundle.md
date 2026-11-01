@@ -73,8 +73,9 @@ optional manual UI check is an identity-only observation, not full-play or range
 acceptance. Neither test replaces live Ansible/systemd, Windows/AD, Splunk, or
 snapshot checks.
 
-Run the manual check only on a disposable Linux amd64 VM with Internet egress
-blocked. Use a fresh database and run ID, temporary credentials, one Uvicorn
+Run the manual check only on a disposable Linux amd64 VM using the project's
+accepted isolation method (DNS blocking is sufficient evidence for #79 per
+Patrick's October 31 decision). Use a fresh database and run ID, temporary credentials, one Uvicorn
 process bound to loopback, and an SSH tunnel for remote viewing. Do not use
 production secrets or expose the HTTP listener.
 
@@ -145,11 +146,17 @@ products such as Splunk, Universal Forwarder, and Sysmon. It includes the
 Ubuntu 26.04 domain/DNS/time packages, which `linux_baseline` installs offline.
 Targets require Linux x86_64/glibc; these OS packages require Ubuntu 26.04.
 Review python-build-standalone terms before redistribution. The temporary
-Actions artifact is neither an approved transfer channel nor CITEF approval;
-validate installation and readiness on a clean, network-isolated target.
+Actions artifact is not a delivery-readiness certificate. The team controls
+exercise VM allocation, network configuration, and offline transfer under
+delegated Cyber Range authority; no additional configuration approval is
+outstanding. Validate the selected bundle/configuration against the deployed
+targets and retain its identity with the evidence.
 
 The [provisioning validation report](offline-bundle-provisioning-validation.md)
 records the October 15 and October 21 local rehearsals, not range acceptance.
 On October 21, restore and readiness were exercised three times but not in
-consecutive cycles; the local test used Docker-hosted Splunk and DNS blocking,
-not full Internet-egress isolation.
+consecutive cycles; the local test used Docker-hosted Splunk and DNS blocking.
+Patrick accepts that provisioning and DNS-blocking evidence for #79's tested
+configuration. It is not a technical certificate of all-path Internet-egress
+blocking or blanket validation of later source revisions. See the
+[remaining baseline screenshot checklist](offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).

@@ -1,6 +1,6 @@
 # CITEF provisioning
 
-**Status (2026-10-21):** The local rehearsal is documented in the [validation report](../docs/offline-bundle-provisioning-validation.md). It was not CITEF deployment approval and did not establish range network policy or consecutive restore acceptance.
+**Status (clarified 2026-10-31):** The Cyber Range has delegated full exercise VM and network configuration control to the team: allocations, images, sizing, addresses, DNS/NTP, firewall rules, management paths, and participant access do not await further range approval. The October 21 provisioning and DNS-blocking evidence is accepted for #79's tested configuration. Complete baseline and consecutive restore evidence remain separate; see the [validation report](../docs/offline-bundle-provisioning-validation.md).
 
 ## Authoritative guides
 
@@ -14,7 +14,7 @@
 
 ![Proposed NetStrike CITEF example environment network diagram](../docs/network-diagram/network-diagram.png)
 
-The [local network diagram](../docs/network-diagram/network-diagram-local.png) reflects `environment.local.json`. Diagrams, host images, addresses, and network ranges are planning examples, not approved assignments or policy. Confirm them with CITEF before use.
+The [local network diagram](../docs/network-diagram/network-diagram-local.png) reflects `environment.local.json`. The team selects the actual images, addresses, sizing, and network policy under delegated authority; no additional CITEF allocation approval is required. Examples are not proof of deployed values: record those values in the private deployment manifest and validate target matches.
 
 | Asset | Selected placement | Example address and DNS | Purpose |
 |---|---|---|---|
@@ -25,7 +25,7 @@ The [local network diagram](../docs/network-diagram/network-diagram-local.png) r
 | `SPLUNK01` | Cyber Range-provided Splunk host | `10.77.0.30`, `splunk01.simcorp.test` | SIEM and forwarder receiver; range-provided, not a project-provisioned VM |
 | `FILE01` | Logical service on `CTRL01`; not a separate VM | `ctrl01.simcorp.test` | Disposable fixtures and controller-managed known-good copy |
 
-`ANSIBLE01` is excluded from Linux baseline provisioning so the playbook runner is not reconfigured as a target. Scenario VMs must not have an Internet path.
+`ANSIBLE01` is excluded from Linux baseline provisioning so the playbook runner is not reconfigured as a target. Scenario VMs must not depend on Internet access. Patrick accepts the October 21 DNS-blocking method as sufficient #79 isolation evidence; this does not certify every possible egress path.
 
 ## Prepare and provision
 
@@ -54,6 +54,6 @@ Approved deployments require the configured TLS material. Inject controller serv
 
 Follow the [safety and reset procedure](../docs/exercise-design/04-safety-and-reset.md). Capture clean snapshots after OS installation and remote-management setup, but before provisioning. After a restore, run the wrapper against the clean environment with a new unique run ID, then complete the documented readiness and admission checks.
 
-Important scope: `provision.sh` runs `provision.yml` and its provisioning validation; it does **not** run the separate `readiness.yml` playbook. A successful wrapper run does not establish snapshot identity, network isolation, emergency-stop reachability, complete Splunk ingestion, or participant admission. Verify those controls independently with range staff. The October rehearsal did not meet the consecutive-cycle acceptance criterion; see the [validation report](../docs/offline-bundle-provisioning-validation.md).
+Important scope: `provision.sh` runs `provision.yml` and its provisioning validation; it does **not** run the separate `readiness.yml` playbook. A successful wrapper run does not establish snapshot identity, emergency-stop reachability, complete Splunk ingestion, or participant admission. Patrick and exercise staff validate these controls; Zian/Julien assist or handle escalations, not a new configuration approval gate. Reuse the October evidence for what it shows; the consecutive-cycle criterion remains unmet. See the [baseline screenshot checklist](../docs/offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
 
 For portal startup failures or run-ID recovery, follow the [deployment binding guide](../docs/full-play-deployment-binding.md). Do not remove portal state, reuse a run ID, or bypass preflight to force a restart. For receiver and Sysmon-to-Splunk setup, use the [Splunk/Sysmon ingestion guide](../docs/splunk-sysmon-ingest.md).

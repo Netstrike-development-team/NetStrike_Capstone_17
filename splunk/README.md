@@ -1,8 +1,11 @@
 # NetStrike Splunk content (#102)
 
-Versioned, secret-free Splunk Enterprise 10.0.1 content. **Nothing here has been
-deployed or validated against a live Splunk**; `splunk_ingestion_verified` stays
-false until the acceptance steps below are run and evidence is recorded in #102.
+Versioned, secret-free Splunk Enterprise 10.0.1 content. Patrick's closed #102
+records October 16 live source-health, participant-separation, volume and
+fresh-redeploy checks; #103 records October 21 three-host run-tagged ingestion
+screenshots. Reuse those records for their tested scope. A saved-file checker or
+static test still leaves `splunk_ingestion_verified` false and does not certify
+a later deployment or complete range rehearsal.
 
 | Path | Deploy to | Purpose |
 |---|---|---|
@@ -19,8 +22,9 @@ Windows Security/PowerShell/Sysmon and Linux inputs already come from
   telemetry and the separate reviewed SimCorp audit projection. The canonical application ledger contains facilitator/evaluator events
   and answer labels, so it goes to **`netstrike_staff`**, which only
   `netstrike_facilitator` can search. A visibility field is not access control, so
-  no `srchFilter` is relied on. **`netstrike_staff` is not in the CITEF approval
-  record; confirm with the range administrator.**
+  no `srchFilter` is relied on. **Index creation is already delegated to the team
+  and covers `netstrike_staff`, as Patrick confirmed in the October 16 #102 update.
+  No further range index-creation approval is required.**
 - **Retention** is the approved one day (`frozenTimePeriodInSecs = 86400`, hot
   buckets capped at a day). Splunk freezes whole buckets, so expect data to persist
   slightly longer. Events with timestamps older than a day (backdated PRE-02 history)

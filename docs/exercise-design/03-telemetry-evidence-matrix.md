@@ -46,7 +46,11 @@ attack-module phases are not permitted in v1.
 
 ## Required evidence
 
-Exact Splunk index and source-type names are provisional until the Cyber Range confirms its conventions.
+The team controls exercise index and source-type conventions under delegated
+Cyber Range authority. Versioned Splunk content and forwarder templates define
+the deployed names; validate those mappings during ingestion, without a new
+range naming-approval task. `netstrike` and staff-only `netstrike_staff` are the
+selected indexes.
 
 | Event/activity | Required source and key fields | What a participant should conclude | Evaluator evidence | Generator | Validation |
 |---|---|---|---|---|---|

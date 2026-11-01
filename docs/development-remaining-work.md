@@ -56,7 +56,8 @@ Their open status does not mean those stages still need to be built from scratch
 
 Patrick owns offline installers/licenses, concrete topology, Splunk configuration,
 data-health and ingestion proof, snapshots/readiness and acceptance rehearsals
-(#101 closed with Patrick's evidence; #102–#104 remain open). Anna owns inject scripts, participant and facilitator/evaluator/solution
+(#101/#102/#103 closed with Patrick's records; #79 retains consecutive-restore
+acceptance and #104 remains open). Anna owns inject scripts, participant and facilitator/evaluator/solution
 materials, timing/usability and calibration (#98–#100). Ashley owns schedule,
 client decisions, risk/board and final acceptance coordination (#96/#97). Aya
 owns application integration and code fixes found by that work.
@@ -69,8 +70,11 @@ representative rehearsal. PR count measures batching, not percent complete.
 
 ## Most important next gates
 
-1. Patrick validates the deployed identity slice and searchable run-correlated
-   sources, including staff/participant separation; addresses deployment blockers.
+1. Patrick reuses the October 16 #102 access/source-health and October 21 #103
+   provisioning/ingestion evidence, then captures remaining complete-baseline,
+   safety and consecutive-restore results. VM/network configuration authority
+   is already delegated; October 21 offline provisioning and DNS blocking are
+   accepted #79 evidence, not outstanding approval/isolation tasks.
 2. Anna and a non-author test the real learner flow and final content rather than
    accepting a developer's automated success path as usability proof.
 3. The team records objective calibration and complete live rehearsals, including
@@ -84,7 +88,9 @@ CI do not establish live Splunk ingestion, snapshot restoration or client sign-o
 October 7 owner update: Patrick closed #101 with recorded offline bundle/source
 (`5553a3fce81b4f59981460259a8f933b9d4d4b69`), workflow/archive digest, reported
 checksum passes and Ansible provisioning, plus Windows Sysmon-to-Splunk screenshot
-evidence. #156 is merged. #102 still owns canonical application ingest, access and
-retention; #103 owns snapshot/readiness; #104 owns representative rehearsals.
+evidence. #156 is merged. #102 is closed with recorded live local checks; complete
+delivery-run application evidence remains distinct. #103 records snapshot/readiness;
+#104 owns representative rehearsals. See the
+[baseline evidence checklist](offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
 The earlier tested application source does not validate subsequent dev changes
 or authorize main promotion. See the [test record](exercise-design/07-offline-tool-bundle-inventory.md).

@@ -102,6 +102,12 @@ access to emergency stop, or facilitator admission sign-off. These remain
 Patrick's environment/readiness work and the team's release acceptance under
 #79, #103, #104 and #86. No 20-minute Ansible reset target is introduced.
 
+The Cyber Range has already delegated full exercise VM/network configuration
+control to the team. These external checks validate what is deployed; they are
+not additional allocation, address, DNS/NTP, or access-policy approval tasks.
+Reuse the October 21 provisioning/telemetry and accepted DNS-blocking evidence
+for their recorded scope; see the [baseline screenshot checklist](offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
+
 Aya owns this code-level gate. The strict full-play CI workflow runs the complete
 portal suite, including readiness tests, and rehearses normal paths through this service boundary. The deliberate
 missing-impact-source rehearsal uses a fixed low-level fault injection to test
