@@ -25,7 +25,23 @@ The [local network diagram](../docs/network-diagram/network-diagram-local.png) r
 | `SPLUNK01` | Cyber Range-provided Splunk host | `10.77.0.30`, `splunk01.simcorp.test` | SIEM and forwarder receiver; range-provided, not a project-provisioned VM |
 | `FILE01` | Logical service on `CTRL01`; not a separate VM | `ctrl01.simcorp.test` | Disposable fixtures and controller-managed known-good copy |
 
-`ANSIBLE01` is excluded from Linux baseline provisioning so the playbook runner is not reconfigured as a target. Scenario VMs must not depend on Internet access. Patrick accepts the October 21 DNS-blocking method as sufficient #79 isolation evidence; this does not certify every possible egress path.
+`ANSIBLE01` runs the playbooks locally and must not appear in the manifest's
+`assets`. `SPLUNK01` remains in the
+manifest for DNS and receiver settings, but its inventory entry is commented
+out. Neither host receives remote provisioning or service/clock validation
+tasks. Readiness checks Splunk ingestion through its API from `localhost`;
+forwarder configuration on exercise targets remains enabled.
+
+Regenerate an existing inventory after updating the configuration:
+
+```sh
+python3 citef-config/validate_environment.py inventory > citef-config/inventory.ini
+```
+
+The provisioning wrapper regenerates inventory from the JSON manifest using
+its bundled source, so rebuild the offline bundle to include these changes.
+
+Scenario VMs must not depend on Internet access. Patrick accepts the October 21 DNS-blocking method as sufficient #79 isolation evidence; this does not certify every possible egress path.
 
 ## Prepare and provision
 
