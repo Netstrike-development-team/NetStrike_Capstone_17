@@ -165,7 +165,7 @@ access.
 | Available indexes and whether a dedicated index is permitted | Team may create exercise indexes, including `netstrike` and staff-only `netstrike_staff` | Patrick relayed CITEF permission, 2026-10-04; October 16 #102 update confirms both indexes and fresh redeploy |
 | Index name and retention | Dedicated index `netstrike`, one-day retention | Patrick relayed CITEF decision, 2026-10-04; apply and verify during deployment |
 | Required naming convention for source, sourcetype, and host | Team-defined in versioned Splunk content and forwarder templates; `XmlWinEventLog` confirmed in the October 16 test | Team/Patrick |
-| Installed or permitted add-ons, especially Windows/Sysmon | Team selects exercise add-ons within licensing and capacity limits | Team |
+| Splunk add-ons | No Splunk add-ons are required by the project; the MVP uses built-in Splunk parsing/search capabilities and the project's versioned apps and forwarder configuration | Not a project acceptance requirement |
 | Data retention and cleanup policy | `netstrike` retention is one day; broader cleanup procedure pending | Patrick relayed CITEF decision, 2026-10-04 |
 | Participant role/search permissions and export limits | Separate participant and facilitator access; participant can investigate permitted exercise telemetry but cannot manage the simulation; facilitator manages simulation and Splunk configuration | October 16 #102 update records allowed `netstrike` and forbidden `netstrike_staff` searches after removing the built-in `user` role; export limits remain team-defined |
 | Facilitator management privileges | Facilitator manages simulation; participant is restricted to the investigation surface and authorized telemetry | Versioned roles and October 16 local access/redeploy evidence; validate changed configurations separately |
@@ -261,7 +261,7 @@ Use this 60-minute agenda with the team and CITEF contact:
 3. **15 minutes — Topology and access:** map logical assets to VMs and confirm
    network, DNS, time, accounts, permissions, and dates.
 4. **15 minutes — Splunk and evidence:** confirm version, ingestion, roles,
-   retention, add-ons, and the telemetry acceptance method.
+   retention, and the telemetry acceptance method.
 5. **10 minutes — Safety and restoration:** confirm isolation, emergency stop,
    snapshot ownership, evidence preservation, and readiness validation.
 6. **5 minutes — Decisions and owners:** select fallbacks, assign unanswered
@@ -330,7 +330,7 @@ representative; this document should then link to that evidence.
 - [x] Named Cyber Range contacts are recorded.
 - [x] Logical-asset allocation authority is established; the team selects and records the deployed mapping.
 - [x] Network, DNS, time, access, and automation configuration authority is delegated to the team.
-- [ ] Splunk version, ingestion, indexes, roles, retention, and add-ons are confirmed.
+- [x] Splunk version, ingestion methods, indexes, roles, and retention are recorded; no project Splunk add-ons are required.
 - [ ] Windows/AD and endpoint capabilities are confirmed.
 - [x] Snapshot/restoration ownership is confirmed; emergency-stop delivery channel remains to confirm.
 - [ ] Every unavailable dependency has an accepted zero-cost fallback or scope reduction.
