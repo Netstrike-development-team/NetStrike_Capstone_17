@@ -154,10 +154,12 @@ following independently; the current playbooks do not establish all of them:
 The facilitator signs the readiness record before admitting participants.
 The October 21 local rehearsal passed restore/reprovision/readiness three times,
 but not consecutively, and used Docker-hosted Splunk rather than a range-managed
-Splunk VM. It therefore does not meet the consecutive-cycle acceptance
-criterion. Reuse its provisioning and telemetry evidence. Local readiness is
-not itself an admission certificate; staff must separately verify deployed
-access controls and emergency-stop reachability. See the
+Splunk VM. The November 1 report supersedes the earlier cycle result: the
+three-consecutive-cycle restore/reprovision/readiness criterion was met (owner
+clarification, 2026-11-04). Reuse provisioning and telemetry evidence only for
+its demonstrated scope. Local readiness is not itself an admission certificate;
+staff must separately verify deployed access controls and emergency-stop
+reachability. See the
 [baseline screenshot checklist](../offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
 
 ## Dry-run requirements

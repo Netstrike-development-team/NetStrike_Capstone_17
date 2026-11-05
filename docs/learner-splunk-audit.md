@@ -10,6 +10,9 @@ It does not add a new attack or a vulnerable website unrelated to the storyline.
 
 ## Separate evidence contracts
 
+For facilitator searches and interpretation of source-health statuses, see
+[distinguishing scenario health from participant evidence](../splunk/README.md#distinguish-scenario-health-from-participant-evidence).
+
 | Source | Destination | Content |
 |---|---|---|
 | Windows Security, PowerShell, Sysmon | `netstrike` | Actual host telemetry, configured by the existing forwarder roles |

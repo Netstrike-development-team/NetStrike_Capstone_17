@@ -228,10 +228,12 @@ outstanding. Validate the selected bundle/configuration against the deployed
 targets and retain its identity with the evidence.
 
 The [provisioning validation report](offline-bundle-provisioning-validation.md)
-records the October 15 and October 21 local rehearsals, not range acceptance.
-On October 21, restore and readiness were exercised three times but not in
-consecutive cycles; the local test used Docker-hosted Splunk and DNS blocking.
-Patrick accepts that provisioning and DNS-blocking evidence for #79's tested
-configuration. It is not a technical certificate of all-path Internet-egress
-blocking or blanket validation of later source revisions. See the
+records the October 15, October 21, and November 1 local rehearsals, not full
+range acceptance. The October 21 restore/readiness cycles were not consecutive;
+the November 1 report records three consecutive cycles and meets that criterion
+(owner clarification, 2026-11-04). The local tests used Docker-hosted Splunk and
+DNS blocking. Patrick accepts the October 21 provisioning and DNS-blocking
+evidence for #79's tested configuration. It is not a technical certificate of
+all-path Internet-egress blocking or blanket validation of later source
+revisions. See the
 [remaining baseline screenshot checklist](offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).

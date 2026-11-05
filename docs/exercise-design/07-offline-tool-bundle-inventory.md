@@ -1,15 +1,18 @@
 # Offline tool bundle inventory and deployment decisions
 
-**Status (2026-10-21):** The merged CI workflow builds and verifies a
+**Status (updated 2026-11-04):** The merged CI workflow builds and verifies a
 versioned offline bundle containing the portable Python runtime, resolved wheels,
 project source trees, and pinned Ansible collections. `inventory.json` records
 per-artifact version, source, license, owner, SHA-256, destination VM, and offline
-installation method. A local restore/provision/readiness rehearsal on October 21
-is recorded in the [validation report](../offline-bundle-provisioning-validation.md).
-It passed three cycles, but they were not consecutive; the rehearsal used
-Docker-hosted Splunk and did not establish Cyber Range deployment acceptance.
-The report also records the October 15 rehearsal separately. Remaining
-acceptance checks are listed below and in the linked issues.
+installation method. The October 21 and November 1 restore/provision/readiness
+rehearsals are recorded in the
+[validation report](../offline-bundle-provisioning-validation.md). The November
+1 report records three consecutive cycles, meeting that criterion (owner
+clarification, 2026-11-04); the October 21 nonconsecutive-cycle result is
+historical and superseded. The rehearsals used Docker-hosted Splunk and do not
+establish all Cyber Range deployment or final exercise acceptance. The report
+also records the October 15 rehearsal separately. Remaining acceptance checks
+are listed below and in the linked issues.
 
 **Owner clarification (2026-10-31):** The Cyber Range has delegated full
 exercise VM/network configuration control to the team, including images, sizing,
@@ -17,8 +20,9 @@ allocations, addresses, DNS/NTP, firewall rules, and access paths. Do not list
 further range configuration approval as a completion task. Patrick accepts the
 October 21 provisioning and DNS-blocking evidence for #79's tested configuration.
 DNS blocking is sufficient under that project acceptance decision; it is not
-proof of all-path egress isolation. Keep baseline, consecutive-cycle and final
-exercise acceptance separate. See the [evidence checklist](../offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
+proof of all-path egress isolation. The three-consecutive-cycle criterion is
+met; complete baseline and final exercise acceptance remain separate. See the
+[evidence checklist](../offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
 
 This document is the source of truth for:
 
@@ -41,7 +45,7 @@ application host.
 | Windows telemetry and forwarding | Selected Splunk Universal Forwarder 10.0.1 and Sysmon 15.22 | Reuse October 7 Windows/Sysmon and October 21 three-host run-tagged ingestion evidence. Team controls exercise artifacts within license terms; additional range artifact approval is not a gate. Record any changed-source or delivery-run validation separately |
 | Controller, portal, and state | Python 3.11, FastAPI, SQLite; the bundle includes the declared dashboard, validator, controller, shared, and module wheels | Build inventory records exact wheel/runtime versions, license/author metadata, checksums, CTRL01 application destination, and offline install method |
 | Ansible and remote configuration | `ansible-core` requirement `>=2.16,<3`; `ansible.windows` 3.8.0 and `microsoft.ad` 1.12.1; run from `ANSIBLE01` | The October 21 local rehearsal provisioned CTRL01, DC01, and FIN-WS01 without reported failed tasks; SPLUNK01 was unreachable because the local test used Docker-hosted Splunk. The October 15 report remains a separate, earlier scoped test. Neither proves successful provisioning of the Cyber Range targets |
-| Snapshot restoration and readiness | October 21 local restore/reprovision/readiness passed three times, but not consecutively | Consecutive-cycle acceptance remains unmet; #104 also requires consecutive Cyber Range cycles and a non-author end-to-end run. See [#79](https://github.com/Netstrike-development-team/NetStrike_Capstone_17/issues/79) and [#104](https://github.com/Netstrike-development-team/NetStrike_Capstone_17/issues/104) |
+| Snapshot restoration and readiness | The November 1 report records three consecutive clean-snapshot restore/reprovision/readiness cycles (owner clarification, 2026-11-04) | The three-cycle criterion is met. #104's distinct complete Cyber Range rehearsal and non-author end-to-end requirements remain. See [#79](https://github.com/Netstrike-development-team/NetStrike_Capstone_17/issues/79) and [#104](https://github.com/Netstrike-development-team/NetStrike_Capstone_17/issues/104) |
 | Commercial EDR | Not included in the MVP | Sysmon and Windows logs provide endpoint evidence; restricted NetStrike exercise controls simulate limited containment actions and must be described as exercise controls, not production EDR |
 | Mock cloud and impact | Project-owned stateful Python mock; safe marker files and reversible file moves | Keep the mock local; limit changes to allowlisted disposable fixtures; do not add real cloud APIs or encryption |
 | Scenario VM architecture and images | The October 21 local layout used Ubuntu Server 26.04.1 LTS amd64 for ANSIBLE01/CTRL01, Windows Server 2025 Evaluation build 26100.32230 for DC01, Windows 11 Pro 26H2 build 2300.9457 for FIN-WS01, and a range-provided SPLUNK01 | Team selects images, sizing, and target mapping under delegated authority; record deployed values and validate capacity, without a new CITEF approval task |
@@ -51,7 +55,7 @@ application host.
 | Project runtime package lock and wheelhouse | Generated by the CI workflow for each bundle revision | Review generated `inventory.json` and `requirements.lock`; exact wheel versions and hashes are recorded per build |
 | Ansible collections and other system installers | `citef-config/requirements.yml` pins `ansible.windows` and `microsoft.ad`; controller requirements and collection archives are bundled | The bundle records versions, metadata, SHA-256, CTRL01 destination, and offline install method; approved system installers remain separately staged |
 | Portal network independence | The packaged full-play developer smoke ran in a kernel-isolated, loopback-only Linux network namespace; the earlier isolated VM smoke is also recorded below | These checks have their stated scope. October 21 DNS blocking is accepted #79 isolation evidence, not a claim that all external-request paths were audited |
-| Clean offline installation | October 7 application smoke and the October 21 offline provisioning rehearsal are recorded below; October 21 covered CTRL01, DC01, and FIN-WS01 locally | Patrick accepts October 21 as the tested #79 offline provisioning evidence. Preserve its bundle/source identity; only changed-source validation, complete baseline and consecutive restores remain distinct gates |
+| Clean offline installation | October 7 application smoke and the October 21 offline provisioning rehearsal are recorded below; October 21 covered CTRL01, DC01, and FIN-WS01 locally | Patrick accepts October 21 as the tested #79 offline provisioning evidence. Preserve its bundle/source identity; changed-source validation and complete baseline remain distinct gates. The three-consecutive-cycle criterion is met by the November 1 report |
 | Versioned release bundle | CI builds a versioned runtime/source/collection bundle for a selected repository revision | Select a reviewed merged-dev bundle for range validation and record its workflow run, source revision, archive and inventory digests; a PR-source/temporary test artifact is not a range release |
 | Artifact licensing and transfer | Patrick reports no additional licensing or transfer review is applicable to the tested artifacts/use | Treat as the project owner's stated disposition for this acceptance record; keep proprietary installers, secrets, and credentials out of Git |
 
@@ -232,13 +236,15 @@ config deployment workflow.
 
 ## Offline installation test record
 
-**Follow-up (2026-10-21):** A later local rehearsal provisioned CTRL01, DC01,
-and FIN-WS01, found run-tagged events from those three hosts in Docker-hosted
-Splunk, and exercised restore/reprovision/readiness three times. The cycles
-were not consecutive due to shared-hardware constraints; SPLUNK01 was not
-configured as a separate VM. Patrick accepts the provisioning and DNS-blocking
-evidence for #79's tested configuration; this does not establish #104's complete
-Cyber Range rehearsal acceptance. See
+**Follow-up (2026-10-21; cycle status superseded 2026-11-01):** A local
+rehearsal provisioned CTRL01, DC01, and FIN-WS01, found run-tagged events from
+those three hosts in Docker-hosted Splunk, and exercised restore/reprovision/
+readiness three times. Those October cycles were not consecutive due to
+shared-hardware constraints; SPLUNK01 was not configured as a separate VM. The
+November 1 report records three consecutive cycles and meets that criterion.
+Patrick accepts the provisioning and DNS-blocking evidence for #79's tested
+configuration; this does not establish #104's complete Cyber Range rehearsal
+acceptance. See
 the [validation report](../offline-bundle-provisioning-validation.md) for both
 dated rehearsal records and limitations.
 
@@ -277,7 +283,7 @@ secrets and link them from the approved project evidence location.
 | Windows image and Sysmon-to-Splunk test (2026-10-07) | Windows 11 26H2 build 26300.9550 AMD64; staged Sysmon ZIP and Windows Forwarder matched recorded hashes; Sysmon events successfully appeared in the Splunk `netstrike` index |
 | Splunk sample volume | Approximately 2 MB for 5,000 events over two hours, without filtering. At a constant rate this extrapolates to about 24 MB/day, roughly 0.24% of the 10 GB/day allowance; a typical several-hour simulation would produce only a few MB at this observed rate |
 | Ansible provisioning and readiness (October 7) | Patrick reported successful deployment, but individual host and readiness-check results were not itemized; later, separately scoped October 15 and October 21 rehearsals are summarized above and in the linked validation report |
-| Snapshot restore | Not tested in the October 7 record. The October 21 local test later exercised three restore/reprovision/readiness cycles, but not consecutively and not on Cyber Range targets; see the follow-up above |
+| Snapshot restore | Not tested in the October 7 record. The October 21 local test exercised three nonconsecutive cycles; the November 1 report records three consecutive cycles (owner clarification, 2026-11-04). These local rehearsals used Docker-hosted Splunk, not a separate Cyber Range Splunk VM |
 | Splunk `netstrike` one-day retention and participant/facilitator RBAC checks | Not recorded in the October 7 test. Reuse Patrick's October 16 #102 source-health, ingestion-volume, redeploy, and participant-separation evidence; changed configuration or delivery-run validation is separate, not a new permission request |
 | Result, failures, and remediation | Linux dashboard installed and ran offline; Windows Sysmon events ingested into `netstrike`; remaining deployment acceptance checks above are pending |
 | Evidence/log location | Sysmon-to-Splunk screenshot: [sysmon-splunk-integration-2026-10-07.png](evidence/sysmon-splunk-integration-2026-10-07.png) |

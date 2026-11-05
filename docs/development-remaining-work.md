@@ -56,8 +56,9 @@ Their open status does not mean those stages still need to be built from scratch
 
 Patrick owns offline installers/licenses, concrete topology, Splunk configuration,
 data-health and ingestion proof, snapshots/readiness and acceptance rehearsals
-(#101/#102/#103 closed with Patrick's records; #79 retains consecutive-restore
-acceptance and #104 remains open). Anna owns inject scripts, participant and facilitator/evaluator/solution
+(#101/#102/#103 closed with Patrick's records; #79's three-consecutive-cycle
+criterion is met in the November 1 report; #104 remains open for its broader
+acceptance rehearsals). Anna owns inject scripts, participant and facilitator/evaluator/solution
 materials, timing/usability and calibration (#98–#100). Ashley owns schedule,
 client decisions, risk/board and final acceptance coordination (#96/#97). Aya
 owns application integration and code fixes found by that work.
@@ -70,11 +71,12 @@ representative rehearsal. PR count measures batching, not percent complete.
 
 ## Most important next gates
 
-1. Patrick reuses the October 16 #102 access/source-health and October 21 #103
-   provisioning/ingestion evidence, then captures remaining complete-baseline,
-   safety and consecutive-restore results. VM/network configuration authority
-   is already delegated; October 21 offline provisioning and DNS blocking are
-   accepted #79 evidence, not outstanding approval/isolation tasks.
+1. Patrick reuses the October 16 #102 access/source-health, October 21 #103
+   provisioning/ingestion, and November 1 consecutive-cycle evidence, then
+   captures any remaining complete-baseline and safety details. VM/network
+   configuration authority is already delegated; October 21 offline
+   provisioning and DNS blocking are accepted #79 evidence, not outstanding
+   approval/isolation tasks.
 2. Anna and a non-author test the real learner flow and final content rather than
    accepting a developer's automated success path as usability proof.
 3. The team records objective calibration and complete live rehearsals, including
