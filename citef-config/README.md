@@ -8,7 +8,7 @@
 - [Offline tool-bundle inventory](../docs/exercise-design/07-offline-tool-bundle-inventory.md): selected artifacts, licensing, and test evidence.
 - [Offline bundle guide](../docs/offline-bundle.md): bundle build, contents, integrity, and offline dependencies.
 - [Safety and reset](../docs/exercise-design/04-safety-and-reset.md): isolation, stop, snapshots, readiness, and admission.
-- [Portal deployment contract](../docs/application-deployment-contract.md) and [full-play deployment binding](../docs/full-play-deployment-binding.md): portal configuration, startup, and next-run handoff.
+- [Portal deployment contract](../docs/application-deployment-contract.md) and [full-play deployment runbook](../docs/full-play-deployment-guide.md): portal configuration, deployment steps, and next-run handoff.
 
 ## Example topology
 
@@ -56,4 +56,4 @@ Follow the [safety and reset procedure](../docs/exercise-design/04-safety-and-re
 
 Important scope: `provision.sh` runs `provision.yml` and its provisioning validation; it does **not** run the separate `readiness.yml` playbook. A successful wrapper run does not establish snapshot identity, emergency-stop reachability, complete Splunk ingestion, or participant admission. Patrick and exercise staff validate these controls; Zian/Julien assist or handle escalations, not a new configuration approval gate. The three-consecutive-cycle criterion is met in the November 1 report; reuse the other evidence only for the scope it demonstrates. See the [baseline screenshot checklist](../docs/offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
 
-For portal startup failures or run-ID recovery, follow the [deployment binding guide](../docs/full-play-deployment-binding.md). Do not remove portal state, reuse a run ID, or bypass preflight to force a restart. For receiver and Sysmon-to-Splunk setup, use the [Splunk/Sysmon ingestion guide](../docs/splunk-sysmon-ingest.md).
+For portal startup failures or run-ID recovery, follow the [full-play deployment runbook](../docs/full-play-deployment-guide.md). Do not remove portal state, reuse a run ID, or bypass preflight to force a restart. For receiver and Sysmon-to-Splunk setup, use the [Splunk/Sysmon ingestion guide](../docs/splunk-sysmon-ingest.md).

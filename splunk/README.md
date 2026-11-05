@@ -51,7 +51,7 @@ Windows Security/PowerShell/Sysmon and Linux inputs already come from
 - **Portal binding.** The controller template now passes the same run ID to the
   application and defaults to full play. A portal-only reset does not update the
   forwarders, so its stale local binding blocks the next Prepare/Start. Use the
-  [clean-deployment handoff](../docs/full-play-deployment-binding.md); this local
+  [clean-deployment handoff](../docs/full-play-deployment-guide.md); this local
   guard is not a substitute for the live per-source probe or #158 reconciliation.
 - **Windows fields** use `rex` on rendered XML (no add-on assumed).
 - **Checkpoint 1 = DP1** (identity triage: Sarah, ≥3 artifacts from ≥2 sources,

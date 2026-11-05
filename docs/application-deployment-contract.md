@@ -29,7 +29,7 @@ For an approved cloud-slice or full-play configuration, select `cloud` or
 selection. Full play still requires `NETSTRIKE_SCENARIO_PATH` and an approved
 `NETSTRIKE_IMPACT_ROOT`. The controller Ansible role now defaults to full play
 and supplies matching scope/run intent; identity/cloud remain explicit overrides.
-See [deployment binding and reset handoff](full-play-deployment-binding.md).
+See the [full-play deployment runbook](full-play-deployment-guide.md).
 The application factory's standalone default remains identity-only.
 
 For Patrick's existing extracted-bundle layout, run the bundled interpreter:
