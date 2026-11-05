@@ -7,8 +7,11 @@ linux_auth,host,0,900
 scenario-controller,application,1,3600
 identity-slice-automation,application,1,3600
 identity-action-adapter,application,1,3600
-identity-action-controller,application,1,3600
-netstrike-portal,application,1,3600
+application-readiness,application,1,3600
+osint-profile-initializer,application,0,3600
+identity-simulator,application,0,3600
+helpdesk-simulator,application,0,3600
+endpoint-ad-simulator,application,0,3600
 scheduled-mfa,application,0,3600
 endpoint-ad-action-adapter,application,0,3600
 mock-cloud-simulator,application,0,3600

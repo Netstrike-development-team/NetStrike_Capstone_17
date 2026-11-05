@@ -19,8 +19,10 @@ November 1 timestamps and run IDs `2026-11-01-test-1`, `-test-2`, and `-test-3`.
 
 The DNS-blocking check, bundle receipt, selected host/service checks, local
 portal readiness, fixture equality, multi-run telemetry presence, and UI
-emergency-stop response are evidenced within the limits above. The evidence demonstrates three consecutive clean-snapshot restore/reprovision
-cycles: the three run IDs appear in Splunk.
+emergency-stop response are evidenced within the limits above. **Owner clarification (2026-11-04):** The three November 1 runs were three
+consecutive clean-snapshot restore/reprovision/readiness cycles. This satisfies
+the consecutive-cycle criterion; earlier documentation describing the cycles
+as nonconsecutive is stale. The three run IDs appear in Splunk.
 
 ## Embedded screenshot evidence
 
@@ -197,11 +199,10 @@ Credentials were test-only; literal values are intentionally omitted.
 - Splunk search of `index="netstrike"` showed telemetry from `CTRL01`, `DC01`,
   and `FIN-WS01` with `run_id=test2-2026-10-21`; the second supplied screenshot
   shows the events and run ID.
-- Snapshot restore and provisioning/readiness were successfully exercised
-  three times, but not in consecutive cycles. The shared test hardware (six
-  cores and 32 GB RAM for four VMs plus Splunk) caused instability and
-  multi-minute provisioning delays. The consecutive-cycle acceptance criterion
-  is therefore not demonstrated.
+- On October 21, snapshot restore and provisioning/readiness were exercised
+  three times, but not in consecutive cycles because shared test hardware
+  caused instability and multi-minute provisioning delays. The November 1
+  three-consecutive-cycle result supersedes that earlier status.
 - The separate Ansible `readiness.yml` playbook checks deployment readiness, and portal
   startup performs its own local preflight/readiness gate. A failed startup
   check prevents the application from starting; actionable blocker evidence is
@@ -212,10 +213,54 @@ Credentials were test-only; literal values are intentionally omitted.
   or failed restore/readiness result to Zian/Julien and do not admit
   participants.
 - The offline provisioning/isolation evidence is accepted for the tested
-  configuration. Docker-hosted Splunk and nonconsecutive cycles still do not
-  establish the full-play Cyber Range rehearsal/sign-off required by #104.
+  configuration, and the November 1 three-consecutive-cycle criterion is met.
+  Docker-hosted Splunk and local rehearsal evidence do not by themselves
+  establish the distinct full-play Cyber Range rehearsal/sign-off required by
+  #104.
 
 ## Existing evidence to reuse
+
+### November 4 telemetry readiness and alert evidence
+
+Patrick supplied two live Splunk screenshots, preserved with the
+[evidence comment on #35](https://github.com/Netstrike-development-team/NetStrike_Capstone_17/issues/35#issuecomment-6647480971).
+
+![Source overview with all 25 expected sources](https://github.com/user-attachments/assets/8945c048-18d9-4078-82b5-ed4ea9c9d9c7)
+
+| Status | Count | Recorded evidence |
+| --- | --- | --- |
+| `OK` | 20 | Includes required application-readiness, identity-action-adapter, identity-slice-automation, scenario-controller, Windows Security and Sysmon; also cloud simulation, impact reset and review archive |
+| `IDLE` | 3 | Optional exercise-clock-supervisor: 4374.275 seconds against 3600; helpdesk-simulator: 4197.515 against 3600; linux_auth: 1454.878812 against 900 |
+| `NOT_SEEN` | 1 | Optional objective-evaluator; objective judgment was intentionally not performed yet |
+| `STALE` | 1 | Required windows_powershell: 929.403 seconds against a 900-second limit |
+
+There are no `MISSING` or `UNMAPPED` rows. The operator intentionally demonstrated
+optional-source age expiry and required-source staleness. Optional inactivity
+correctly remains nonblocking; mandatory staleness is correctly flagged. This is
+a controlled failure-detection demonstration, not an all-healthy readiness pass.
+
+![Scheduled source-freshness alert in Triggered Alerts](https://github.com/user-attachments/assets/a8a63914-0435-4386-9266-0de85ed3fc63)
+
+The second screenshot shows **NetStrike Health - Source freshness**, triggered
+at **2026-11-04 20:50:01 EST**, in `netstrike_staff`, with **Type: Scheduled**,
+**Severity: High**, **Mode: Digest**, and a **View Results** action.
+
+Together these establish source-status classification and live scheduled alert
+triggering in the tested deployment. The trigger screenshot does not show its
+underlying result rows, so it does not independently identify which source(s)
+triggered that later execution. Neither screenshot proves email/webhook delivery,
+an all-healthy recovery, per-source run-ID correlation, or full-exercise acceptance
+under #104/#86. Inspect the result rows using
+[Activity > Triggered Alerts > View Results](../splunk/README.md#view-triggered-alerts).
+
+Original supplied PNG SHA-256 hashes:
+
+```text
+a7bcd859cd3c739d5e2b6839567cf1d904ff26c756f1c0548b1f172b3e13f353  source-overview.png
+bec3f1cd6ebb49faff594dc24b28fb48b1c2864dcfa49d198f166cbfccab06d7  triggered-alert.png
+```
+
+### Earlier provisioning and ingestion evidence
 
 Use [the October 21 #103 comment and its two screenshots](https://github.com/Netstrike-development-team/NetStrike_Capstone_17/issues/103#issuecomment-6319080151)
 rather than requesting the same provisioning and ingestion evidence again:
@@ -256,7 +301,7 @@ readable summaries, not replacements for the detailed check results.
 | Telemetry/run boundary | Source-health results and required source/run correlation, plus raw canonical and learner comparison receipts if not already retained | Reuse #103 ingestion and #102 access/health evidence. Add only missing application-source/export details; a staff search alone does not prove participant access |
 | Participant role assignment, if absent | Participant assigned only `netstrike_participant`, with no built-in `user` role | #102 already includes allowed/forbidden search screenshots; its October 16 update says the corrected role-assignment screenshot was not attached |
 | Safety failure and admission block | Failed dependency/readiness check with actionable blocker, rejected Prepare/Start or recorded staff admission refusal; authenticated emergency Stop with stopped/cancelled actions and preserved audit evidence | Capture a controlled disposable test; do not expose tokens or use production credentials. Escalation/restore failure can also be recorded in a staff incident record |
-| Three consecutive restores | Snapshot identifiers captured after OS/SSH/WinRM and before Ansible; each cycle's restore, new shared run ID, reprovision and complete readiness/baseline result | Three nonconsecutive successes are reported; three consecutive successful cycles remain required by #79/#103 |
+| Three consecutive restores | Snapshot identifiers captured after OS/SSH/WinRM and before Ansible; each cycle's restore, new shared run ID, reprovision and complete readiness/baseline result | **Met:** the November 1 report records three consecutive clean-snapshot restore/reprovision/readiness cycles (owner clarification, 2026-11-04). Preserve the detailed cycle records with the evidence; do not repeat cycles solely to satisfy this criterion |
 
 Application readiness covers local synthetic state, including identity
 sessions/factors, mock-cloud state, and fixture integrity. AD checks cover the

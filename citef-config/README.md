@@ -1,6 +1,6 @@
 # CITEF provisioning
 
-**Status (clarified 2026-10-31):** The Cyber Range has delegated full exercise VM and network configuration control to the team: allocations, images, sizing, addresses, DNS/NTP, firewall rules, management paths, and participant access do not await further range approval. The October 21 provisioning and DNS-blocking evidence is accepted for #79's tested configuration. Complete baseline and consecutive restore evidence remain separate; see the [validation report](../docs/offline-bundle-provisioning-validation.md).
+**Status (clarified 2026-11-04):** The Cyber Range has delegated full exercise VM and network configuration control to the team: allocations, images, sizing, addresses, DNS/NTP, firewall rules, management paths, and participant access do not await further range approval. The October 21 provisioning and DNS-blocking evidence is accepted for #79's tested configuration. The November 1 report records that the three-consecutive-cycle restore/reprovision/readiness criterion was met. Other baseline and final exercise acceptance checks remain separate; see the [validation report](../docs/offline-bundle-provisioning-validation.md).
 
 ## Authoritative guides
 
@@ -8,7 +8,7 @@
 - [Offline tool-bundle inventory](../docs/exercise-design/07-offline-tool-bundle-inventory.md): selected artifacts, licensing, and test evidence.
 - [Offline bundle guide](../docs/offline-bundle.md): bundle build, contents, integrity, and offline dependencies.
 - [Safety and reset](../docs/exercise-design/04-safety-and-reset.md): isolation, stop, snapshots, readiness, and admission.
-- [Portal deployment contract](../docs/application-deployment-contract.md) and [full-play deployment binding](../docs/full-play-deployment-binding.md): portal configuration, startup, and next-run handoff.
+- [Portal deployment contract](../docs/application-deployment-contract.md) and [full-play deployment runbook](../docs/full-play-deployment-guide.md): portal configuration, deployment steps, and next-run handoff.
 
 ## Example topology
 
@@ -25,7 +25,23 @@ The [local network diagram](../docs/network-diagram/network-diagram-local.png) r
 | `SPLUNK01` | Cyber Range-provided Splunk host | `10.77.0.30`, `splunk01.simcorp.test` | SIEM and forwarder receiver; range-provided, not a project-provisioned VM |
 | `FILE01` | Logical service on `CTRL01`; not a separate VM | `ctrl01.simcorp.test` | Disposable fixtures and controller-managed known-good copy |
 
-`ANSIBLE01` is excluded from Linux baseline provisioning so the playbook runner is not reconfigured as a target. Scenario VMs must not depend on Internet access. Patrick accepts the October 21 DNS-blocking method as sufficient #79 isolation evidence; this does not certify every possible egress path.
+`ANSIBLE01` runs the playbooks locally and must not appear in the manifest's
+`assets`. `SPLUNK01` remains in the
+manifest for DNS and receiver settings, but its inventory entry is commented
+out. Neither host receives remote provisioning or service/clock validation
+tasks. Readiness checks Splunk ingestion through its API from `localhost`;
+forwarder configuration on exercise targets remains enabled.
+
+Regenerate an existing inventory after updating the configuration:
+
+```sh
+python3 citef-config/validate_environment.py inventory > citef-config/inventory.ini
+```
+
+The provisioning wrapper regenerates inventory from the JSON manifest using
+its bundled source, so rebuild the offline bundle to include these changes.
+
+Scenario VMs must not depend on Internet access. Patrick accepts the October 21 DNS-blocking method as sufficient #79 isolation evidence; this does not certify every possible egress path.
 
 ## Prepare and provision
 
@@ -54,6 +70,6 @@ Approved deployments require the configured TLS material. Inject controller serv
 
 Follow the [safety and reset procedure](../docs/exercise-design/04-safety-and-reset.md). Capture clean snapshots after OS installation and remote-management setup, but before provisioning. After a restore, run the wrapper against the clean environment with a new unique run ID, then complete the documented readiness and admission checks.
 
-Important scope: `provision.sh` runs `provision.yml` and its provisioning validation; it does **not** run the separate `readiness.yml` playbook. A successful wrapper run does not establish snapshot identity, emergency-stop reachability, complete Splunk ingestion, or participant admission. Patrick and exercise staff validate these controls; Zian/Julien assist or handle escalations, not a new configuration approval gate. Reuse the October evidence for what it shows; the consecutive-cycle criterion remains unmet. See the [baseline screenshot checklist](../docs/offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
+Important scope: `provision.sh` runs `provision.yml` and its provisioning validation; it does **not** run the separate `readiness.yml` playbook. A successful wrapper run does not establish snapshot identity, emergency-stop reachability, complete Splunk ingestion, or participant admission. Patrick and exercise staff validate these controls; Zian/Julien assist or handle escalations, not a new configuration approval gate. The three-consecutive-cycle criterion is met in the November 1 report; reuse the other evidence only for the scope it demonstrates. See the [baseline screenshot checklist](../docs/offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
 
-For portal startup failures or run-ID recovery, follow the [deployment binding guide](../docs/full-play-deployment-binding.md). Do not remove portal state, reuse a run ID, or bypass preflight to force a restart. For receiver and Sysmon-to-Splunk setup, use the [Splunk/Sysmon ingestion guide](../docs/splunk-sysmon-ingest.md).
+For portal startup failures or run-ID recovery, follow the [full-play deployment runbook](../docs/full-play-deployment-guide.md). Do not remove portal state, reuse a run ID, or bypass preflight to force a restart. For receiver and Sysmon-to-Splunk setup, use the [Splunk/Sysmon ingestion guide](../docs/splunk-sysmon-ingest.md).

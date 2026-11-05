@@ -51,12 +51,52 @@ Windows Security/PowerShell/Sysmon and Linux inputs already come from
 - **Portal binding.** The controller template now passes the same run ID to the
   application and defaults to full play. A portal-only reset does not update the
   forwarders, so its stale local binding blocks the next Prepare/Start. Use the
-  [clean-deployment handoff](../docs/full-play-deployment-binding.md); this local
+  [clean-deployment handoff](../docs/full-play-deployment-guide.md); this local
   guard is not a substitute for the live per-source probe or #158 reconciliation.
 - **Windows fields** use `rex` on rendered XML (no add-on assumed).
 - **Checkpoint 1 = DP1** (identity triage: Sarah, ≥3 artifacts from ≥2 sources,
   per `orchestrator/checkpoints.py`).
 - **Licence** limit is 10 GB/day (CITEF record, 2026-10-02); the volume alert fires at 80%.
+
+## Distinguish scenario health from participant evidence
+
+Facilitators should use index and sourcetype to select the evidence contract,
+then inspect event type and context within the private audit. A source component
+name alone is not a health/evidence classification: a simulator can emit both
+setup/control records and learner-observable facts.
+
+| Data | Search scope | Interpretation |
+| --- | --- | --- |
+| Private application audit | `index=netstrike_staff sourcetype="netstrike:event:v1"` | Complete canonical ledger, including readiness, scenario control, checkpoints, judgments, archives and originals of projected learner facts; not every row is a health event |
+| Participant application evidence | `index=netstrike sourcetype="netstrike:learner:audit:v1"` | Reviewed, allowlisted synthetic SimCorp service facts |
+| Participant host evidence | `index=netstrike` with Windows/Linux sources | Actual host telemetry, separate from synthetic application facts |
+
+For participant application evidence, replace the sample run ID and select a
+time window covering that run:
+
+```spl
+index=netstrike sourcetype="netstrike:learner:audit:v1"
+run_id="YOUR_RUN_ID"
+```
+
+For facilitator inspection of the private application audit:
+
+```spl
+index=netstrike_staff sourcetype="netstrike:event:v1"
+run_id="YOUR_RUN_ID"
+| table _time event_id source.component event_type visibility
+```
+
+The **Source overview** report spans application and host telemetry.
+`OK` means a source is sufficiently recent, not that a learner performed an
+objective correctly. `IDLE`/`STALE` describe freshness; the lookup's `required`
+flag controls health-alert behavior, not participant visibility or grading.
+
+Participants must remain restricted to `netstrike`. A canonical event's
+`visibility=participant` is not permission to expose the private ledger:
+projection requires the reviewed event type, producer and visibility to match.
+See [the separate evidence contracts](../docs/learner-splunk-audit.md#separate-evidence-contracts)
+for allowed facts and exclusions.
 
 ## Deploy
 
@@ -72,10 +112,19 @@ Windows Security/PowerShell/Sysmon and Linux inputs already come from
    to `netstrike_staff`; `/var/lib/netstrike/learner-event-spool` routes to `netstrike`.
 4. Provision hosts with both `deployment_version` and `exercise_run_id`
    (`scripts/provision.sh`), so every source is tagged with the run ID.
-5. Review `lookups/netstrike_expected_sources.csv` (`required`, `max_age_seconds`);
-   the required set is an assumption for the identity slice.
+5. Review `lookups/netstrike_expected_sources.csv` (`required`, `max_age_seconds`).
+   The required application sources cover scenario control, identity-slice
+   automation, the active identity-action adapter, and facilitator readiness.
+   One-time setup and scenario-action sources are listed as optional so their
+   expected absence or age does not block the global freshness alert.
 
 ## Acceptance checklist (to run live and record in #102)
+
+The [November 4 telemetry evidence](../docs/offline-bundle-provisioning-validation.md#november-4-telemetry-readiness-and-alert-evidence)
+records all 25 expected sources, intentional optional `IDLE` states, required
+PowerShell `STALE`, and a scheduled source-freshness alert trigger. Reuse it for
+status classification and live alert triggering; it is not an all-healthy
+readiness result or source-by-source run-ID evidence.
 
 - [ ] `NetStrike Probe - Run ID by source` with a fresh run ID shows every
       identity-slice source (application and Windows).
@@ -94,6 +143,19 @@ Windows Security/PowerShell/Sysmon and Linux inputs already come from
 - [ ] Check for duplicates/gaps and compare with `python -m dashboard.telemetry_check` (#158).
 - [ ] `NetStrike Health - Ingestion volume by source` measured during a rehearsal.
 - [ ] Redeploy to a clean Splunk from this directory and re-run the checks; save evidence outside reverted VMs.
+
+## View triggered alerts
+
+1. In Splunk Web, click **Activity**, then **Triggered Alerts**.
+2. Set **App** to **NetStrike Staff (netstrike_staff)**. If needed, set **Owner**
+   to **All owners** and **Alert name** to **NetStrike Health - Source freshness**.
+3. Find the trigger by time and click **View Results** to inspect the required
+   `MISSING`/`STALE` source rows returned by that execution. The separate
+   **NetStrike Health - Source overview** report lists optional `IDLE` and
+   `NOT_SEEN` states as well as healthy sources.
+4. Preserve the trigger time and result rows with the deployment/run evidence
+   outside restored VMs. A trigger proves alert execution; it does not prove
+   email/webhook delivery or that required sources have recovered.
 
 ## Known risks to verify
 

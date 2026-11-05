@@ -44,7 +44,7 @@ index](exercise-design/README.md).
 | [Learner audit/export comparison](learner-telemetry-comparison.md) | Read-only comparison of published learner evidence with an independently supplied Splunk Raw Events export |
 | [Application readiness](application-readiness.md) | Local preflight, guarded preparation/start, and the boundary from range approval |
 | [Application deployment inputs](application-deployment-contract.md) | Offline read-only configuration inspection before startup side effects; not runtime/range readiness |
-| [Full-play deployment binding](full-play-deployment-binding.md) | Full-exercise selection, shared portal/host run intent and safe next-run admission after reset |
+| [Full-play deployment runbook](full-play-deployment-guide.md) | Provisioning steps, post-deployment verification, and safe next-run handoff |
 | [Supervised exercise clock](exercise-clock.md) | Staff clock inspection, supervision, failure behavior, and recovery |
 | [Human support workflow](exercise-support.md) | Private learner requests, staff replies, roles, and API lifecycle |
 | [Run-review archives](run-review-archives.md) | Capture and retrieval of frozen run-review snapshots across application reset |

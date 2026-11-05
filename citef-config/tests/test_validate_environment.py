@@ -3,6 +3,8 @@ import importlib.util
 import unittest
 from pathlib import Path
 
+import yaml
+
 
 MODULE_PATH = Path(__file__).parents[1] / "validate_environment.py"
 SPEC = importlib.util.spec_from_file_location("validate_environment", MODULE_PATH)
@@ -13,7 +15,6 @@ SPEC.loader.exec_module(validate_environment)
 def valid_manifest():
     hosts = [
         ("CTRL01", "10.77.0.10", "linux", "ssh", ["CTRL01", "IDP01", "HELPDESK01", "CLOUD01", "FILE01"]),
-        ("ANSIBLE01", "10.77.0.14", "linux", "ssh", ["ANSIBLE01"]),
         ("DC01", "10.77.0.11", "windows", "winrm", ["DC01"]),
         ("FIN-WS01", "10.77.0.12", "windows", "winrm", ["FIN-WS01"]),
         ("SPLUNK01", "10.77.0.13", "linux", "ssh", ["SPLUNK01"]),
@@ -100,14 +101,14 @@ class ValidateEnvironmentTests(unittest.TestCase):
 
     def test_splunk_dns_name_can_be_customized(self):
         manifest = valid_manifest()
-        manifest["assets"][4]["dns_name"] = "splunk-lab.simcorp.test"
+        manifest["assets"][3]["dns_name"] = "splunk-lab.simcorp.test"
         manifest["splunk"]["forwarder_receiver"]["host"] = "splunk-lab.simcorp.test"
         manifest["splunk"]["rest_url"] = "https://splunk-lab.simcorp.test:8089"
         self.assertEqual(validate_environment.validate_manifest(manifest), manifest)
 
     def test_splunk_dns_name_must_be_in_the_authoritative_zone(self):
         manifest = valid_manifest()
-        manifest["assets"][4]["dns_name"] = "192.168.0.234"
+        manifest["assets"][3]["dns_name"] = "192.168.0.234"
         manifest["splunk"]["forwarder_receiver"]["host"] = "192.168.0.234"
         with self.assertRaisesRegex(validate_environment.ManifestError, "fully qualified name within"):
             validate_environment.validate_manifest(manifest)
@@ -145,9 +146,9 @@ class ValidateEnvironmentTests(unittest.TestCase):
     def test_inventory_is_generated_from_approved_targets(self):
         inventory = validate_environment.render_inventory(valid_manifest())
         self.assertIn("ctrl01 ansible_host=10.77.0.10", inventory)
-        self.assertIn("ansible01 ansible_host=10.77.0.14", inventory)
+        self.assertNotIn("ansible01", inventory)
         self.assertIn("[file_store]\nctrl01", inventory)
-        self.assertIn("[ansible_controller]\nansible01", inventory)
+        self.assertNotIn("[ansible_controller]", inventory)
         self.assertIn("[domain_controllers]\ndc01", inventory)
         self.assertIn(
             "ansible_connection=winrm ansible_winrm_transport=ntlm "
@@ -157,6 +158,76 @@ class ValidateEnvironmentTests(unittest.TestCase):
         self.assertNotIn("ansible_user=", inventory)
         self.assertNotIn("ansible_password=", inventory)
         self.assertNotIn("ansible_become_password=", inventory)
+
+    def test_splunk_inventory_is_commented_out(self):
+        inventory = validate_environment.render_inventory(valid_manifest())
+        self.assertIn("# [splunk]", inventory)
+        self.assertIn("# splunk01 ansible_host=10.77.0.13", inventory)
+        active_lines = [
+            line for line in inventory.splitlines() if not line.startswith("#")
+        ]
+        self.assertFalse(any("splunk01" in line for line in active_lines))
+
+    def test_runner_is_not_a_supported_manifest_asset(self):
+        manifest = valid_manifest()
+        manifest["assets"].append({
+            "name": "ANSIBLE01",
+            "address": "10.77.0.14",
+            "dns_name": "ansible01.simcorp.test",
+            "os_family": "linux",
+            "connection": "ssh",
+            "port": 22,
+            "logical_assets": ["ANSIBLE01"],
+            "required_services": ["ssh"],
+        })
+        with self.assertRaisesRegex(validate_environment.ManifestError, "ANSIBLE01"):
+            validate_environment.validate_manifest(manifest)
+
+    def test_checked_in_manifests_do_not_configure_the_runner(self):
+        for name in ("environment.example.json", "environment.local.json"):
+            with self.subTest(name=name):
+                manifest = json.loads((MODULE_PATH.parent / name).read_text())
+                self.assertNotIn("ANSIBLE01", [host["name"] for host in manifest["assets"]])
+
+    def test_remote_validation_plays_exclude_non_targets(self):
+        for name in ("provisioning_validation.yml", "readiness.yml"):
+            with self.subTest(name=name):
+                plays = yaml.safe_load((MODULE_PATH.parent / "playbooks" / name).read_text())
+                remote_play = plays[1]
+                self.assertEqual(
+                    remote_play["hosts"],
+                    "linux_hosts:windows_hosts",
+                )
+
+    def test_ssh_key_scan_excludes_splunk(self):
+        from jinja2 import Environment
+
+        plays = yaml.safe_load((MODULE_PATH.parent / "playbooks/provision.yml").read_text())
+        loop = plays[1]["tasks"][0]["loop"]
+        manifest = valid_manifest()
+        rendered = Environment().compile_expression(loop[3:-3])(assets=manifest["assets"])
+        self.assertEqual([host["name"] for host in rendered], ["CTRL01"])
+        self.assertEqual(
+            plays[-2]["hosts"],
+            "linux_hosts",
+        )
+
+    def test_dedicated_file_store_remains_a_target(self):
+        manifest = valid_manifest()
+        manifest["assets"][0]["logical_assets"].remove("FILE01")
+        manifest["assets"].append({
+            "name": "FILE01",
+            "address": "10.77.0.15",
+            "dns_name": "file01.simcorp.test",
+            "os_family": "linux",
+            "connection": "ssh",
+            "port": 22,
+            "logical_assets": ["FILE01"],
+            "required_services": ["ssh"],
+        })
+        inventory = validate_environment.render_inventory(manifest)
+        self.assertIn("file01 ansible_host=10.77.0.15", inventory)
+        self.assertIn("[file_store]\nfile01", inventory)
 
     def test_duplicate_addresses_are_rejected(self):
         manifest = valid_manifest()

@@ -16,7 +16,7 @@
       changed_when: false
 
 - name: Validate provisioned services, names, and clocks
-  hosts: all
+  hosts: linux_hosts:windows_hosts
   gather_facts: false
   vars_files:
     - "{{ playbook_dir }}/../environment.json"
