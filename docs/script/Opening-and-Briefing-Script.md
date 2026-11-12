@@ -96,17 +96,38 @@ undoes work already completed. Confirm the external procedure before delivery.
 
 ## 3. SimCorp and the service map — 04:00–06:00
 
-> SimCorp is a fictional services company preparing a quarterly customer billing export. You'll be supporting its staff while investigating an incident. Sarah Mitchell is the VP of Finance, Tyler Brennan is a helpdesk technician, and Rebecca Nwosu is the Director of IT. Simulated staff conversations go through exercise control, not real calls or emails.
+> **Welcome to SimCorp**
 >
-> Your handout includes short policies for identity and access, helpdesk verification, data handling and escalation. Use those policies to understand what normal, authorized activity should look like. They aren't an answer key.
+> SimCorp is a fictional services company preparing its quarterly customer billing export next week. You'll support its staff while investigating an incident. Key people:
 >
-> The map shows services, not necessarily seven separate VMs. Identity handles accounts, sessions and MFA. Helpdesk holds support records. The Finance workstation and directory provide endpoint and account context. The mock cloud holds synthetic storage records, and the recovery service supplies disposable files and their known-good backup.
+> * Sarah Mitchell: VP of Finance
+> * Tyler Brennan: Helpdesk technician
+> * Rebecca Nwosu: Director of IT
 >
-> Splunk is the investigation tool. The participant portal receives situation updates, records your findings and exposes approved response controls. The cloud is a local Python simulation, not AWS. Portal response actions change controlled simulation state; don't assume they administer real Windows or Active Directory services.
+> Staff conversations are simulated, not real calls or emails.
+>
+> **Policies**
+>
+> Your handout includes short policies on identity and access, helpdesk verification, data handling, and escalation. Use them to understand what normal, authorized activity looks like. They aren't an answer key.
+>
+> **The environment**
+>
+> The map shows seven services, not necessarily seven separate VMs:
+>
+> * Identity service: accounts, sessions, SSO, and MFA
+> * Helpdesk system: support records
+> * Finance workstation and directory (Active Directory): endpoint and account context
+> * Mock cloud: synthetic storage records
+> * Recovery service: disposable files and their known-good backup
+> * Splunk: your investigation tool for logs and events
+>
+> The participant portal delivers situation updates, records your findings, and provides the approved response controls.
+>
+> You don't need to memorize this. The network diagram will be your reference throughout the exercise. Let's take a look at it before we move on to your tools.
 
-Show the conceptual map in the quick reference, followed by Patrick's approved
-participant topology if available. Do not present the repository's example
-subnet, URLs or logical-to-VM mapping as a confirmed deployment.
+**Staff procedure, not extra participant dialogue:**
+
+Show the conceptual map first, followed by Patrick's approved participant topology if available. Don't present the repository's example subnet, URLs, or logical-to-VM mapping as a confirmed deployment.
 
 ## 4. Access demonstration — 06:00–09:00
 
