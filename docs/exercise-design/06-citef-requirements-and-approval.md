@@ -61,7 +61,7 @@ decision owner. A blank row means the decision remains pending.
 | Learning objectives | Five objectives: triage, timeline, identity/endpoint containment, mock-cloud containment, recovery/communication | Approved | Cyber Range, 2026-09-24 | Details may be tuned during rehearsal |
 | Decision model | Four deterministic checkpoints with contained/adverse variants | Approved | Cyber Range, 2026-09-24 | — |
 | Simulation control | MSEL-driven automation with manual facilitator fallback | Approved | Cyber Range, 2026-09-24 | — |
-| SIEM | Cyber Range-provided Splunk under its educational license; the project supplies sources, field mappings, searches, and dashboards | Approved with follow-up | Cyber Range, 2026-09-24; product/version, license, and capacity confirmed 2026-10-02; ingestion/index/access permissions relayed by Patrick 2026-10-04 | Splunk Enterprise 10.0.1; maximum 10 GB ingestion per day and 300 GB disk size. HEC and Universal Forwarder ingestion are permitted; create dedicated index `netstrike` with one-day retention. Separate participant and facilitator access: participant investigates permitted simulation telemetry; facilitator manages the simulation and Splunk configuration. RBAC implementation and end-to-end validation remain |
+| SIEM | Cyber Range-provided Splunk under its educational license; the project supplies sources, field mappings, searches, and dashboards | Approved with follow-up | Cyber Range, 2026-09-24; product/version, license, and capacity confirmed 2026-10-02; ingestion/index/access permissions relayed by Patrick 2026-10-04 | Splunk Enterprise 10.0.1; maximum 10 GB ingestion per day and 300 GB disk size. HEC and Universal Forwarder ingestion are permitted; use separate learner `netstrike` and staff-only `netstrike_staff` indexes with one-day retention. Versioned roles and local access checks exist; validate changed configurations and delivery-run access and ingestion separately |
 | Cloud | Stateful Python mock only; no public-cloud account | Approved | Cyber Range, 2026-09-24 | — |
 | Impact | Marker/move simulation on disposable fixtures; no encryption | Approved | Cyber Range, 2026-09-24 | — |
 | Reset approach | Cyber Range snapshot restore followed by readiness validation | Approved with change | Cyber Range, 2026-09-24 | No 20-minute Ansible reset target is required |
@@ -178,8 +178,9 @@ producers, Splunk field mappings, health queries, learner views, solution-guide
 searches, and export validation.
 
 The selected Windows telemetry stack is Splunk Universal Forwarder 10.0.1 and
-Sysmon 15.22. Use Universal Forwarder for Windows event-channel collection;
-HEC is an approved ingestion option for project events. Send host telemetry and
+Sysmon 15.22. Use Universal Forwarder for Windows event-channel collection and
+the configured application spools; HEC is an approved alternative, not a
+requirement for the monitored-file path. Send host telemetry and
 participant-safe projections to `netstrike`, and canonical staff application
 events to `netstrike_staff`, with one-day retention. Participant access is for permitted
 simulation investigation; facilitator access includes simulation management.

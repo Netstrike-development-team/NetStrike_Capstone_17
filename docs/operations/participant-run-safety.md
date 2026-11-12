@@ -116,6 +116,8 @@ concurrency/clock behavior under range load, evidence preservation and clean VM
 snapshots. [Application reset is not snapshot restoration](staff-operations.md).
 Include rapid double submit/across-form actions, a slow write across reconnect
 and reset, failed post-write inspection and delayed cloud/recovery reads on the
-actual final deployment in #99/#104. Their acceptance issues remain open.
+actual final deployment as part of the remaining rehearsal work in #104.
+Participant-materials issue #99 is closed; that does not establish acceptance
+of a changed deployment.
 Ashley coordinates rehearsal/admission/acceptance. No new service, dependency,
 license or hosted deployment is introduced.

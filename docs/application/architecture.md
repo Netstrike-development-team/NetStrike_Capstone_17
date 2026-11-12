@@ -52,12 +52,15 @@ safe identity, endpoint/AD, mock-cloud, and marker-impact/recovery actions.
 
 ### Telemetry and Splunk
 
-The target design sends native Windows audit, PowerShell, and Sysmon events
-through the Splunk Universal Forwarder. Project-owned services should send
-normalized NetStrike events through a confirmed Splunk input, preferably HEC.
-Windows-forwarder configuration is implemented in the proposed offline
-Ansible roles; normalized portal-event forwarding and live Splunk ingestion
-are not yet implemented or verified. Splunk is the only SIEM in the MVP.
+The configured deployment path uses Splunk Universal Forwarder inputs for native Windows audit,
+PowerShell, and Sysmon events and for the application-event spools. The
+canonical ledger goes to the staff-only index; a separate reviewed projection
+goes to the learner index. The Ansible and Splunk configuration is implemented,
+but live delivery, access boundaries, and source health must be verified for
+the selected deployment. See the [spool guide](event-spool.md), the
+[learner audit guide](../operations/learner-splunk-audit.md), and the
+[Windows TLS limitation](../deployment/splunk-sysmon-ingest.md#receiver-prerequisites).
+Splunk is the only SIEM in the MVP.
 
 No commercial EDR is required. Sysmon provides endpoint activity telemetry;
 NetStrike's allowlisted action adapters provide the exercise containment
@@ -80,9 +83,10 @@ The final VM count, image versions, resources, network, and access model are
 captured as environment configuration rather than hard-coded in application
 logic. The proposed logical mapping, fail-closed inventory, Ansible procedure,
 and external readiness workflow are documented in
-[`citef-config/README.md`](../../citef-config/README.md). CITEF has not yet
-confirmed the target addresses, images, or access paths, so the example
-manifest cannot be used for deployment.
+[`citef-config/README.md`](../../citef-config/README.md). The team selects
+addresses, images, and access paths under delegated authority; the example
+manifest is not proof of deployed values and must be completed and validated
+for the actual deployment.
 
 ## Explicitly out of scope for the MVP
 

@@ -1,7 +1,8 @@
-# Remaining development and PR estimate — updated 10 October 2026
+# Remaining development and PR estimate
 
-This is a planning estimate, not a list of confirmed defects or a promise of an
-exact PR count. Baseline: #152/#155/#158/#160/#162/#164/#166/#168/#170 merged; Patrick's #156 also merged. The
+This is an October 10 planning snapshot with later deployment evidence noted
+below, not a live issue list, confirmed-defect list, or promise of an exact PR
+count. Baseline: #152/#155/#158/#160/#162/#164/#166/#168/#170 merged; Patrick's #156 also merged. The
 application already supports all four checkpoint branches, mock-cloud and safe
 impact/recovery, submissions, human review/AAR, run archives, supervised timing,
 private event-spool export, local readiness, human support and staff operations.

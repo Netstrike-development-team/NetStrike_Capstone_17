@@ -1,8 +1,9 @@
 # Briefing materials — author review and delivery checklist
 
-Revised 14 October 2026. Supports Anna's #99 participant-materials work, with
-related authored content under #98/#100. These local revisions are drafts,
-not issue closure, teammate acceptance or authorization to promote to main.
+The draft review below is dated 14 October 2026. It supports Anna's #99
+participant-materials work, with related authored content under #98/#100.
+#99 closed on 29 October; this dated checklist is not itself evidence that
+every item was completed, nor authorization to promote to main.
 
 ## Files and intended audience
 
@@ -50,7 +51,7 @@ The revision preserves her welcome and approved duration, and adds/fixes:
 - [ ] Approve the four short fictional policies, including a usable trusted helpdesk verification/contact route; no real contacts or answer key.
 - [ ] Agree how participants acknowledge messages and give ordinary status updates; no UI acknowledgement is currently implemented.
 - [ ] Run a timed read-aloud/click-through within 15 minutes, including the opening and questions; record actual timing and revisions.
-- [ ] Have at least one non-author use the materials and portal without code explanations. Record confusion, defects and resolutions/accepted limitations under #99.
+- [ ] For changed materials or deployments, have a non-author use the materials and portal without code explanations. Record confusion, defects and resolutions or accepted limitations with the relevant rehearsal evidence.
 - [ ] Align facilitator/evaluator/solution guidance and assistance treatment under #100; no automatic numeric score or calibration claim.
 
 ### Patrick — deployment and tool walkthrough

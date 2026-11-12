@@ -10,7 +10,8 @@ Participants enter while the compromise is still developing. They must determine
 
 ## Logical assets
 
-The exact VM mapping is agreed with the Cyber Range, but the story requires these logical assets:
+The team selects and validates the VM mapping under delegated Cyber Range
+authority. The story requires these logical assets:
 
 | Asset | Function |
 |---|---|
@@ -54,7 +55,7 @@ DP1 does not change attacker capability; it only controls support and scoring.
 
 ### DP2 — Identity and endpoint containment
 
-**Pass condition:** `sess-red-01` revoked, `factor-red-01` removed, Sarah's exercise password reset, and `FIN-WS01` remote path isolated by minute 60.
+**Pass condition:** `sess-red-01` revoked, `factor-red-01` removed, Sarah's exercise password reset, and `FIN-WS01` simulated remote path isolated by minute 60.
 
 - **Pass — contained variant:** A new authentication attempt fails. The attacker continues using a pre-staged mock-cloud key already obtained before containment; this ensures later objectives remain available.
 - **Miss — adverse variant:** The session remains valid long enough to create `svc-print-sync`, add it to the designated privileged exercise group, and perform further directory discovery.
@@ -68,7 +69,7 @@ DP1 does not change attacker capability; it only controls support and scoring.
 
 ### DP4 — Impact and recovery
 
-**Pass condition before impact:** Designated persistence removed, affected host isolated, and impact task disabled by minute 110.
+**Pass condition before impact:** Designated persistence removed, the affected host's simulated remote path isolated, and impact task disabled by minute 110.
 
 - **Pass — blocked impact:** The simulated impact attempt is blocked; five canary files receive harmless marker companions for investigation.
 - **Miss — realized impact:** All disposable files under the allowlisted exercise directory are moved to an unavailable staging directory and marker files plus a ransom note are created. Originals remain recoverable by the controller.
@@ -88,7 +89,7 @@ Times are relative to the start of exercise play, after the briefing. The facili
 | ACT-01 | 00:10 | Automated attacker action | Use `sess-red-01` for a second simulated authentication and access to `FIN-WS01`. | Find the source, user, session, and affected host in Splunk. | Creates live evidence after exercise start. | — | — |
 | MSEL-03 | 00:15 | Phone/portal inject | Tyler states that the caller knew Sarah's manager and travel story, so he completed the reset. | Interview the simulated witness; record what is fact versus recollection. | Facilitator follows scripted answers only. | From: Tyler (role-player, scripted answers only)<br>To: Participant(s) conducting the interview (investigation lead) | Tyler’s opening line (if he starts): “Hi, I handled a reset for Sarah last night. Do you need to talk to me?”<br><br>Answers (F = documented fact, R = Tyler’s recollection):<br>When did the call come in? “Around quarter to seven. The ticket has the exact time.” (F)<br>Where did it come from? “Not the number on file, I see now.” (F)<br>Did you call back? “No. She said her phone was dead and she was on someone else’s.” (F + R)<br>Why did you trust her? “She knew {{MANAGER}} and had a whole travel story. It felt real.” (R)<br>Did she sound like Sarah? “I’ve never spoken to Sarah. She sounded stressed, with background noise.” (R)<br>What did you change? “Reset the password and added a new authenticator. I left the old one.” (F)<br>How did she get the password? “I read it to her over the phone.” (R)<br>Did you check with her manager or tell your supervisor? “No to both. It was late and it looked resolved.” (F + R)<br>Anything else? “Just the payroll approval. She asked me to confirm it worked before hanging up.” (R)<br>Anything not covered: “I don’t remember that, sorry. |
 | DP1 | 00:25 | Checkpoint | Evaluate incident classification and submitted evidence. | Submit triage answer if not already submitted. | Issue the documented hint on miss. | — | — |
-| MSEL-04 | 00:30 | Portal inject | Rebecca Nwosu requests a five-minute status: affected identity, confidence, immediate risk, and next action. | Provide a concise, evidence-based update. | Evaluates communication without revealing the answer. | From: Rebecca Nwosu (Executive Sponsor)<br>To: Incident lead; the reply goes back to Rebecca | “I’m in a leadership meeting at 10:00. Can you send me a quick update before then?<br>Who is affected, and how sure are you?<br>What’s the risk right now?<br>What are you doing next? |
+| MSEL-04 | 00:30 | Portal inject | Rebecca Nwosu requests a five-minute status: affected identity, confidence, immediate risk, and next action. | Provide a concise, evidence-based update. | Evaluates communication without revealing the answer. | From: Rebecca Nwosu (Director of IT)<br>To: Incident lead; the reply goes back to Rebecca | “I’m in a leadership meeting at 10:00. Can you send me a quick update before then?<br>Who is affected, and how sure are you?<br>What’s the risk right now?<br>What are you doing next? |
 | ACT-02 | 00:35 | Automated attacker action | Run safe process and directory discovery on the designated endpoint. | Detect execution, identify account/host, preserve evidence, and begin containment. | Command output and process events must reach Splunk. | — | — |
 | ACT-03 | 00:45 | Automated attacker action | Attempt persistence through the designated exercise account/group change. | Review directory audit events and reverse unauthorized changes. | Action variant depends on verified identity state where practical. | — | — |
 | MSEL-05 | 00:50 | Portal inject | Helpdesk supervisor asks whether Sarah's access can be restored immediately for payroll approval. | Balance business need with containment; explain conditions for safe restoration. | There is no penalty for keeping the account restricted with rationale. | From: Helpdesk supervisor ({{SUPERVISOR}})<br>To: Incident lead | “Hi,<br>Sarah has been locked out since this morning and payroll approvals are due by 11:30. Can we restore her access now? If not, what should I tell her?<br>Thanks,<br>{{SUPERVISOR}}” |
@@ -106,7 +107,7 @@ Times are relative to the start of exercise play, after the briefing. The facili
 | DP4 | 01:50 | Checkpoint | Verify endpoint isolation, persistence removal, and impact-task state. | Disable the designated impact path and validate. | Select blocked- or realized-impact variant. | — | — |
 | ACT-08A | DP4 pass | Automated branch | Log blocked impact; create marker companions for five canary files. | Inspect artifacts and confirm production-like data remains available. | Marker files only. | — | — |
 | ACT-08B | DP4 miss | Automated branch | Move disposable files to controller-managed staging, create markers, and write a ransom note. | Contain, preserve artifacts, and invoke the recovery procedure. | No encryption and no VM-disk interaction. | — | — |
-| MSEL-09 | 01:55 | Portal inject | Executive asks whether critical service can be restored and what remains unknown. | Restore designated data/service and communicate constraints. | Starts final recovery/report window. | From: Rebecca Nwosu (Executive Sponsor)<br>To: Incident lead | “I need a decision I can take to the board within the hour. Can we restore the customer export service today? What don’t we know yet? If it can’t be restored, what should the business do in the meantime?<br>- Rebecca”<br><br>Give only if participants ask:<br>Last known-good backup: Customer Export snapshot Mon 18:00 (before the first attacker sign-in at 19:03). The Tue 02:00 snapshot is not trusted.<br>Restore time: about 45 minutes from snapshot, or about 20 minutes to rerun the export once the lock is cleared. |
+| MSEL-09 | 01:55 | Portal inject | Rebecca asks whether critical service can be restored and what remains unknown. | Restore designated data/service and communicate constraints. | Starts final recovery/report window. | From: Rebecca Nwosu (Director of IT)<br>To: Incident lead | “I need a decision I can take to the board within the hour. Can we restore the customer export service today? What don’t we know yet? If it can’t be restored, what should the business do in the meantime?<br>- Rebecca”<br><br>Give only if participants ask:<br>Last known-good backup: Customer Export snapshot Mon 18:00 (before the first attacker sign-in at 19:03). The Tue 02:00 snapshot is not trusted.<br>Restore time: about 45 minutes from snapshot, or about 20 minutes to rerun the export once the lock is cleared. |
 | END-01 | 02:10 | Exercise end | Freeze scoring, preserve run ledger, and collect final incident brief. | Submit final report and stop technical actions. | Proceed directly to the 25-minute hotwash. | — | — |
 
 ## Facilitator pacing rules

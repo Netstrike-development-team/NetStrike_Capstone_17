@@ -88,7 +88,9 @@ with Latifa.
 
 ## Current priority order
 
-Updated October 10: all four scenario stages and application review/evidence/staff
+The following is a planning snapshot based on October 10 application status,
+with later deployment evidence noted separately; it is not a live issue list.
+All four scenario stages and application review/evidence/staff
 foundations are implemented locally; #152/#155/#158/#160/#162/#164/#166/#168/#170 and Patrick's #156 are merged.
 This is application progress, not live Cyber Range acceptance.
 
