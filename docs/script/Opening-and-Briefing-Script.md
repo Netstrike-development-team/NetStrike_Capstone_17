@@ -56,7 +56,6 @@ Patrick/Aya must supply the appropriate participant credentials separately.
 > * Isolate lab hosts using the provided control.
 > * Revoke mock-cloud keys and correct mock bucket policies.
 > * Restore data from the exercise backup.
-> * Ask me to simulate any action the lab doesn't support.
 >
 > Before any disruptive action, preserve the relevant evidence first and explain why you're taking it.
 >
@@ -64,10 +63,10 @@ Patrick/Aya must supply the appropriate participant credentials separately.
 >
 > * Don't scan or connect to anything outside the exercise subnet or scope.
 > * Don't use real names, passwords, phone numbers, or personal data.
-> * Don't contact real people or carry out real phishing.
+> * Don't contact real people.
 > * Don't change Splunk, the controller, evaluator/scoring settings, or VM snapshots.
 > * Don't delete or alter logs.
-> * Don't install unapproved or offensive tools, or disable safety controls.
+> * Don't install unapproved tools or disable safety controls.
 >
 > **If something looks wrong**
 >
