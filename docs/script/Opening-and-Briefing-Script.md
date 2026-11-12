@@ -134,24 +134,56 @@ Show the conceptual map first, followed by Patrick's approved participant topolo
 Before this section, workstations should be ready. Never assume OS login also
 authenticates Splunk or the portal. Do not project passwords or access tokens.
 
-### Splunk: demonstrate a neutral search
-
-> Open [SPLUNK_URL_OR_SHORTCUT] and sign in using the private access instructions. Open [SPLUNK_APP]. Set the time picker to [SPLUNK_UTC_WINDOW], including the supplied pre-exercise history. Use the exact learner search from your handout; it is restricted to your assigned exercise and run.
+> Your workstation is already logged in. Let's dive right in.
 >
-> Open one harmless orientation event and find its time, source and event identifier. A received time and the time something happened can be different. Record occurrence times with their time zone.
+**Splunk:**
+
+> First, let's open Splunk. Splunk is where you'll do most of your investigating.
 >
-> If you get no results, check the supplied time window and run filter, then tell us. No results do not prove that nothing happened. Don't remove scope restrictions or change server configuration to fix access.
-
-Patrick must validate the handout's base search, extracted fields, event-ID
-mapping and participant permissions on the actual deployment. Use the neutral
-count/table examples in the handout, not searches that identify the culprit.
-This is a short refresher, not a replacement for introductory Splunk training.
-
-### Participant portal: demonstrate connection and navigation
-
-> Open [PORTAL_BASE_URL]/participant. Paste your assigned participant token into **Exercise access token**, then select **Connect**. Check the **Run ID** against your handout. New SimCorp messages appear under **Situation updates**; use **Refresh** if needed.
+> 1. Open `splunk01.simcorp.test`.
+> 2. Sign in with username "participant" and password `<TBD>`.
+> 3. Click "NetStrike Investigation".
+> 4. Set the time range first. Use the picker beside the search bar and choose "Last 24 hours".
+> 5. Filter by the index "netstrike".
+> 6. Run your search and check that events appear.
+> 7. Click "All Fields" and check "run_id" to display the run_id of all logs.
+> 8. To filter by run_id, add `run_id="<run_id>"` to your search.
 >
-> **Open evidence timeline** opens the local, read-only synthetic evidence viewer. It is not Splunk. Connect there with your assigned participant token as well. You can filter signals and copy event IDs for your submissions.
+> *[SCREENSHOT 1: Splunk home with the app to click]*
+>
+> *[SCREENSHOT 2: search bar and time picker, annotated]*
+>
+> *[SCREENSHOT 3: results showing events for your exercise ID]*
+>
+> If you see no results, check the time range and exercise ID first. If that doesn't fix it, let us know.
+>
+**Participant portal:**
+
+> Moving on, let's open the participant portal. The portal is your link to the exercise. Messages from SimCorp arrive here, and it's where you send things back.
+>
+> 1. Open `https://ctrl01.simcorp.test:8443/participant`.
+> 2. Sign in with [credential method].
+> 3. Check your team name at the top: [location on screen].
+>
+> * **Inbox/injects:** New messages appear in [location]. Click one to open it, then acknowledge it with [button name].
+> * **Submit evidence:** Click [button], fill in the form, and attach your work.
+> * **Send an update:** Click [button] and write your message.
+> * **Request a hint:** Click [button].
+> * **Request a simulated action:** Click [button] and describe the action you want. [Describe what happens next.]
+>
+> *[SCREENSHOT 4: portal home with team name and inbox]*
+>
+> *[SCREENSHOT 5: an inject open, with the acknowledge button highlighted]*
+>
+> *[SCREENSHOT 6: evidence-submission form]*
+>
+> *[SCREENSHOT 7: hint request screen]*
+>
+> *[SCREENSHOT 8: simulated-action request screen]*
+>
+> Hints are recorded and may affect your rating. Use them when you're stuck.
+
+**Open item for Patrick:** How long a response takes, and where the response appears.
 
 The current UI has no team-name banner, inject-acknowledgement button or
 attachment-upload form. Do not tell learners to find them. Acknowledgement and
