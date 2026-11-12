@@ -125,7 +125,7 @@ undoes work already completed. Confirm the external procedure before delivery.
 >
 > You don't need to memorize this. The network diagram will be your reference throughout the exercise. Let's take a look at it before we move on to your tools.
 
-**Staff procedure, not extra participant dialogue:**
+Staff procedure, not extra participant dialogue:
 
 Show the conceptual map first, followed by Patrick's approved participant topology if available. Don't present the repository's example subnet, URLs, or logical-to-VM mapping as a confirmed deployment.
 
