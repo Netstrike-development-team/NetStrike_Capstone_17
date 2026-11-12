@@ -45,13 +45,32 @@ Patrick/Aya must supply the appropriate participant credentials separately.
 
 ## 2. Ground rules and emergency stop — 01:30–04:00
 
-> Work only with the approved exercise systems and targets listed in your handout. You may search and export permitted exercise events, inspect the supplied records, preserve copies and hashes in [EVIDENCE_DIRECTORY], and use the approved response controls. Explain why you're taking a disruptive action and preserve relevant evidence first.
->
-> Don't connect to systems outside the exercise scope, contact real people, use real personal data or credentials in scenario records, alter source logs, install unapproved tools, or disable safety controls. Don't change Splunk, the controller, evaluator settings or VM snapshots. Never encrypt or erase real data.
->
-> If you see anything unsafe, unexpected external connectivity, a target outside our scope, or a change to unrelated data, say **“STOP EXERCISE”** immediately and contact [SAFETY_CONTACT]. Anyone may call a stop. Stop typing commands and stop submitting actions; leave the screens, logs and files as they are. Don't try to clean up or reset anything yourself.
->
-> Staff will confirm the stop and tell you what happens next. If the portal isn't responding, contact us directly; don't wait for the help queue. Don't continue until the facilitator explicitly gives instructions. A tool failure is not automatically a participant mistake.
+Rules of engagement and emergency-stop instructions. 
+Ground rules
+Everything today is simulated. Work only with the approved exercise systems and targets in your handout.
+You can
+Search and export permitted exercise events in Splunk.
+Investigate the designated hosts, files, tickets, and mock-service records.
+Copy evidence and generate hashes, saving them to [EVIDENCE_DIRECTORY].
+Reset or disable exercise accounts, revoke sessions, and remove MFA factors.
+Isolate lab hosts using the provided control.
+Revoke mock-cloud keys and correct mock bucket policies.
+Restore data from the exercise backup.
+Ask me to simulate any action the lab doesn’t support.
+Before any disruptive action, preserve the relevant evidence first and explain why you’re taking it.
+Off-limits
+Don’t scan or connect to anything outside the exercise subnet or scope.
+Don’t use real names, passwords, phone numbers, or personal data.
+Don’t contact real people or carry out real phishing.
+Don’t change Splunk, the controller, evaluator/scoring settings, or VM snapshots.
+Don’t delete or alter logs.
+Don’t install unapproved or offensive tools, or disable safety controls.
+
+If something looks wrong
+If you see anything unsafe, unexpected external connectivity, an out-of-scope target, or a change to unrelated data, say “STOP EXERCISE” immediately and contact [SAFETY_CONTACT]. Anyone can call a stop.
+Stop and leave everything as it is.
+If the portal isn’t responding, contact us directly rather than waiting for the help queue.
+A tool failure isn’t automatically a participant mistake.
 
 Staff procedure, not extra participant dialogue:
 
