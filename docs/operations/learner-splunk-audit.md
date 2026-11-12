@@ -11,7 +11,7 @@ It does not add a new attack or a vulnerable website unrelated to the storyline.
 ## Separate evidence contracts
 
 For facilitator searches and interpretation of source-health statuses, see
-[distinguishing scenario health from participant evidence](../splunk/README.md#distinguish-scenario-health-from-participant-evidence).
+[distinguishing scenario health from participant evidence](../../splunk/README.md#distinguish-scenario-health-from-participant-evidence).
 
 | Source | Destination | Content |
 |---|---|---|

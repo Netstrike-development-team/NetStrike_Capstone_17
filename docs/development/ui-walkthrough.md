@@ -202,7 +202,8 @@ browser engine. Private support/evaluator/archive interactions are covered by
 the separate staff journey below, not the scenario walkthrough. Neither certifies
 representative usability, accessibility, authored hints/rubric, realistic timing,
 Splunk ingestion/RBAC, Windows/AD, load, VM snapshot restoration or client acceptance.
-Anna's #99 and Patrick's #104 remain open; main promotion gates are unchanged.
+Anna's #99 is closed; Patrick's #104 remains open. Closure of #99 does not
+make this developer smoke a substitute for deployment or release acceptance.
 
 ## Help, evaluator and archive browser journey (#171)
 

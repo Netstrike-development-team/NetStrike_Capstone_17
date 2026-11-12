@@ -1,24 +1,24 @@
 # Canonical application-event spool
 
 **Owner:** Aya (export implementation); Patrick (UF/Splunk deployment and acceptance).
-**Tracking:** #129, #102, #35. Follows #123; integrates with proposed #127/#128.
+**Tracking:** #129, #102, #35. Follows #123 and integrates with #127/#128.
 
-The application currently writes normalized events to SQLite, whereas Patrick's
-proposed Universal Forwarder roles collect Windows Security/PowerShell/Sysmon and
-Linux system logs. This exporter supplies the missing **local monitored-file
-source**. It does not install/configure a forwarder, run a background service,
-contact Splunk, require HEC credentials, or change the portal's event sink.
-No new Python dependency, licence or Internet connection is needed.
+The application writes normalized events to SQLite. This exporter supplies a
+**local monitored-file source**; the exporter itself does not configure a
+forwarder, contact Splunk, require HEC credentials, or change the portal's event
+sink. The controller role separately installs a timer/service and the forwarder
+configuration monitors the staff and learner spools. No new Python dependency,
+licence or Internet connection is needed for export.
 
 CITEF has confirmed that Universal Forwarder and HEC ingestion are permitted
 and that a dedicated `netstrike` exercise index with one-day retention may be
 created (relayed by Patrick on 2026-10-04). Access is to be separated:
 participants investigate permitted simulation telemetry; facilitators manage
-the simulation. The planned deployment uses Universal Forwarder for Windows
-event channels and HEC for normalized project events. This spool exporter
-remains a local export only; implementing HEC delivery, provisioning the
-index/retention, and verifying role separation, run correlation, and ingestion
-health are still required before application events are accepted in Splunk.
+the simulation. The configured deployment uses Universal Forwarder for Windows
+event channels and monitored application-event files; HEC is permitted but not
+required by this path. This spool exporter remains a local export only. Verify
+index/retention, role separation, run correlation, and ingestion health for
+the selected deployment before accepting application events in Splunk.
 
 ## Staff-only boundary
 
@@ -30,7 +30,7 @@ answers, checkpoint results, human review history and submissions. Never share
 the spool through the portal or expose its directory over HTTP. Forward this
 unfiltered ledger only to `netstrike_staff`, never the participant-accessible
 `netstrike` index. Do not rely on visibility fields or search filters as the
-security boundary. The separate [learner audit projection](learner-splunk-audit.md)
+security boundary. The separate [learner audit projection](../operations/learner-splunk-audit.md)
 publishes only explicitly reviewed application facts to the learner index.
 
 Known sensitive keys must already be redacted; invalid/unredacted input is
@@ -43,7 +43,7 @@ it is not a canonical ledger export or a live ingestion acceptance claim.
 ## Preview and publish
 
 Run from the reviewed application source directory using its Python environment.
-Patrick's proposed service uses `/opt/netstrike/current` as its working directory
+The controller service uses `/opt/netstrike/current` as its working directory
 and `/var/lib/netstrike/portal.sqlite3` as its database. Example paths below are
 handoff conventions, not a deployment already performed or a range allocation.
 
@@ -65,8 +65,9 @@ not a guarantee that operating-system file metadata never changes.
 Add `--execute` to publish **one** new batch. Repeat or schedule the same command
 until `events_remaining` is zero. `--limit` is 1–1000 events (default 500).
 Each event is at most 256 KiB and a batch is at most 20 MiB; a byte boundary can
-select fewer events than requested. No daemon, scheduler or automatic admission
-gate is introduced. Preview counts can change before execution; execution
+select fewer events than requested. The command itself does not schedule exports
+or provide an automatic admission gate; the controller role supplies the timer.
+Preview counts can change before execution; execution
 revalidates under an exclusive local publisher lock.
 
 The parent directory must already exist. Use a dedicated real spool directory,
@@ -86,7 +87,7 @@ network filesystems and concurrent portal-process orchestration are not supporte
 or certified. Normal portal writes can continue; the read transaction closes
 before file publication to avoid holding its read lock during filesystem writes.
 
-The module is in `dashboard/`, so Patrick's proposed source-tree bundle in #128
+The module is in `dashboard/`, so the source-tree bundle
 includes it without a separate `scripts/` transfer or packaging change. Select
 a reviewed revision containing it when assembling the offline release.
 
@@ -173,7 +174,9 @@ deployment. Patrick owns the following deployment decisions and live verificatio
 acknowledgement, exactly-once delivery guarantee, readiness sign-off or license
 measurement. Missing UF access/configuration/receiver availability must be detected
 in Patrick's environment. After Splunk search confirmation, he can record actual
-acceptance evidence in #102/#104/#86; this exporter does not close those issues.
+acceptance evidence for the relevant deployment and rehearsal work; local
+publication does not establish that acceptance. #102 is closed with its
+recorded local evidence; #104 tracks broader rehearsals.
 
 For a run-scoped, independently saved raw receiver export, use the
 [offline application telemetry comparison](application-telemetry-comparison.md).

@@ -102,6 +102,6 @@ and truncation. For duplicates, inspect replay and forwarder checkpoints. For
 changed events, inspect wrapping/line breaking/truncation and preserve both
 original files. Never edit the source/spool/exports to conceal a failing result.
 
-Related: [canonical spool](event-spool.md), [event contract](event-contract-v1.md),
-[source/revision check](offline-release-source-check.md), and
-[milestone gates](milestone-release-checklist.md).
+Related: [canonical spool](event-spool.md), [event contract](contracts/event-contract-v1.md),
+[source/revision check](../deployment/offline-release-source-check.md), and
+[milestone gates](../deployment/milestone-release-checklist.md).

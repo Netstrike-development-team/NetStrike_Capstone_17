@@ -80,7 +80,7 @@ For compatibility, callers omitting the header keep the existing behavior and
 an authorized current state response, not infer it from a cached environment
 variable. The header is a concurrency guard, not a credential or authorization
 capability. The SSO/role-play APIs separately gained the same guard in #162; see
-[SSO run safety](ui-walkthrough.md#synthetic-sign-in-and-mfa-run-safety-161).
+[SSO run safety](../development/ui-walkthrough.md#synthetic-sign-in-and-mfa-run-safety-161).
 The identity-capture service is separate. Support, evaluator judgments and archive capture
 keep their existing explicit body run contracts.
 
@@ -116,6 +116,8 @@ concurrency/clock behavior under range load, evidence preservation and clean VM
 snapshots. [Application reset is not snapshot restoration](staff-operations.md).
 Include rapid double submit/across-form actions, a slow write across reconnect
 and reset, failed post-write inspection and delayed cloud/recovery reads on the
-actual final deployment in #99/#104. Their acceptance issues remain open.
+actual final deployment as part of the remaining rehearsal work in #104.
+Participant-materials issue #99 is closed; that does not establish acceptance
+of a changed deployment.
 Ashley coordinates rehearsal/admission/acceptance. No new service, dependency,
 license or hosted deployment is introduced.

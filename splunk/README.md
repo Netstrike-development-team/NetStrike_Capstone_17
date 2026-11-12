@@ -35,7 +35,7 @@ Windows Security/PowerShell/Sysmon and Linux inputs already come from
   real users to them; none exist in the repo.
 - **Participant application events.** A separate fact-only projection uses
   `netstrike:learner:audit:v1`; neutral timeline/identity/helpdesk/storage searches
-  are included. See [contract and live handoff](../docs/learner-splunk-audit.md).
+  are included. See [contract and live handoff](../docs/operations/learner-splunk-audit.md).
   This is simulated application evidence, not vendor/Windows logs or a new EDR.
 - **Parsing.** JSON is extracted on the forwarder (`INDEXED_EXTRACTIONS=json`,
   `timestamp` as event time) because sorted keys make a regex time prefix unsafe.
@@ -51,7 +51,7 @@ Windows Security/PowerShell/Sysmon and Linux inputs already come from
 - **Portal binding.** The controller template now passes the same run ID to the
   application and defaults to full play. A portal-only reset does not update the
   forwarders, so its stale local binding blocks the next Prepare/Start. Use the
-  [clean-deployment handoff](../docs/full-play-deployment-guide.md); this local
+  [clean-deployment handoff](../docs/deployment/full-play-deployment-guide.md); this local
   guard is not a substitute for the live per-source probe or #158 reconciliation.
 - **Windows fields** use `rex` on rendered XML (no add-on assumed).
 - **Checkpoint 1 = DP1** (identity triage: Sarah, ≥3 artifacts from ≥2 sources,
@@ -95,7 +95,7 @@ flag controls health-alert behavior, not participant visibility or grading.
 Participants must remain restricted to `netstrike`. A canonical event's
 `visibility=participant` is not permission to expose the private ledger:
 projection requires the reviewed event type, producer and visibility to match.
-See [the separate evidence contracts](../docs/learner-splunk-audit.md#separate-evidence-contracts)
+See [the separate evidence contracts](../docs/operations/learner-splunk-audit.md#separate-evidence-contracts)
 for allowed facts and exclusions.
 
 ## Deploy
@@ -120,7 +120,7 @@ for allowed facts and exclusions.
 
 ## Acceptance checklist (to run live and record in #102)
 
-The [November 4 telemetry evidence](../docs/offline-bundle-provisioning-validation.md#november-4-telemetry-readiness-and-alert-evidence)
+The [November 4 telemetry evidence](../docs/deployment/offline-bundle-provisioning-validation.md#november-4-telemetry-readiness-and-alert-evidence)
 records all 25 expected sources, intentional optional `IDLE` states, required
 PowerShell `STALE`, and a scheduled source-freshness alert trigger. Reuse it for
 status classification and live alert triggering; it is not an all-healthy
@@ -137,7 +137,7 @@ readiness result or source-by-source run-ID evidence.
 - [ ] Participant searches return rows and show no answer labels.
 - [ ] Learner audit searches preserve assigned exercise/run/event IDs and typed
       application facts; compare independent Raw Events with the separate local
-      projection using [the learner checker](../docs/learner-telemetry-comparison.md),
+      projection using [the learner checker](../docs/operations/learner-telemetry-comparison.md),
       not the canonical-contract `dashboard.telemetry_check` helper. A file match
       is not live search/role/ingestion acceptance.
 - [ ] Check for duplicates/gaps and compare with `python -m dashboard.telemetry_check` (#158).

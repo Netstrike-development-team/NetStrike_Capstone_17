@@ -77,7 +77,8 @@ wall-clock events together.
 Use the **canonical JSONL**, not CSV, to preserve the nested correlation fields.
 This PR provides valid events/exports, not an automatic live Splunk transport.
 The dedicated index, ingestion path, timestamp/JSON extraction configuration,
-permissions, and forwarder/HEC automation remain Patrick's scope (#102).
+permissions, and deployed forwarder verification remain Patrick's scope.
+The configured application path uses monitored files; HEC is not required.
 
 Replay a demo export into the approved offline Splunk environment and verify:
 

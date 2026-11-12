@@ -6,7 +6,7 @@ project source trees, and pinned Ansible collections. `inventory.json` records
 per-artifact version, source, license, owner, SHA-256, destination VM, and offline
 installation method. The October 21 and November 1 restore/provision/readiness
 rehearsals are recorded in the
-[validation report](../offline-bundle-provisioning-validation.md). The November
+[validation report](../deployment/offline-bundle-provisioning-validation.md). The November
 1 report records three consecutive cycles, meeting that criterion (owner
 clarification, 2026-11-04); the October 21 nonconsecutive-cycle result is
 historical and superseded. The rehearsals used Docker-hosted Splunk and do not
@@ -22,7 +22,7 @@ October 21 provisioning and DNS-blocking evidence for #79's tested configuration
 DNS blocking is sufficient under that project acceptance decision; it is not
 proof of all-path egress isolation. The three-consecutive-cycle criterion is
 met; complete baseline and final exercise acceptance remain separate. See the
-[evidence checklist](../offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
+[evidence checklist](../deployment/offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
 
 This document is the source of truth for:
 
@@ -33,7 +33,7 @@ This document is the source of truth for:
 Use [06-citef-requirements-and-approval.md](06-citef-requirements-and-approval.md)
 for CITEF decisions and open environment requirements, the
 [CITEF configuration guide](../../citef-config/README.md) for Ansible commands,
-and the [offline bundle guide](../offline-bundle.md) for bundle build/install
+and the [offline bundle guide](../deployment/offline-bundle.md) for bundle build/install
 steps. Stage and run the bundle on `ANSIBLE01`; `CTRL01` remains the portal and
 application host.
 
@@ -179,21 +179,21 @@ part of the approved Splunk-based MVP.
 
 | Name | Version | Source / owner | License | Checksum / integrity reference | Destination VM | Offline installation method |
 |---|---|---|---|---|---|---|
-| `ansible-core` | Exact version resolved per bundle build | PyPI / Ansible project | GPL-3.0-or-later; Ansible Project | Per-wheel `inventory.json` and `SHA256SUMS` | `CTRL01` | Install from local wheelhouse using the generated hash-pinned lock |
-| `ansible.windows` collection | 3.8.0 (`citef-config/requirements.yml`) | Ansible Galaxy / Jordan Borean, Matt Davis | GNU GPL version 3 (`COPYING`; manifest license field empty) | Per-archive `inventory.json` and `SHA256SUMS` | `CTRL01` Ansible controller | Install the bundled collection archive with `ansible-galaxy collection install --offline` |
-| `microsoft.ad` collection | 1.12.1 (`citef-config/requirements.yml`) | Ansible Galaxy / Jordan Borean, Matt Davis | GNU GPL version 3 (`COPYING`; manifest license field empty) | Per-archive `inventory.json` and `SHA256SUMS` | `CTRL01` Ansible controller | Install the bundled collection archive with `ansible-galaxy collection install --offline` |
+| `ansible-core` | Exact version resolved per bundle build | PyPI / Ansible project | GPL-3.0-or-later; Ansible Project | Per-wheel `inventory.json` and `SHA256SUMS` | `ANSIBLE01` execution host; wheels in the `CTRL01` payload | Install from local wheelhouse using the generated hash-pinned lock |
+| `ansible.windows` collection | 3.8.0 (`citef-config/requirements.yml`) | Ansible Galaxy / Jordan Borean, Matt Davis | GNU GPL version 3 (`COPYING`; manifest license field empty) | Per-archive `inventory.json` and `SHA256SUMS` | `ANSIBLE01` execution host | Install the bundled collection archive with `ansible-galaxy collection install --offline` |
+| `microsoft.ad` collection | 1.12.1 (`citef-config/requirements.yml`) | Ansible Galaxy / Jordan Borean, Matt Davis | GNU GPL version 3 (`COPYING`; manifest license field empty) | Per-archive `inventory.json` and `SHA256SUMS` | `ANSIBLE01` execution host | Install the bundled collection archive with `ansible-galaxy collection install --offline` |
 | SSH client and WinRM dependencies | Exact OS/Python package versions not selected | Selected Linux OS repositories / Python package sources | Verify per package | Pending | Ansible control host; Windows targets use WinRM | Stage OS packages and Python dependencies; configure SSH/WinRM without Internet |
 | PowerShell | Version supplied by the selected Windows image; exact version pending | Microsoft / Windows image | Windows image license terms | Pending image/build manifest | Windows Server and Windows 11 endpoints | Use the image-provided PowerShell for configuration, telemetry setup, and readiness tasks |
-| Windows Security event logging | OS-provided; audit policy not configured | Microsoft / Windows image | Windows image license terms | N/A; record configuration revision/hash | Windows endpoints | Configure and validate the audit policy offline with Ansible/PowerShell |
-| PowerShell logging | OS-provided; policy not configured | Microsoft / Windows image | Windows image license terms | N/A; record configuration revision/hash | Windows endpoints | Configure required logging policy offline with Ansible/PowerShell |
+| Windows Security event logging | OS-provided; selected audit subcategories configured by the Windows telemetry role | Microsoft / Windows image | Windows image license terms | N/A; record configuration revision/hash | Windows endpoints | Apply the role and validate the audit policy on the deployed hosts |
+| PowerShell logging | OS-provided; script-block and module logging configured by the Windows telemetry role | Microsoft / Windows image | Windows image license terms | N/A; record configuration revision/hash | Windows endpoints | Apply the role and validate logging on the deployed hosts |
 | Splunk Enterprise | 10.0.1; range version and 10 GB/day ingestion / 300 GB disk limits confirmed 2026-10-02 | Cyber Range-provided instance | Cyber Range educational license, confirmed; no Splunk installer is in the project bundle | N/A for transfer (record receiver identity/config separately) | Existing `SPLUNK01` | Configure the range-provided service; no offline installer transfer planned |
 | Splunk Universal Forwarder | **10.0.1 selected** to match Splunk Enterprise 10.0.1 ([Splunk download](https://www.splunk.com/en_us/download/universal-forwarder.html)) | Splunk distribution / Splunk Inc. | Splunk software license; no additional licensing or transfer review considered applicable per Patrick | Windows x64 MSI SHA-512: `246e0ce374c89fe0f5ba52e95ccb1c7cdeb8bedebc04b244708beb270b0b5cb268407e7db0a9937354aeb074ecd9725122c35f078c0b1e0347b26661f40ccd96`; Linux amd64 DEB SHA-512: `ab289083aa191c94c4e38a18826962069de8cc53b10dd60e7630e724773d12db5f0a742bfaf3d4c3c5375beb81983e307c1c8c87024b491b183571d5af7a800b` | Windows endpoints and Linux forwarder host(s), if used | Stage the matching installer locally; verify its SHA-512; install/configure offline with Ansible; collect Windows event channels |
 | Sysmon distribution archive | **15.22 selected** ([Microsoft Sysmon](https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon)) | Microsoft Sysinternals / Microsoft | Microsoft Sysinternals terms; no additional licensing or transfer review considered applicable per Patrick | ZIP archive SHA-256 (contains executable and EULA): `00ecf1b46aec99299d3ae0bca79dc621458bd014b20b509d7c5c8e8c8611aa54`; Patrick reports the staged archive matched | Windows endpoints | Stage the archive locally; verify archive SHA-256 and executable Authenticode signature; install offline with reviewed XML config |
 | Sysmon XML configuration | Project revision to be fixed at release; current file `citef-config/files/sysmon-config.xml` | Project-authored | Project-authored configuration | Generate from exact release file | Windows endpoints | Verify SHA-256 and copy directly from `citef-config/files`; apply locally |
-| Splunk HEC inputs and project event mapping | HEC permitted; exact configuration/revision pending | Project-authored Splunk inputs, field mappings, searches, dashboards | Project-authored configuration | Generate SHA-256 from exact release files | `netstrike` index on existing Splunk instance | Configure HEC and project field mappings locally; send normalized project events via HEC and validate correlation/health |
+| Splunk application-event inputs and mapping | Universal Forwarder monitored-file inputs are versioned; HEC is permitted but not required | Project-authored Splunk inputs, field mappings, searches, dashboards | Project-authored configuration | Generate SHA-256 from exact release files | `netstrike_staff` for canonical events; `netstrike` for learner projection | Deploy the forwarder and Splunk apps; validate correlation, access separation, and source health |
 | Dedicated exercise indexes | `netstrike` and staff-only `netstrike_staff`, one-day retention; creation permitted | Project configuration on range-provided Splunk | Index-creation authority covers both; Patrick's October 16 #102 update records this | Record configuration revision/hash | Existing `SPLUNK01` | Create/configure locally; isolate exercise data by `exercise_id` and `run_id`; verify one-day retention |
 | Splunk access control | Participant investigates permitted simulation telemetry; facilitator manages simulation and Splunk configuration | Cyber Range Splunk administrator / project roles | Covered by range-provided Splunk service; implement least-privilege roles | Record role/search-filter configuration revision and test evidence | `netstrike` index and facilitator management interfaces | Configure separate participant and facilitator roles; verify participant cannot access facilitator-only data or management actions and facilitator can manage the simulation |
-| Complete CITEF transfer release and manifest | Runtime/source/dependency/collection bundle is CI-built; approved external artifacts and target acceptance remain | Project team | Apply third-party package terms from the generated inventory | Per-build manifest/hash; external artifacts pending approval/acquisition | `CTRL01` plus relevant Windows targets | Stage CI bundle and approved installers/configuration, TLS materials, playbooks, fixtures, and manifest; verify each locally before install |
+| Complete CITEF transfer release and manifest | Runtime/source/dependency/collection bundle is CI-built; release-specific artifact and target validation remain | Project team | Apply third-party package terms from the generated inventory | Per-build manifest/hash; verify external artifacts for the selected release | `CTRL01` plus relevant Windows targets | Stage CI bundle and approved installers/configuration, TLS materials, playbooks, fixtures, and manifest; verify each locally before install |
 | Event/action schemas and exercise configuration | Repository revision; no release artifact yet | Project-authored | Project-authored files | Generate at release | `CTRL01` and relevant target VMs | Copy with the versioned application bundle; no package-manager or network fetch should be required |
 
 The project-owned configuration candidates currently in the repository include
@@ -230,7 +230,7 @@ isolation test required to close that criterion. To record such an audit:
 
 Record per-artifact license, approval, version, and SHA-256 in the tables above.
 Keep proprietary installers, credentials, and secrets out of Git. Use the
-[offline bundle guide](../offline-bundle.md) for Python bundle installation and
+[offline bundle guide](../deployment/offline-bundle.md) for Python bundle installation and
 the [CITEF guide](../../citef-config/README.md) for collection staging and
 config deployment workflow.
 
@@ -245,7 +245,7 @@ November 1 report records three consecutive cycles and meets that criterion.
 Patrick accepts the provisioning and DNS-blocking evidence for #79's tested
 configuration; this does not establish #104's complete Cyber Range rehearsal
 acceptance. See
-the [validation report](../offline-bundle-provisioning-validation.md) for both
+the [validation report](../deployment/offline-bundle-provisioning-validation.md) for both
 dated rehearsal records and limitations.
 
 **Status (2026-10-07):** Patrick reports that the dashboard was installed and
@@ -261,7 +261,7 @@ establish application smoke-test, provisioning, and
 event-ingestion success, not all deployment acceptance: detailed readiness and
 access-control outcomes and snapshot restore are not recorded. Replication steps for the
 application smoke test are in the
-[offline bundle guide](../offline-bundle.md#3-run-the-application-smoke-test-on-an-isolated-linux-vm).
+[offline bundle guide](../deployment/offline-bundle.md#smoke-test-scope).
 
 Complete this record for each target OS/VM role. Preserve logs that contain no
 secrets and link them from the approved project evidence location.
@@ -286,14 +286,14 @@ secrets and link them from the approved project evidence location.
 | Snapshot restore | Not tested in the October 7 record. The October 21 local test exercised three nonconsecutive cycles; the November 1 report records three consecutive cycles (owner clarification, 2026-11-04). These local rehearsals used Docker-hosted Splunk, not a separate Cyber Range Splunk VM |
 | Splunk `netstrike` one-day retention and participant/facilitator RBAC checks | Not recorded in the October 7 test. Reuse Patrick's October 16 #102 source-health, ingestion-volume, redeploy, and participant-separation evidence; changed configuration or delivery-run validation is separate, not a new permission request |
 | Result, failures, and remediation | Linux dashboard installed and ran offline; Windows Sysmon events ingested into `netstrike`; remaining deployment acceptance checks above are pending |
-| Evidence/log location | Sysmon-to-Splunk screenshot: [sysmon-splunk-integration-2026-10-07.png](evidence/sysmon-splunk-integration-2026-10-07.png) |
+| Evidence/log location | Sysmon-to-Splunk screenshot: [sysmon-splunk-integration-2026-10-07.png](../evidence/sysmon-integration-2026-10-07/sysmon-splunk-integration-2026-10-07.png) |
 
 The screenshot shows a Splunk search for the unique `NetstrikeSysmonTest`
 marker returning 11 events from the `Microsoft-Windows-Sysmon/Operational`
 channel in the `netstrike` index. It is integration evidence, not evidence of
 retention or access-control validation.
 
-![Splunk search results showing Sysmon test events in the netstrike index](evidence/sysmon-splunk-integration-2026-10-07.png)
+![Splunk search results showing Sysmon test events in the netstrike index](../evidence/sysmon-integration-2026-10-07/sysmon-splunk-integration-2026-10-07.png)
 
 ### Test procedure
 
@@ -310,8 +310,9 @@ retention or access-control validation.
    service. Run configuration and readiness checks.
 5. Restore clean VM snapshots and verify readiness checks. Exercise a
    representative Windows and project-event telemetry flow to Splunk, using the
-   Universal Forwarder for Windows events and HEC for normalized project events
-   in `netstrike`. Verify run correlation, event freshness, one-day retention,
+   Universal Forwarder for Windows events and the configured application spools:
+   canonical events in `netstrike_staff`, and the learner-safe projection in
+   `netstrike`. Verify run correlation, event freshness, one-day retention,
    participant-versus-facilitator access separation, and daily ingestion usage.
 6. Inspect installer output, service logs, host/network logs, and browser network
    activity for missing artifacts or attempted Internet access. Record every

@@ -366,4 +366,4 @@ namespace, and retains inferred email confidence. Its seeded IDs and content
 are repeatable. The legacy profiler output/schema below remain available for
 historical module tests, but their `.com` contacts are rejected by the
 maintained exercise initializer. See
-[the profile contract](../../docs/synthetic-profile-contract-v1.md).
+[the profile contract](../../docs/application/contracts/synthetic-profile-contract-v1.md).

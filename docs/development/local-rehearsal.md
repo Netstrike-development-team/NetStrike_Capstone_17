@@ -102,11 +102,11 @@ manual dispatch), runs all core Python and offline Node regression tests, execut
 24 cases, verifies the exported package independently and uploads the evidence
 with a 14-day retention period. It requires matching clean checkout provenance.
 Failures fail the job; evidence upload still runs. See the
-[milestone checklist](milestone-release-checklist.md) for final-source evidence.
+[milestone checklist](../deployment/milestone-release-checklist.md) for final-source evidence.
 This adds a CI check, not a change to repository branch-protection rules.
 
 Core CI also renders the controller's real startup template and exercises the
-[full-play deployment/run binding](full-play-deployment-guide.md), including
+[full-play deployment/run binding](../deployment/full-play-deployment-guide.md), including
 reset admission guards. Static `splunk/tests` are included; passing them does
 not validate a live Splunk instance. Install `citef-config/requirements-test.txt`
 for the template-rendering developer tests (Ansible already depends on Jinja2).
@@ -162,7 +162,7 @@ a separate local run as proof the downloaded artifact passed. This fix does not
 change scenario state, acceptance, deployment ownership or branch protections.
 
 The same strict workflow executes all dependency-free `dashboard/tests/*.test.mjs`
-client regressions and the [learner run-boundary HTTP checks](participant-run-safety.md).
+client regressions and the [learner run-boundary HTTP checks](../operations/participant-run-safety.md).
 Those tests compose real API roles through full-play recovery and reset; the
 24-case evidence runner still targets the underlying in-process services. Neither
 is a browser video or actual range rehearsal.

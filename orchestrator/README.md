@@ -1,7 +1,7 @@
 # Scenario controller
 
 For automated full-play developer coverage, use the
-[local rehearsal runner](../docs/local-rehearsal.md): 16 checkpoint paths,
+[local rehearsal runner](../docs/development/local-rehearsal.md): 16 checkpoint paths,
 eight partial-control/fault cases, retained evidence and read-only verification.
 
 This package is the application-side control plane for Operation Silent Spider. It loads a reviewed, versioned MSEL, advances it deterministically, records every transition through the shared event contract, and exposes only explicitly registered automation handlers.
@@ -62,7 +62,7 @@ Tyler's helpdesk evidence, and manager/contact/confidence context share profile
 references. Prepare records the catalog fingerprint; reset restores the same
 validated metadata rather than re-reading a changed source file.
 The input contract and export workflow are documented in
-[Synthetic profile initialization v1](../docs/synthetic-profile-contract-v1.md).
+[Synthetic profile initialization v1](../docs/application/contracts/synthetic-profile-contract-v1.md).
 
 ## Minimal use
 
@@ -98,7 +98,7 @@ controller.resolve_checkpoint(
 Select `scenarios/cloud-slice.v1.json` to exercise identity + cloud on the
 approved compressed MSEL. Run `python -m orchestrator.cloud_demo --outcome
 contained` (or `full` / `partial`) from the repository root.
-See [cloud handoff](../docs/mock-cloud-dev-handoff.md) for participant actions,
+See [cloud handoff](../docs/development/mock-cloud-dev-handoff.md) for participant actions,
 DP3 evidence, reset, safety and acceptance boundaries.
 ## Full-play impact/recovery integration
 
@@ -106,4 +106,4 @@ The opt-in `scenarios/full-play.v1.json` extends through DP4, recovery and the
 130-minute play end. It requires an existing dedicated `NETSTRIKE_IMPACT_ROOT`.
 `python -m orchestrator.impact_demo` previews without writes; add `--execute`
 for temporary five-decoy blocked/realized/partial demonstrations.
-See [impact/recovery handoff](../docs/impact-recovery-dev-handoff.md).
+See [impact/recovery handoff](../docs/development/impact-recovery-dev-handoff.md).

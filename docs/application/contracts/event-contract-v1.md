@@ -1,10 +1,10 @@
 # NetStrike Exercise Event Contract v1
 
-**Schema:** [`schemas/event.v1.json`](../schemas/event.v1.json)
+**Schema:** [`schemas/event.v1.json`](../../../schemas/event.v1.json)
 
-**Stable entry point:** [`schemas/event.json`](../schemas/event.json)
+**Stable entry point:** [`schemas/event.json`](../../../schemas/event.json)
 
-**Implementation:** [`shared/events.py`](../shared/events.py)
+**Implementation:** [`shared/events.py`](../../../shared/events.py)
 
 **Status:** Version 1.0.0 contract for the blue-team MVP
 
@@ -195,18 +195,12 @@ Legacy phase mapping:
 | 6 | `cloud` |
 | 7 | `impact_recovery` |
 
-Module migration order after this contract is approved:
-
-1. OSINT profiler and existing ransomware simulator, which already emit the
-   issue #49 shape.
-2. MFA and mock-cloud services, which currently use console/file logs without
-   the shared contract.
-3. Identity/helpdesk and endpoint/AD services as their stateful interfaces are
-   implemented.
-4. Scenario control, participant actions, evaluation, reset, and AAR exports.
-
-During transition, a module may return legacy events to the adapter, but only v1
-events may enter the authoritative exercise ledger or Splunk event stream.
+The maintained identity and mock-cloud action adapters, scenario controller,
+and portal use the shared event interfaces. A legacy module may return older
+events to an adapter, but only v1 events may enter the authoritative exercise
+ledger or canonical Splunk event stream. See the
+[learner audit contract](../../operations/learner-splunk-audit.md) for the
+separate participant-safe projection.
 
 ## Splunk transport envelope
 

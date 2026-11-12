@@ -160,7 +160,7 @@ clarification, 2026-11-04). Reuse provisioning and telemetry evidence only for
 its demonstrated scope. Local readiness is not itself an admission certificate;
 staff must separately verify deployed access controls and emergency-stop
 reachability. See the
-[baseline screenshot checklist](../offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
+[baseline screenshot checklist](../deployment/offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
 
 ## Dry-run requirements
 

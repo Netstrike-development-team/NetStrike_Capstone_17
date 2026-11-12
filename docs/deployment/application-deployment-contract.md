@@ -103,8 +103,8 @@ used; no facilitator/evaluator credential means no review access; full play with
 a cloud responder has no learner cloud/recovery write credential. It remains the
 operator's responsibility to configure the exercise audience and staff accounts.
 
-After startup, use authenticated [application readiness](application-readiness.md),
-[clock inspection](exercise-clock.md) and [staff operations](staff-operations.md).
+After startup, use authenticated [application readiness](../application/application-readiness.md),
+[clock inspection](../operations/exercise-clock.md) and [staff operations](../operations/staff-operations.md).
 Then complete Patrick's independent environment checks and human admission gates.
 Deploy **one process/one ASGI worker per runtime**; preflight warns but does not
 inspect or enforce Uvicorn command-line worker settings, TLS or systemd hardening.

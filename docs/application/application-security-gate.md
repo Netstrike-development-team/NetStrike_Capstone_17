@@ -77,7 +77,7 @@ python scripts/check_security_report.py /tmp/netstrike-adapter-security.json
 python -m pytest scripts/tests/test_security_report.py scripts/tests/test_walkthrough_http.py -q
 ```
 
-This complements the [strict full-play checks](milestone-release-checklist.md).
+This complements the [strict full-play checks](../deployment/milestone-release-checklist.md).
 Rehearsal source fingerprints include the recorder, report guard and security
 workflow; matching source still does not prove a tool ran or a deployed VM passed.
 Patrick owns offline installation, Windows/Sysmon/Splunk and environment proof;
