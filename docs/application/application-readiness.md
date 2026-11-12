@@ -7,12 +7,12 @@ It is **not** a Cyber Range readiness certificate or permission to admit learner
 
 ## Staff workflow
 
-Before starting the process, [deployment-input preflight](application-deployment-contract.md)
+Before starting the process, [deployment-input preflight](../deployment/application-deployment-contract.md)
 can catch invalid configuration without opening SQLite/provisioning decoys. It is
 not this runtime readiness gate and cannot inspect the deployed environment.
 
 The `/facilitator` page displays these checks beside clock health. See
-[the staff page workflow](staff-operations.md); external checks stay unverified.
+[the staff page workflow](../operations/staff-operations.md); external checks stay unverified.
 
 1. Obtain the deployment's facilitator or technical-operator bearer credential.
 2. Inspect `GET /api/facilitator/readiness`. This is read-only and not cached.
@@ -106,7 +106,7 @@ The Cyber Range has already delegated full exercise VM/network configuration
 control to the team. These external checks validate what is deployed; they are
 not additional allocation, address, DNS/NTP, or access-policy approval tasks.
 Reuse the October 21 provisioning/telemetry and accepted DNS-blocking evidence
-for their recorded scope; see the [baseline screenshot checklist](offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
+for their recorded scope; see the [baseline screenshot checklist](../deployment/offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
 
 Aya owns this code-level gate. The strict full-play CI workflow runs the complete
 portal suite, including readiness tests, and rehearses normal paths through this service boundary. The deliberate

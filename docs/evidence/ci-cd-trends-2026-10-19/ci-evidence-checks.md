@@ -48,7 +48,7 @@ It also runs a separate 14-step help/review/archive journey (#171) in a new disp
 app, retaining both outputs in the same artifact. Either step failing fails the job;
 the normal check count remains fourteen.
 It does not replace the strict core/DOM/24-case service checks or Anna/Patrick's
-acceptance. See [browser tooling, commands and coverage limits](../../ui-walkthrough.md#strict-real-browser-smoke-gate-169).
+acceptance. See [browser tooling, commands and coverage limits](../../development/ui-walkthrough.md#strict-real-browser-smoke-gate-169).
 
 All four workflows use `ubuntu-24.04` and immutable official Node-24-compatible
 v6 action commits verified on October 5:
@@ -97,7 +97,7 @@ actions executed; actual run URLs/results must be retained. A skipped **step**
 because a module has no tests is different from a cancelled **job** that never
 acquired a runner. Neither means nonexistent tests passed.
 
-See [maintained security scope](../../application-security-gate.md) and
-[milestone promotion](../../milestone-release-checklist.md). PR #152's one-time
+See [maintained security scope](../../application/application-security-gate.md) and
+[milestone promotion](../../deployment/milestone-release-checklist.md). PR #152's one-time
 outage/review exception does not authorize exceptions for later PRs; #153 remains
 open for actual retrospective teammate review even though its post-merge CI passed.

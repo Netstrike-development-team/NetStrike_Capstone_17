@@ -9,7 +9,7 @@ The participant guide must not include the answer or the expected evidence value
 ## Common event requirements
 
 The requirements below describe the **private canonical event contract**.
-Learner Splunk receives a distinct [fact-only audit projection](../learner-splunk-audit.md),
+Learner Splunk receives a distinct [fact-only audit projection](../operations/learner-splunk-audit.md),
 not this complete ledger. Fields such as ATT&CK labels, checkpoint IDs, reasons
 and expected answers are not copied. Host telemetry remains separate actual
 Windows/Sysmon data. The projection's strict schema and local 24-path tests do
@@ -17,7 +17,7 @@ not establish live ingestion, completeness of every design-time evidence row or
 range acceptance; Patrick must still verify those in Splunk.
 
 The authoritative machine-readable definition is the
-[NetStrike Exercise Event Contract v1](../event-contract-v1.md). Every
+[NetStrike Exercise Event Contract v1](../application/contracts/event-contract-v1.md). Every
 NetStrike-generated event must validate against `schemas/event.v1.json` and
 contain:
 

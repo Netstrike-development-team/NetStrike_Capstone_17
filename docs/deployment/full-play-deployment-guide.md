@@ -8,7 +8,7 @@ below rather than repeated here.
 
 1. Build and verify the [offline bundle](offline-bundle.md).
 2. Prepare the actual target manifest, licensed-installers archive, and private
-   secrets file as described in the [CITEF provisioning guide](../citef-config/README.md).
+   secrets file as described in the [CITEF provisioning guide](../../citef-config/README.md).
    Confirm the required TLS material and credentials are available through the
    approved secret process; do not commit secrets or put them in command
    arguments or logs.
@@ -58,10 +58,10 @@ Provisioning is not readiness or acceptance. After it completes:
 4. Complete the deployed-environment and facilitator admission checks before
    starting the exercise.
 
-Use the [safety and reset procedure](exercise-design/04-safety-and-reset.md)
+Use the [safety and reset procedure](../exercise-design/04-safety-and-reset.md)
 for environment, snapshot, readiness, and admission checks; the
 [Splunk/Sysmon ingestion guide](splunk-sysmon-ingest.md) and
-[learner telemetry handoff](learner-splunk-audit.md) for live-source checks.
+[learner telemetry handoff](../operations/learner-splunk-audit.md) for live-source checks.
 The provisioning wrapper does not run `readiness.yml`, restore snapshots,
 configure Splunk, or authorize participant admission.
 
@@ -73,5 +73,5 @@ and a fresh restricted work directory. Do not reuse the previous ID, rerun
 against retained application state instead of restoring, or remove portal state
 to force a restart. An application-only reset creates a new portal run but does
 not update host forwarders; do not bypass the resulting run-binding mismatch.
-Follow the [safety and reset procedure](exercise-design/04-safety-and-reset.md)
+Follow the [safety and reset procedure](../exercise-design/04-safety-and-reset.md)
 and repeat the verification and admission steps above.

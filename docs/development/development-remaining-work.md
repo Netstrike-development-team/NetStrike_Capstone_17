@@ -93,6 +93,6 @@ checksum passes and Ansible provisioning, plus Windows Sysmon-to-Splunk screensh
 evidence. #156 is merged. #102 is closed with recorded live local checks; complete
 delivery-run application evidence remains distinct. #103 records snapshot/readiness;
 #104 owns representative rehearsals. See the
-[baseline evidence checklist](offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
+[baseline evidence checklist](../deployment/offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
 The earlier tested application source does not validate subsequent dev changes
-or authorize main promotion. See the [test record](exercise-design/07-offline-tool-bundle-inventory.md).
+or authorize main promotion. See the [test record](../exercise-design/07-offline-tool-bundle-inventory.md).

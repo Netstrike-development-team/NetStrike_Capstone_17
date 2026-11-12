@@ -80,7 +80,7 @@ For compatibility, callers omitting the header keep the existing behavior and
 an authorized current state response, not infer it from a cached environment
 variable. The header is a concurrency guard, not a credential or authorization
 capability. The SSO/role-play APIs separately gained the same guard in #162; see
-[SSO run safety](ui-walkthrough.md#synthetic-sign-in-and-mfa-run-safety-161).
+[SSO run safety](../development/ui-walkthrough.md#synthetic-sign-in-and-mfa-run-safety-161).
 The identity-capture service is separate. Support, evaluator judgments and archive capture
 keep their existing explicit body run contracts.
 

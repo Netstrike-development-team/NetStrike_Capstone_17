@@ -76,7 +76,7 @@ has finished. The existing server run/role/limit/idempotency checks remain
 authoritative. This queue is not an emergency-stop channel or proof of independent
 learner performance; human evaluation and the external safety procedure remain.
 
-The [actual-browser staff smoke (#171)](ui-walkthrough.md#help-evaluator-and-archive-browser-journey-171)
+The [actual-browser staff smoke (#171)](../development/ui-walkthrough.md#help-evaluator-and-archive-browser-journey-171)
 complements API/DOM regressions with two actors' private threads, literal replies,
 facilitator clarification, platform-only operator response, read-only evaluator
 assistance and an empty new-run queue. All prose/reviews are labelled synthetic

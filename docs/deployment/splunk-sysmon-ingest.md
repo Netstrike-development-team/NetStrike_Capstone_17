@@ -32,8 +32,8 @@ certificate verification or enable a plaintext input on the same port.
 Use the completed local `citef-config/environment.json` for receiver, index,
 certificate, and target values; do not use sample addresses. The Windows role
 renders its output and event inputs from
-[`outputs.conf.j2`](../citef-config/roles/windows_telemetry/templates/outputs.conf.j2)
-and [`inputs.conf.j2`](../citef-config/roles/windows_telemetry/templates/inputs.conf.j2).
+[`outputs.conf.j2`](../../citef-config/roles/windows_telemetry/templates/outputs.conf.j2)
+and [`inputs.conf.j2`](../../citef-config/roles/windows_telemetry/templates/inputs.conf.j2).
 **The current Windows output template sets `useSSL = false`; its CA and server
 verification settings are commented out, as are the role's CA-staging tasks.
 It therefore does not meet the TLS receiver requirements above. Do not use it
@@ -57,7 +57,7 @@ it once if changed; unchanged runs do not restart it. Each service transition
 has a 120-second timeout, and failures stop provisioning.
 
 Use the current `provision.sh` workflow in the
-[`citef-config` README](../citef-config/README.md) to install the offline
+[`citef-config` README](../../citef-config/README.md) to install the offline
 runtime/collections, generate `inventory.ini`, and provision from the extracted
 bundle source. Then run the purpose-built test from that generated
 `source/citef-config` directory. It creates a harmless `cmd.exe` marker on each

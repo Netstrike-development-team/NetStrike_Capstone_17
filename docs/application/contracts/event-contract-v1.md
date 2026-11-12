@@ -1,10 +1,10 @@
 # NetStrike Exercise Event Contract v1
 
-**Schema:** [`schemas/event.v1.json`](../schemas/event.v1.json)
+**Schema:** [`schemas/event.v1.json`](../../../schemas/event.v1.json)
 
-**Stable entry point:** [`schemas/event.json`](../schemas/event.json)
+**Stable entry point:** [`schemas/event.json`](../../../schemas/event.json)
 
-**Implementation:** [`shared/events.py`](../shared/events.py)
+**Implementation:** [`shared/events.py`](../../../shared/events.py)
 
 **Status:** Version 1.0.0 contract for the blue-team MVP
 

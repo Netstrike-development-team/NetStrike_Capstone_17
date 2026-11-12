@@ -30,7 +30,7 @@ answers, checkpoint results, human review history and submissions. Never share
 the spool through the portal or expose its directory over HTTP. Forward this
 unfiltered ledger only to `netstrike_staff`, never the participant-accessible
 `netstrike` index. Do not rely on visibility fields or search filters as the
-security boundary. The separate [learner audit projection](learner-splunk-audit.md)
+security boundary. The separate [learner audit projection](../operations/learner-splunk-audit.md)
 publishes only explicitly reviewed application facts to the learner index.
 
 Known sensitive keys must already be redacted; invalid/unredacted input is

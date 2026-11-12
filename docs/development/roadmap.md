@@ -100,19 +100,19 @@ This is application progress, not live Cyber Range acceptance.
    (#148; #147 closed). #150 delivers a dependency-free extracted-source
    handoff check against separately saved revision/inventory digest (#149 closed);
    no rubric/default scenario change or takeover of environment work. See
-   [application deployment inputs](application-deployment-contract.md) and
-   [learner reset safety](participant-run-safety.md) and
-   [current evaluator workflow](evaluator-review-workflow.md).
-   [Milestone promotion](milestone-release-checklist.md) is independent of continued
+   [application deployment inputs](../deployment/application-deployment-contract.md) and
+   [learner reset safety](../operations/participant-run-safety.md) and
+   [current evaluator workflow](../operations/evaluator-review-workflow.md).
+   [Milestone promotion](../deployment/milestone-release-checklist.md) is independent of continued
    feature development; a tested prototype is not final range acceptance.
-   [Selected offline source consistency](offline-release-source-check.md) is not
+   [Selected offline source consistency](../deployment/offline-release-source-check.md) is not
    whole-bundle installation, running-process or VM/Splunk proof.
-   #152 adds a [strict maintained-code security gate](application-security-gate.md)
+   #152 adds a [strict maintained-code security gate](../application/application-security-gate.md)
    and contains recorder HTTP requests (#151 closed). Its explicit outage exception
    now has passing post-merge CI; #153 remains open for retrospective teammate review.
-   Merged #155 closes #154's [module test/coverage CI defects](evidence/ci-cd-trends-2026-10-19/ci-evidence-checks.md)
+   Merged #155 closes #154's [module test/coverage CI defects](../evidence/ci-cd-trends-2026-10-19/ci-evidence-checks.md)
    and deprecated action runtimes, without changing exercise/environment scope.
-   Merged #158 closes #157 with a [saved raw telemetry comparison](application-telemetry-comparison.md)
+   Merged #158 closes #157 with a [saved raw telemetry comparison](../application/application-telemetry-comparison.md)
    to support Patrick's actual application-event ingestion checks; no live transport
    or readiness claim is added.
    Merged #160 closed #159, fixing a reproduced pending-read credential boundary in the
@@ -122,13 +122,13 @@ This is application progress, not live Cyber Range acceptance.
    [run-pinned SSO actions](ui-walkthrough.md#synthetic-sign-in-and-mfa-run-safety-161),
    not a new exercise stage or environment deployment. Merged #164 closed #163, fixing a
    reproduced double learner submission and obsolete inspection callbacks in
-   the [participant workflow](participant-run-safety.md#pending-submissions-and-inspection-163),
+   the [participant workflow](../operations/participant-run-safety.md#pending-submissions-and-inspection-163),
    with no API, scoring, storyline or Splunk/Ansible change. Merged #166 closed #165, fixing
    reproduced facilitator reconnect/stop pending-command gaps with
-   [request/inspection boundaries](staff-operations.md#pending-control-and-inspection-boundaries-165);
+   [request/inspection boundaries](../operations/staff-operations.md#pending-control-and-inspection-boundaries-165);
    Emergency Stop priority and the existing server contract remain intact.
    Merged #168 closed #167, fixing reproduced overlapping support replies after reconnect and
-   stale queue authority after rejection with [support delivery inspection](exercise-support.md#pending-delivery-and-queue-inspection-167).
+   stale queue authority after rejection with [support delivery inspection](../operations/exercise-support.md#pending-delivery-and-queue-inspection-167).
    Frozen same-message retries and server role/run/limit rules remain unchanged.
    Merged #170 closed #169 with a [strict actual-browser smoke gate](ui-walkthrough.md#strict-real-browser-smoke-gate-169)
    for the existing walkthrough, with source-correlated screenshots/export and

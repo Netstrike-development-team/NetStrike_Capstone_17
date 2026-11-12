@@ -40,7 +40,7 @@ encryption.
 | Infrastructure configuration | Ansible over SSH/WinRM plus PowerShell where required |
 | Cloud stage | Project-owned stateful Python mock; no AWS or LocalStack |
 | Impact stage | Marker files and reversible moves inside disposable fixtures; no encryption |
-| Offline installation | Staged and verified artifacts; see the [bundle status and installation guide](docs/offline-bundle.md) |
+| Offline installation | Staged and verified artifacts; see the [bundle status and installation guide](docs/deployment/offline-bundle.md) |
 
 CALDERA, GHOSTS, Wazuh/Elastic, public cloud, and a custom SIEM are outside the
 MVP. They may be reconsidered only after the complete blue-team exercise works.
@@ -55,8 +55,11 @@ dashboard/             Existing participant/facilitator UI code
 detection/             Existing detection and scoring code
 citef-config/          Infrastructure and Ansible configuration
 docs/README.md         Index of guides, contracts, and planning snapshots
+docs/application/      Architecture, behavior, and versioned contracts
+docs/deployment/      Offline build, provisioning, and release guidance
+docs/development/      Roadmap, handoffs, and local rehearsals
 docs/exercise-design/  Authoritative exercise design and delivery package
-docs/roadmap.md        Current schedule, ownership, and milestones
+docs/operations/      Staff, participant, and evaluator workflows
 ```
 
 Some older module names remain because the project began as an attack-chain
@@ -69,7 +72,7 @@ The exercise design, shared event contract, safe-action contract, and safe
 identity, endpoint/AD, mock-cloud, and impact/recovery controls have been built.
 Offline Ansible provisioning and manifest validation are implemented. A
 November 1, 2026 local full-play provisioning and readiness rehearsal is
-documented in the [validation report](docs/offline-bundle-provisioning-validation.md).
+documented in the [validation report](docs/deployment/offline-bundle-provisioning-validation.md).
 It records three consecutive restore/reprovision/readiness cycles, but is not
 final exercise acceptance.
 The CI bundle contains the portable Python runtime, resolved dependencies,
@@ -87,17 +90,17 @@ See:
 
 - [Documentation index](docs/README.md)
 - [Exercise design package](docs/exercise-design/README.md)
-- [Architecture](docs/architecture.md)
-- [Roadmap and ownership](docs/roadmap.md)
-- [Shared event contract](docs/event-contract-v1.md)
-- [Safe-action contract](docs/safe-action-contract-v1.md)
+- [Architecture](docs/application/architecture.md)
+- [Roadmap and ownership](docs/development/roadmap.md)
+- [Shared event contract](docs/application/contracts/event-contract-v1.md)
+- [Safe-action contract](docs/application/contracts/safe-action-contract-v1.md)
 
 ## Development workflow
 
 - Feature branches and pull requests target `dev`.
 - Normal merges require CI and at least one teammate review. #174 was an
   owner-authorized exception and did not claim independent review.
-- Follow the [milestone promotion checklist](docs/milestone-release-checklist.md):
+- Follow the [milestone promotion checklist](docs/deployment/milestone-release-checklist.md):
   `main` normally holds reviewed milestone/release snapshots. The October 14,
   2026 promotion (#174) is an explicitly validation-deferred development
   snapshot, not a tested milestone or accepted release. Post-merge CI passed;

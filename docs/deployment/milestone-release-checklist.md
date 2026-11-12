@@ -30,9 +30,9 @@ and reset in managed Chromium, plus the separate 14-step help/evaluator/archive
 journey (#171). Preserve both source-correlated screenshots/receipts alongside
 other evidence. These are compressed synthetic developer paths, not
 representative usability or a replacement for any owner acceptance requirement.
-See [browser scope and commands](ui-walkthrough.md#strict-real-browser-smoke-gate-169).
+See [browser scope and commands](../development/ui-walkthrough.md#strict-real-browser-smoke-gate-169).
 
-The separate [maintained application security gate](application-security-gate.md)
+The separate [maintained application security gate](../application/application-security-gate.md)
 blocks medium/high Bandit findings and scan errors in application/tooling code
 and the five maintained profile/action adapters. Legacy reports remain
 informational, not evidence those entry points passed.
@@ -55,7 +55,7 @@ This workflow is a check, **not branch protection**. At the 5 October inspection
 neither main nor dev had branch protection. A repository administrator should
 require review and the strict check if available under the repository's settings;
 until then, reviewers must enforce the checklist manually. This increment does
-not change repository settings. [Module pytest and coverage](evidence/ci-cd-trends-2026-10-19/ci-evidence-checks.md)
+not change repository settings. [Module pytest and coverage](../evidence/ci-cd-trends-2026-10-19/ci-evidence-checks.md)
 now fail on errors; module lint alone remains informational. Missing test suites
 are explicitly not validation and do not generate coverage artifacts.
 The security job now has strict maintained-code scans alongside the informational
@@ -113,6 +113,6 @@ owner checks are pending. After promotion, continue feature PRs into dev.
 - Ashley: client communication, dates, decisions and acceptance coordination.
 
 See [offline bundle and smoke procedure](offline-bundle.md),
-[local rehearsal limitations](local-rehearsal.md),
+[local rehearsal limitations](../development/local-rehearsal.md),
 [deployment inputs](application-deployment-contract.md) and
-[remaining work](development-remaining-work.md).
+[remaining work](../development/development-remaining-work.md).

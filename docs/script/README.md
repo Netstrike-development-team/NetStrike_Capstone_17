@@ -117,8 +117,8 @@ The five-page PDF was reopened for text checks and all pages rendered for visual
 inspection; spoken paragraphs stay together across page breaks.
 
 Checked against `dashboard/static/participant.html`, `participant.js`,
-`evidence.html`, `docs/exercise-support.md`, `docs/staff-operations.md`,
-`docs/after-action-review.md`, the event contract and approved exercise design.
+`evidence.html`, `docs/operations/exercise-support.md`, `docs/operations/staff-operations.md`,
+`docs/operations/after-action-review.md`, the event contract and approved exercise design.
 Rebecca's role is in `orchestrator/fixtures/identity-profiles.v1.json`.
 Generic Splunk commands/navigation were checked against the official 10.0
 references linked in the handout; actual Splunk Enterprise 10.0.1 deployment
@@ -126,5 +126,5 @@ still needs Patrick's validation.
 
 Useful private author references: [charter](../exercise-design/01-exercise-charter.md),
 [safety](../exercise-design/04-safety-and-reset.md),
-[support](../exercise-support.md), [staff operations](../staff-operations.md),
-and [main-promotion checklist](../milestone-release-checklist.md).
+[support](../operations/exercise-support.md), [staff operations](../operations/staff-operations.md),
+and [main-promotion checklist](../deployment/milestone-release-checklist.md).

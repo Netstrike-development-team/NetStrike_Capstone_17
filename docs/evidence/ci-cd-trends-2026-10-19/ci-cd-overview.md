@@ -219,5 +219,5 @@ reconstruct missing coverage by testing today's code, or forward-fill gaps.
 Preserve historical reports before their retention expires.
 
 See [CI evidence details](ci-evidence-checks.md),
-[security scope](../../application-security-gate.md), and
-[milestone promotion](../../milestone-release-checklist.md) for gate boundaries.
+[security scope](../../application/application-security-gate.md), and
+[milestone promotion](../../deployment/milestone-release-checklist.md) for gate boundaries.

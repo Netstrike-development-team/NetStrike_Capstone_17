@@ -6,7 +6,7 @@ project source trees, and pinned Ansible collections. `inventory.json` records
 per-artifact version, source, license, owner, SHA-256, destination VM, and offline
 installation method. The October 21 and November 1 restore/provision/readiness
 rehearsals are recorded in the
-[validation report](../offline-bundle-provisioning-validation.md). The November
+[validation report](../deployment/offline-bundle-provisioning-validation.md). The November
 1 report records three consecutive cycles, meeting that criterion (owner
 clarification, 2026-11-04); the October 21 nonconsecutive-cycle result is
 historical and superseded. The rehearsals used Docker-hosted Splunk and do not
@@ -22,7 +22,7 @@ October 21 provisioning and DNS-blocking evidence for #79's tested configuration
 DNS blocking is sufficient under that project acceptance decision; it is not
 proof of all-path egress isolation. The three-consecutive-cycle criterion is
 met; complete baseline and final exercise acceptance remain separate. See the
-[evidence checklist](../offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
+[evidence checklist](../deployment/offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
 
 This document is the source of truth for:
 
@@ -33,7 +33,7 @@ This document is the source of truth for:
 Use [06-citef-requirements-and-approval.md](06-citef-requirements-and-approval.md)
 for CITEF decisions and open environment requirements, the
 [CITEF configuration guide](../../citef-config/README.md) for Ansible commands,
-and the [offline bundle guide](../offline-bundle.md) for bundle build/install
+and the [offline bundle guide](../deployment/offline-bundle.md) for bundle build/install
 steps. Stage and run the bundle on `ANSIBLE01`; `CTRL01` remains the portal and
 application host.
 
@@ -230,7 +230,7 @@ isolation test required to close that criterion. To record such an audit:
 
 Record per-artifact license, approval, version, and SHA-256 in the tables above.
 Keep proprietary installers, credentials, and secrets out of Git. Use the
-[offline bundle guide](../offline-bundle.md) for Python bundle installation and
+[offline bundle guide](../deployment/offline-bundle.md) for Python bundle installation and
 the [CITEF guide](../../citef-config/README.md) for collection staging and
 config deployment workflow.
 
@@ -245,7 +245,7 @@ November 1 report records three consecutive cycles and meets that criterion.
 Patrick accepts the provisioning and DNS-blocking evidence for #79's tested
 configuration; this does not establish #104's complete Cyber Range rehearsal
 acceptance. See
-the [validation report](../offline-bundle-provisioning-validation.md) for both
+the [validation report](../deployment/offline-bundle-provisioning-validation.md) for both
 dated rehearsal records and limitations.
 
 **Status (2026-10-07):** Patrick reports that the dashboard was installed and
@@ -261,7 +261,7 @@ establish application smoke-test, provisioning, and
 event-ingestion success, not all deployment acceptance: detailed readiness and
 access-control outcomes and snapshot restore are not recorded. Replication steps for the
 application smoke test are in the
-[offline bundle guide](../offline-bundle.md#3-run-the-application-smoke-test-on-an-isolated-linux-vm).
+[offline bundle guide](../deployment/offline-bundle.md#3-run-the-application-smoke-test-on-an-isolated-linux-vm).
 
 Complete this record for each target OS/VM role. Preserve logs that contain no
 secrets and link them from the approved project evidence location.

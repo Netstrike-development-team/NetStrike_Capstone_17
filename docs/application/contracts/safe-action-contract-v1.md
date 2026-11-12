@@ -1,8 +1,8 @@
 # NetStrike Safe Action Adapter Contract v1
 
-**Schema:** [`schemas/action.v1.json`](../schemas/action.v1.json)
+**Schema:** [`schemas/action.v1.json`](../../../schemas/action.v1.json)
 
-**Implementation:** [`shared/actions.py`](../shared/actions.py)
+**Implementation:** [`shared/actions.py`](../../../shared/actions.py)
 
 **Status:** v1.0.0 design and reference enforcement layer
 

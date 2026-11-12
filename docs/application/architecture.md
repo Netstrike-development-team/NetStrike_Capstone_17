@@ -80,7 +80,7 @@ The final VM count, image versions, resources, network, and access model are
 captured as environment configuration rather than hard-coded in application
 logic. The proposed logical mapping, fail-closed inventory, Ansible procedure,
 and external readiness workflow are documented in
-[`citef-config/README.md`](../citef-config/README.md). CITEF has not yet
+[`citef-config/README.md`](../../citef-config/README.md). CITEF has not yet
 confirmed the target addresses, images, or access paths, so the example
 manifest cannot be used for deployment.
 
@@ -94,8 +94,8 @@ manifest cannot be used for deployment.
 
 ## Source of truth
 
-- Event format: [event-contract-v1.md](event-contract-v1.md)
-- Action safety: [safe-action-contract-v1.md](safe-action-contract-v1.md)
-- Exercise behavior: [exercise-design/02-storyline-and-msel.md](exercise-design/02-storyline-and-msel.md)
-- Telemetry: [exercise-design/03-telemetry-evidence-matrix.md](exercise-design/03-telemetry-evidence-matrix.md)
-- Tools/offline plan: [exercise-design/07-offline-tool-bundle-inventory.md](exercise-design/07-offline-tool-bundle-inventory.md)
+- Event format: [event-contract-v1.md](contracts/event-contract-v1.md)
+- Action safety: [safe-action-contract-v1.md](contracts/safe-action-contract-v1.md)
+- Exercise behavior: [exercise-design/02-storyline-and-msel.md](../exercise-design/02-storyline-and-msel.md)
+- Telemetry: [exercise-design/03-telemetry-evidence-matrix.md](../exercise-design/03-telemetry-evidence-matrix.md)
+- Tools/offline plan: [exercise-design/07-offline-tool-bundle-inventory.md](../exercise-design/07-offline-tool-bundle-inventory.md)

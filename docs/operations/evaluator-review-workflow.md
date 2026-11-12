@@ -78,7 +78,7 @@ actual page bindings: draft preservation/conflict, lost acknowledgment, credenti
 reset races, raw pinned downloads and no repeated writes. Deployment preflight and
 the 24-case rehearsal fingerprint the new asset. This is not browser visual QA,
 non-author usability or live range evidence. The separate
-[14-step actual-browser staff smoke](ui-walkthrough.md#help-evaluator-and-archive-browser-journey-171)
+[14-step actual-browser staff smoke](../development/ui-walkthrough.md#help-evaluator-and-archive-browser-journey-171)
 complements these checks with synthetic `not_observed` revisions, completed draft
 refresh, pinned current downloads, frozen archives and current/historical separation
 after reset. This is not actual learner evaluation, rubric calibration or acceptance.

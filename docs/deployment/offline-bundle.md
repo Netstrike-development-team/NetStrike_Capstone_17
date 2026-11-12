@@ -2,7 +2,7 @@
 
 This guide covers the CI-built runtime, Python wheelhouse, and offline Linux
 packages. For artifact approvals and license/version decisions, see the
-[offline tool-bundle inventory](exercise-design/07-offline-tool-bundle-inventory.md).
+[offline tool-bundle inventory](../exercise-design/07-offline-tool-bundle-inventory.md).
 
 ## Build and verify
 
@@ -88,7 +88,7 @@ sha256sum -c SHA256SUMS
 ```
 
 `destinations/CTRL01/` is the payload destination, not the Ansible host. Deploy
-from the repository root on `ANSIBLE01` using [`citef-config/README.md`](../citef-config/README.md)
+from the repository root on `ANSIBLE01` using [`citef-config/README.md`](../../citef-config/README.md)
 and `provision.sh`. The wrapper verifies the bundle, extracts the runtime,
 installs hash-locked Python dependencies and pinned collections offline, then
 provisions from its extracted source tree. Pass the application bundle,
