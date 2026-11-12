@@ -55,7 +55,7 @@ This workflow is a check, **not branch protection**. At the 5 October inspection
 neither main nor dev had branch protection. A repository administrator should
 require review and the strict check if available under the repository's settings;
 until then, reviewers must enforce the checklist manually. This increment does
-not change repository settings. [Module pytest and coverage](ci-evidence-checks.md)
+not change repository settings. [Module pytest and coverage](evidence/ci-cd-trends-2026-10-19/ci-evidence-checks.md)
 now fail on errors; module lint alone remains informational. Missing test suites
 are explicitly not validation and do not generate coverage artifacts.
 The security job now has strict maintained-code scans alongside the informational

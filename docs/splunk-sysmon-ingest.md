@@ -99,12 +99,3 @@ range readiness.
   time range and check host/source values.
 - **TLS errors:** Verify receiver certificate names and CA chain and the staged
   CA file. Do not disable validation or bypass the approved certificate process.
-
-The October 2026 local rehearsal used Docker-hosted Splunk, not the
-Cyber-Range-managed receiver. It does not validate range network policy or
-establish Cyber Range deployment acceptance; see the
-[provisioning validation report](offline-bundle-provisioning-validation.md).
-
-For TLS REST searches, configure the receiver CA in the manifest; the test
-validates the certificate only when that CA is configured. Approved deployments
-must use their required TLS material.

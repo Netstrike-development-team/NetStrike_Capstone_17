@@ -32,17 +32,6 @@ out. Neither host receives remote provisioning or service/clock validation
 tasks. Readiness checks Splunk ingestion through its API from `localhost`;
 forwarder configuration on exercise targets remains enabled.
 
-Regenerate an existing inventory after updating the configuration:
-
-```sh
-python3 citef-config/validate_environment.py inventory > citef-config/inventory.ini
-```
-
-The provisioning wrapper regenerates inventory from the JSON manifest using
-its bundled source, so rebuild the offline bundle to include these changes.
-
-Scenario VMs must not depend on Internet access. Patrick accepts the October 21 DNS-blocking method as sufficient #79 isolation evidence; this does not certify every possible egress path.
-
 ## Prepare and provision
 
 Copy `environment.example.json` to the ignored `environment.json` and fill it with approved, non-secret values. The example is intentionally incomplete. The provisioning wrapper validates the manifest, verifies bundle integrity, installs pinned dependencies and collections offline, renders inventory, and runs the provisioning playbook.

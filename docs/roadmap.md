@@ -110,7 +110,7 @@ This is application progress, not live Cyber Range acceptance.
    #152 adds a [strict maintained-code security gate](application-security-gate.md)
    and contains recorder HTTP requests (#151 closed). Its explicit outage exception
    now has passing post-merge CI; #153 remains open for retrospective teammate review.
-   Merged #155 closes #154's [module test/coverage CI defects](ci-evidence-checks.md)
+   Merged #155 closes #154's [module test/coverage CI defects](evidence/ci-cd-trends-2026-10-19/ci-evidence-checks.md)
    and deprecated action runtimes, without changing exercise/environment scope.
    Merged #158 closes #157 with a [saved raw telemetry comparison](application-telemetry-comparison.md)
    to support Patrick's actual application-event ingestion checks; no live transport

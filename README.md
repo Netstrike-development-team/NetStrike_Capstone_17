@@ -68,15 +68,16 @@ supported MVP behavior.
 The exercise design, shared event contract, safe-action contract, and safe
 identity, endpoint/AD, mock-cloud, and impact/recovery controls have been built.
 Offline Ansible provisioning and manifest validation are implemented. A
-scoped local provisioning rehearsal was recorded on October 15, 2026, but it
-did not configure DC01 or Splunk, restore snapshots, or establish CITEF
-readiness; see the [validation report](docs/20261015%20Offline%20Bundle%20and%20Provisioning%20Validation.md).
+November 1, 2026 local full-play provisioning and readiness rehearsal is
+documented in the [validation report](docs/offline-bundle-provisioning-validation.md).
+It records three consecutive restore/reprovision/readiness cycles, but is not
+final exercise acceptance.
 The CI bundle contains the portable Python runtime, resolved dependencies,
 project source trees, and pinned Ansible collections, with a generated
 per-artifact inventory and checksums. CITEF deployment, complete clean-target
-provisioning/readiness acceptance, external-artifact staging and manifest
-verification, normalized portal-event forwarding, and end-to-end telemetry
-acceptance remain open.
+exercise acceptance, external-artifact staging and manifest verification,
+normalized portal-event forwarding, and end-to-end telemetry acceptance remain
+open.
 The next delivery goal is a complete identity vertical
 slice: start a run, deliver an inject, investigate it in Splunk, take a safe
 containment action, score the checkpoint, export evidence, and restore the

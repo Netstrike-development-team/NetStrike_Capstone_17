@@ -5,6 +5,25 @@ and archived/legacy placeholders. Documents remain at their existing paths so
 current links keep working. Short descriptions indicate whether a file is
 operational guidance, a contract, a planning snapshot, or only a placeholder.
 
+## Find a guide by task
+
+| If you need to… | Start with |
+|---|---|
+| Understand the exercise and its requirements | [Exercise design package](exercise-design/README.md) |
+| Prepare or run an exercise | [Full-play deployment runbook](full-play-deployment-guide.md), [staff operations](staff-operations.md), and [participant safety](participant-run-safety.md) |
+| Build or validate an offline deployment | [Offline bundle guide](offline-bundle.md) and [validation report](offline-bundle-provisioning-validation.md) |
+| Change application behavior or integrations | [Architecture](architecture.md), then the relevant [contract](#contracts-and-application-behavior) |
+| Find implementation-level setup | [Application and component guides](#application-and-component-guides) and [scenario module guides](#scenario-module-guides) |
+
+## Folder guide
+
+| Folder | Contents |
+|---|---|
+| [`exercise-design/`](exercise-design/README.md) | Exercise scope, storyline, safety, and approval materials |
+| [`evidence/`](evidence/) | Dated verification and CI evidence; treat these as scoped snapshots |
+| [`Script/`](Script/README.md) | Briefing script and participant quick reference |
+| [`network-diagram/`](network-diagram/) | Editable PlantUML sources and rendered topology diagrams |
+
 ## Start here
 
 | Document | What it covers |
@@ -13,7 +32,6 @@ operational guidance, a contract, a planning snapshot, or only a placeholder.
 | [Architecture](architecture.md) | MVP components, boundaries, and out-of-scope work |
 | [Roadmap and ownership](roadmap.md) | Delivery milestones, schedule, team roles, and working rhythm |
 | [Remaining development estimate](development-remaining-work.md) | Planning estimate updated October 7, 2026; not a live issue count or delivery commitment |
-| [Integration review](patrick-integration-review-2026-10-03.md) | Historical October 3 review of proposed deployment PRs and risks; not current deployment or acceptance status |
 | [Repository README](../README.md) | Project overview, current state, repository structure, and development workflow |
 
 ## Exercise design documents
@@ -75,8 +93,8 @@ index](exercise-design/README.md).
 | [Offline application source check](offline-release-source-check.md) | Read-only selected-source comparison against a separately recorded commit/inventory digest, without Git or runtime dependencies |
 | [Milestone promotion checklist](milestone-release-checklist.md) | Strict main/dev checks, source-matched evidence and prototype versus accepted-release gates |
 | [Application security gate](application-security-gate.md) | Blocking maintained-code scans, informational legacy boundary and recorder loopback request controls |
-| [CI test and coverage evidence](ci-evidence-checks.md) | Strict module test outcomes, retained coverage, no-tests boundaries and pinned Node-24 actions/CI image |
-| [CI/CD quality trends](ci-cd-overview.md) | Weekly averages since September 1: coverage, test-count-weighted pass rate, tests per run, workflow success, and evidence gaps |
+| [CI test and coverage evidence](evidence/ci-cd-trends-2026-10-19/ci-evidence-checks.md) | Strict module test outcomes, retained coverage, no-tests boundaries and pinned Node-24 actions/CI image |
+| [CI/CD quality trends](evidence/ci-cd-trends-2026-10-19/ci-cd-overview.md) | Weekly averages since September 1: coverage, test-count-weighted pass rate, tests per run, workflow success, and evidence gaps |
 | [CITEF topology and Ansible workflow](../citef-config/README.md) | Team-controlled topology under delegated range authority, private manifest, provisioning, and post-restore checks; configuration permission is established |
 
 ## Application and component guides
