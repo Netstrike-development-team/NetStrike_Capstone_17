@@ -45,8 +45,6 @@ Patrick/Aya must supply the appropriate participant credentials separately.
 
 ## 2. Ground rules and emergency stop — 01:30–04:00
 
-> **Ground rules**
->
 > Everything today is simulated. Work only with the approved exercise systems and targets in your handout.
 >
 > **You can**
