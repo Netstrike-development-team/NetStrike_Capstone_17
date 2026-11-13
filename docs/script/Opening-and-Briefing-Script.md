@@ -1,9 +1,6 @@
 # Operation Silent Spider — opening and 15-minute briefing
 
-Facilitator working draft, revised 14 October 2026. Builds on Anna's opening
-message and the expanded briefing supplied by Aya. Anna retains content approval.
-Checked against application source `a5725fa97d70ef8e4e9934498646427494494b6a`.
-This is not a record of a completed rehearsal or deployment acceptance.
+Facilitator Working Draft, revised 12 November 2026. Anna added the script, reviewed draft and approved changes. Speaker notes, Timing brief and format are carried over from Aya’s draft, and screenshots are still needed for the participant portal explanation. Checked against application source a5725fa97d70ef8e4e9934498646427494494b6a. This is not a record of a completed rehearsal or deployment acceptance.
 
 Read the quoted paragraphs aloud. Unquoted directions are staff notes, not
 participant dialogue. Complete the [delivery checklist](README.md) first.
@@ -45,13 +42,36 @@ Patrick/Aya must supply the appropriate participant credentials separately.
 
 ## 2. Ground rules and emergency stop — 01:30–04:00
 
-> Work only with the approved exercise systems and targets listed in your handout. You may search and export permitted exercise events, inspect the supplied records, preserve copies and hashes in [EVIDENCE_DIRECTORY], and use the approved response controls. Explain why you're taking a disruptive action and preserve relevant evidence first.
+> Everything today is simulated. Work only with the approved exercise systems and targets in your handout.
 >
-> Don't connect to systems outside the exercise scope, contact real people, use real personal data or credentials in scenario records, alter source logs, install unapproved tools, or disable safety controls. Don't change Splunk, the controller, evaluator settings or VM snapshots. Never encrypt or erase real data.
+> **You can**
 >
-> If you see anything unsafe, unexpected external connectivity, a target outside our scope, or a change to unrelated data, say **“STOP EXERCISE”** immediately and contact [SAFETY_CONTACT]. Anyone may call a stop. Stop typing commands and stop submitting actions; leave the screens, logs and files as they are. Don't try to clean up or reset anything yourself.
+> * Search and export permitted exercise events in Splunk.
+> * Investigate the designated hosts, files, tickets, and mock-service records.
+> * Copy evidence and generate hashes, saving them to [EVIDENCE_DIRECTORY].
+> * Reset or disable exercise accounts, revoke sessions, and remove MFA factors.
+> * Isolate lab hosts using the provided control.
+> * Revoke mock-cloud keys and correct mock bucket policies.
+> * Restore data from the exercise backup.
 >
-> Staff will confirm the stop and tell you what happens next. If the portal isn't responding, contact us directly; don't wait for the help queue. Don't continue until the facilitator explicitly gives instructions. A tool failure is not automatically a participant mistake.
+> Before any disruptive action, preserve the relevant evidence first and explain why you're taking it.
+>
+> **Off-limits**
+>
+> * Don't scan or connect to anything outside the exercise subnet or scope.
+> * Don't use real names, passwords, phone numbers, or personal data.
+> * Don't contact real people.
+> * Don't change Splunk, the controller, evaluator/scoring settings, or VM snapshots.
+> * Don't delete or alter logs.
+> * Don't install unapproved tools or disable safety controls.
+>
+> **If something looks wrong**
+>
+> If you see anything unsafe, unexpected external connectivity, an out-of-scope target, or a change to unrelated data, say **"STOP EXERCISE"** immediately and contact [SAFETY_CONTACT]. Anyone can call a stop.
+>
+> * Stop and leave everything as it is.
+> * If the portal isn't responding, contact us directly rather than waiting for the help queue.
+> * A tool failure isn't automatically a participant mistake.
 
 Staff procedure, not extra participant dialogue:
 
@@ -73,28 +93,54 @@ undoes work already completed. Confirm the external procedure before delivery.
 
 ## 3. SimCorp and the service map — 04:00–06:00
 
-> SimCorp is a fictional services company preparing a quarterly customer billing export. You'll be supporting its staff while investigating an incident. Sarah Mitchell is the VP of Finance, Tyler Brennan is a helpdesk technician, and Rebecca Nwosu is the Director of IT. Simulated staff conversations go through exercise control, not real calls or emails.
+> **Welcome to SimCorp**
 >
-> Your handout includes short policies for identity and access, helpdesk verification, data handling and escalation. Use those policies to understand what normal, authorized activity should look like. They aren't an answer key.
+> SimCorp is a fictional services company preparing its quarterly customer billing export next week. You'll support its staff while investigating an incident. Key people:
 >
-> The map shows services, not necessarily seven separate VMs. Identity handles accounts, sessions and MFA. Helpdesk holds support records. The Finance workstation and directory provide endpoint and account context. The mock cloud holds synthetic storage records, and the recovery service supplies disposable files and their known-good backup.
+> * Sarah Mitchell: VP of Finance
+> * Tyler Brennan: Helpdesk technician
+> * Rebecca Nwosu: Director of IT
 >
-> Splunk is the investigation tool. The participant portal receives situation updates, records your findings and exposes approved response controls. The cloud is a local Python simulation, not AWS. Portal response actions change controlled simulation state; don't assume they administer real Windows or Active Directory services.
+> Staff conversations are simulated, not real calls or emails.
+>
+> **Policies**
+>
+> Your handout includes short policies on identity and access, helpdesk verification, data handling, and escalation. Use them to understand what normal, authorized activity looks like. They aren't an answer key.
+>
+> **The environment**
+>
+> The map shows seven services, not necessarily seven separate VMs:
+>
+> * Identity service: accounts, sessions, SSO, and MFA
+> * Helpdesk system: support records
+> * Finance workstation and directory (Active Directory): endpoint and account context
+> * Mock cloud: synthetic storage records
+> * Recovery service: disposable files and their known-good backup
+> * Splunk: your investigation tool for logs and events
+>
+> The participant portal delivers situation updates, records your findings, and provides the approved response controls.
+>
+> You don't need to memorize this. The network diagram will be your reference throughout the exercise. Let's take a look at it before we move on to your tools.
 
-Show the conceptual map in the quick reference, followed by Patrick's approved
-participant topology if available. Do not present the repository's example
-subnet, URLs or logical-to-VM mapping as a confirmed deployment.
+Show the conceptual map first, followed by Patrick's approved participant topology if available. Don't present the repository's example subnet, URLs, or logical-to-VM mapping as a confirmed deployment.
 
 ## 4. Access demonstration — 06:00–09:00
 
 Before this section, workstations should be ready. Never assume OS login also
 authenticates Splunk or the portal. Do not project passwords or access tokens.
 
+> Your workstation is already logged in. Let's dive right in.
+
 ### Splunk: demonstrate a neutral search
 
-> Open [SPLUNK_URL_OR_SHORTCUT] and sign in using the private access instructions. Open [SPLUNK_APP]. Set the time picker to [SPLUNK_UTC_WINDOW], including the supplied pre-exercise history. Use the exact learner search from your handout; it is restricted to your assigned exercise and run.
+> 1) Open [SPLUNK_URL_OR_SHORTCUT]
+> 2) Sign in using the private access instructions.
+> 3) Open [SPLUNK_APP].
+> 4) Set the time picker to [SPLUNK_UTC_WINDOW], including the supplied pre-exercise history.
+> 5) Use the exact learner search from your handout; it is restricted to your assigned exercise and run.
+> 6) Open one harmless orientation event and find its time, source and event identifier.
 >
-> Open one harmless orientation event and find its time, source and event identifier. A received time and the time something happened can be different. Record occurrence times with their time zone.
+> A received time and the time something happened can be different. Record occurrence times with their time zone.
 >
 > If you get no results, check the supplied time window and run filter, then tell us. No results do not prove that nothing happened. Don't remove scope restrictions or change server configuration to fix access.
 
@@ -105,7 +151,11 @@ This is a short refresher, not a replacement for introductory Splunk training.
 
 ### Participant portal: demonstrate connection and navigation
 
-> Open [PORTAL_BASE_URL]/participant. Paste your assigned participant token into **Exercise access token**, then select **Connect**. Check the **Run ID** against your handout. New SimCorp messages appear under **Situation updates**; use **Refresh** if needed.
+> 1) Open [PORTAL_BASE_URL]/participant.
+> 2) Paste your assigned participant token into **Exercise access token**,
+> 3) then select **Connect**.
+> 4) Check the **Run ID** against your handout.
+> 5) New SimCorp messages appear under **Situation updates**; use **Refresh** if needed.
 >
 > **Open evidence timeline** opens the local, read-only synthetic evidence viewer. It is not Splunk. Connect there with your assigned participant token as well. You can filter signals and copy event IDs for your submissions.
 
