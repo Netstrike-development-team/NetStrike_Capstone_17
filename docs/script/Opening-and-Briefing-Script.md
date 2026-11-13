@@ -1,6 +1,6 @@
 # Operation Silent Spider — opening and 15-minute briefing
 
-Facilitator Working Draft, revised 12 November 2026. Anna reviewed and added the script. Speaker notes, Timing brief and format are carried over from Aya’s draft, and screenshots are still needed for the participant portal explanation. Checked against application source a5725fa97d70ef8e4e9934498646427494494b6a. This is not a record of a completed rehearsal or deployment acceptance.
+Facilitator Working Draft, revised 12 November 2026. Anna added the script, reviewed draft and approved changes. Speaker notes, Timing brief and format are carried over from Aya’s draft, and screenshots are still needed for the participant portal explanation. Checked against application source a5725fa97d70ef8e4e9934498646427494494b6a. This is not a record of a completed rehearsal or deployment acceptance.
 
 Read the quoted paragraphs aloud. Unquoted directions are staff notes, not
 participant dialogue. Complete the [delivery checklist](README.md) first.
