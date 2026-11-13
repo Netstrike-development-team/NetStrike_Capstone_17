@@ -1,10 +1,5 @@
 # Briefing materials — author review and delivery checklist
 
-The draft review below is dated 14 October 2026. It supports Anna's #99
-participant-materials work, with related authored content under #98/#100.
-#99 closed on 29 October; this dated checklist is not itself evidence that
-every item was completed, nor authorization to promote to main.
-
 ## Files and intended audience
 
 - [Opening and 15-minute briefing](Opening-and-Briefing-Script.md): facilitator read-aloud script plus private delivery notes. Renamed with a Markdown extension so applications can recognize and open it.
@@ -14,14 +9,6 @@ every item was completed, nor authorization to promote to main.
 Read-aloud text is quoted. Do not distribute staff notes, the solution guide,
 full MSEL, checkpoint verifiers, evaluator archive or raw canonical staff ledger
 to participants. Do not copy answer-bearing screenshots into this handout.
-
-## What Anna added and what this review changes
-
-Anna directly added/edited the opening on `dev` in commits `4c8efdb`, `6380715`,
-`f64efe0` and `a5725fa` (11–13 October). At `a5725fa`, the file is a 17-line
-opening only. The expanded briefing pasted into chat was reviewed as additional
-draft content, not misreported as already committed by Anna. No recent Anna PR
-or her own new acceptance comment was found in #98–#100 during this review.
 
 The revision preserves her welcome and approved duration, and adds/fixes:
 
