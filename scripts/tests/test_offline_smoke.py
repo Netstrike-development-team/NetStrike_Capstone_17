@@ -174,6 +174,7 @@ def test_orchestration_uses_only_bundled_runtime_and_dependency_sources(tmp_path
                 "packaged_runtime_verified": True, "application_reset_verified": True,
                 "archive_preserved": True, "publication_retry_verified": True}
             report["learner_comparison_verified"] = True
+            report["native_file_recovery_verified"] = True
             (tmp_path / "output/application-smoke.json").write_text(json.dumps(report))
 
     monkeypatch.setattr(smoke, "command", command)

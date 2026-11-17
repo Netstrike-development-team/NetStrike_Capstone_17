@@ -53,7 +53,8 @@ export class ParticipantSession {
           state.run_id !== state.run_id.trim() || state.run_id.length > 128 || /[\x00-\x1f]/.test(state.run_id) ||
           !["ready", "running", "paused", "stopped", "completed"].includes(state.state) ||
           !Number.isFinite(state.elapsed_seconds) || state.elapsed_seconds < 0 || !Array.isArray(state.injects) ||
-          typeof state.cloud_enabled !== "boolean" || typeof state.impact_enabled !== "boolean") {
+          typeof state.cloud_enabled !== "boolean" || typeof state.impact_enabled !== "boolean" ||
+          (state.recovery_mode !== undefined && !["fixture", "native_files"].includes(state.recovery_mode))) {
         throw new Error("Exercise state unavailable.");
       }
       if (this.runId && this.runId !== state.run_id) this.invalidate("run");

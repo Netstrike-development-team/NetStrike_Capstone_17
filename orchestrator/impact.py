@@ -33,9 +33,11 @@ STEPS = {
 class ImpactStage:  # pylint: disable=too-many-instance-attributes
     """Own only one run's five decoys, local evidence and recovery review."""
 
-    def __init__(self, run, run_id, approved_root, *, fixture=None):
+    def __init__(self, run, run_id, approved_root, *, fixture=None, recovery_mode="fixture"):
         self.run = run
         self.run_id = run_id
+        self.recovery_mode = recovery_mode
+        self.native_validation_manifest = None
         self.module = importlib.import_module("modules.07-ransomware-sim.impact_actions")
         if not approved_root:
             raise ValueError("full-play scenario requires NETSTRIKE_IMPACT_ROOT")
@@ -60,7 +62,8 @@ class ImpactStage:  # pylint: disable=too-many-instance-attributes
             clock=run.clock, sequence_factory=run.sequencer.next,
         )
         registry = ActionRegistry()
-        self.module.register_impact_actions(registry, self.fixture, run_id=run_id)
+        self.module.register_impact_actions(registry, self.fixture, run_id=run_id,
+                                            recovery_mode=recovery_mode)
         self.adapter = self._adapter(registry, "marker-impact-action-adapter")
         automation = ActionRegistry()
         for action_id, item_id in STEPS.items():
@@ -343,6 +346,13 @@ class ImpactStage:  # pylint: disable=too-many-instance-attributes
                 "exercise_id": self.run.definition.exercise_id, "run_id": self.run_id,
                 "fixture": self.fixture.inspect(), "audit": deepcopy(self.audit),
                 "endpoint": self.run.endpoint_state.snapshot(),
+                "recovery": {
+                    "mode": self.recovery_mode,
+                    "portal_restore_allowed": self.recovery_mode == "fixture",
+                    "verification_scope": "file_bytes_readable_by_controller",
+                    "permissions_verified": False,
+                    "intended_user_access_verified": False,
+                },
             }
 
     def staff_state(self):
@@ -373,11 +383,29 @@ class ImpactStage:  # pylint: disable=too-many-instance-attributes
         with self.run.state_lock:
             if action_id not in RECOVERY_ACTIONS or not self.applied:
                 raise ActionContractError("recovery requires an observed impact branch")
+            if self.recovery_mode == "native_files" and self.run.controller.state != RunState.RUNNING:
+                raise ActionContractError("native recovery verification requires running play")
             request = self._request(
                 action_id, entity("fixture_set", fixture_id), actor, key, dry_run=dry_run,
             )
             result = self.adapter.execute(request)
+            if (self.recovery_mode == "native_files" and not dry_run and not result["cached"]
+                    and action_id == "recovery.health.validate" and result["status"] != "denied"):
+                self.validation_event_id = None
+                self.native_validation_manifest = None
             if result["successful"] and not dry_run and not result["cached"]:
+                if self.recovery_mode == "native_files" and action_id == "recovery.health.validate":
+                    observed = self.fixture.native_recovery_observation()
+                    if not observed["passed"]:
+                        raise ActionExecutionError("fixture_unhealthy", "Native files changed; verify again")
+                    event = self._emit(
+                        "recovery.files.verified", "Read-only observation of native file recovery",
+                        data={**observed, "requested_by": actor["id"],
+                              "verification_request_id": result["request_id"]},
+                    )
+                    self.validation_event_id = event["event_id"]
+                    self.native_validation_manifest = deepcopy(observed["live_manifest"])
+                    return result
                 event_type = (
                     "recovery.fixture.restored" if action_id == "recovery.fixture.restore"
                     else "recovery.health.verified"
@@ -397,6 +425,7 @@ class ImpactStage:  # pylint: disable=too-many-instance-attributes
             effects = self.adapter.rollback(self.last_impact_request, actor)
             self.last_impact_request = None
             self.validation_event_id = None
+            self.native_validation_manifest = None
             self._emit("impact.rollback.completed", "Staff restored the pre-impact decoys",
                        data=self.fixture.inspect())
             return {"effects": list(effects), "run_id": self.run_id}
@@ -419,13 +448,14 @@ class ImpactStage:  # pylint: disable=too-many-instance-attributes
         """Observe recovery and report completeness; quality/rubric stays with #84."""
         with self.run.state_lock:
             status = self.fixture.inspect()
+            native = self.fixture.native_recovery_observation() if self.recovery_mode == "native_files" else None
             brief = self.brief or {}
             count = self.run.cloud.state.exposure[
                 self.run.cloud.module.BUCKET_ID
             ]["confirmed_count"]
             checks = {
                 "originals_unchanged": status["originals_unchanged"] and status["backup_intact"],
-                "baseline_restored": status["baseline_verified"],
+                "baseline_restored": native["passed"] if native else status["baseline_verified"],
                 "health_validation_recorded": bool(self.validation_event_id),
                 "health_evidence_cited": self.validation_event_id in brief.get("evidence_ids", [])
                 if self.validation_event_id else False,
@@ -437,6 +467,10 @@ class ImpactStage:  # pylint: disable=too-many-instance-attributes
                     )
                 ) and len(brief.get("recommendations", [])) >= 2,
             }
+            if native:
+                checks["native_file_observation_current"] = (
+                    self.native_validation_manifest == native["live_manifest"]
+                )
             return self._evaluation(checks, brief.get("evidence_ids", []))
 
     def validate_next_run(self, run_id):
