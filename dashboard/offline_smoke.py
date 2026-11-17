@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import secrets
 import socket
+import subprocess
 import sys
 import threading
 import time
@@ -47,7 +48,7 @@ def imported_sources(source):
             require(any(path.is_relative_to(root) for root in allowed), "import_outside_bundle")
 
 
-def environment(source, work):
+def environment(source, work, *, recovery_mode="fixture"):
     """Synthetic per-process configuration; never retain credentials in evidence."""
     tokens = {role: secrets.token_urlsafe(32) for role in ROLES}
     for key in list(os.environ):
@@ -61,6 +62,7 @@ def environment(source, work):
         "NETSTRIKE_SCENARIO_PATH": str(source / "orchestrator/scenarios/full-play.v1.json"),
         "NETSTRIKE_PROFILE_FIXTURE": str(source / "orchestrator/fixtures/identity-profiles.v1.json"),
         "NETSTRIKE_IMPACT_ROOT": str(work / "fixtures"),
+        "NETSTRIKE_RECOVERY_MODE": recovery_mode,
         "NETSTRIKE_PORTAL_DATABASE": str(work / "portal.sqlite3"),
         "NETSTRIKE_SSO_ALLOWED_ORIGINS": json.dumps(["http://127.0.0.1"]),
     }
@@ -68,7 +70,7 @@ def environment(source, work):
     return tokens
 
 
-def journey(client, tokens, work):
+def journey(client, tokens, work, *, native_files=False):
     """Use only real HTTP endpoints, including authentication and stale-run guards."""
     run_id, checks = INITIAL, []
 
@@ -120,16 +122,48 @@ def journey(client, tokens, work):
     request("GET", "/api/participant/cloud", role="cloud_responder")
     recovery = request("GET", "/api/participant/recovery", role="cloud_responder").json()
     require(recovery["fixture"]["available_originals"] == 0, "impact_observed")
-    for preview in (True, False):
-        request("POST", "/api/participant/recovery/action", role="cloud_responder", body={
+    if native_files:
+        require(recovery["recovery"]["mode"] == "native_files", "native_mode")
+        request("POST", "/api/participant/recovery/action", role="cloud_responder", status=403, body={
             "action_id": "recovery.fixture.restore", "fixture_id": "FILE01-disposable-fixture",
-            "key": "packaged-restore-" + str(preview), "dry_run": preview})
-        state = request("GET", "/api/participant/recovery", role="cloud_responder").json()
-        require(state["fixture"]["available_originals"] == (0 if preview else 5), "recovery_preview_or_execute")
+            "key": "native-portal-restore-denied", "dry_run": False})
+        request("POST", "/api/participant/recovery/action", role="cloud_responder", status=403, body={
+            "action_id": "recovery.health.validate", "fixture_id": "FILE01-disposable-fixture",
+            "key": "native-incomplete-denied", "dry_run": False})
+        fixture = work / "fixtures" / INITIAL
+        for name in recovery["fixture"]["expected_manifest"]:
+            # Fixed system utility, generated private fixture paths, no shell.
+            subprocess.run(["/bin/cp", str(fixture / "known-good" / name),
+                            str(fixture / "live" / name)], check=True, timeout=5)  # nosec B603
+    else:
+        for preview in (True, False):
+            request("POST", "/api/participant/recovery/action", role="cloud_responder", body={
+                "action_id": "recovery.fixture.restore", "fixture_id": "FILE01-disposable-fixture",
+                "key": "packaged-restore-" + str(preview), "dry_run": preview})
+            state = request("GET", "/api/participant/recovery", role="cloud_responder").json()
+            require(state["fixture"]["available_originals"] == (0 if preview else 5), "recovery_preview_or_execute")
     request("POST", "/api/participant/recovery/action", role="cloud_responder", body={
         "action_id": "recovery.health.validate", "fixture_id": "FILE01-disposable-fixture",
         "key": "packaged-health", "dry_run": False})
-    request("POST", "/api/facilitator/stop", body={"reason": "Synthetic packaged smoke complete, not learner evaluation."})
+    if native_files:
+        observation = request("GET", "/api/participant/recovery", role="cloud_responder").json()
+        observed = observation["audit"][-1]
+        require(observed["event_type"] == "recovery.files.verified"
+                and observation["fixture"]["marker_count"] == 5
+                and not observed["data"]["files_modified_by_verifier"], "native_read_only_observation")
+        request("POST", "/api/participant/recovery/brief", role="soc_analyst", body={
+            "confirmed_scope": "Synthetic file-recovery smoke fixture.", "confirmed_cloud_records": 25,
+            "business_impact": "Five disposable files were unavailable.",
+            "actions_taken": "Copied supplied backups with an OS file utility; checked contents.",
+            "remaining_risk": "Windows permissions and intended-user access are unverified.",
+            "recommendations": ["Validate lab access separately.", "Preserve incident artifacts."],
+            "evidence_ids": [observed["event_id"]]})
+        request("POST", "/api/facilitator/advance", body={"elapsed_seconds": 7800})
+        completed = request("GET", "/api/facilitator/state").json()
+        require(completed["controller"]["state"] == "completed"
+                and completed["impact"]["final_review"]["passed"], "native_recovery_final_observations")
+    else:
+        request("POST", "/api/facilitator/stop", body={"reason": "Synthetic packaged smoke complete, not learner evaluation."})
     review = request("GET", "/api/evaluator/exports/bundle.json", role="evaluator").json()
     save(work.parent / "run-review-bundle.json", review)
     raw = request("GET", "/api/facilitator/exports/events.jsonl").text
@@ -140,11 +174,16 @@ def journey(client, tokens, work):
     archived = request("GET", f"/api/evaluator/archives/{archive_id}/bundle.json", role="evaluator").content
     run_id = FRESH
     request("POST", "/api/facilitator/start")
+    if native_files:
+        fresh = request("GET", "/api/participant/state", role="soc_analyst").json()
+        require(fresh["recovery_mode"] == "native_files", "native_mode_retained_after_reset")
     request("POST", "/api/facilitator/stop", body={"reason": "Synthetic fresh-run smoke stopped."})
     require(request("GET", f"/api/evaluator/archives/{archive_id}/bundle.json", role="evaluator").content == archived, "immutable_archive")
     save(work.parent / "http-checks.json", checks)
     return {"http_checks": len(checks), "application_reset_verified": True,
-            "archive_preserved": True, "representative_journey_only": True}
+            "archive_preserved": True, "representative_journey_only": True,
+            "native_file_recovery_verified": native_files,
+            "windows_access_verified": False}
 
 
 def publication(work):
@@ -219,12 +258,36 @@ def comparison_smoke(work, public):
         "external_readiness_verified": False})
 
 
+def serve_journey(app, tokens, work, *, native_files=False):
+    """Own one disposable loopback server and close it on every outcome."""
+    import httpx  # pylint: disable=import-outside-toplevel
+    import uvicorn  # pylint: disable=import-outside-toplevel
+
+    with socket.socket() as listener:
+        listener.bind(("127.0.0.1", 0))
+        listener.listen(128)
+        server = uvicorn.Server(uvicorn.Config(app, log_level="critical", access_log=False, loop="asyncio", http="h11"))
+        thread = threading.Thread(target=server.run, kwargs={"sockets": [listener]}, daemon=True)
+        thread.start()
+        try:
+            deadline = time.monotonic() + 15
+            while not server.started and thread.is_alive() and time.monotonic() < deadline:
+                time.sleep(0.02)
+            require(server.started and thread.is_alive(), "http_startup")
+            with httpx.Client(base_url=f"http://127.0.0.1:{listener.getsockname()[1]}", trust_env=False, timeout=20) as client:
+                result = journey(client, tokens, work, native_files=native_files)
+            result.update(publication(work))
+        finally:
+            server.should_exit = True
+            thread.join(timeout=15)
+            require(not thread.is_alive(), "http_shutdown")
+    return result
+
+
 def run(bundle, output, revision, inventory_sha256):
     require(sys.flags.isolated and sys.dont_write_bytecode, "isolated_interpreter_required")
     require(sys.prefix == sys.base_prefix and Path(sys.prefix).resolve().is_relative_to(output.resolve() / "runtime"), "packaged_interpreter_required")
     # Third-party/application imports happen only in the packaged interpreter.
-    import httpx  # pylint: disable=import-outside-toplevel
-    import uvicorn  # pylint: disable=import-outside-toplevel
     from .app import create_default_app  # pylint: disable=import-outside-toplevel
     from .configuration import inspect_configuration  # pylint: disable=import-outside-toplevel
     from .release_check import inspect_release  # pylint: disable=import-outside-toplevel
@@ -242,25 +305,20 @@ def run(bundle, output, revision, inventory_sha256):
     require(preflight["configuration_valid"], "packaged_preflight")
     require(not (work / "portal.sqlite3").exists() and not list((work / "fixtures").iterdir()), "read_only_preflight")
     save(output / "preflight.json", preflight)
-    app = create_default_app()
-    with socket.socket() as listener:
-        listener.bind(("127.0.0.1", 0))
-        listener.listen(128)
-        server = uvicorn.Server(uvicorn.Config(app, log_level="critical", access_log=False, loop="asyncio", http="h11"))
-        thread = threading.Thread(target=server.run, kwargs={"sockets": [listener]}, daemon=True)
-        thread.start()
-        try:
-            deadline = time.monotonic() + 15
-            while not server.started and thread.is_alive() and time.monotonic() < deadline:
-                time.sleep(0.02)
-            require(server.started and thread.is_alive(), "http_startup")
-            with httpx.Client(base_url=f"http://127.0.0.1:{listener.getsockname()[1]}", trust_env=False, timeout=20) as client:
-                result = journey(client, tokens, work)
-            result.update(publication(work))
-        finally:
-            server.should_exit = True
-            thread.join(timeout=15)
-            require(not thread.is_alive(), "http_shutdown")
+    result = serve_journey(create_default_app(), tokens, work)
+    native_output = output / "native-recovery"
+    native_output.mkdir(mode=0o700)
+    native_work = native_output / "application"
+    native_work.mkdir(mode=0o700)
+    (native_work / "fixtures").mkdir(mode=0o700)
+    tokens = environment(source, native_work, recovery_mode="native_files")
+    native_preflight, _configuration = inspect_configuration(expected_scope="full-play")
+    require(native_preflight["configuration_valid"], "native_packaged_preflight")
+    save(native_output / "preflight.json", native_preflight)
+    native = serve_journey(create_default_app(), tokens, native_work, native_files=True)
+    require(native["native_file_recovery_verified"], "native_packaged_journey")
+    save(native_output / "native-smoke.json", native)
+    result["native_file_recovery_verified"] = True
     imported_sources(source)
     require(inspect_release(bundle, expected_revision=revision, expected_inventory_sha256=inventory_sha256)["source_verified"], "source_unchanged")
     result.update(passed=True, scope="packaged_synthetic_application_smoke", external_readiness_verified=False,

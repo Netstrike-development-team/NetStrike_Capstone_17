@@ -17,6 +17,28 @@ from scripts import rehearsal
 SCRIPT = Path(__file__).resolve().parents[1] / "record_ui_walkthrough.py"
 
 
+def test_native_browser_preview_needs_no_dependencies_or_writes(tmp_path):
+    script = SCRIPT.with_name("native_recovery_browser_smoke.py")
+    output = tmp_path / "not-created"
+    result = subprocess.run([sys.executable, "-S", str(script), "--output", str(output)],
+                            check=True, capture_output=True, text=True)
+    preview = json.loads(result.stdout)
+    assert preview["preview_only"] and not preview["writes_performed"]
+    assert preview["journey_id"] == "native-file-recovery"
+    assert len(preview["chapters"]) == 5
+    assert not output.exists()
+
+
+def test_native_browser_cli_preserves_existing_output(tmp_path):
+    script = SCRIPT.with_name("native_recovery_browser_smoke.py")
+    existing = tmp_path / "existing.txt"
+    existing.write_text("preserve existing data")
+    result = subprocess.run([sys.executable, str(script), "--execute", "--output", str(tmp_path)],
+                            capture_output=True, text=True)
+    assert result.returncode == 2 and "must not already exist" in result.stderr
+    assert existing.read_text() == "preserve existing data"
+
+
 def test_preview_requires_no_recording_dependencies_and_makes_no_output(tmp_path):
     destination = tmp_path / "not-created"
     result = subprocess.run(

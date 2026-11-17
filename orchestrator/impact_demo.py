@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import tempfile
 import uuid
 from datetime import datetime, timezone
@@ -18,7 +19,7 @@ from .impact import FULL_SCENARIO_PATH
 DEMO_TIME = datetime(2026, 10, 1, 20, 0, tzinfo=timezone.utc)
 
 
-def run_demo(outcome, root, *, run_id=None):
+def run_demo(outcome, root, *, run_id=None, recovery_mode="fixture"):
     """Use only a supplied dedicated root; this is not a release acceptance run."""
     if outcome not in {"blocked", "realized", "partial"}:
         raise ValueError("unsupported impact demo outcome")
@@ -26,6 +27,7 @@ def run_demo(outcome, root, *, run_id=None):
     run = IdentitySliceRun(
         event_sink=events.append, scenario_path=FULL_SCENARIO_PATH, impact_root=root,
         run_id=run_id or f"impact-demo-{uuid.uuid4()}",
+        recovery_mode=recovery_mode,
         clock=lambda: DEMO_TIME,
     )
     run.controller.prepare()
@@ -60,7 +62,15 @@ def run_demo(outcome, root, *, run_id=None):
     prevention = run.impact.resolve()
     before_recovery = run.impact.fixture.inspect()
     actual_variant = run.impact.fixture.last_report["variant"]
-    for action_id in ("recovery.fixture.restore", "recovery.health.validate"):
+    actions = ("recovery.fixture.restore", "recovery.health.validate")
+    if recovery_mode == "native_files":
+        fixture = run.impact.fixture
+        for name in fixture.expected_manifest:
+            # Fixed OS copy tool and disposable generated paths; never use a shell.
+            subprocess.run(["/bin/cp", str(fixture.backup_dir / name), str(fixture.live_dir / name)],
+                           check=True, timeout=5)  # nosec B603
+        actions = ("recovery.health.validate",)
+    for action_id in actions:
         result = run.impact.recover(
             actor=entity("participant", "demo-recovery", role="cloud_responder"),
             action_id=action_id, fixture_id="FILE01-disposable-fixture",
@@ -82,6 +92,8 @@ def run_demo(outcome, root, *, run_id=None):
         EventValidator().validate(event)
     return {
         "developer_demo_only": True, "dry_run": False, "run_id": run.run_id,
+        "recovery_mode": recovery_mode,
+        "windows_access_verified": False,
         "impact_outcome_requested": outcome, "dp4_prevention_passed": prevention.passed,
         "actual_marker_variant": actual_variant,
         "available_before_recovery": before_recovery["available_originals"],
@@ -97,6 +109,7 @@ def run_demo(outcome, root, *, run_id=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--outcome", choices=("blocked", "realized", "partial"), default="blocked")
+    parser.add_argument("--recovery-mode", choices=("fixture", "native_files"), default="fixture")
     parser.add_argument(
         "--execute", action="store_true", help="Explicitly create/move/restore decoys",
     )
@@ -118,11 +131,13 @@ def main():
         }, indent=2))
         return
     if args.root:
-        summary, events = run_demo(args.outcome, args.root, run_id=args.run_id)
+        summary, events = run_demo(args.outcome, args.root, run_id=args.run_id,
+                                   recovery_mode=args.recovery_mode)
         summary["fixture_retained"] = True
     else:
         with tempfile.TemporaryDirectory(prefix="netstrike-impact-demo-") as demo_root:
-            summary, events = run_demo(args.outcome, demo_root, run_id=args.run_id)
+            summary, events = run_demo(args.outcome, demo_root, run_id=args.run_id,
+                                       recovery_mode=args.recovery_mode)
         summary["fixture_retained"] = False
     if args.events:
         ledger = EventLedger(args.events, clock=lambda: DEMO_TIME)

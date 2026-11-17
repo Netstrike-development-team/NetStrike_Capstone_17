@@ -30,6 +30,16 @@ function updateControls() {
     "#dp1-form button[type=submit], #intrusion-timeline button[type=submit], #cloud-form button[type=submit], " +
     "#recovery-brief button[type=submit], #actions button[data-action], #recovery-actions button[data-recovery]"
   )) button.disabled = !enabled;
+  const native = session.state?.recovery_mode === "native_files";
+  const restore = document.querySelector("#recovery-restore");
+  restore.hidden = native;
+  restore.disabled = !enabled || native;
+  document.querySelector("#recovery-validate").textContent = native ? "Verify restored files" : "Validate hashes";
+  document.querySelector("#recovery-mode").textContent = !session.state
+    ? "Refresh the exercise to inspect its recovery mode."
+    : native
+      ? "Restore the designated files using the lab’s normal file tools and approved backup. Preserve the incident artifacts. This portal only checks file bytes; it does not restore them or verify Windows permissions or user access. Record those separate checks in your incident brief."
+      : "Fixture demo mode: the portal can restore the disposable files. This is separate from native-tool recovery practice.";
   if (!session.state) setStatus(document.querySelector("#run-state"), session.pendingWrite ? "action-pending" : "inspection-required");
 }
 
@@ -315,6 +325,10 @@ document.querySelector("#load-recovery").addEventListener("click", async () => {
 document.querySelector("#recovery-actions").addEventListener("click", async (event) => {
   const button = event.target.closest("button[data-recovery]");
   if (!button) return;
+  if (session.state?.recovery_mode === "native_files" && button.dataset.recovery === "recovery.fixture.restore") {
+    notify(notice, "Use the approved lab file tools to restore files in this exercise.", "error");
+    return;
+  }
   const form = event.currentTarget;
   if (!form.reportValidity()) return;
   button.disabled = true;

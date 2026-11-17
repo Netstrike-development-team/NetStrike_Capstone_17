@@ -81,6 +81,7 @@
 
         <article class="panel">
           <div class="panel-header"><div><h2>Approved containment actions</h2><p>Every action is role-checked, allowlisted, reversible, and recorded.</p></div></div>
+          <p class="muted">These controls change simulated identity, endpoint and mock-cloud state. They do not administer Windows or a public-cloud account.</p>
           <div id="actions" class="actions">
             <div class="action-card"><div><strong>Revoke a session</strong><small>Enter the session ID supported by your evidence.</small></div><input aria-label="Session ID" placeholder="Session ID"><button data-action="identity.session.revoke" data-type="session" disabled>Revoke session</button></div>
             <div class="action-card"><div><strong>Remove an MFA factor</strong><small>Enter the factor ID supported by your evidence.</small></div><input aria-label="MFA factor ID" placeholder="Factor ID"><button data-action="identity.factor.remove" data-type="mfa_factor" disabled>Remove factor</button></div>
@@ -134,13 +135,14 @@
         <article id="recovery-panel" class="panel" hidden>
           <div class="panel-header"><div><h2>Disposable-file recovery</h2><p>Five synthetic decoys only. No encryption or production data.</p></div><button id="load-recovery" class="secondary small">Refresh evidence</button></div>
           <p id="recovery-summary" class="muted">Load current fixture hashes and audit.</p>
+          <p id="recovery-mode" class="muted">Refresh the exercise to inspect its recovery mode.</p>
           <details><summary>Current files, hashes and task state</summary><pre id="recovery-state"></pre></details>
           <div id="recovery-audit" class="timeline"></div>
           <form id="recovery-actions" class="form-grid">
             <label class="form-wide">Fixture ID from the evidence<input name="fixture_id" required placeholder="Logical fixture ID, never a path"></label>
             <label class="form-wide"><input id="recovery-preview" type="checkbox" checked> Preview only — do not execute</label>
-            <button data-recovery="recovery.fixture.restore" type="button" disabled>Restore decoys</button>
-            <button data-recovery="recovery.health.validate" type="button" class="secondary" disabled>Validate hashes</button>
+            <button id="recovery-restore" data-recovery="recovery.fixture.restore" type="button" disabled>Restore decoys</button>
+            <button id="recovery-validate" data-recovery="recovery.health.validate" type="button" class="secondary" disabled>Validate hashes</button>
           </form>
           <h3>Final incident brief</h3>
           <p class="muted">Complete recovery and record a real health validation before citing it.</p>

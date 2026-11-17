@@ -112,6 +112,7 @@ class PortalConfiguration:
     authenticator: TokenAuthenticator = field(repr=False)
     origins: tuple[str, ...]
     host_telemetry_run_id: str | None = None
+    recovery_mode: str = "fixture"
 
     @classmethod
     def from_environment(cls):
@@ -197,6 +198,14 @@ def inspect_configuration(environment=None, *, expected_scope=None):
         return scope
 
     probe("expected_scenario_scope", scope_guard, available=definition is not None)
+    def recovery_mode():
+        value = env.get("NETSTRIKE_RECOVERY_MODE", "fixture")
+        if value not in {"fixture", "native_files"} or (
+                value == "native_files" and scope != "full-play"):
+            raise ValueError("unsupported recovery mode for selected scope")
+        return value
+
+    selected_recovery = probe("recovery_mode", recovery_mode, available=definition is not None)
     impact_root = env.get("NETSTRIKE_IMPACT_ROOT")
 
     def impact():
@@ -225,6 +234,7 @@ def inspect_configuration(environment=None, *, expected_scope=None):
     report = {"schema_version": "1.0.0", "scope": "application_configuration_only",
               "configuration_valid": not blockers, "read_only": True,
               "selected_scenario_scope": scope, "configured_roles": roles,
+              "selected_recovery_mode": selected_recovery,
               "checks": checks, "blockers": blockers,
               "external_readiness_verified": False, "runtime_readiness_verified": False,
               "not_checked": ["database_integrity_or_run_history", "actual_write_permissions",
@@ -235,6 +245,8 @@ def inspect_configuration(environment=None, *, expected_scope=None):
                            "preflight_does_not_reserve_run_or_pin_files", "one_process_one_asgi_worker_required"]}
     if scope == "full-play":
         report["warnings"].append("full_play_startup_provisions_five_disposable_decoys")
+    if selected_recovery == "native_files":
+        report["warnings"].append("native_recovery_requires_external_file_access_and_permission_checks")
     if database == ":memory:":
         report["warnings"].append("database_is_ephemeral")
     if telemetry_run is not None:
@@ -247,6 +259,6 @@ def inspect_configuration(environment=None, *, expected_scope=None):
         report["warnings"].append("no_cloud_recovery_credential")
     configuration = None if blockers else PortalConfiguration(
         database, identifier, str(scenario_path), str(profile_path), impact_root, audit, auth[0], allowed,
-        telemetry_run,
+        telemetry_run, selected_recovery,
     )
     return report, configuration
