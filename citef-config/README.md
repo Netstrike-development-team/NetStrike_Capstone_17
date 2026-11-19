@@ -1,14 +1,13 @@
 # CITEF provisioning
 
-**Status (clarified 2026-11-04):** The Cyber Range has delegated full exercise VM and network configuration control to the team: allocations, images, sizing, addresses, DNS/NTP, firewall rules, management paths, and participant access do not await further range approval. The October 21 provisioning and DNS-blocking evidence is accepted for #79's tested configuration. The November 1 report records that the three-consecutive-cycle restore/reprovision/readiness criterion was met. Other baseline and final exercise acceptance checks remain separate; see the [validation report](../docs/deployment/offline-bundle-provisioning-validation.md).
-
 ## Authoritative guides
 
 - [CITEF requirements and approval](../docs/exercise-design/06-citef-requirements-and-approval.md): confirmed requirements and approval decisions.
 - [Offline tool-bundle inventory](../docs/exercise-design/07-offline-tool-bundle-inventory.md): selected artifacts, licensing, and test evidence.
-- [Offline bundle guide](../docs/deployment/offline-bundle.md): bundle build, contents, integrity, and offline dependencies.
+- [Offline bundle guide](../docs/deployment/offline-bundle.md): application bundle build, contents, integrity checks, offline Linux packages, and licensed-installer archive layout.
 - [Safety and reset](../docs/exercise-design/04-safety-and-reset.md): isolation, stop, snapshots, readiness, and admission.
-- [Portal deployment contract](../docs/deployment/application-deployment-contract.md) and [full-play deployment runbook](../docs/deployment/full-play-deployment-guide.md): portal configuration, deployment steps, and next-run handoff.
+- [Portal deployment contract](../docs/deployment/application-deployment-contract.md): required portal configuration, TLS material, and credentials.
+- [Full-play deployment runbook](../docs/deployment/full-play-deployment-guide.md): deployment steps and next-run handoff.
 
 ## Example topology
 
@@ -23,7 +22,9 @@ The [local network diagram](../docs/network-diagram/network-diagram-local.png) r
 | `DC01` | Windows Server 2025 Evaluation Version, build 26100.32230 | `10.77.0.10`, `dc01.simcorp.test` | Synthetic AD, internal DNS, and isolated time source |
 | `FIN-WS01` | Windows 11 Pro 26H2, build 2300.9457 | `10.77.0.20`, `fin-ws01.simcorp.test` | Participant endpoint and telemetry |
 | `SPLUNK01` | Cyber Range-provided Splunk host | `10.77.0.30`, `splunk01.simcorp.test` | SIEM and forwarder receiver; range-provided, not a project-provisioned VM |
-| `FILE01` | Logical service on `CTRL01`; not a separate VM | `ctrl01.simcorp.test` | Disposable fixtures and controller-managed known-good copy |
+
+`FILE01` is implemented by Docker containers on `CTRL01`; it is not a separate
+VM or asset entry.
 
 `ANSIBLE01` runs the playbooks locally and must not appear in the manifest's
 `assets`. `SPLUNK01` remains in the
@@ -53,12 +54,20 @@ umask 077
 
 Use actual archive paths and path-safe deployment/run identifiers accepted by the playbook. Do not use example addresses or unapproved targets. The wrapper provisions `DC01`, Windows hosts, Linux baseline, and the controller; `SPLUNK01` is range-managed and is not configured by this project.
 
-Approved deployments require the configured TLS material. Inject controller service credentials, readiness credentials, and audit keys through approved secret management; see the [portal deployment contract](../docs/deployment/application-deployment-contract.md) for required values and token roles. The offline package bundle includes Linux domain-enrollment and DNS/time prerequisites; use the [offline bundle guide](../docs/deployment/offline-bundle.md) for package or bundle issues.
+For portal TLS, service/readiness credentials, audit keys, and required values,
+follow the [portal deployment contract](../docs/deployment/application-deployment-contract.md).
+For application-bundle contents, offline Linux packages, and licensed-installer
+archive layout, see the [offline bundle guide](../docs/deployment/offline-bundle.md).
 
 ## Restore and readiness
 
 Follow the [safety and reset procedure](../docs/exercise-design/04-safety-and-reset.md). Capture clean snapshots after OS installation and remote-management setup, but before provisioning. After a restore, run the wrapper against the clean environment with a new unique run ID, then complete the documented readiness and admission checks.
 
-Important scope: `provision.sh` runs `provision.yml` and its provisioning validation; it does **not** run the separate `readiness.yml` playbook. A successful wrapper run does not establish snapshot identity, emergency-stop reachability, complete Splunk ingestion, or participant admission. Patrick and exercise staff validate these controls; Zian/Julien assist or handle escalations, not a new configuration approval gate. The three-consecutive-cycle criterion is met in the November 1 report; reuse the other evidence only for the scope it demonstrates. See the [baseline screenshot checklist](../docs/deployment/offline-bundle-provisioning-validation.md#baseline-evidence-to-capture).
+`provision.sh` runs `provision.yml` and its provisioning validation; it does
+**not** run the separate `readiness.yml` playbook. Provisioning alone does not
+establish snapshot identity, emergency-stop reachability, Splunk ingestion, or
+participant admission. Use the [validation report](../docs/deployment/offline-bundle-provisioning-validation.md)
+and [baseline evidence checklist](../docs/deployment/offline-bundle-provisioning-validation.md#baseline-evidence-to-capture)
+for the corresponding evidence.
 
 For portal startup failures or run-ID recovery, follow the [full-play deployment runbook](../docs/deployment/full-play-deployment-guide.md). Do not remove portal state, reuse a run ID, or bypass preflight to force a restart. For receiver and Sysmon-to-Splunk setup, use the [Splunk/Sysmon ingestion guide](../docs/deployment/splunk-sysmon-ingest.md).
