@@ -1,0 +1,3 @@
+---
+# Explicitly override to identity/cloud only for a scoped provisioning test.
+controller_scenario_scope: full-play

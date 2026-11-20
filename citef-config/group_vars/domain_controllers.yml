@@ -1,0 +1,5 @@
+---
+# The WinRM plugin prefers these over ansible_user/ansible_password, which are
+# injected as extra vars for every host and would otherwise override DC01's own.
+ansible_winrm_user: "{{ dc01_ansible_user }}"
+ansible_winrm_password: "{{ dc01_ansible_password }}"

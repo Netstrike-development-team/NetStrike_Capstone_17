@@ -65,8 +65,15 @@ class PortalService:  # pylint: disable=too-many-public-methods
         profile_path: Path | str | None = None,
         impact_root: Path | str | None = None,
         identity_audit_key: bytes | None = None,
+        host_telemetry_run_id: str | None = None,
         monotonic: Callable[[], float] = time.monotonic,
     ) -> None:
+        if host_telemetry_run_id is not None and (
+            not isinstance(host_telemetry_run_id, str) or not host_telemetry_run_id
+            or run_id != host_telemetry_run_id
+        ):
+            raise ValueError("configured host telemetry requires a matching explicit run")
+        self.host_telemetry_run_id = host_telemetry_run_id
         self.store = store
         options: dict[str, Any] = {
             "event_sink": store.append_event,

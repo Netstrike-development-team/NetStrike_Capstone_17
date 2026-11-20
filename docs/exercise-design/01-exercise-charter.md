@@ -57,7 +57,7 @@ Before the first containment checkpoint, construct a timeline containing at leas
 
 ### LO3 — Contain identity and endpoint access
 
-Before the endpoint checkpoint, revoke the malicious session, reset the compromised credential, remove the unauthorized MFA factor, and isolate the affected endpoint or otherwise block its simulated remote access path. Preserve the named evidence before destructive remediation.
+Before the endpoint checkpoint, revoke the malicious session, reset the compromised credential, remove the unauthorized MFA factor, and block the affected endpoint's simulated remote access path. Preserve the named evidence before remediation.
 
 **Successful state:** all four containment checks pass and no more than one unrelated account or host is disrupted.
 
@@ -97,7 +97,7 @@ By exercise end, restore the affected simulated service or data set from the kno
 ### Endpoint and Active Directory responder
 
 - Investigates the affected workstation and directory activity.
-- Isolates designated hosts and reverses unauthorized lab changes.
+- Isolates designated hosts' simulated remote paths and reverses unauthorized simulated changes.
 - Validates that attacker access has stopped.
 
 ### Cloud and recovery responder
@@ -120,9 +120,9 @@ Participants may:
 - search and export exercise-tagged events from Splunk;
 - examine designated hosts, files, processes, tickets, and mock-service records;
 - collect copies or hashes of artifacts into the approved evidence directory;
-- disable or reset designated SimCorp exercise accounts;
+- disable or reset designated simulated SimCorp accounts;
 - revoke simulated sessions and MFA factors;
-- isolate designated lab hosts using the supplied control;
+- isolate designated hosts' simulated remote paths using the supplied control;
 - stop designated simulated attacker or persistence processes;
 - revoke mock-cloud keys and correct mock bucket policies;
 - restore designated disposable data from the supplied exercise backup;

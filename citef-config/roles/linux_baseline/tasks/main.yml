@@ -18,6 +18,46 @@
     fail_msg: "CTRL01 must use the pinned Ubuntu Server 26.04 LTS baseline."
   when: logical_name == "CTRL01"
 
+- name: Require Ubuntu 26.04 for the bundled Linux membership packages
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution == "Ubuntu"
+      - ansible_facts.distribution_version == "26.04"
+    fail_msg: "Linux domain membership packages are bundled for Ubuntu 26.04 amd64."
+
+- name: Remove stale Linux domain package files
+  ansible.builtin.file:
+    path: /var/cache/netstrike-linux-domain-packages
+    state: absent
+
+- name: Stage Linux Active Directory package bundle
+  ansible.builtin.copy:
+    src: "{{ controller_offline_bundle_root | default(playbook_dir ~ '/../../' ~ offline_artifacts.directory ~ '/netstrike-offline-bundle') }}/destinations/CTRL01/linux-packages/"
+    dest: /var/cache/netstrike-linux-domain-packages/
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Install Linux Active Directory packages without downloading
+  ansible.builtin.shell: >-
+    apt-get --no-download --no-install-recommends
+    -o Dir::Cache::archives=/var/cache/netstrike-linux-domain-packages
+    install --yes --no-remove /var/cache/netstrike-linux-domain-packages/*.deb
+  args:
+    chdir: /var/cache/netstrike-linux-domain-packages
+  register: linux_domain_package_install
+  changed_when: "'Setting up ' in linux_domain_package_install.stdout"
+
+- name: Ensure systemd drop-in directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - /etc/systemd/resolved.conf.d
+
 - name: Configure internal DNS and exercise search domain
   ansible.builtin.template:
     src: systemd-resolved.conf.j2
@@ -27,14 +67,14 @@
     mode: "0644"
   notify: Restart systemd-resolved
 
-- name: Configure DC01 as the only NTP source
+- name: Configure approved NTP sources and root distance
   ansible.builtin.template:
-    src: systemd-timesyncd.conf.j2
-    dest: /etc/systemd/timesyncd.conf.d/60-netstrike.conf
+    src: chrony.conf.j2
+    dest: /etc/chrony/chrony.conf
     owner: root
     group: root
     mode: "0644"
-  notify: Restart systemd-timesyncd
+  notify: Restart chrony
 
 - name: Ensure systemd-resolved is enabled
   ansible.builtin.service:
@@ -49,9 +89,9 @@
     state: link
     force: true
 
-- name: Ensure systemd-timesyncd is enabled
+- name: Ensure chrony is enabled
   ansible.builtin.service:
-    name: systemd-timesyncd
+    name: chrony
     enabled: true
     state: started
 
@@ -74,7 +114,7 @@
   loop_control:
     label: "{{ item.item.name }}"
 
-- name: Require systemd-timesyncd to report synchronized time
+- name: Require chrony to report synchronized time
   ansible.builtin.command:
     argv: [timedatectl, show, --property=NTPSynchronized, --value]
   register: time_sync_state
@@ -83,10 +123,52 @@
   delay: 5
   until: time_sync_state.stdout | trim == "yes"
 
-- name: Confirm systemd-timesyncd selected the approved internal source
+- name: Confirm chrony selected the approved internal source
   ansible.builtin.command:
-    argv: [timedatectl, timesync-status]
+    argv: [chronyc, sources]
   register: time_sync_status
   changed_when: false
   failed_when: >-
     (network.ntp_servers | select('in', time_sync_status.stdout) | list | length) == 0
+
+- name: Check existing Linux domain membership
+  ansible.builtin.command:
+    argv: [realm, list, --name-only]
+  register: linux_realms
+  changed_when: false
+
+- name: Join Linux host to the exercise domain
+  ansible.builtin.command:
+    argv:
+      - realm
+      - join
+      - --user
+      # ASCII 92 is a backslash; avoid Ansible's escaping of Jinja literals.
+      - >-
+        {{ domain_admin_user | replace('%c' | format(92), '/') | split('/') | last }}
+      - --computer-ou
+      - "{{ identity_baseline.search_base_dn }}"
+      - --client-software=sssd
+      - --membership-software=adcli
+      - "{{ identity_baseline.domain_dns_name }}"
+    stdin: "{{ domain_admin_password }}"
+  when: identity_baseline.domain_dns_name | lower not in (linux_realms.stdout_lines | map('lower') | list)
+  no_log: true
+
+- name: Ensure SSSD is enabled and running
+  ansible.builtin.service:
+    name: sssd
+    enabled: true
+    state: started
+
+- name: Verify Linux host joined the exercise domain
+  ansible.builtin.command:
+    argv: [realm, list, --name-only]
+  register: joined_linux_realms
+  changed_when: false
+
+- name: Require Linux host to be joined to the exercise domain
+  ansible.builtin.assert:
+    that:
+      - identity_baseline.domain_dns_name | lower in (joined_linux_realms.stdout_lines | map('lower') | list)
+    fail_msg: "{{ logical_name }} did not join {{ identity_baseline.domain_dns_name }}."

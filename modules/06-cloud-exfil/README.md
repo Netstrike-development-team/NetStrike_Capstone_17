@@ -4,7 +4,7 @@
 
 The mock is connected to the selectable identity + cloud runtime, participant
 investigation/containment tools, DP3 assessment, canonical audit and reset.
-See [developer handoff](../../docs/mock-cloud-dev-handoff.md) for timing,
+See [developer handoff](../../docs/development/mock-cloud-dev-handoff.md) for timing,
 API roles, local demonstrations and remaining Cyber Range acceptance.
 
 This module supplies the state and containment controls for the Silent Spider

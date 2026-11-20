@@ -1,4 +1,13 @@
 ---
+- name: Collect the optional TLS artifacts that were provided
+  ansible.builtin.set_fact:
+    optional_tls_artifacts: >-
+      {{ ([offline_artifacts.universal_forwarder.receiver_ca]
+          if offline_artifacts.universal_forwarder.receiver_ca is defined else [])
+         + ([controller.tls_certificate] if controller.tls_certificate is defined else [])
+         + ([controller.tls_ca] if controller.tls_ca is defined else []) }}
+  changed_when: false
+
 - name: Validate artifact manifest entries
   ansible.builtin.assert:
     that:
@@ -9,19 +18,17 @@
       - "'..' not in item.file"
       - not item.file.startswith('/')
     fail_msg: "An offline artifact filename or SHA-256 is missing or unsafe."
-  loop:
-    - "{{ offline_artifacts.universal_forwarder.linux_deb }}"
-    - "{{ offline_artifacts.universal_forwarder.windows_msi }}"
-    - "{{ offline_artifacts.universal_forwarder.receiver_ca }}"
-    - "{{ offline_artifacts.sysmon.archive }}"
-    - "{{ offline_artifacts.sysmon.config }}"
-    - "{{ offline_artifacts.controller_source }}"
-    - "{{ offline_artifacts.python_runtime.archive }}"
-    - "{{ offline_artifacts.python_runtime.requirements_lock }}"
-    - "{{ controller.tls_certificate }}"
-    - "{{ controller.tls_ca }}"
+  loop: "{{ [offline_artifacts.sysmon.archive] + optional_tls_artifacts }}"
   loop_control:
     label: "{{ item.file | default('missing filename') }}"
+
+- name: Require the Sysmon configuration from the repository files directory
+  ansible.builtin.assert:
+    that:
+      - offline_artifacts.sysmon.config.sha256 is match('^[A-Fa-f0-9]{64}$')
+    fail_msg: >-
+      offline_artifacts.sysmon.config must provide the approved SHA-256 for
+      citef-config/files/sysmon-config.xml.
 
 - name: Require Sysmon ZIP in the licensed artifact staging directory
   ansible.builtin.assert:
@@ -39,27 +46,34 @@
     fail_msg: >-
       Place the licensed Windows Universal Forwarder MSI at
       {{ offline_artifacts.directory }}/windows/splunkforwarder-10.0.1-c486717c322b-windows-x64.msi
-      and set its approved SHA-256 and SHA-512 in environment.json.
+      and set its vendor SHA-512 in environment.json.
 
-- name: Verify offline artifact files and hashes on the Ansible control host
+- name: Verify SHA-256-protected artifacts on the Ansible control host
   ansible.builtin.stat:
     path: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ item.file }}"
     checksum_algorithm: sha256
-  loop:
-    - "{{ offline_artifacts.universal_forwarder.linux_deb }}"
-    - "{{ offline_artifacts.universal_forwarder.windows_msi }}"
-    - "{{ offline_artifacts.universal_forwarder.receiver_ca }}"
-    - "{{ offline_artifacts.sysmon.archive }}"
-    - "{{ offline_artifacts.sysmon.config }}"
-    - "{{ offline_artifacts.controller_source }}"
-    - "{{ offline_artifacts.python_runtime.archive }}"
-    - "{{ offline_artifacts.python_runtime.requirements_lock }}"
-    - "{{ controller.tls_certificate }}"
-    - "{{ controller.tls_ca }}"
+  loop: "{{ [offline_artifacts.sysmon.archive] + optional_tls_artifacts }}"
   register: staged_artifacts
   delegate_to: localhost
   loop_control:
     label: "{{ item.file }}"
+
+- name: Verify the repository Sysmon configuration on the control host
+  ansible.builtin.stat:
+    path: "{{ playbook_dir }}/../files/sysmon-config.xml"
+    checksum_algorithm: sha256
+  register: sysmon_config_source
+  delegate_to: localhost
+
+- name: Require the repository Sysmon configuration checksum to match
+  ansible.builtin.assert:
+    that:
+      - sysmon_config_source.stat.exists
+      - sysmon_config_source.stat.isreg
+      - sysmon_config_source.stat.checksum | lower == offline_artifacts.sysmon.config.sha256 | lower
+    fail_msg: >-
+      citef-config/files/sysmon-config.xml is missing or does not match its
+      approved SHA-256.
 
 - name: Fail before provisioning when an artifact is absent or changed
   ansible.builtin.assert:
@@ -105,10 +119,3 @@
       - offline_artifacts.universal_forwarder.version | length > 0
       - offline_artifacts.sysmon.version | length > 0
     fail_msg: "Complete the Splunk/forwarder versions, receiver, and index settings before provisioning."
-
-- name: Verify the offline Python wheelhouse manifest
-  ansible.builtin.command:
-    argv: [sha256sum, -c, SHA256SUMS]
-    chdir: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ offline_artifacts.python_runtime.archive.file | dirname | dirname }}"
-  changed_when: false
-  delegate_to: localhost

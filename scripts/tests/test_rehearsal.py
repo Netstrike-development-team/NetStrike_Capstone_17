@@ -3,11 +3,17 @@
 from copy import deepcopy
 import importlib
 import json
+import os
 import shutil
 import socket
+import subprocess
+import sys
+import tarfile
+import zipfile
 from pathlib import Path
 
 import pytest
+import yaml
 
 from scripts import rehearsal
 
@@ -22,6 +28,59 @@ def full_package(tmp_path_factory):
 
 def load_result(root, name):
     return json.loads((root / name / "result.json").read_text(encoding="utf-8"))
+
+
+def test_all_full_play_paths_produce_only_reviewed_learner_facts(full_package, tmp_path):
+    from dashboard import event_spool, learner_spool
+    from dashboard.learner_audit import RULES, project
+    from dashboard.learner_check import compare
+    from dashboard.store import PortalStore
+
+    manifest = json.loads((full_package / "manifest.json").read_text())
+    assert len(manifest["cases"]) == 24
+    covered = set()
+    for case in manifest["cases"]:
+        events = [json.loads(line) for line in (full_package / case["case_id"] / "events.jsonl").read_text().splitlines()]
+        projections = [result for event in events if (result := project(event)) is not None]
+        assert projections
+        root = tmp_path / case["case_id"]
+        root.mkdir()
+        expected, observed = root / "expected-learner.jsonl", root / "synthetic-observed.jsonl"
+        expected.write_text("".join(json.dumps(row) + "\n" for row in projections))
+        observed.write_text("".join(json.dumps(row) + "\n" for row in reversed(projections)))
+        scope = {"exercise_id": events[0]["exercise_id"], "run_id": events[0]["run_id"]}
+        assert compare(expected, observed, **scope)["supplied_files_match"]
+        observed.write_text("".join(json.dumps(row) + "\n" for row in projections[:-1]))
+        assert compare(expected, observed, **scope)["missing_events"] == 1
+        original = {event["event_id"]: event for event in events}
+        assert len(projections) == len({event["event_id"] for event in projections})
+        for result in projections:
+            source = original[result["event_id"]]
+            assert source["visibility"] == "participant"
+            assert source["source"]["kind"] == "module"
+            assert source["event_type"] in RULES
+            covered.add(source["event_type"])
+            for key in ("exercise_id", "run_id", "timestamp"):
+                assert result[key] == source[key]
+            assert not {"message", "reason", "data", "sequence", "phase", "visibility", "objectives", "attack", "checkpoint", "score"} & result.keys()
+            assert "approved_policy_hash" not in result["facts"]
+        # Exercise the real two-stage publication for both end-to-end extremes.
+        if case["case_id"] in {"path-pass-pass-pass-pass", "path-miss-miss-miss-miss"}:
+            store = PortalStore(root / "portal.sqlite3")
+            try:
+                for event in events:
+                    store.append_event(event)
+            finally:
+                store.close()
+            staff, learner = root / "staff", root / "learner"
+            while event_spool.export(root / "portal.sqlite3", staff, exercise_id=events[0]["exercise_id"], execute=True)["events_remaining"]:
+                pass
+            report = learner_spool.export(staff, learner, exercise_id=events[0]["exercise_id"], execute=True)
+            actual = [json.loads(line) for path in sorted(learner.glob("batch-*/events.jsonl")) for line in path.read_text().splitlines()]
+            assert actual == projections
+            assert report["published_events"] == len(projections)
+            assert not report["splunk_ingestion_verified"]
+    assert {"helpdesk.identity_reset.completed", "cloud.object.accessed", "impact.markers.applied", "recovery.fixture.restored"} <= covered
 
 
 def copy_case(root, tmp_path, name="path-pass-pass-pass-pass"):
@@ -215,6 +274,63 @@ def test_all_sixteen_combinations_are_covered(full_package):
     assert verification["cases_verified"] == 24
     assert verification["branch_paths_verified"] == 16
     assert verification["control_fault_cases_verified"] == 8
+
+
+def test_ci_artifact_round_trip_keeps_markers_and_empty_directories(full_package, tmp_path):
+    """Run the real packaging command; model ZIP transfer of its single file."""
+    from scripts.check_rehearsal_upload import inspect_upload
+
+    inspected = inspect_upload(full_package)
+    assert inspected["hidden_root_markers"] == 24
+    workflow = yaml.safe_load(
+        (rehearsal.ROOT / ".github/workflows/local-rehearsal-ci.yml").read_text()
+    )
+    upload = next(
+        step for step in workflow["jobs"]["full-play-rehearsal"]["steps"]
+        if step.get("name") == "Retain synthetic developer evidence (not range sign-off)"
+    )
+    packaging = next(
+        step for step in workflow["jobs"]["full-play-rehearsal"]["steps"]
+        if step.get("id") == "rehearsal_archive"
+    )
+    runner_temp = tmp_path / "runner temp"
+    shutil.copytree(full_package, runner_temp / "local-rehearsal-evidence")
+    result = subprocess.run(
+        ["bash", "-c", packaging["run"]], cwd=rehearsal.ROOT,
+        env=os.environ | {
+            "RUNNER_TEMP": str(runner_temp),
+            "PATH": str(Path(sys.executable).parent) + os.pathsep + os.environ["PATH"],
+        },
+        capture_output=True, text=True, check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    packed = Path(upload["with"]["path"].replace("${{ runner.temp }}", str(runner_temp)))
+    assert packed.name == "local-rehearsal-evidence.tar.gz" and packed.is_file()
+    archive = tmp_path / "downloaded-artifact.zip"
+    with zipfile.ZipFile(archive, "w") as output:
+        output.write(packed, packed.name)
+    downloaded = tmp_path / "downloaded"
+    with zipfile.ZipFile(archive) as source:
+        source.extractall(downloaded)  # Only this test's own generated paths.
+    transferred = tmp_path / "unpacked"
+    with tarfile.open(downloaded / packed.name) as source:
+        source.extractall(transferred, filter="data")
+    verified = rehearsal.verify_package(transferred)
+    assert verified["full_suite"] and verified["cases_verified"] == 24
+    assert verified["events_validated"] == 3555
+    markers = list(transferred.glob("*/disposable/.netstrike-disposable-root"))
+    assert len(markers) == 24
+    for marker in markers:
+        assert marker.read_bytes() == rehearsal.ROOT_CONTENT
+    assert {p.relative_to(full_package) for p in full_package.rglob("*")} == {
+        p.relative_to(transferred) for p in transferred.rglob("*")
+    }
+
+
+def test_upload_guard_inputs_are_in_exact_source_fingerprints():
+    fingerprints = rehearsal._source()["files_sha256"]
+    for name in ("scripts/check_rehearsal_upload.py", "scripts/tests/test_rehearsal_upload.py"):
+        assert fingerprints[name] == rehearsal._sha(rehearsal.ROOT / name)
 
 
 def test_partial_controls_prevent_fabricated_access_or_rearmed_impact(full_package):

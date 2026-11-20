@@ -40,7 +40,7 @@ encryption.
 | Infrastructure configuration | Ansible over SSH/WinRM plus PowerShell where required |
 | Cloud stage | Project-owned stateful Python mock; no AWS or LocalStack |
 | Impact stage | Marker files and reversible moves inside disposable fixtures; no encryption |
-| Offline installation | Staged and verified artifacts; see the [bundle status and installation guide](docs/offline-bundle.md) |
+| Offline installation | Staged and verified artifacts; see the [bundle status and installation guide](docs/deployment/offline-bundle.md) |
 
 CALDERA, GHOSTS, Wazuh/Elastic, public cloud, and a custom SIEM are outside the
 MVP. They may be reconsidered only after the complete blue-team exercise works.
@@ -48,50 +48,72 @@ MVP. They may be reconsidered only after the complete blue-team exercise works.
 ## Repository structure
 
 ```text
-modules/              Controlled scenario fixtures and safe actions
-orchestrator/          Scenario control, events, and action adapters
-schemas/               Shared versioned event contracts
-dashboard/             Existing participant/facilitator UI code
-detection/             Existing detection and scoring code
-citef-config/          Infrastructure and Ansible configuration
-docs/README.md         Index of guides, contracts, and planning snapshots
-docs/exercise-design/  Authoritative exercise design and delivery package
-docs/roadmap.md        Current schedule, ownership, and milestones
+dashboard/             Participant/facilitator portal and application services
+orchestrator/           Scenario control, event handling, and action adapters
+modules/                Scenario-stage implementations, fixtures, and safe actions
+shared/                 Shared actions, event handling, and synthetic profiles
+schemas/                Shared versioned event contracts and fixtures
+splunk/                 Versioned Splunk apps, forwarder inputs, and checks
+citef-config/           Infrastructure inventory, Ansible, and provisioning
+scripts/                Offline bundle, provisioning, rehearsal, and validation tools
+docs/README.md          Documentation index and task-based guide routes
+docs/application/       Architecture, behavior, and versioned contracts
+docs/deployment/        Offline build, provisioning, and release guidance
+docs/development/       Roadmap, handoffs, and local rehearsals
+docs/exercise-design/   Authoritative exercise design and delivery package
+docs/operations/        Staff, participant, and evaluator workflows
+_legacy/                Retired prototype code; not the maintained MVP path
+licensed-installers/    Licensed deployment-artifact staging area
 ```
 
-Some older module names remain because the project began as an attack-chain
-prototype. The blue-team design package and safe-action contracts define the
-supported MVP behavior.
+Some module names reflect the project's original attack-chain prototype; not
+every module is an active exercise capability. The exercise-design package and
+safe-action contracts define the supported MVP behavior, while `_legacy/`
+contains retired implementations.
 
 ## Current state
 
-The exercise design, shared event contract, safe-action contract, and safe
-identity, endpoint/AD, mock-cloud, and impact/recovery controls have been built.
-Offline Ansible provisioning and manifest validation are implemented, but have
-not yet been exercised against CITEF VMs. The CI bundle now contains the
-portable Python runtime, resolved dependencies, project source trees, and pinned
-Ansible collections, with a generated per-artifact inventory and checksums.
-Clean-target installation, approvals and hashes for licensed/approved external
-artifacts, normalized portal-event forwarding, and end-to-end telemetry
-acceptance remain open.
-The next delivery goal is a complete identity vertical
-slice: start a run, deliver an inject, investigate it in Splunk, take a safe
-containment action, score the checkpoint, export evidence, and restore the
-environment.
+The exercise design and shared event/safe-action contracts are in place, along
+with safe identity, endpoint/AD, mock-cloud, and impact/recovery controls.
+Offline Ansible provisioning and manifest validation are implemented. The
+[November 1, 2026 local full-play validation](docs/deployment/offline-bundle-provisioning-validation.md)
+records three consecutive restore/reprovision/readiness cycles; later evidence
+documents Splunk source-health classification and alert triggering. These are
+scoped local checks, not final exercise acceptance or proof of a later
+deployment.
+
+The offline bundle includes the portable Python runtime, resolved dependencies,
+project source trees, pinned Ansible collections, and a generated per-artifact
+inventory with checksums. CITEF deployment and complete clean-target exercise
+acceptance remain open, as do external-artifact staging and manifest
+verification, normalized portal-event forwarding, and end-to-end telemetry
+acceptance.
 
 See:
 
 - [Documentation index](docs/README.md)
 - [Exercise design package](docs/exercise-design/README.md)
-- [Architecture](docs/architecture.md)
-- [Roadmap and ownership](docs/roadmap.md)
-- [Shared event contract](docs/event-contract-v1.md)
-- [Safe-action contract](docs/safe-action-contract-v1.md)
+- [Architecture](docs/application/architecture.md)
+- [Roadmap and ownership](docs/development/roadmap.md)
+- [Shared event contract](docs/application/contracts/event-contract-v1.md)
+- [Safe-action contract](docs/application/contracts/safe-action-contract-v1.md)
+
+## Full deployment
+
+For a full exercise deployment, start with the
+[full-play deployment runbook](docs/deployment/full-play-deployment-guide.md).
+It links the required [offline bundle guide](docs/deployment/offline-bundle.md)
+and [CITEF provisioning guide](citef-config/README.md), then covers provisioning,
+readiness, live telemetry checks, and participant admission.
 
 ## Development workflow
 
 - Feature branches and pull requests target `dev`.
-- CI and at least one teammate review are required before merge.
-- `main` is reserved for tested milestone/release snapshots.
-- Follow the [milestone promotion checklist](docs/milestone-release-checklist.md); prototype promotion is not Cyber Range v1.0 acceptance.
+- Normal merges require CI and at least one teammate review. #174 was an
+  owner-authorized exception and did not claim independent review.
+- Follow the [milestone promotion checklist](docs/deployment/milestone-release-checklist.md):
+  `main` normally holds reviewed milestone/release snapshots. The October 14,
+  2026 promotion (#174) is an explicitly validation-deferred development
+  snapshot, not a tested milestone or accepted release. Post-merge CI passed;
+  a separate downloadable rehearsal-artifact packaging issue is tracked in #175.
 - Cyber Range-specific secrets and licensed installers are never committed.

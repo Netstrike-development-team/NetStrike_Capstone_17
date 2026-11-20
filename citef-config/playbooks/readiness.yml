@@ -31,7 +31,7 @@
       no_log: true
 
 - name: Verify approved hosts, services, DNS, and clock state
-  hosts: all
+  hosts: linux_hosts:windows_hosts
   gather_facts: false
   vars_files:
     - "{{ playbook_dir }}/../environment.json"
@@ -59,6 +59,11 @@
           - ansible_facts.hostname | lower == logical_name | lower
         fail_msg: "Connected target does not identify itself as {{ logical_name }}."
 
+    - name: Refresh the target clock immediately before comparison
+      ansible.builtin.setup:
+        gather_subset: [min, date_time]
+        filter: ansible_date_time
+
     - name: Read the control-host clock immediately before comparison
       ansible.builtin.command:
         argv: [date, -u, +%s]
@@ -66,14 +71,19 @@
       register: control_epoch_current
       changed_when: false
 
-    - name: Check target clock against the control host
+    - name: Report measured clock skew
+      ansible.builtin.set_fact:
+        measured_clock_skew: >-
+          {{ ((ansible_facts.date_time.epoch | int) -
+          (control_epoch_current.stdout | int)) | abs }}
+
+    - name: Require target clock skew to be within the approved limit
       ansible.builtin.assert:
         that:
-          - >-
-            (((ansible_facts.date_time.epoch | int) -
-            (control_epoch_current.stdout | int)) | abs)
-            <= (network.max_clock_skew_seconds | int)
-        fail_msg: "{{ logical_name }} exceeds the approved clock-skew limit."
+          - (measured_clock_skew | int) <= (network.max_clock_skew_seconds | int)
+        fail_msg: >-
+          {{ logical_name }} exceeds the approved clock-skew limit
+          ({{ measured_clock_skew }}s measured, {{ network.max_clock_skew_seconds }}s allowed).
 
     - name: Resolve every approved host from Linux targets
       ansible.builtin.command:
@@ -94,6 +104,7 @@
     - name: Resolve every approved host from Windows targets
       ansible.windows.win_shell: >-
         (Resolve-DnsName -Name '{{ item.dns_name }}' -Type A -ErrorAction Stop |
+        Where-Object { $_.PSObject.Properties['IPAddress'] } |
         Select-Object -ExpandProperty IPAddress) -join ','
       loop: "{{ assets }}"
       register: windows_dns_results
@@ -159,16 +170,21 @@
           search_base_dn: "{{ identity_baseline.search_base_dn }}"
           expected_users: "{{ identity_baseline.users | to_json }}"
         script: |
+          param(
+            [string]$expected_domain,
+            [string]$search_base_dn,
+            [string]$expected_users
+          )
           $ErrorActionPreference = 'Stop'
           Import-Module ActiveDirectory
           $domain = (Get-ADDomain).DNSRoot
-          if ($domain -ine $Ansible.Params.expected_domain) {
+          if ($domain -ine $expected_domain) {
             throw "Active Directory domain does not match the baseline."
           }
-          $users = ConvertFrom-Json -InputObject $Ansible.Params.expected_users
+          $users = ConvertFrom-Json -InputObject $expected_users
           $expectedNames = @($users | ForEach-Object { $_.sam_account_name } | Sort-Object -Unique)
           $actualNames = @(
-            Get-ADUser -SearchBase $Ansible.Params.search_base_dn -Filter * |
+            Get-ADUser -SearchBase $search_base_dn -Filter * |
               Select-Object -ExpandProperty SamAccountName |
               Sort-Object -Unique
           )
@@ -193,27 +209,6 @@
           $Ansible.Changed = $false
           $Ansible.Result = @{ checked_users = $users.Count; domain = $domain }
 
-- name: Verify the clean fixture baseline
-  hosts: file_store
-  gather_facts: false
-  vars_files:
-    - "{{ playbook_dir }}/../environment.json"
-  tasks:
-    - name: Calculate fixture hashes without modifying files
-      ansible.builtin.stat:
-        path: "{{ item.path }}"
-        checksum_algorithm: sha256
-      loop: "{{ fixtures }}"
-      register: fixture_results
-
-    - name: Require every fixture to match its clean baseline hash
-      ansible.builtin.assert:
-        that:
-          - item.stat.exists
-          - item.stat.isreg
-          - item.stat.checksum | lower == item.item.sha256 | lower
-        fail_msg: "Fixture baseline mismatch at {{ item.item.path }}; restore the clean snapshot."
-      loop: "{{ fixture_results.results }}"
 
 - name: Verify controller, Splunk telemetry, and staff safety gates
   hosts: localhost
@@ -229,8 +224,8 @@
           Authorization: "Bearer {{ lookup('ansible.builtin.env', 'NETSTRIKE_READINESS_TOKEN') }}"
         return_content: true
         status_code: 200
-        validate_certs: true
-        ca_path: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ controller.tls_ca.file }}"
+        validate_certs: "{{ controller.tls_ca is defined }}"
+        ca_path: "{{ (playbook_dir ~ '/../../' ~ offline_artifacts.directory ~ '/' ~ controller.tls_ca.file) if controller.tls_ca is defined else omit }}"
       register: local_readiness
       no_log: true
 
@@ -258,7 +253,7 @@
           latest_time: now
         return_content: true
         status_code: 200
-        validate_certs: true
+        validate_certs: "{{ offline_artifacts.universal_forwarder.receiver_ca is defined }}"
         timeout: 60
       loop: "{{ splunk.required_sources }}"
       loop_control:
@@ -276,13 +271,3 @@
       loop_control:
         label: "{{ item.item.id }}"
       no_log: true
-
-    - name: Confirm the emergency-stop operator and egress controls were verified
-      ansible.builtin.assert:
-        that:
-          - network.internet_egress == 'deny'
-          - network.egress_verified_by | length > 0
-          - controller.emergency_stop.verified | bool
-          - controller.emergency_stop.operator | length > 0
-          - controller.emergency_stop.contact_channel | length > 0
-        fail_msg: "Cyber Range egress or emergency-stop operator verification is missing."

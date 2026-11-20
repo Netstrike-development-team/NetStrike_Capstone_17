@@ -73,7 +73,7 @@ def test_builder_source_format_composes_with_read_only_inspector(bundle, monkeyp
     assert report["scope"] == "selected_application_source_only"
     assert report["repository_revision"] == REVISION
     assert report["inventory_sha256"] == inventory_digest(bundle)
-    assert len(report["source_artifacts"]) == 6
+    assert len(report["source_artifacts"]) == 8
     assert not report["source_authenticity_verified"]
     assert not report["running_process_verified"]
     assert not report["external_readiness_verified"]
@@ -201,7 +201,7 @@ def test_malformed_and_duplicate_inventory_is_safe(bundle, raw):
 def test_other_valid_commit_does_not_pass_expected_revision(bundle):
     report = inspect(bundle, revision="b" * 40)
     assert report["blockers"] == ["expected_repository_revision"]
-    assert len(report["source_artifacts"]) == 6  # Hashes alone do not prove the requested commit.
+    assert len(report["source_artifacts"]) == 8  # Hashes alone do not prove the requested commit.
 
 
 @pytest.mark.parametrize("location", ["inventory", "source-root", "tree", "file", "directory", "empty-directory"])
@@ -318,6 +318,10 @@ def test_real_source_copy_contains_a_dependency_free_runnable_checker(tmp_path, 
     (root / "inventory.json").write_text(json.dumps({
         "repository_revision": REVISION, "destination_vm": "CTRL01", "source_artifacts": records,
     }))
+    assert release_check.SOURCE_TREES == offline_bundle.SOURCE_DIRECTORIES
+    assert "offline-bundles" not in offline_bundle.SOURCE_DIRECTORIES
+    for directory in ("linux", "sysmon", "windows"):
+        assert (root / "source/licensed-installers/CITEF-RELEASE" / directory / ".gitkeep").is_file()
     assert (root / "source/dashboard/release_check.py").is_file()
     result = subprocess.run(
         [sys.executable, "-B", "-S", "-m", "dashboard.release_check",

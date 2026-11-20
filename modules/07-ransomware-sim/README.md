@@ -4,7 +4,7 @@
 
 The safe module is connected to the selectable full-play runtime, DP4,
 participant default-preview recovery, hash/evidence inspection, final brief,
-staff rollback and stop/reset. See [integration handoff](../../docs/impact-recovery-dev-handoff.md)
+staff rollback and stop/reset. See [integration handoff](../../docs/development/impact-recovery-dev-handoff.md)
 for root configuration, timing, demonstrations and remaining acceptance.
 
 This module implements the marker-only impact and recovery phase of Operation

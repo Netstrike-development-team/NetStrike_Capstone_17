@@ -74,9 +74,11 @@ This package follows the objective-led, operations-based exercise approach in th
 ## Approval gates
 
 The Cyber Range has accepted the audience, objectives, safety rules, blue-team
-scope, VM flexibility, Splunk availability, and snapshot restoration approach.
-Remaining confirmations include the VM mapping, Splunk configuration and
-permissions, the complete offline bundle and license terms, and delivery dates.
+scope, Splunk availability, and snapshot restoration approach, and delegated
+exercise VM/network configuration to the team. The team must record and
+validate the selected deployment, Splunk configuration and access, bundle and
+license disposition, and delivery dates; these checks do not imply a new range
+configuration approval. Final exercise acceptance remains separate.
 
 Use [06-citef-requirements-and-approval.md](06-citef-requirements-and-approval.md)
 to collect these decisions, record exceptions, re-estimate the backlog, and

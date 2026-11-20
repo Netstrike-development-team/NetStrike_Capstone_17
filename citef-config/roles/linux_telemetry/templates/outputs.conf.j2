@@ -3,7 +3,11 @@ defaultGroup = netstrike_receivers
 
 [tcpout:netstrike_receivers]
 server = {{ splunk.forwarder_receiver.host }}:{{ splunk.forwarder_receiver.port }}
+{% if offline_artifacts.universal_forwarder.receiver_ca is defined %}
 useSSL = true
 sslRootCAPath = /opt/splunkforwarder/etc/auth/netstrike/receiver-ca.pem
 sslVerifyServerCert = true
+{% else %}
+useSSL = false
+{% endif %}
 useACK = true

@@ -1,9 +1,11 @@
 [monitor:///var/log/syslog]
 disabled = 0
 index = {{ splunk.linux_index }}
+_meta = run_id::{{ exercise_run_id }}
 sourcetype = linux_syslog
 
 [monitor:///var/log/auth.log]
 disabled = 0
 index = {{ splunk.linux_index }}
+_meta = run_id::{{ exercise_run_id }}
 sourcetype = linux_auth

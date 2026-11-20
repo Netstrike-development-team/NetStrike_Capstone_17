@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build and verify portable Python runtime and dependency bundles."""
+"""Build and verify portable Python and Linux package bundles."""
 
 from __future__ import annotations
 
@@ -23,6 +23,29 @@ from pathlib import Path, PurePosixPath
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CHECKSUMS_NAME = "SHA256SUMS"
 UNKNOWN = "UNKNOWN (review required)"
+LINUX_PACKAGE_IMAGE = "ubuntu:26.04"
+LINUX_PACKAGE_BASELINE = (
+    REPO_ROOT / "citef-config/files/ubuntu-26.04-amd64-package-baseline.status"
+)
+LINUX_DOMAIN_PACKAGES = (
+    "adcli",
+    "chrony",
+    "libnss-sss",
+    "libnss-systemd",
+    "libpam-sss",
+    "libpam-systemd",
+    "packagekit",
+    "realmd",
+    "samba-common-bin",
+    "sssd",
+    "sssd-ad",
+    "sssd-tools",
+    # Server baseline packages tied to the same version as systemd's libraries.
+    "systemd-cryptsetup",
+    "systemd-resolved",
+    "systemd-sysv",
+    "udev",
+)
 SOURCE_DIRECTORIES = (
     "modules",
     "dashboard",
@@ -30,6 +53,8 @@ SOURCE_DIRECTORIES = (
     "shared",
     "orchestrator",
     "schemas",
+    "licensed-installers",
+    "splunk"
 )
 
 
@@ -336,7 +361,7 @@ def _copy_source_directories(
         shutil.copytree(
             source,
             destination,
-            ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc"),
+            ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc", "netstrike-*.tar.gz"),
         )
         copied.append(
             {
@@ -463,6 +488,203 @@ def _copy_ansible_collection_archives(
     return sorted(inventory, key=lambda item: item["name"].lower())
 
 
+def _linux_package_status(source: Path) -> str:
+    """Retain only installed-package fields needed by APT's solver."""
+    fields = (
+        "Package", "Status", "Architecture", "Version", "Essential", "Protected",
+        "Multi-Arch", "Depends", "Pre-Depends", "Breaks", "Conflicts", "Provides",
+        "Replaces", "Recommends", "Suggests", "Enhances",
+    )
+    records: dict[str, str] = {}
+    for paragraph in re.split(rb"\n\s*\n", source.read_bytes().strip()):
+        record = BytesParser(policy=default).parsebytes(paragraph)
+        for field in fields:
+            if len(record.get_all(field, [])) > 1:
+                raise ValueError(f"duplicate {field} in Linux package baseline")
+        status = str(record.get("Status", "")).split()
+        if len(status) != 3:
+            raise ValueError("invalid Linux package baseline status")
+        if status[2] in {"not-installed", "config-files"}:
+            continue
+        if record.get("Status") not in {"install ok installed", "hold ok installed"}:
+            raise ValueError("Linux package baseline requires clean installed packages")
+        name = str(record.get("Package", ""))
+        architecture = str(record.get("Architecture", ""))
+        version = str(record.get("Version", ""))
+        if (
+            not re.fullmatch(r"[a-z0-9][a-z0-9+.-]+", name)
+            or architecture not in {"amd64", "all"}
+            or not re.fullmatch(r"(?:[0-9]+:)?[0-9][A-Za-z0-9.+:~\-]*", version)
+        ):
+            raise ValueError(f"invalid Ubuntu amd64 package baseline record: {name}")
+        if name in records:
+            raise ValueError(f"duplicate Linux package baseline record: {name}")
+        records[name] = "".join(
+            f"{field}: {str(record[field])}\n" for field in fields if field in record
+        )
+    if not records:
+        raise ValueError("Linux package baseline contains no installed packages")
+    return "\n".join(records[name] for name in sorted(records)) + "\n"
+
+
+def capture_linux_package_baseline(args: argparse.Namespace) -> None:
+    content = _linux_package_status(Path(args.status))
+    output = Path(args.output)
+    output.write_text(content, encoding="utf-8")
+    print(f"Captured installed-package solver metadata in {output}")
+
+
+def _download_linux_packages(
+    package_dir: Path, baseline: Path = LINUX_PACKAGE_BASELINE
+) -> None:
+    _linux_package_status(baseline)
+    package_dir.mkdir(parents=True, exist_ok=True)
+    command = [
+        "docker",
+        "run",
+        "--rm",
+        "--platform",
+        "linux/amd64",
+        "--volume",
+        f"{package_dir.resolve()}:/packages",
+        "--volume",
+        f"{baseline.resolve()}:/baseline.status:ro",
+        LINUX_PACKAGE_IMAGE,
+        "/bin/sh",
+        "-ec",
+        # Keep APT's root/_apt-owned cache directories off the host bind mount.
+        # An empty status file prevents installed container packages from
+        # satisfying dependencies that must be carried to an older target.
+        ": > /tmp/netstrike-empty-status && "
+        "apt-get update && apt-get install --download-only "
+        "-o Dir::State::status=/tmp/netstrike-empty-status "
+        "--no-install-recommends --yes "
+        + " ".join(LINUX_DOMAIN_PACKAGES)
+        # Repeat until companion updates and their dependencies stop adding
+        # archives; a newly added library can affect another server package.
+        + ' && previous_count=0 && package_count="$(find /var/cache/apt/archives '
+        '-maxdepth 1 -name \'*.deb\' | wc -l)" && '
+        'while [ "$package_count" -ne "$previous_count" ]; do '
+        'previous_count="$package_count"; '
+        "apt-get install --download-only --no-install-recommends --yes "
+        "--no-remove -o Dir::State::status=/baseline.status "
+        "/var/cache/apt/archives/*.deb || exit $?; "
+        # New companion packages can add forward dependencies of their own.
+        + "apt-get install --download-only --no-install-recommends --yes "
+        "--no-remove -o Dir::State::status=/tmp/netstrike-empty-status "
+        "/var/cache/apt/archives/*.deb || exit $?; "
+        + 'package_count="$(find /var/cache/apt/archives -maxdepth 1 '
+        '-name \'*.deb\' | wc -l)"; done'
+        + " && install -m 0644 /var/cache/apt/archives/*.deb /packages/",
+    ]
+    completed = subprocess.run(command, cwd=REPO_ROOT, check=False)
+    if completed.returncode:
+        raise RuntimeError(
+            f"Linux domain package download failed with exit code {completed.returncode}"
+        )
+    if not list(package_dir.glob("*.deb")):
+        raise ValueError("apt produced no Linux domain package archives")
+
+
+def _copy_linux_package_archives(
+    package_dir: Path, bundle: Path, destination_vm: str = "CTRL01"
+) -> list[dict]:
+    destination = bundle / "destinations" / destination_vm / "linux-packages"
+    destination.mkdir(parents=True, exist_ok=True)
+    inventory = []
+    names = set()
+    archives = sorted(package_dir.glob("*.deb"))
+    if not archives:
+        raise ValueError("no Linux domain package archives were provided")
+
+    for source in archives:
+        completed = subprocess.run(
+            [
+                "dpkg-deb",
+                "--show",
+                "--showformat=${Package}\\n${Version}\\n${Architecture}\\n${Maintainer}\\n",
+                str(source),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        fields = completed.stdout.splitlines()
+        if len(fields) not in (3, 4) or not all(value.strip() for value in fields[:3]):
+            raise ValueError(f"invalid Debian package metadata: {source.name}")
+        name, version, architecture = (value.strip() for value in fields[:3])
+        maintainer = fields[3].strip() if len(fields) == 4 else UNKNOWN
+        if architecture not in {"amd64", "all"}:
+            raise ValueError(f"unsupported Linux package architecture: {architecture}")
+        if name in names:
+            raise ValueError(f"duplicate Linux package archive: {name}")
+        names.add(name)
+
+        bundled = destination / source.name
+        shutil.copyfile(source, bundled)
+        inventory.append(
+            {
+                "name": name,
+                "version": version,
+                "architecture": architecture,
+                "source": f"Ubuntu {LINUX_PACKAGE_IMAGE} package repositories",
+                "license": UNKNOWN,
+                "owner": maintainer or UNKNOWN,
+                "sha256": _sha256(bundled),
+                "destination_vm": destination_vm,
+                "offline_install_method": (
+                    "Install the bundled .deb files with apt-get --no-download; "
+                    "all package dependencies are included."
+                ),
+                "file": bundled.relative_to(bundle).as_posix(),
+            }
+        )
+    missing = set(LINUX_DOMAIN_PACKAGES) - names
+    if missing:
+        raise ValueError(
+            "Linux package download is missing requested packages: "
+            + ", ".join(sorted(missing))
+        )
+    return sorted(inventory, key=lambda item: item["name"].lower())
+
+
+def _verify_linux_packages_offline(bundle: Path, destination_vm: str) -> None:
+    package_dir = bundle / "destinations" / destination_vm / "linux-packages"
+    baseline = package_dir.parent / "linux-package-baseline.status"
+    _linux_package_status(baseline)
+    command = [
+        "docker",
+        "run",
+        "--rm",
+        "--platform",
+        "linux/amd64",
+        "--network",
+        "none",
+        "--volume",
+        f"{package_dir.resolve()}:/packages:ro",
+        "--volume",
+        f"{baseline.resolve()}:/baseline.status:ro",
+        LINUX_PACKAGE_IMAGE,
+        "/bin/sh",
+        "-ec",
+        # Neither installed packages nor repository indexes may mask missing
+        # archives during the closure check.
+        "mkdir -p /tmp/netstrike-empty-lists && : > /tmp/netstrike-empty-status && "
+        "apt-get install --simulate --no-download --no-install-recommends --yes "
+        "-o Dir::State::lists=/tmp/netstrike-empty-lists "
+        "-o Dir::Cache::pkgcache= -o Dir::Cache::srcpkgcache= "
+        "-o Dir::State::status=/tmp/netstrike-empty-status /packages/*.deb && "
+        "apt-get install --simulate --no-download --no-install-recommends --yes "
+        "--no-remove -o Dir::State::lists=/tmp/netstrike-empty-lists "
+        "-o Dir::Cache::pkgcache= -o Dir::Cache::srcpkgcache= "
+        "-o Dir::State::status=/baseline.status /packages/*.deb && "
+        "install -m 0644 /packages/*.deb /var/cache/apt/archives/ && "
+        "apt-get install --no-download --no-install-recommends --yes --no-remove "
+        "/var/cache/apt/archives/*.deb",
+    ]
+    subprocess.run(command, check=True)
+
+
 def _write_checksums(root: Path) -> None:
     entries = []
     for path in sorted(root.rglob("*")):
@@ -478,6 +700,7 @@ def build_bundle(args: argparse.Namespace) -> None:
     runtime_archive = Path(args.python_runtime_archive).resolve()
     if not runtime_archive.is_file():
         raise FileNotFoundError(runtime_archive)
+    baseline_content = _linux_package_status(Path(args.linux_package_status))
     runtime_url = _configured_runtime_url()
     output = Path(args.output).resolve()
     if output.suffixes[-2:] != [".tar", ".gz"]:
@@ -529,6 +752,13 @@ def build_bundle(args: argparse.Namespace) -> None:
         if not wheels:
             raise ValueError("pip produced no wheels; refusing to create an empty bundle")
         artifacts = _write_lock_and_inventory(wheels, wheelhouse, destination, bundle)
+        baseline = destination_dir / "linux-package-baseline.status"
+        baseline.write_text(baseline_content, encoding="utf-8")
+        linux_package_download = Path(temporary) / "linux-packages"
+        _download_linux_packages(linux_package_download, baseline)
+        linux_packages = _copy_linux_package_archives(
+            linux_package_download, bundle, destination
+        )
         source_artifacts = _copy_source_directories(bundle, revision, destination)
         ansible_collections = _copy_ansible_collection_archives(
             args.ansible_collection_archive, bundle, destination
@@ -547,6 +777,19 @@ def build_bundle(args: argparse.Namespace) -> None:
                 path.relative_to(REPO_ROOT).as_posix() for path in requirement_files
             ],
             "artifacts": artifacts,
+            "linux_package_target": "Ubuntu 26.04 amd64",
+            "linux_package_baseline": {
+                "name": "Ubuntu Server installed-package baseline",
+                "version": "26.04 amd64",
+                "source": "Target /var/lib/dpkg/status (solver fields only)",
+                "license": "Package relationship metadata; no binaries",
+                "owner": "Netstrike-development-team",
+                "sha256": _sha256(baseline),
+                "destination_vm": destination,
+                "offline_install_method": "APT simulation input; do not install on target",
+                "file": baseline.relative_to(bundle).as_posix(),
+            },
+            "linux_packages": linux_packages,
             "source_artifacts": source_artifacts,
             "ansible_collections": ansible_collections,
         }
@@ -559,7 +802,8 @@ def build_bundle(args: argparse.Namespace) -> None:
 
     print(
         f"Created {output} with {len(artifacts)} Python packages, "
-        f"{len(source_artifacts)} source trees, and {len(ansible_collections)} "
+        f"{len(linux_packages)} Linux packages, {len(source_artifacts)} source trees, "
+        f"and {len(ansible_collections)} "
         f"Ansible collections for {destination}."
     )
 
@@ -601,6 +845,9 @@ def _verify_inventory_artifacts(bundle: Path, inventory: dict) -> None:
     destination = _validate_destination(inventory["destination_vm"])
     artifacts = [inventory["python_runtime"]]
     artifacts.extend(inventory.get("artifacts", []))
+    artifacts.extend(inventory.get("linux_packages", []))
+    if inventory.get("linux_package_baseline"):
+        artifacts.append(inventory["linux_package_baseline"])
     artifacts.extend(inventory.get("source_artifacts", []))
     artifacts.extend(inventory.get("ansible_collections", []))
     required_fields = (
@@ -653,6 +900,21 @@ def verify_bundle(args: argparse.Namespace) -> None:
         inventory = json.loads((bundle / "inventory.json").read_text(encoding="utf-8"))
         _verify_inventory_artifacts(bundle, inventory)
         destination = _validate_destination(inventory["destination_vm"])
+        if inventory.get("linux_package_target") != "Ubuntu 26.04 amd64":
+            raise ValueError("bundle has no supported Linux domain package target")
+        baseline_file = f"destinations/{destination}/linux-package-baseline.status"
+        if inventory.get("linux_package_baseline", {}).get("file") != baseline_file:
+            raise ValueError("bundle has no target Linux package baseline; rebuild it")
+        linux_packages = inventory.get("linux_packages", [])
+        package_names = {package["name"] for package in linux_packages}
+        missing_packages = set(LINUX_DOMAIN_PACKAGES) - package_names
+        if missing_packages:
+            raise ValueError(
+                "bundle is missing Linux domain packages: "
+                + ", ".join(sorted(missing_packages))
+            )
+        _verify_linux_packages_offline(bundle, destination)
+
         destination_dir = bundle / "destinations" / destination
         runtime = inventory["python_runtime"]
         expected_version = runtime["version"]
@@ -735,6 +997,11 @@ def main() -> None:
     )
     build.add_argument("--output", required=True, help="new .tar.gz archive path")
     build.add_argument(
+        "--linux-package-status",
+        default=str(LINUX_PACKAGE_BASELINE),
+        help="Ubuntu 26.04 amd64 target dpkg status (defaults to checked-in CTRL01 baseline)",
+    )
+    build.add_argument(
         "--python-runtime-archive",
         required=True,
         help="CPython standalone Linux x86_64 install-only .tar.gz archive",
@@ -746,6 +1013,13 @@ def main() -> None:
         help="Ansible Galaxy collection .tar.gz archive (repeat for each collection)",
     )
     build.set_defaults(handler=build_bundle)
+
+    capture = commands.add_parser(
+        "capture-linux-baseline", help="reduce target dpkg status to package solver metadata"
+    )
+    capture.add_argument("--status", required=True, help="target /var/lib/dpkg/status file")
+    capture.add_argument("--output", required=True, help="output baseline .status file")
+    capture.set_defaults(handler=capture_linux_package_baseline)
 
     verify = commands.add_parser("verify", help="verify checksums and install without an index")
     verify.add_argument("archive", help="offline bundle .tar.gz archive")

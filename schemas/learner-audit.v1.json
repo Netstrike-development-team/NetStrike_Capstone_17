@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Learner-visible SimCorp audit projection v1 (simulated services)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "schema_id", "event_id", "exercise_id", "run_id", "timestamp", "service", "event_type", "outcome", "simulated_service", "facts"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "schema_id": {"const": "netstrike.learner-audit.v1"},
+    "event_id": {"type": "string", "format": "uuid"},
+    "exercise_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "run_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "timestamp": {"type": "string", "format": "date-time", "pattern": "Z$"},
+    "service": {"enum": ["simcorp-access", "simcorp-helpdesk", "simcorp-identity", "simcorp-endpoint", "simcorp-directory", "simcorp-storage", "simcorp-file-service"]},
+    "event_type": {"type": "string", "pattern": "^[a-z][a-z0-9_.]+$", "maxLength": 64},
+    "outcome": {"enum": ["success", "failure", "denied", "blocked", "pending", "skipped", "cancelled", "error", "unknown"]},
+    "simulated_service": {"const": true},
+    "actor_id": {"$ref": "#/$defs/id"},
+    "actor_type": {"$ref": "#/$defs/entity"},
+    "target_id": {"$ref": "#/$defs/id"},
+    "target_type": {"$ref": "#/$defs/entity"},
+    "facts": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "source_ip": {"$ref": "#/$defs/id"},
+        "landing_id": {"$ref": "#/$defs/id"},
+        "ticket_id": {"$ref": "#/$defs/id"},
+        "caller_employee_id": {"$ref": "#/$defs/id"},
+        "callback_verified": {"type": "boolean"},
+        "factor_id": {"$ref": "#/$defs/id"},
+        "host": {"$ref": "#/$defs/id"},
+        "identity_id": {"$ref": "#/$defs/id"},
+        "challenge_id": {"$ref": "#/$defs/id"},
+        "session_id": {"$ref": "#/$defs/id"},
+        "identity_event_id": {"$ref": "#/$defs/id"},
+        "category": {"$ref": "#/$defs/id"},
+        "command_id": {"$ref": "#/$defs/id"},
+        "object_count": {"$ref": "#/$defs/count"},
+        "query_category": {"$ref": "#/$defs/id"},
+        "enabled": {"type": "boolean"},
+        "member": {"$ref": "#/$defs/id"},
+        "bucket_id": {"$ref": "#/$defs/id"},
+        "principal_id": {"$ref": "#/$defs/id"},
+        "key_id": {"$ref": "#/$defs/id"},
+        "policy_hash": {"$ref": "#/$defs/id"},
+        "bytes": {"$ref": "#/$defs/count"},
+        "confirmed_count": {"$ref": "#/$defs/count"},
+        "task_id": {"$ref": "#/$defs/id"},
+        "active": {"type": "boolean"},
+        "fixture_id": {"$ref": "#/$defs/id"},
+        "available_originals": {"$ref": "#/$defs/count"},
+        "marker_count": {"$ref": "#/$defs/count"}
+      }
+    }
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@-]{0,127}$"},
+    "count": {"type": "integer", "minimum": 0, "maximum": 1000000000000},
+    "entity": {"enum": ["identity", "helpdesk_agent", "session", "service", "host", "mfa_factor", "directory", "directory_account", "directory_group", "cloud_principal", "cloud_bucket", "process", "file_set"]}
+  }
+}

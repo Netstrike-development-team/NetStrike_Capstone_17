@@ -8,8 +8,16 @@ The participant guide must not include the answer or the expected evidence value
 
 ## Common event requirements
 
+The requirements below describe the **private canonical event contract**.
+Learner Splunk receives a distinct [fact-only audit projection](../operations/learner-splunk-audit.md),
+not this complete ledger. Fields such as ATT&CK labels, checkpoint IDs, reasons
+and expected answers are not copied. Host telemetry remains separate actual
+Windows/Sysmon data. The projection's strict schema and local 24-path tests do
+not establish live ingestion, completeness of every design-time evidence row or
+range acceptance; Patrick must still verify those in Splunk.
+
 The authoritative machine-readable definition is the
-[NetStrike Exercise Event Contract v1](../event-contract-v1.md). Every
+[NetStrike Exercise Event Contract v1](../application/contracts/event-contract-v1.md). Every
 NetStrike-generated event must validate against `schemas/event.v1.json` and
 contain:
 
@@ -38,7 +46,11 @@ attack-module phases are not permitted in v1.
 
 ## Required evidence
 
-Exact Splunk index and source-type names are provisional until the Cyber Range confirms its conventions.
+The team controls exercise index and source-type conventions under delegated
+Cyber Range authority. Versioned Splunk content and forwarder templates define
+the deployed names; validate those mappings during ingestion, without a new
+range naming-approval task. `netstrike` and staff-only `netstrike_staff` are the
+selected indexes.
 
 | Event/activity | Required source and key fields | What a participant should conclude | Evaluator evidence | Generator | Validation |
 |---|---|---|---|---|---|
@@ -63,7 +75,7 @@ Exact Splunk index and source-type names are provisional until the Cyber Range c
 | Marker/ransom-note creation | File audit/controller: allowlisted path, file count, hashes | Safe indicators simulate ransomware impact | File set, note, and hashes | Phase 7 safe adapter | No path outside allowlist changes |
 | Realized safe impact | Controller/file audit: original/staging paths, count, service status | Disposable business data became unavailable but was not encrypted | Impact scope and service status | Phase 7 safe adapter | Originals exist in controller staging; no VM disk touched |
 | Identity containment | IdP audit and current state: session revoked, factor removed, password version changed | Team completed identity containment | Four verifier checks | Participant action/API | State check and audit trail agree |
-| Endpoint containment | Isolation controller/host audit: host, actor, state, time | Team isolated the affected endpoint | Isolation and evidence-preservation checks | Participant action | Host cannot use attack path but remains observable to controller |
+| Endpoint containment | Isolation controller/host audit: host, actor, state, time | Team blocked the affected endpoint's simulated remote path | Isolation and evidence-preservation checks | Participant action | Simulated remote path is disabled; the control does not assert real host network isolation |
 | AD remediation | AD/current state: account disabled/removed, group membership restored | Unauthorized persistence was removed | State check plus audit event | Participant action | Baseline membership manifest matches |
 | Cloud remediation | Mock cloud audit/current state: key revoked, approved policy restored | Team contained cloud access | Key and policy state checks | Participant action/API | Subsequent bulk access is denied |
 | Recovery | Backup/controller: manifest, hashes, restored count, health status | Team restored the approved data/service | Passing recovery health check | Participant action | Baseline hashes and service check pass |

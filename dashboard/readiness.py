@@ -138,6 +138,11 @@ def application_readiness(service) -> dict:
             _probe("identity_audit_empty", lambda: not service.identity_timeline()),
             _probe("event_ledger", lambda: _ledger_matches(service)),
         ]
+        if service.host_telemetry_run_id is not None:
+            checks.append(_probe(
+                "configured_host_telemetry_run",
+                lambda: run.run_id == service.host_telemetry_run_id,
+            ))
         if run.cloud_enabled:
             checks.append(
                 _probe(

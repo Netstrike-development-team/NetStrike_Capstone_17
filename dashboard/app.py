@@ -906,6 +906,7 @@ def create_default_app() -> FastAPI:
             store, run_id=configuration.run_id, profile_path=configuration.profile_path,
             scenario_path=configuration.scenario_path, impact_root=configuration.impact_root,
             identity_audit_key=configuration.audit_key,
+            host_telemetry_run_id=configuration.host_telemetry_run_id,
         )
         return create_app(service, configuration.authenticator,
                           sso_allowed_origins=configuration.origins)

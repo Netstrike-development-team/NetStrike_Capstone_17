@@ -5,12 +5,14 @@
   vars_files:
     - "{{ playbook_dir }}/../environment.json"
   tasks:
-    - name: Refuse provisioning without a unique deployment identifier
+    - name: Refuse provisioning without a deployment version and exercise run identifier
       ansible.builtin.assert:
         that:
-          - deployment_id is defined
-          - deployment_id is match('^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$')
-        fail_msg: "Pass a unique, path-safe deployment_id (8-64 letters, digits, dots, underscores, or hyphens)."
+          - deployment_version is defined
+          - deployment_version is match('^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$')
+          - exercise_run_id is defined
+          - exercise_run_id is match('^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$')
+        fail_msg: "Pass path-safe deployment_version and exercise_run_id values (8-64 letters, digits, dots, underscores, or hyphens)."
 
     - name: Validate the approved environment manifest
       ansible.builtin.command:
@@ -27,14 +29,45 @@
         that:
           - ad_safe_mode_password is defined
           - ad_safe_mode_password | length >= 16
+          - ad_safe_mode_password is search('[A-Za-z]')
+          - ad_safe_mode_password is search('[0-9]')
+          - ad_safe_mode_password is search('[^A-Za-z0-9]')
           - domain_admin_user is defined
           - domain_admin_password is defined
           - domain_admin_password | length >= 16
-        fail_msg: "Inject domain bootstrap credentials using the approved Ansible Vault or secret manager."
+          - domain_admin_password is search('[A-Za-z]')
+          - domain_admin_password is search('[0-9]')
+          - domain_admin_password is search('[^A-Za-z0-9]')
+        fail_msg: "Inject domain bootstrap credentials using the approved Ansible Vault or secret manager. Passwords must be 16+ characters with lowercase, numbers and symbols."
       no_log: true
 
     - name: Validate all staged vendor artifacts before any host changes
       ansible.builtin.include_tasks: ../tasks/validate_artifacts.yml
+
+- name: Trust SSH host keys of the Linux targets (trust on first use)
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/../environment.json"
+  tasks:
+    - name: Scan ed25519 host keys of Linux assets
+      ansible.builtin.command:
+        argv: [ssh-keyscan, -t, ed25519, -p, "{{ item.port }}", "{{ item.address }}"]
+      loop: "{{ assets | selectattr('os_family', 'equalto', 'linux') | rejectattr('name', 'equalto', 'SPLUNK01') | list }}"
+      loop_control:
+        label: "{{ item.name }}"
+      register: ssh_hostkeys
+      changed_when: false
+      failed_when: ssh_hostkeys.stdout | length == 0
+
+    - name: Record the scanned host keys in known_hosts
+      ansible.builtin.known_hosts:
+        name: "{{ item.item.address if item.item.port | int == 22 else '[' ~ item.item.address ~ ']:' ~ item.item.port }}"
+        key: "{{ item.item.address if item.item.port | int == 22 else '[' ~ item.item.address ~ ']:' ~ item.item.port }} {{ (item.stdout_lines | reject('match', '^#') | first).split(' ', 1)[1] }}"
+        state: present
+      loop: "{{ ssh_hostkeys.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
 
 - name: Install the domain controller and establish internal DNS/time
   hosts: domain_controllers
@@ -42,6 +75,7 @@
   vars_files:
     - "{{ playbook_dir }}/../environment.json"
   roles:
+    - host_identity
     - domain_controller
 
 - name: Configure domain clients and Windows security telemetry
@@ -50,6 +84,7 @@
   vars_files:
     - "{{ playbook_dir }}/../environment.json"
   roles:
+    - host_identity
     - windows_client
 
 - name: Configure Windows security telemetry on domain hosts
@@ -63,9 +98,15 @@
 - name: Configure isolated DNS/time on Linux hosts
   hosts: linux_hosts
   gather_facts: false
+  become: true
+  # su allocates a pty that merges stderr into module stdout; keep Python warnings out of the JSON stream
+  environment:
+    PYTHONWARNINGS: ignore
+    PYTHONDONTWRITEBYTECODE: "1"
   vars_files:
     - "{{ playbook_dir }}/../environment.json"
   roles:
+    - host_identity
     - linux_baseline
   tasks:
     - name: Configure Splunk forwarder on the controller host

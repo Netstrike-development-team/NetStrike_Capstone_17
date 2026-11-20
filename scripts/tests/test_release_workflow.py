@@ -21,9 +21,9 @@ def test_dev_and_main_have_the_same_strict_check(event):
 
 def test_strict_ci_covers_core_tests_and_exact_checkout_without_failure_masking():
     workflow = WORKFLOW.read_text()
-    assert "python -m pytest shared/tests dashboard/tests orchestrator/tests scripts/tests citef-config/tests -q" in workflow
+    assert "python -m pytest shared/tests dashboard/tests orchestrator/tests scripts/tests citef-config/tests splunk/tests -q" in workflow
     assert "node --test dashboard/tests/*.test.mjs" in workflow
-    assert "-r citef-config/requirements-validator.txt" in workflow
+    assert "-r citef-config/requirements-test.txt" in workflow
     assert 'python scripts/rehearsal.py --verify "$RUNNER_TEMP/local-rehearsal-evidence" --require-current-source' in workflow
     assert 'python scripts/rehearsal.py --execute --output "$RUNNER_TEMP/local-rehearsal-evidence"' in workflow
     assert "--case" not in workflow

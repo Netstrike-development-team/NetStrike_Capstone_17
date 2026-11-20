@@ -1,6 +1,7 @@
 [WinEventLog://Security]
 disabled = 0
 index = {{ splunk.windows_index }}
+_meta = run_id::{{ exercise_run_id }}
 renderXml = 1
 start_from = oldest
 current_only = 1
@@ -9,6 +10,7 @@ checkpointInterval = 5
 [WinEventLog://Microsoft-Windows-PowerShell/Operational]
 disabled = 0
 index = {{ splunk.windows_index }}
+_meta = run_id::{{ exercise_run_id }}
 renderXml = 1
 start_from = oldest
 current_only = 1
@@ -17,6 +19,7 @@ checkpointInterval = 5
 [WinEventLog://Microsoft-Windows-Sysmon/Operational]
 disabled = 0
 index = {{ splunk.windows_index }}
+_meta = run_id::{{ exercise_run_id }}
 renderXml = 1
 start_from = oldest
 current_only = 1

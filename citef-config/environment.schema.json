@@ -10,11 +10,9 @@
     "network",
     "assets",
     "identity_baseline",
-    "fixtures",
     "offline_artifacts",
     "splunk",
-    "controller",
-    "snapshots"
+    "controller"
   ],
   "properties": {
     "schema_version": {"const": 1},
@@ -23,20 +21,14 @@
       "additionalProperties": false,
       "required": [
         "exercise_cidr",
-        "management_cidr",
-        "internet_egress",
         "dns_servers",
         "ntp_servers",
         "reverse_dns_zone",
         "domain_dns_name",
-        "max_clock_skew_seconds",
-        "egress_verified_by",
-        "egress_verified_at"
+        "max_clock_skew_seconds"
       ],
       "properties": {
         "exercise_cidr": {"type": "string", "pattern": "^[0-9.]+/[0-9]{1,2}$"},
-        "management_cidr": {"type": "string", "pattern": "^[0-9.]+/[0-9]{1,2}$"},
-        "internet_egress": {"const": "deny"},
         "dns_servers": {
           "type": "array",
           "minItems": 1,
@@ -52,9 +44,7 @@
           "type": "string",
           "pattern": "^(?=.{1,253}$)(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$"
         },
-        "max_clock_skew_seconds": {"type": "integer", "minimum": 0, "maximum": 300},
-        "egress_verified_by": {"type": "string", "minLength": 1},
-        "egress_verified_at": {"type": "string", "format": "date-time"}
+        "max_clock_skew_seconds": {"type": "integer", "minimum": 0, "maximum": 300}
       }
     },
     "assets": {
@@ -68,8 +58,6 @@
           "address",
           "dns_name",
           "os_family",
-          "os_image_assumption",
-          "os_version_assumption",
           "connection",
           "port",
           "logical_assets",
@@ -80,9 +68,6 @@
           "address": {"type": "string", "format": "ipv4"},
           "dns_name": {"type": "string", "minLength": 1},
           "os_family": {"enum": ["linux", "windows"]},
-          "os_image_assumption": {"type": "string", "minLength": 1},
-          "os_version_assumption": {"type": "string", "minLength": 1},
-          "splunk_enterprise_version": {"type": "string", "minLength": 1},
           "connection": {"enum": ["ssh", "winrm"]},
           "port": {"type": "integer", "minimum": 1, "maximum": 65535},
           "logical_assets": {
@@ -140,39 +125,16 @@
         }
       }
     },
-    "fixtures": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["path", "sha256"],
-        "properties": {
-          "path": {"type": "string", "minLength": 1},
-          "sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"}
-        }
-      }
-    },
     "offline_artifacts": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["directory", "controller_source", "python_runtime", "universal_forwarder", "sysmon"],
+      "required": ["directory", "universal_forwarder", "sysmon"],
       "properties": {
         "directory": {"type": "string", "minLength": 1},
-        "controller_source": {"$ref": "#/$defs/artifact"},
-        "python_runtime": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["archive", "requirements_lock"],
-          "properties": {
-            "archive": {"$ref": "#/$defs/artifact"},
-            "requirements_lock": {"$ref": "#/$defs/artifact"}
-          }
-        },
         "universal_forwarder": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["version", "linux_deb", "windows_msi", "receiver_ca"],
+          "required": ["version", "linux_deb", "windows_msi"],
           "properties": {
             "version": {"type": "string", "minLength": 1},
             "linux_deb": {"$ref": "#/$defs/universalForwarderArtifact"},
@@ -197,7 +159,7 @@
       "additionalProperties": false,
       "required": ["rest_url", "version", "forwarder_receiver", "windows_index", "linux_index", "required_sources"],
       "properties": {
-        "rest_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+        "rest_url": {"type": "string", "format": "uri", "pattern": "^https?://"},
         "version": {"const": "10.0.1"},
         "forwarder_receiver": {
           "type": "object",
@@ -229,7 +191,7 @@
     "controller": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["listen_port", "readiness_url", "sso_allowed_origins", "tls_certificate", "tls_ca", "emergency_stop"],
+      "required": ["listen_port", "readiness_url", "sso_allowed_origins"],
       "properties": {
         "listen_port": {"type": "integer", "minimum": 1, "maximum": 65535},
         "readiness_url": {"type": "string", "format": "uri", "pattern": "^https://"},
@@ -239,29 +201,7 @@
           "items": {"type": "string", "format": "uri", "pattern": "^https://"}
         },
         "tls_certificate": {"$ref": "#/$defs/artifact"},
-        "tls_ca": {"$ref": "#/$defs/artifact"},
-        "emergency_stop": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["verified", "operator", "contact_channel", "verified_at"],
-          "properties": {
-            "verified": {"const": true},
-            "operator": {"type": "string", "minLength": 1},
-            "contact_channel": {"type": "string", "minLength": 1},
-            "verified_at": {"type": "string", "format": "date-time"}
-          }
-        }
-      }
-    },
-    "snapshots": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["snapshot_ids"],
-      "properties": {
-        "snapshot_ids": {
-          "type": "object",
-          "additionalProperties": {"type": "string", "minLength": 1}
-        }
+        "tls_ca": {"$ref": "#/$defs/artifact"}
       }
     }
   },
@@ -278,10 +218,9 @@
     "universalForwarderArtifact": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["file", "sha256", "sha512"],
+      "required": ["file", "sha512"],
       "properties": {
         "file": {"type": "string", "minLength": 1},
-        "sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
         "sha512": {"type": "string", "pattern": "^[A-Fa-f0-9]{128}$"}
       }
     }
