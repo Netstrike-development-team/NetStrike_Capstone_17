@@ -54,6 +54,32 @@ umask 077
 
 Use actual archive paths and path-safe deployment/run identifiers accepted by the playbook. Do not use example addresses or unapproved targets. The wrapper provisions `DC01`, Windows hosts, Linux baseline, and the controller; `SPLUNK01` is range-managed and is not configured by this project.
 
+To deploy only the controller service and its forwarder input app on an already
+provisioned controller, use `scripts/provision_controller.sh` instead. It takes
+the application bundle, controller IP, environment manifest, secrets file,
+deployment version, exercise run ID, and optional work directory. The supplied
+IP must match the manifest's `CTRL01` address. The script runs
+`controller_service.yml`; it does not provision the host baseline or other
+exercise machines. It still requires the existing Universal Forwarder and the
+controller credentials described below. `environment.json` remains required
+because the playbook loads it for controller configuration and validates it
+before deployment.
+
+```sh
+umask 077
+./scripts/provision_controller.sh \
+  netstrike-CTRL01-39599988130.tar.gz \
+  10.77.0.11 \
+  environment.json \
+  secrets.yml \
+  DASHBOARD_VERSION \
+  UNIQUE_EXERCISE_RUN_ID \
+  ./offline-controller
+```
+
+Use the approved manifest and path-safe deployment/run identifiers. Keep the
+secrets file private and use a fresh, access-restricted work directory.
+
 For portal TLS, service/readiness credentials, audit keys, and required values,
 follow the [portal deployment contract](../docs/deployment/application-deployment-contract.md).
 For application-bundle contents, offline Linux packages, and licensed-installer
