@@ -116,4 +116,4 @@ Times are relative to the start of exercise play, after the briefing. The facili
 - Do not pause merely because the team is making an incorrect decision.
 - A level-one hint points to a data source; a level-two hint suggests a search concept; a level-three intervention states the required next action.
 - Never improvise a new technical attacker action during the MVP. Use only an allowlisted MSEL action.
-- If a branch action fails technically, deliver its pre-generated evidence bundle, mark the action as simulated fallback, and continue.
+- If a branch action fails technically, deliver i
