@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 import shutil
+import stat
+from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, Callable, Mapping
@@ -105,8 +108,10 @@ class ImpactFixture:  # pylint: disable=too-many-instance-attributes
             for directory in (live_dir, backup_dir, staging_dir):
                 directory.mkdir(mode=0o700)
             for name, content in FIXTURE_CONTENTS.items():
-                (live_dir / name).write_bytes(content)
-                (backup_dir / name).write_bytes(content)
+                with (live_dir / name).open("xb") as handle:
+                    handle.write(content)
+                with (backup_dir / name).open("xb") as handle:
+                    handle.write(content)
         except Exception:
             shutil.rmtree(run_root, ignore_errors=True)
             raise
@@ -134,30 +139,65 @@ class ImpactFixture:  # pylint: disable=too-many-instance-attributes
         markers = {f"{name}{MARKER_SUFFIX}" for name in self._original_names}
         return self._original_names | markers | {NOTE_NAME}
 
-    def _inventory(
-        self, directory: Path, allowed_names: frozenset[str]
-    ) -> dict[str, bytes]:
+    @contextmanager
+    def _directory_handle(self, directory):
+        """Pin each real directory; learner shares must not expose their parents."""
+        handles = []
         try:
             self._validate_directories()
-        except ValueError as exc:
-            raise ActionExecutionError("unsafe_fixture", str(exc)) from exc
-        inventory: dict[str, bytes] = {}
-        for path in directory.iterdir():
-            if (
-                path.name not in allowed_names
-                or path.is_symlink()
-                or not path.is_file()
-                or path.stat().st_nlink != 1
-                or path.stat().st_size > 64 * 1024
+            flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+            handles.append(os.open(self.approved_root, flags))
+            handles.append(os.open(self.run_id, flags, dir_fd=handles[-1]))
+            handles.append(os.open(directory.name, flags, dir_fd=handles[-1]))
+            yield handles[-1]
+            # Detect replacement rather than accepting a detached directory's bytes.
+            for parent, name, child in (
+                (handles[0], self.run_id, handles[1]),
+                (handles[1], directory.name, handles[2]),
             ):
-                raise ActionExecutionError(
-                    "unsafe_fixture", "Fixture contains an unexpected or unsafe entry"
-                )
-            if path.resolve(strict=True).parent != directory.resolve(strict=True):
-                raise ActionExecutionError(
-                    "unsafe_fixture", "Fixture entry escaped its approved directory"
-                )
-            inventory[path.name] = path.read_bytes()
+                current = os.stat(name, dir_fd=parent, follow_symlinks=False)
+                opened = os.fstat(child)
+                if (current.st_dev, current.st_ino) != (opened.st_dev, opened.st_ino):
+                    raise ValueError("fixture directory changed")
+        except (OSError, ValueError) as exc:
+            raise ActionExecutionError("unsafe_fixture", "Fixture is unsafe, unreadable or changing") from exc
+        finally:
+            for descriptor in reversed(handles):
+                os.close(descriptor)
+
+    @staticmethod
+    def _stamp(value):
+        return (value.st_dev, value.st_ino, value.st_mode, value.st_nlink,
+                value.st_size, value.st_mtime_ns, value.st_ctime_ns)
+
+    def _inventory(self, directory: Path, allowed_names: frozenset[str]) -> dict[str, bytes]:
+        """Bounded no-follow reads; never open a FIFO or accept replaced file data."""
+        inventory = {}
+        with self._directory_handle(directory) as parent:
+            with os.scandir(parent) as entries:
+                names = []
+                for entry in entries:
+                    if entry.name not in allowed_names or len(names) >= len(allowed_names):
+                        raise ActionExecutionError("unsafe_fixture", "Fixture has an unapproved entry")
+                    names.append(entry.name)
+            for name in names:
+                before = os.stat(name, dir_fd=parent, follow_symlinks=False)
+                if (not stat.S_ISREG(before.st_mode) or before.st_nlink != 1
+                        or before.st_size > 64 * 1024):
+                    raise ActionExecutionError("unsafe_fixture", "Fixture has an unsafe file")
+                descriptor = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK,
+                                     dir_fd=parent)
+                with os.fdopen(descriptor, "rb") as handle:
+                    opened = os.fstat(handle.fileno())
+                    if self._stamp(opened) != self._stamp(before):
+                        raise ActionExecutionError("unsafe_fixture", "Fixture file changed")
+                    content = handle.read(64 * 1024 + 1)
+                    after = os.fstat(handle.fileno())
+                current = os.stat(name, dir_fd=parent, follow_symlinks=False)
+                if (len(content) != before.st_size or self._stamp(before) != self._stamp(after)
+                        or self._stamp(before) != self._stamp(current)):
+                    raise ActionExecutionError("unsafe_fixture", "Fixture file changed")
+                inventory[name] = content
         return inventory
 
     def _inventories(self) -> dict[str, dict[str, bytes]]:
@@ -208,6 +248,32 @@ class ImpactFixture:  # pylint: disable=too-many-instance-attributes
             "encryption_performed": False,
         }
 
+    def native_recovery_observation(self) -> dict[str, Any]:
+        """Observe external file restoration without deleting evidence or repairing files.
+
+        Reads are in the controller's OS context. This is not proof of Windows
+        ACLs, intended-user access, who copied the files, or the tool they used.
+        """
+        first = self._inventories()
+        second = self._inventories()
+        if first != second:
+            raise ActionExecutionError("unsafe_fixture", "Fixture changed during verification")
+        manifests = {name: _manifest(files) for name, files in second.items()}
+        checks = {
+            "live_files_match": {name: manifests["live"].get(name)
+                                 for name in self.expected_manifest} == self.expected_manifest,
+            "backup_intact": manifests["backup"] == self.expected_manifest,
+            "staged_originals_intact": not manifests["staging"]
+            or manifests["staging"] == self.expected_manifest,
+        }
+        return {
+            "mode": "native_files", "verification_method": "controller_read_only_filesystem",
+            "checks": checks, "passed": all(checks.values()),
+            "live_manifest": manifests["live"], "expected_manifest": deepcopy(self.expected_manifest),
+            "permissions_verified": False, "intended_user_access_verified": False,
+            "learner_attribution_verified": False, "files_modified_by_verifier": False,
+        }
+
     def _capture(self) -> str:
         inventories = self._inventories()
         self._rollback_sequence += 1
@@ -226,7 +292,8 @@ class ImpactFixture:  # pylint: disable=too-many-instance-attributes
         for name in current:
             (directory / name).unlink()
         for name, content in files.items():
-            (directory / name).write_bytes(content)
+            with (directory / name).open("xb") as handle:
+                handle.write(content)
 
     def _restore_snapshot(self, snapshot: Mapping[str, Any]) -> None:
         self._replace_inventory(self.live_dir, self._live_names, snapshot["live"])
@@ -266,15 +333,16 @@ class ImpactFixture:  # pylint: disable=too-many-instance-attributes
                     (self.live_dir / name).replace(self.staging_dir / name)
                     self._step(f"moved:{name}")
                 marker = self.live_dir / f"{name}{MARKER_SUFFIX}"
-                marker.write_bytes(self._marker_content(name))
+                with marker.open("xb") as handle:
+                    handle.write(self._marker_content(name))
                 self._step(f"marked:{name}")
             if variant == "realized":
-                (self.live_dir / NOTE_NAME).write_text(
-                    "NETSTRIKE EXERCISE ONLY\n"
-                    "Disposable synthetic files were staged by the controller.\n"
-                    "No encryption occurred and no payment or contact is required.\n",
-                    encoding="utf-8",
-                )
+                with (self.live_dir / NOTE_NAME).open("x", encoding="utf-8") as handle:
+                    handle.write(
+                        "NETSTRIKE EXERCISE ONLY\n"
+                        "Disposable synthetic files were staged by the controller.\n"
+                        "No encryption occurred and no payment or contact is required.\n"
+                    )
                 self._step("note-created")
             after = self._inventories()
         except Exception as exc:
@@ -307,7 +375,8 @@ class ImpactFixture:  # pylint: disable=too-many-instance-attributes
             self._replace_inventory(self.staging_dir, self._original_names, {})
             for name, content in inventories["backup"].items():
                 control.checkpoint()
-                (self.live_dir / name).write_bytes(content)
+                with (self.live_dir / name).open("xb") as handle:
+                    handle.write(content)
                 self._step(f"restored:{name}")
             after = self._inventories()
             if _manifest(after["live"]) != self.expected_manifest:
@@ -355,7 +424,8 @@ def _impact_parameters(parameters: Mapping[str, Any]) -> None:
 # The complete mutation surface stays together for role/target policy review.
 # pylint: disable=too-many-locals
 def register_impact_actions(
-    registry: ActionRegistry, fixture: ImpactFixture, *, run_id: str
+    registry: ActionRegistry, fixture: ImpactFixture, *, run_id: str,
+    recovery_mode: str = "fixture",
 ) -> None:
     """Register marker impact, recovery, reset, and readiness actions."""
 
@@ -378,6 +448,12 @@ def register_impact_actions(
 
     def validate(_parameters, _target, control):
         control.checkpoint()
+        if recovery_mode == "native_files":
+            observation = fixture.native_recovery_observation()
+            if not observation["passed"]:
+                raise ActionExecutionError("fixture_unhealthy", "Native file recovery is incomplete")
+            return ActionEffect(("observed restored file bytes without changing files",),
+                                metadata={"native_observation": observation})
         mismatches = fixture.health_mismatches()
         if mismatches:
             raise ActionExecutionError(
@@ -409,7 +485,7 @@ def register_impact_actions(
         ActionDefinition(
             action_id="recovery.fixture.restore",
             phase="impact_recovery",
-            allowed_roles=RECOVERY_ROLES,
+            allowed_roles=CONTROL_ROLES if recovery_mode == "native_files" else RECOVERY_ROLES,
             allowed_targets=frozenset({target}),
             allowed_run_states=frozenset({"running"}),
             max_timeout_seconds=30,

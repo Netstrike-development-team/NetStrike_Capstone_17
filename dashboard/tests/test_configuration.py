@@ -166,6 +166,38 @@ def test_cli_intent_cannot_weaken_configured_expected_scope(tmp_path):
     assert configuration is None and "expected_scenario_scope" in report["blockers"]
 
 
+@pytest.mark.parametrize("value", ["", "native", "unknown-private-mode", True])
+def test_bad_recovery_mode_blocks_before_provisioning(tmp_path, value):
+    report, configuration = inspect_configuration(environment(tmp_path, NETSTRIKE_RECOVERY_MODE=value))
+    assert configuration is None and "recovery_mode" in report["blockers"]
+    assert "unknown-private-mode" not in json.dumps(report)
+    assert not (tmp_path / "not-created").exists()
+
+
+@pytest.mark.parametrize("scenario_path", [DEFAULT_SCENARIO_PATH, CLOUD_SCENARIO_PATH])
+def test_native_recovery_requires_full_play(tmp_path, scenario_path):
+    report, configuration = inspect_configuration(environment(
+        tmp_path, NETSTRIKE_SCENARIO_PATH=str(scenario_path), NETSTRIKE_RECOVERY_MODE="native_files"))
+    assert configuration is None and "recovery_mode" in report["blockers"]
+
+
+def test_native_mode_preflight_is_inert_and_reaches_actual_runtime(tmp_path, monkeypatch):
+    disposable = tmp_path / "native"
+    disposable.mkdir()
+    env = environment(tmp_path, NETSTRIKE_IMPACT_ROOT=str(disposable),
+                      NETSTRIKE_SCENARIO_PATH=str(FULL_SCENARIO_PATH),
+                      NETSTRIKE_RECOVERY_MODE="native_files", NETSTRIKE_PORTAL_DATABASE=":memory:")
+    report, configuration = inspect_configuration(env)
+    assert report["configuration_valid"] and configuration.recovery_mode == "native_files"
+    assert report["selected_recovery_mode"] == "native_files"
+    assert "native_recovery_requires_external_file_access_and_permission_checks" in report["warnings"]
+    assert not list(disposable.iterdir())
+    inject(monkeypatch, env)
+    with TestClient(create_default_app()) as client:
+        state = client.get("/api/facilitator/state", headers={"Authorization": "Bearer " + TOKEN}).json()
+        assert state["impact"]["view"]["recovery"]["mode"] == "native_files"
+
+
 @pytest.mark.parametrize("problem", ["missing", "relative", "symlink", "unrelated", "bad-marker", "reused", "unsafe-run"])
 def test_full_play_root_blockers_are_inert(tmp_path, problem):
     disposable = tmp_path / "disposable"

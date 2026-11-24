@@ -29,6 +29,8 @@ jobs:
         run: python scripts/record_ui_walkthrough.py --execute --smoke-only --output "$RUNNER_TEMP/browser-smoke-evidence"
       - name: Exercise private help, evaluator review and immutable archives (strict)
         run: python scripts/staff_browser_smoke.py --execute --output "$RUNNER_TEMP/staff-browser-smoke-evidence"
+      - name: Verify native file restoration through actual portal forms (strict)
+        run: python scripts/native_recovery_browser_smoke.py --execute --output "$RUNNER_TEMP/native-recovery-browser-evidence"
       - name: Retain synthetic browser diagnostics (not usability or range sign-off)
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6, Node 24
@@ -37,6 +39,7 @@ jobs:
           path: |
             ${{ runner.temp }}/browser-smoke-evidence/
             ${{ runner.temp }}/staff-browser-smoke-evidence/
+            ${{ runner.temp }}/native-recovery-browser-evidence/
           if-no-files-found: warn
           retention-days: 14
 

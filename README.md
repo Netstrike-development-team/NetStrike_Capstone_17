@@ -36,10 +36,11 @@ encryption.
 | Scenario controller and portal | Python 3.11, FastAPI, SQLite, server-rendered web UI |
 | SIEM | Cyber Range-provided Splunk Enterprise 10.0.1; capacity limits are recorded in the [CITEF decision log](docs/exercise-design/06-citef-requirements-and-approval.md) |
 | Windows collection | Splunk Universal Forwarder 10.0.1, Sysmon 15.22, Windows audit and PowerShell logs |
-| Endpoint response | NetStrike allowlisted safe actions; no commercial EDR dependency |
+| Endpoint response | NetStrike allowlisted simulated actions; no commercial EDR dependency |
 | Infrastructure configuration | Ansible over SSH/WinRM plus PowerShell where required |
 | Cloud stage | Project-owned stateful Python mock; no AWS or LocalStack |
 | Impact stage | Marker files and reversible moves inside disposable fixtures; no encryption |
+| Native file recovery | Opt-in normal-tool file restore with independent read-only byte verification; lab access/ACLs require deployment testing |
 | Offline installation | Staged and verified artifacts; see the [bundle status and installation guide](docs/deployment/offline-bundle.md) |
 
 CALDERA, GHOSTS, Wazuh/Elastic, public cloud, and a custom SIEM are outside the
@@ -88,6 +89,15 @@ inventory with checksums. CITEF deployment and complete clean-target exercise
 acceptance remain open, as do external-artifact staging and manifest
 verification, normalized portal-event forwarding, and end-to-end telemetry
 acceptance.
+
+The application supports full play through recovery, human review and exports.
+An opt-in [native file recovery mode](docs/development/native-file-recovery.md)
+lets learners restore the disposable files outside the portal; the controller
+checks actual file contents without performing the restore. The next delivery
+goal is to validate the concrete learner file-access path, permissions, live
+telemetry and complete participant workflow in the range. This file check does
+not establish Windows user access or turn the simulated AD controls into real
+Windows administration.
 
 See:
 

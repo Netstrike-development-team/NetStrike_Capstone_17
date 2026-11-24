@@ -160,6 +160,7 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
     scenes = SCENES
     journey_id = "full-play"
     smoke_default = False
+    recovery_mode = "fixture"
     role_names = ("facilitator", "soc_analyst", "identity_responder",
                   "endpoint_responder", "cloud_responder", "simulated_user")
 
@@ -244,7 +245,15 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
         self.page.wait_for_timeout(250)
 
     def evidence(self, category="all", *, role="soc_analyst", query=""):
-        self.goto("/evidence", role)
+        from playwright.sync_api import expect  # pylint: disable=import-outside-toplevel
+
+        self.goto("/participant", role)
+        page_count = len(self.page.context.pages)
+        self.page.get_by_role("link", name="Open evidence timeline", exact=True).click()
+        expect(self.page).to_have_url(self.base + "/evidence")
+        expect(self.page.locator("#run-id")).to_have_text(self.run_id)
+        expect(self.page.locator("#signal-count")).to_have_text(re.compile(r"^[1-9]\d*$"))
+        assert len(self.page.context.pages) == page_count, "evidence navigation opened a disconnected tab"
         self.page.locator("#category").select_option(category)
         self.page.locator("#search").fill(query)
         self.page.locator(".evidence-workspace").scroll_into_view_if_needed()
@@ -406,6 +415,7 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
             task = Path(temporary)
             decoys = task / "decoys"
             decoys.mkdir()
+            self.decoy_root = decoys
             with socket.socket() as listener:
                 listener.bind(("127.0.0.1", 0))
                 port = listener.getsockname()[1]
@@ -429,6 +439,7 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
                     "NETSTRIKE_SSO_ALLOWED_ORIGINS": json.dumps([self.base]),
                     "NETSTRIKE_PORTAL_DATABASE": str(task / "portal.sqlite3"),
                     "NETSTRIKE_IMPACT_ROOT": str(decoys),
+                    "NETSTRIKE_RECOVERY_MODE": self.recovery_mode,
                     "NETSTRIKE_RUN_ID": self.run_id,
                     "NETSTRIKE_SCENARIO_PATH": str(
                         ROOT / "orchestrator/scenarios/full-play.v1.json"

@@ -64,6 +64,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
         scenario_path: Path | str | None = None,
         profile_path: Path | str | None = None,
         impact_root: Path | str | None = None,
+        recovery_mode: str = "fixture",
         identity_audit_key: bytes | None = None,
         host_telemetry_run_id: str | None = None,
         monotonic: Callable[[], float] = time.monotonic,
@@ -78,6 +79,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
         options: dict[str, Any] = {
             "event_sink": store.append_event,
             "run_id": run_id,
+            "recovery_mode": recovery_mode,
         }
         if scenario_path is not None:
             options["scenario_path"] = scenario_path
@@ -190,6 +192,7 @@ class PortalService:  # pylint: disable=too-many-public-methods
             )),
             "cloud_enabled": self.run.cloud_enabled,
             "impact_enabled": self.run.impact_enabled,
+            "recovery_mode": self.run.recovery_mode,
         }
 
     def participant_evidence(

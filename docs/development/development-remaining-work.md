@@ -1,5 +1,21 @@
 # Remaining development and PR estimate
 
+## November 17 implementation update
+
+Issue #198 adds opt-in [native file recovery](native-file-recovery.md): ordinary
+file-tool restore outside the portal, independent read-only content observation,
+current-run evidence, UI/configuration integration and packaged offline smoke.
+This is application implementation on a feature branch pending review/merge,
+not live Windows deployment or acceptance. Patrick still validates the exact
+file access path, read-only backup, ACLs, intended-user access and host telemetry;
+Anna approves the task/rubric and integrates learner instructions. An actual AD
+administration task remains optional and is not implemented by #198. Remaining
+deployment TLS/source probes, approved runtime-content integration, calibration
+and full live/non-author rehearsals retain their existing owners. No fixed PR
+count can establish readiness.
+
+## Historical planning estimate
+
 This is an October 10 planning snapshot with later deployment evidence noted
 below, not a live issue list, confirmed-defect list, or promise of an exact PR
 count. Baseline: #152/#155/#158/#160/#162/#164/#166/#168/#170 merged; Patrick's #156 also merged. The
