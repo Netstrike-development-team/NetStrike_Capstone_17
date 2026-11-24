@@ -98,7 +98,7 @@ def _existing(root, exercise, rows):
 def _publish(root, row):
     name, content, receipt = row
     stage = root / (".pending-" + uuid.uuid4().hex)
-    stage.mkdir(mode=0o700)
+    stage.mkdir(mode=0o750)
     staff._write(stage / "events.jsonl", content)
     staff._write(stage / "manifest.json", staff._json(receipt))
     staff._sync(stage)

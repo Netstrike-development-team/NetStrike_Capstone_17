@@ -99,7 +99,8 @@ def test_spool_service_renders_two_separate_publishers_with_same_scope():
     tasks = yaml.safe_load((ROLE / "tasks/main.yml").read_text())
     creation = next(t for t in tasks if t["name"] == "Create separate event spool directories readable by the staff group")
     assert creation["loop"] == ["/var/lib/netstrike/event-spool", "/var/lib/netstrike/learner-event-spool"]
-    assert creation["ansible.builtin.file"]["mode"] == "0750"
+    assert creation["ansible.builtin.file"]["mode"] == "2750"
+    assert "chgrp" not in raw and "chmod" not in raw
 
 
 @pytest.mark.parametrize("scope", [None, "identity", "cloud"])
