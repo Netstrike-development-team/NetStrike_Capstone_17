@@ -4,18 +4,24 @@
 # has its baseline and a configured forwarder; the forwarder is not installed, and
 # its outputs, inputs, receiver CA and TLS settings are left untouched.
 #
-# Usage (from citef-config/, with inventory rendered by validate_environment.py):
-#   ansible-playbook -i inventory.ini playbooks/controller_service.yml \
+# Usage (from citef-config/): replace CONTROLLER_IP with the target VM's IP.
+# The trailing comma tells Ansible this is a host, not an inventory file.
+#   ansible-playbook -i 'CONTROLLER_IP,' playbooks/controller_service.yml \
 #     --extra-vars "deployment_version=VERSION exercise_run_id=RUN_ID" \
 #     --extra-vars "@secrets.yml" \
-#     --extra-vars "controller_offline_bundle_root=/path/to/netstrike-offline-bundle" \
-#     [--extra-vars "controller_target=CTRL01"]
+#     --extra-vars "controller_offline_bundle_root=/path/to/netstrike-offline-bundle"
 - name: Validate controller inputs and staged artifacts before any host changes
   hosts: localhost
   gather_facts: false
   vars_files:
     - "{{ playbook_dir }}/../environment.json"
   tasks:
+    - name: Require exactly one controller target
+      ansible.builtin.assert:
+        that:
+          - groups['all'] | length == 1
+        fail_msg: "Specify one target IP using -i 'CONTROLLER_IP,'."
+
     - name: Require a deployment version and exercise run identifier
       ansible.builtin.assert:
         that:
@@ -83,7 +89,7 @@
       when: controller_offline_bundle_root is defined
 
 - name: Deploy the controller portal service and its spool forwarding input
-  hosts: "{{ controller_target | default('CTRL01') }}"
+  hosts: all
   gather_facts: false
   become: true
   # su allocates a pty that merges stderr into module stdout; keep Python warnings out of the JSON stream
@@ -93,6 +99,10 @@
   vars_files:
     - "{{ playbook_dir }}/../environment.json"
   vars:
+    ansible_host: "{{ inventory_hostname }}"
+    # Match the rendered inventory: su to root using ansible_become_password from secrets.yml
+    ansible_become_method: su
+    ansible_become_user: root
     forwarder_home: /opt/splunkforwarder
     forwarder_user: splunkfwd
     forwarder_service_name: SplunkForwarder
