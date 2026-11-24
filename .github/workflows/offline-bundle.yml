@@ -47,9 +47,14 @@ jobs:
 
       - name: Download portable CPython runtime
         id: runtime
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           asset="cpython-${PYTHON_VERSION}+${PYTHON_BUILD}-x86_64-unknown-linux-gnu-install_only.tar.gz"
-          release="$(curl -fsSL "https://api.github.com/repos/astral-sh/python-build-standalone/releases/tags/${PYTHON_BUILD}")"
+          release="$(curl -fsS --retry 3 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/astral-sh/python-build-standalone/releases/tags/${PYTHON_BUILD}")"
           url="$(jq -er --arg asset "$asset" '[.assets[] | select(.name == $asset) | .browser_download_url] | if length == 1 then .[0] else error("runtime asset not found uniquely") end' <<< "$release")"
           curl -fL --retry 3 "$url" -o "$RUNNER_TEMP/python-runtime.tar.gz"
           echo "url=$url" >> "$GITHUB_OUTPUT"
