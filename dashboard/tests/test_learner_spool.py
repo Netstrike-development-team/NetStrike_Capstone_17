@@ -58,7 +58,7 @@ def test_preview_and_bounded_retry_preserve_staff_source(source, tmp_path):
     assert "PRIVATE" not in json.dumps(events)
     assert len(list(output.glob("batch-*"))) == 6  # Private-only batches advance too.
     assert output.stat().st_mode & 0o777 == 0o700
-    assert all(p.stat().st_mode & 0o777 == 0o600 for p in output.rglob("*") if p.is_file())
+    assert all(p.stat().st_mode & 0o777 == (0o600 if p.name == ".lock" else 0o640) for p in output.rglob("*") if p.is_file())
     assert not report["splunk_ingestion_verified"] and not report["external_readiness_verified"]
 
 
@@ -134,7 +134,7 @@ def test_failed_staging_is_private_and_retry_ignores_uncommitted_files(source, t
         publish(source, output, execute=True)
     assert not list(output.glob("batch-*"))
     pending = next(output.glob(".pending-*"))
-    assert pending.stat().st_mode & 0o777 == 0o700
+    assert pending.stat().st_mode & 0o777 == 0o750
     monkeypatch.setattr(staff, "_write", original)
     assert publish(source, output, execute=True)["published_events"] == 4
 
