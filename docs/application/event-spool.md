@@ -78,10 +78,12 @@ devices, unexpected contents, world access and group-writable files/directories.
 The caller-selected parent is resolved normally, allowing macOS `/tmp` aliases;
 the parent must be a trusted staff-managed location, not participant-writable.
 
-New directories are `0700` and files `0600`. Patrick can grant the dedicated UF
-service identity read-only access using an approved staff-only group (`0750`
-directories, `0640` files are accepted) or run collection under the approved
-identity. Do not grant group write, world access, participant accounts or portal
+The spool root is created `0700` standalone. Batch directories are created `0750` and
+files `0640` (`.lock` stays `0600`) before the atomic rename, so a group-readable batch is
+never visible with restrictive permissions. The deployed spool roots are setgid (`2750`,
+group `netstrike-staff`), so new entries inherit the staff group with no post-publish
+`chgrp`/`chmod`, avoiding transient UF "Permission denied" errors. Alternatively run
+collection under the approved identity. Do not grant group write, world access, participant accounts or portal
 HTTP access. Linux/POSIX locking/atomic rename/fsync are required; Windows output,
 network filesystems and concurrent portal-process orchestration are not supported
 or certified. Normal portal writes can continue; the read transaction closes

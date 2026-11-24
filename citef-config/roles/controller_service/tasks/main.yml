@@ -274,7 +274,7 @@
     state: directory
     owner: netstrike
     group: "{{ event_spool_group | default('netstrike-staff') }}"
-    mode: "0750"
+    mode: "2750"
   loop:
     - /var/lib/netstrike/event-spool
     - /var/lib/netstrike/learner-event-spool

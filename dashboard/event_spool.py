@@ -347,7 +347,7 @@ def _read(connection, state, limit, manifests):  # pylint: disable=too-many-loca
 
 def _write(path: Path, content: bytes):
     descriptor = os.open(
-        path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600
+        path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o640
     )
     with os.fdopen(descriptor, "wb") as stream:
         stream.write(content)
@@ -372,7 +372,9 @@ def _head(root: Path, state):
 
 def _publish(root, previous, following, first, content):
     stage = root / (".pending-" + uuid.uuid4().hex)
-    stage.mkdir(mode=0o700)
+    # Group-readable before the rename so a forwarder never sees an unreadable batch;
+    # the group comes from the setgid spool root and the umask caps world access.
+    stage.mkdir(mode=0o750)
     manifest = {
         "version": VERSION,
         "exercise_id": previous["exercise_id"],

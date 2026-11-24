@@ -118,7 +118,7 @@ def test_repeated_bounded_publication_preserves_canonical_events_and_database(
     assert len(list(root.glob("batch-*"))) == 2
     assert root.stat().st_mode & 0o777 == 0o700
     assert all(
-        path.stat().st_mode & 0o777 == 0o600
+        path.stat().st_mode & 0o777 == (0o600 if path.name == ".lock" else 0o640)
         for path in root.rglob("*")
         if path.is_file()
     )
