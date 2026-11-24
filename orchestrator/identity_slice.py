@@ -632,6 +632,7 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
         scenario_path: Path | str = DEFAULT_SCENARIO_PATH,
         profile_path: Path | str = DEFAULT_PROFILE_PATH,
         impact_root: Path | str | None = None,
+        recovery_mode: str = "fixture",
         clock: Callable[[], datetime] = _utc_now,
     ) -> None:
         self.event_sink = event_sink
@@ -639,6 +640,11 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
         self.definition = load_scenario(scenario_path)
         self.impact_root = impact_root
         self.impact_enabled = any(item.item_id == "DP4" for item in self.definition.items)
+        if recovery_mode not in {"fixture", "native_files"}:
+            raise ValueError("unsupported recovery mode")
+        if recovery_mode == "native_files" and not self.impact_enabled:
+            raise ValueError("native file recovery requires full play")
+        self.recovery_mode = recovery_mode
         self.profiles = load_reviewed_profiles(self.definition, profile_path)
         self.sequencer = EventSequencer()
         self.state_lock = threading.RLock()
@@ -746,7 +752,8 @@ class IdentitySliceRun:  # pylint: disable=too-many-instance-attributes
         if self.cloud_enabled:
             self.controller.handlers.update(self.cloud.handlers)
         self.impact = (
-            ImpactStage(self, run_id, self.impact_root, fixture=impact_fixture)
+            ImpactStage(self, run_id, self.impact_root, fixture=impact_fixture,
+                        recovery_mode=self.recovery_mode)
             if self.impact_enabled else None
         )
         if self.impact:

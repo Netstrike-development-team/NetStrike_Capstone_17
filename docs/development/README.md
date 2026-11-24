@@ -11,5 +11,6 @@ guidance, not normative interface contracts.
 | [Scheduled synthetic MFA](scheduled-mfa-dev-handoff.md) | Local MFA role-play sequence and browser demo |
 | [Mock-cloud stage](mock-cloud-dev-handoff.md) | Opt-in identity/cloud scenario and development boundaries |
 | [Impact and recovery](impact-recovery-dev-handoff.md) | Opt-in full-play path and recovery handoff |
+| [Native file recovery](native-file-recovery.md) | Independent file verification, local demo and range access handoff (#198) |
 | [Local full-play rehearsals](local-rehearsal.md) | Offline execution of the developer regression package |
 | [Evidence UI walkthrough](ui-walkthrough.md) | Participant evidence boundary and browser recording |

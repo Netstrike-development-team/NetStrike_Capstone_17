@@ -126,6 +126,37 @@ function mounted() {
   new vm.Script(source).runInContext(context);
   return {nodes, targets, controls, calls, responses, session, credential: (value) => { credential = value; }, select};
 }
+test("native recovery hides portal restore and explains verification limits", async () => {
+  const m = mounted(); m.credential("learner-a");
+  m.responses.push({...state(), recovery_mode: "native_files"});
+  await m.select("#refresh").events.click();
+  assert.equal(m.select("#recovery-restore").hidden, true);
+  assert.equal(m.select("#recovery-restore").disabled, true);
+  assert.equal(m.select("#recovery-validate").textContent, "Verify restored files");
+  assert.match(m.select("#recovery-mode").textContent, /normal file tools/);
+  assert.match(m.select("#recovery-mode").textContent, /does not restore them/);
+  const button = new Element("button"); button.dataset.recovery = "recovery.fixture.restore";
+  await m.select("#recovery-actions").events.click({target: {closest: () => button}});
+  assert.equal(m.calls.filter((c) => c.options?.method === "POST").length, 0);
+});
+test("fixture mode restores normal controls and credentials clear native instructions", async () => {
+  const m = mounted(); m.credential("learner-a");
+  m.responses.push({...state(), recovery_mode: "native_files"});
+  await m.select("#refresh").events.click();
+  m.responses.push({...state("fresh"), recovery_mode: "fixture"});
+  await m.select("#refresh").events.click();
+  assert.equal(m.select("#recovery-restore").hidden, false);
+  assert.equal(m.select("#recovery-restore").disabled, false);
+  assert.match(m.select("#recovery-mode").textContent, /Fixture demo mode/);
+  m.credential(""); m.session.sync();
+  assert.equal(m.select("#recovery-restore").disabled, true);
+  assert.match(m.select("#recovery-mode").textContent, /Refresh/);
+});
+test("unknown recovery mode cannot grant learner write authority", async () => {
+  const h = harness(); h.responses.push({...state(), recovery_mode: "unreviewed"});
+  await assert.rejects(h.session.refresh(), /unavailable/);
+  assert.equal(h.session.canWrite(), false);
+});
 test("actual participant bindings send a run header for every learner mutation", async () => {
   const m = mounted(); m.credential("learner-a"); m.responses.push(state()); await m.select("#refresh").events.click();
   const cases = [

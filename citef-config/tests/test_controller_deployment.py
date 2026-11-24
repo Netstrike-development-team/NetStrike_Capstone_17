@@ -39,13 +39,14 @@ def test_example_secret_principals_are_valid_after_replacing_placeholders():
     assert principals[example["controller_readiness_token"]]["role"] == "facilitator"
 
 
-def render(tmp_path, scope=None):
+def render(tmp_path, scope=None, *, recovery_mode=None):
     defaults = yaml.safe_load((ROLE / "defaults/main.yml").read_text())
     selected = scope or defaults["controller_scenario_scope"]
     engine = Environment(undefined=StrictUndefined)
     engine.filters["to_json"] = json.dumps
     raw = engine.from_string((ROLE / "templates/controller.env.j2").read_text()).render(
         controller_scenario_scope=selected,
+        controller_recovery_mode=recovery_mode or defaults["controller_recovery_mode"],
         controller_scenario_file=SCENARIOS[selected], exercise_run_id=RUN_ID,
         controller_identity_audit_key="synthetic-deployment-audit-key-" + "x" * 32,
         controller={"sso_allowed_origins": ["http://testserver"]},
@@ -56,6 +57,7 @@ def render(tmp_path, scope=None):
     assert injected["NETSTRIKE_RUN_ID"] == RUN_ID
     assert injected["NETSTRIKE_HOST_TELEMETRY_RUN_ID"] == RUN_ID
     assert injected["NETSTRIKE_EXPECTED_SCENARIO_SCOPE"] == selected
+    assert injected["NETSTRIKE_RECOVERY_MODE"] == (recovery_mode or "fixture")
     assert injected["NETSTRIKE_SCENARIO_PATH"] == "/opt/netstrike/current/orchestrator/scenarios/" + SCENARIOS[selected]
     # Only relocate VM paths into this test's disposable workspace.
     injected["NETSTRIKE_SCENARIO_PATH"] = str(ROOT / "orchestrator/scenarios" / SCENARIOS[selected])
@@ -64,6 +66,15 @@ def render(tmp_path, scope=None):
     injected["NETSTRIKE_IMPACT_ROOT"] = str(tmp_path / "fixtures")
     (tmp_path / "fixtures").mkdir()
     return injected
+
+
+def test_template_native_recovery_reaches_factory_without_changing_other_bindings(tmp_path, monkeypatch):
+    environment = render(tmp_path, recovery_mode="native_files")
+    inject(monkeypatch, environment)
+    with TestClient(create_default_app()) as client:
+        state = client.get("/api/facilitator/state", headers={"Authorization": "Bearer " + TOKEN}).json()
+        assert state["controller"]["run_id"] == RUN_ID
+        assert state["impact"]["view"]["recovery"]["mode"] == "native_files"
 
 
 def inject(monkeypatch, environment):

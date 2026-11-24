@@ -1,0 +1,82 @@
+Meeting Notes: Operation Silent Spider Technical Meeting
+Date: Thu, Nov 19, 2026
+Project team: Aya Debbagh, Patrick Luu, Ashley Goman, Anna Elizabeth Brimacombe-Tanner
+ Cyber range: Zian Wang, Julien Cassagne
+
+Purpose: Present the exercise platform to the cyber range, demo it live, get feedback, and agree on deployment and rehearsal details.
+
+1. What we presented
+
+    A slideshow on what we will present and what we need from the range: Operation-Silent-Spider-Technical-Meeting-Updated.pptx
+    A live demo of our built applications and the Splunk next strike index with logs.
+
+2. Demo
+
+  Cloud investigation
+
+Students link the service, principal, key, bucket and audit history to decide what access the records support. They use Splunk to order the events and cite the evidence.
+The cloud is a Python mock. It teaches reasoning about identity, permissions and data exposure without a public cloud account.
+A later exposure shows access to 25 synthetic records, plus a threat claim. Students must separate the claim from what the audit supports.
+
+  Containment
+Evidence is preserved first. Then the key found in the audit is revoked.
+Revoking a key doesn’t erase earlier access, so the incident brief must still account for the exposure.
+Students separate the action requested, the result reported, and the evidence still needed to show containment.
+
+  Recovery
+The scenario starts with 0 of 5 originals available. It uses reversible files and harmless markers, with no real ransomware.
+Students identify the affected files, choose a known-good backup, preserve evidence and contain access before restoring.
+In the demo, preview-only restored nothing. With preview off, restore plus hash validation gave 5 of 5 originals and “recovery health verified.”
+A native file mode lets students restore files outside the portal, and the platform checks the result independently.
+The Windows exercise still needs testing of the real backup location, permissions and user access. Students must prove the intended user can open the files, not just that hashes match.
+
+  Brief, evaluator and exports
+Students submit a final brief, and the evaluator checks that each statement follows from the records.
+Staff review evidence against five learning objectives. The app organizes the record, and a person judges the reasoning.
+Staff can download the offline bundle, the action report and the application ledger (JSONL). These are separate from the installation bundle. In the range, approved Splunk evidence is exported outside the VMs before snapshot restoration.
+
+3. Questions and answers
+
+  Architecture
+Zian: How do the portal and Splunk relate? Participants use both in a browser. The dashboard is the HTTPS endpoint on Controller 01, a separate Linux VM (Patrick).
+Julien: Do the VMs push logs? Yes. The controller’s Splunk forwarder sends logs straight to Splunk (Patrick).
+Julien: Why is there a controller on the workstation? There isn’t. The workstation supplies Windows logs for realism (Patrick).
+Julien: Is the Windows Server a domain controller? Yes. Ansible sets up Active Directory, and it pushes logs to Splunk (Patrick).
+Julien: What are those logs for? Context and realism, with room for future enhancements (Patrick). Participants don’t access the DC or workstation.
+
+  Deployment
+Julien: How long does the playbook take? About 15 to 30 minutes on limited hardware (Patrick).
+Julien: Does the playbook configure the controller? Yes, along with the Windows workstation and DC (Patrick).
+Julien: Does Splunk keep historical logs? Yes. Retention keeps everything by default, and the exercise run ID filters to one exercise (Patrick). The range builds a fresh Splunk each time, and our config files rebuild it.
+Zian: Do you configure Active Directory? Yes. The range also has a default AD setup (Patrick, Zian).
+Julien: TLS and certificates? The controller uses a self-signed certificate, and Splunk logs are unencrypted (Patrick). The range deploys its own certificate authority, so we don’t need to configure it (Julien).
+
+  Range suggestions
+Give each participant a Windows workstation, opened in the browser as an RDP stream (Julien). We can add this, but it’s hard to test (Patrick).
+The portal and controller can share a server, and the range only needs to target the controller (Zian).
+
+  Schedule
+Zian: What’s your deadline? Around December 9 (Ashley).
+Zian: When do you want to run, and do you have participants? As soon as possible. We have no participants yet but can find external people (Ashley). Zian recommended bringing some.
+Zian: What session format? One 2 to 3 hour session. We supply the playbook and packages, and the range deploys beforehand (Zian).
+Ashley: Which slots are free? Next week and the week after, confirmed by email with Latifa. Zian will follow up with her too.
+
+4. Decisions
+
+One combined 2 to 3 hour session instead of two parts.
+The range deploys from our packages and playbooks.
+The portal and controller share a server.
+The range handles the certificate authority.
+Participants use only a browser.
+
+5. Action items
+
+Action                                                                          Owner                When
+1. Send the controller package, install instructions and playbooks to Zian      Project team         Fri, Nov 20
+2. Email Latifa to book a slot                                                  Ashley               Today, Nov 19
+3. Follow up with Latifa on timing                                              Zian                 After the email
+4. Book one 2 to 3 hour session before Dec 9                                    Project team         Pending Latifa
+5. Line up external participants                                                Project team         Before the session
+6. Decide on per-participant Windows workstations                               Project team         Open
+
+
