@@ -1,0 +1,140 @@
+---
+# Deploys only the controller portal service and the forwarder input app that makes
+# the existing Splunk Universal Forwarder pick up its event spools. The VM already
+# has its baseline and a configured forwarder; the forwarder is not installed, and
+# its outputs, inputs, receiver CA and TLS settings are left untouched.
+#
+# Usage (from citef-config/, with inventory rendered by validate_environment.py):
+#   ansible-playbook -i inventory.ini playbooks/controller_service.yml \
+#     --extra-vars "deployment_version=VERSION exercise_run_id=RUN_ID" \
+#     --extra-vars "@secrets.yml" \
+#     --extra-vars "controller_offline_bundle_root=/path/to/netstrike-offline-bundle" \
+#     [--extra-vars "controller_target=CTRL01"]
+- name: Validate controller inputs and staged artifacts before any host changes
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/../environment.json"
+  tasks:
+    - name: Require a deployment version and exercise run identifier
+      ansible.builtin.assert:
+        that:
+          - deployment_version is defined
+          - deployment_version is match('^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$')
+          - exercise_run_id is defined
+          - exercise_run_id is match('^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$')
+        fail_msg: "Pass path-safe deployment_version and exercise_run_id values (8-64 letters, digits, dots, underscores, or hyphens)."
+
+    - name: Validate the approved environment manifest
+      ansible.builtin.command:
+        argv:
+          - python3
+          - "{{ playbook_dir }}/../validate_environment.py"
+          - validate
+          - --config
+          - "{{ playbook_dir }}/../environment.json"
+      changed_when: false
+
+    - name: Collect the optional TLS artifacts that were provided
+      ansible.builtin.set_fact:
+        controller_tls_artifacts: >-
+          {{ ([controller.tls_certificate] if controller.tls_certificate is defined else [])
+             + ([controller.tls_ca] if controller.tls_ca is defined else []) }}
+      changed_when: false
+
+    - name: Verify the optional controller TLS artifacts (SHA-256)
+      ansible.builtin.stat:
+        path: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ item.file }}"
+        checksum_algorithm: sha256
+      loop: "{{ controller_tls_artifacts }}"
+      loop_control:
+        label: "{{ item.file }}"
+      register: controller_tls_stats
+
+    - name: Require the controller TLS artifacts to match their approved checksums
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - "'..' not in item.item.file"
+          - not item.item.file.startswith('/')
+          - item.stat.checksum | lower == item.item.sha256 | lower
+        fail_msg: "Offline artifact {{ item.item.file }} is missing or does not match its approved SHA-256."
+      loop: "{{ controller_tls_stats.results }}"
+      loop_control:
+        label: "{{ item.item.file }}"
+
+    - name: Require the offline Python runtime and CTRL01 wheelhouse in the bundle
+      ansible.builtin.stat:
+        path: "{{ controller_offline_bundle_root }}/{{ item }}"
+      loop:
+        - runtime/python-runtime.tar.gz
+        - destinations/CTRL01/requirements.lock
+        - destinations/CTRL01/wheelhouse
+      register: controller_bundle_stats
+      when: controller_offline_bundle_root is defined
+
+    - name: Fail when the offline bundle is incomplete
+      ansible.builtin.assert:
+        that: item.stat.exists
+        fail_msg: "Offline bundle is missing {{ item.item }}."
+      loop: "{{ controller_bundle_stats.results | default([]) }}"
+      loop_control:
+        label: "{{ item.item }}"
+      when: controller_offline_bundle_root is defined
+
+- name: Deploy the controller portal service and its spool forwarding input
+  hosts: "{{ controller_target | default('CTRL01') }}"
+  gather_facts: false
+  become: true
+  # su allocates a pty that merges stderr into module stdout; keep Python warnings out of the JSON stream
+  environment:
+    PYTHONWARNINGS: ignore
+    PYTHONDONTWRITEBYTECODE: "1"
+  vars_files:
+    - "{{ playbook_dir }}/../environment.json"
+  vars:
+    forwarder_home: /opt/splunkforwarder
+    forwarder_user: splunkfwd
+    forwarder_service_name: SplunkForwarder
+  pre_tasks:
+    - name: Require the existing Universal Forwarder
+      ansible.builtin.stat:
+        path: "{{ forwarder_home }}/bin/splunk"
+      register: controller_existing_forwarder
+
+    - name: Fail when the forwarder is not installed
+      ansible.builtin.assert:
+        that: controller_existing_forwarder.stat.exists
+        fail_msg: "No Universal Forwarder found at {{ forwarder_home }}; this playbook does not install it."
+
+    - name: Create the staff group that may read the event spool
+      ansible.builtin.group:
+        name: "{{ event_spool_group | default('netstrike-staff') }}"
+        system: true
+
+    - name: Allow the forwarder user to read the event spool (staff group)
+      ansible.builtin.user:
+        name: "{{ forwarder_user }}"
+        groups: "{{ event_spool_group | default('netstrike-staff') }}"
+        append: true
+      notify: Restart existing Universal Forwarder
+  roles:
+    - controller_service
+  post_tasks:
+    - name: Deploy the NetStrike application-event input app to the forwarder
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../../splunk/forwarder/netstrike_app_events_inputs/"
+        dest: "{{ forwarder_home }}/etc/apps/netstrike_app_events_inputs/"
+        owner: root
+        group: "{{ forwarder_user }}"
+        mode: "0644"
+        directory_mode: "0755"
+      notify: Restart existing Universal Forwarder
+
+    - name: Apply forwarder changes
+      ansible.builtin.meta: flush_handlers
+  handlers:
+    - name: Restart existing Universal Forwarder
+      ansible.builtin.service:
+        name: "{{ forwarder_service_name }}"
+        state: restarted
