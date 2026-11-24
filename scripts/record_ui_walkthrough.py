@@ -245,7 +245,15 @@ class Walkthrough:  # pylint: disable=too-many-instance-attributes
         self.page.wait_for_timeout(250)
 
     def evidence(self, category="all", *, role="soc_analyst", query=""):
-        self.goto("/evidence", role)
+        from playwright.sync_api import expect  # pylint: disable=import-outside-toplevel
+
+        self.goto("/participant", role)
+        page_count = len(self.page.context.pages)
+        self.page.get_by_role("link", name="Open evidence timeline", exact=True).click()
+        expect(self.page).to_have_url(self.base + "/evidence")
+        expect(self.page.locator("#run-id")).to_have_text(self.run_id)
+        expect(self.page.locator("#signal-count")).to_have_text(re.compile(r"^[1-9]\d*$"))
+        assert len(self.page.context.pages) == page_count, "evidence navigation opened a disconnected tab"
         self.page.locator("#category").select_option(category)
         self.page.locator("#search").fill(query)
         self.page.locator(".evidence-workspace").scroll_into_view_if_needed()
