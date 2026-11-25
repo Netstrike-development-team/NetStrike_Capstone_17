@@ -1,0 +1,21 @@
+[Unit]
+Description=NetStrike event spool export (one batch)
+After=netstrike-portal.service
+ConditionPathExists=/var/lib/netstrike/portal.sqlite3
+
+[Service]
+Type=oneshot
+User=netstrike
+Group=netstrike
+WorkingDirectory=/opt/netstrike/current
+UMask=0027
+ExecStart=/opt/netstrike/venv/bin/python -m dashboard.event_spool --database /var/lib/netstrike/portal.sqlite3 --output /var/lib/netstrike/event-spool --exercise-id {{ event_spool_exercise_id | default('operation-silent-spider') }} --limit {{ event_spool_batch_limit | default(500) }} --execute
+# Batches are created 0750/0640 and inherit the staff group from the setgid spool roots (2750), so they are readable the moment they are renamed into place.
+# Learner publication consumes verified immutable staff batches, not live DB rows.
+# It runs as netstrike; failure fails this service without withholding staff access.
+ExecStartPost=/opt/netstrike/venv/bin/python -m dashboard.learner_spool --source-spool /var/lib/netstrike/event-spool --output /var/lib/netstrike/learner-event-spool --exercise-id {{ event_spool_exercise_id | default('operation-silent-spider') }} --execute
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/netstrike
