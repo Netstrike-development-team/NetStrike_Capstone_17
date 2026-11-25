@@ -1,0 +1,10 @@
+[Unit]
+Description=Publish NetStrike event spool batches
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec={{ event_spool_interval | default('30s') }}
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target

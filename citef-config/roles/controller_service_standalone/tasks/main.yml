@@ -1,0 +1,422 @@
+---
+- name: Require a controller bundle archive and safe deployment version
+  ansible.builtin.assert:
+    that:
+      - controller_bundle_archive is defined
+      - controller_bundle_archive is string
+      - controller_bundle_archive | length > 0
+      - deployment_version is defined
+      - deployment_version is string
+      - deployment_version is match('^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$')
+    fail_msg: "Provide controller_bundle_archive on the Ansible host and a path-safe deployment_version (8-64 characters)."
+
+- name: Create temporary controller bundle staging directory
+  ansible.builtin.tempfile:
+    state: directory
+    prefix: netstrike-controller-bundle-
+  register: controller_bundle_staging
+
+- name: Extract, verify, and deploy the controller bundle
+  block:
+    - name: Extract the controller bundle archive
+      ansible.builtin.unarchive:
+        src: "{{ controller_bundle_archive }}"
+        dest: "{{ controller_bundle_staging.path }}"
+
+    - name: Define the extracted bundle root
+      ansible.builtin.set_fact:
+        controller_bundle_root: "{{ controller_bundle_staging.path }}/netstrike-offline-bundle"
+      changed_when: false
+
+    - name: Verify the controller bundle checksums
+      ansible.builtin.command:
+        argv: [sha256sum, -c, SHA256SUMS]
+        chdir: "{{ controller_bundle_root }}"
+      changed_when: false
+
+    - name: Validate controller exercise selection and run binding
+      ansible.builtin.assert:
+        that:
+          - controller_scenario_scope in ['identity', 'cloud', 'full-play']
+          - exercise_run_id is defined
+          - exercise_run_id is string
+          - exercise_run_id is match('^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$')
+        fail_msg: "Select identity, cloud or full-play and supply the same path-safe exercise_run_id used by the forwarders."
+
+    - name: Require runtime-injected portal credentials and TLS key
+      ansible.builtin.assert:
+        that:
+          - controller_service_tokens is mapping
+          - controller_service_tokens | length > 0
+          - controller_readiness_token in controller_service_tokens
+          - controller_service_tokens[controller_readiness_token].role == "facilitator"
+          - controller_identity_audit_key is string
+          - controller_identity_audit_key | length >= 32
+          - controller.tls_certificate is not defined or controller_tls_private_key_pem is string
+          - controller.tls_certificate is not defined or controller_tls_private_key_pem | length > 0
+          - controller_readiness_token is string
+          - controller_readiness_token | length >= 32
+          - "'\n' not in controller_identity_audit_key"
+          - "'\r' not in controller_identity_audit_key"
+        fail_msg: "Inject portal tokens, audit key, TLS key, and readiness token through the approved secret manager."
+      no_log: true
+
+    - name: Define controller release and artifact paths
+      ansible.builtin.set_fact:
+        controller_source_root: "{{ controller_bundle_root }}/source"
+        controller_release_path: "/opt/netstrike/releases/{{ deployment_version }}"
+        controller_scenario_file: "{{ {'identity': 'identity-slice.v1.json', 'cloud': 'cloud-slice.v1.json', 'full-play': 'full-play.v1.json'}[controller_scenario_scope] }}"
+      changed_when: false
+
+    - name: Define controller wheelhouse path
+      ansible.builtin.set_fact:
+        controller_wheelhouse_path: "{{ controller_bundle_root }}/destinations/CTRL01/wheelhouse"
+      changed_when: false
+
+    - name: Create the staff group that may read the event spool
+      ansible.builtin.group:
+        name: "{{ event_spool_group | default('netstrike-staff') }}"
+        system: true
+
+    - name: Create the unprivileged portal service account
+      ansible.builtin.user:
+        name: netstrike
+        system: true
+        create_home: false
+        shell: /usr/sbin/nologin
+        home: /var/lib/netstrike
+
+    - name: Create protected controller directories
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: "{{ item.owner | default('root') }}"
+        group: "{{ item.group | default('root') }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - {path: /opt/netstrike, group: netstrike, mode: "0750"}
+        - {path: /opt/netstrike/releases, group: netstrike, mode: "0750"}
+        - {path: /opt/netstrike/runtime, group: netstrike, mode: "0750"}
+        - {path: /opt/netstrike/offline, group: netstrike, mode: "0750"}
+        - {path: /opt/netstrike/wheelhouse, group: netstrike, mode: "0750"}
+        - {path: /etc/netstrike, group: netstrike, mode: "0750"}
+        - {path: /var/lib/netstrike, owner: netstrike, group: "{{ event_spool_group | default('netstrike-staff') }}", mode: "0750"}
+        - {path: /var/lib/netstrike/fixtures, owner: netstrike, group: netstrike, mode: "0750"}
+
+    - name: Copy the application source with owner and permissions
+      ansible.builtin.copy:
+        src: "{{ controller_source_root }}/{{ item }}"
+        dest: "{{ controller_release_path }}/"
+        remote_src: true
+        mode: preserve
+      loop:
+        - dashboard
+        - modules
+        - shared
+        - orchestrator
+        - schemas
+
+    - name: Require the staged release to contain its service entry point and fixtures
+      ansible.builtin.stat:
+        path: "{{ controller_release_path }}/{{ item }}"
+      loop:
+        - dashboard/app.py
+        - "orchestrator/scenarios/{{ controller_scenario_file }}"
+        - orchestrator/fixtures/identity-profiles.v1.json
+      register: controller_source_contents
+
+    - name: Fail when the bundle source is incomplete
+      ansible.builtin.assert:
+        that: item.stat.exists and item.stat.isreg
+        fail_msg: "The controller bundle source is missing {{ item.item }}."
+      loop: "{{ controller_source_contents.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Stage the portable Python runtime
+      ansible.builtin.copy:
+        src: "{{ controller_bundle_root }}/runtime/python-runtime.tar.gz"
+        dest: /opt/netstrike/offline/python-runtime.tar.gz
+        remote_src: true
+        owner: root
+        group: root
+        mode: preserve
+
+    - name: Extract the portable Python runtime
+      ansible.builtin.unarchive:
+        src: /opt/netstrike/offline/python-runtime.tar.gz
+        dest: /opt/netstrike/runtime
+        remote_src: true
+        creates: /opt/netstrike/runtime/python/bin/python3.11
+
+    - name: Stage the hash-pinned offline Python wheelhouse
+      ansible.builtin.copy:
+        src: "{{ controller_wheelhouse_path }}/"
+        dest: /opt/netstrike/wheelhouse/
+        remote_src: true
+        owner: root
+        group: root
+        mode: preserve
+
+    - name: Stage the hash-pinned Python requirements lock
+      ansible.builtin.copy:
+        src: "{{ controller_bundle_root }}/destinations/CTRL01/requirements.lock"
+        dest: /opt/netstrike/requirements.lock
+        remote_src: true
+        owner: root
+        group: root
+        mode: preserve
+
+    - name: Create the isolated application virtual environment
+      ansible.builtin.command:
+        argv:
+          - /opt/netstrike/runtime/python/bin/python3.11
+          - -m
+          - venv
+          - /opt/netstrike/venv
+        creates: /opt/netstrike/venv/bin/uvicorn
+
+    - name: Install requirements from the hash-pinned offline wheelhouse
+      ansible.builtin.pip:
+        requirements: /opt/netstrike/requirements.lock
+        executable: /opt/netstrike/venv/bin/pip
+        extra_args: "--no-index --find-links=/opt/netstrike/wheelhouse --require-hashes"
+      environment:
+        PIP_NO_INDEX: "1"
+
+    - name: Set runtime, virtual environment, and release permissions
+      ansible.builtin.file:
+        path: "{{ item }}"
+        recurse: true
+        owner: root
+        group: netstrike
+        mode: "u=rwX,g=rX,o-rwx"
+      loop:
+        - /opt/netstrike/runtime
+        - /opt/netstrike/venv
+        - "{{ controller_release_path }}"
+      changed_when: false
+
+    - name: Link the selected controller release
+      ansible.builtin.file:
+        src: "{{ controller_release_path }}"
+        dest: /opt/netstrike/current
+        state: link
+        force: true
+
+    - name: Generate a self-signed controller certificate (no certificates supplied; testing only)
+      ansible.builtin.command:
+        argv:
+          - openssl
+          - req
+          - -x509
+          - -newkey
+          - rsa:3072
+          - -nodes
+          - -days
+          - "30"
+          - -keyout
+          - /etc/netstrike/tls.key
+          - -out
+          - /etc/netstrike/tls.crt
+          - -subj
+          - "/CN={{ controller.readiness_url | urlsplit('hostname') }}"
+          - -addext
+          - "subjectAltName=DNS:{{ controller.readiness_url | urlsplit('hostname') }},IP:{{ ansible_host }}"
+        creates: /etc/netstrike/tls.crt
+      when: controller.tls_certificate is not defined
+
+    - name: Restrict the generated controller key
+      ansible.builtin.file:
+        path: /etc/netstrike/tls.key
+        owner: root
+        group: netstrike
+        mode: "0640"
+      when: controller.tls_certificate is not defined
+
+    - name: Install the controller TLS certificate and trusted CA
+      when: controller.tls_certificate is defined
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../../{{ offline_artifacts.directory }}/{{ item.source.file }}"
+        dest: "{{ item.dest }}"
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - {source: "{{ controller.tls_certificate }}", dest: /etc/netstrike/tls.crt}
+        - {source: "{{ controller.tls_ca }}", dest: /etc/netstrike/tls-ca.pem}
+
+    - name: Install the controller TLS private key
+      when: controller.tls_certificate is defined
+      ansible.builtin.copy:
+        content: "{{ controller_tls_private_key_pem }}"
+        dest: /etc/netstrike/tls.key
+        owner: root
+        group: netstrike
+        mode: "0640"
+      no_log: true
+
+    - name: Verify the controller certificate chain
+      when: controller.tls_certificate is defined
+      ansible.builtin.command:
+        argv:
+          - openssl
+          - verify
+          - -CAfile
+          - /etc/netstrike/tls-ca.pem
+          - /etc/netstrike/tls.crt
+      register: controller_certificate_check
+      changed_when: false
+
+    - name: Require the TLS certificate to match its private key
+      when: controller.tls_certificate is defined
+      ansible.builtin.command:
+        argv: [openssl, x509, -in, /etc/netstrike/tls.crt, -pubkey, -noout]
+      register: controller_certificate_public_key
+      changed_when: false
+
+    - name: Read the public key derived from the controller private key
+      when: controller.tls_certificate is defined
+      ansible.builtin.command:
+        argv: [openssl, pkey, -in, /etc/netstrike/tls.key, -pubout]
+      register: controller_private_key_public_key
+      changed_when: false
+      no_log: true
+
+    - name: Assert the TLS certificate and private key match
+      when: controller.tls_certificate is defined
+      ansible.builtin.assert:
+        that:
+          - controller_certificate_public_key.stdout == controller_private_key_public_key.stdout
+        fail_msg: "The controller TLS certificate does not match its injected private key."
+      no_log: true
+
+    - name: Configure portal credentials in the protected environment
+      ansible.builtin.template:
+        src: controller.env.j2
+        dest: /etc/netstrike/controller.env
+        owner: root
+        group: root
+        mode: "0600"
+      no_log: true
+
+    - name: Install the hardened systemd portal service
+      ansible.builtin.template:
+        src: netstrike-portal.service.j2
+        dest: /etc/systemd/system/netstrike-portal.service
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Create separate event spool directories readable by the staff group
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: netstrike
+        group: "{{ event_spool_group | default('netstrike-staff') }}"
+        mode: "2750"
+      loop:
+        - /var/lib/netstrike/event-spool
+        - /var/lib/netstrike/learner-event-spool
+
+    - name: Install the event spool exporter service
+      ansible.builtin.template:
+        src: netstrike-event-spool.service.j2
+        dest: /etc/systemd/system/netstrike-event-spool.service
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Install the event spool exporter timer
+      ansible.builtin.template:
+        src: netstrike-event-spool.timer.j2
+        dest: /etc/systemd/system/netstrike-event-spool.timer
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Load the systemd units
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+
+    - name: Read the current portal service state
+      ansible.builtin.systemd_service:
+        name: netstrike-portal.service
+      register: controller_portal_unit
+
+    - name: Look for an existing run fixture
+      ansible.builtin.stat:
+        path: "/var/lib/netstrike/fixtures/{{ exercise_run_id }}"
+        follow: false
+      register: controller_run_fixture
+
+    - name: Refuse to start a portal whose run was already started
+      ansible.builtin.fail:
+        msg: >-
+          The portal is not running but fixtures/{{ exercise_run_id }} already exists, so
+          startup preflight would reject this run ID. Configuration is applied only before the
+          first start. Use a new exercise_run_id on a clean snapshot (see
+          docs/full-play-deployment-binding.md#reset-and-next-run-admission).
+      when:
+        - controller_portal_unit.status.ActiveState | default('inactive') != 'active'
+        - controller_run_fixture.stat.exists
+
+    - name: Warn that a running portal keeps its start-time configuration
+      ansible.builtin.debug:
+        msg: >-
+          The portal is already running; configuration changes written by this play are not
+          applied to it. Use a new exercise_run_id on a clean snapshot to apply them.
+      when: controller_portal_unit.status.ActiveState | default('inactive') == 'active'
+
+    - name: Enable and start the NetStrike portal service once
+      ansible.builtin.systemd_service:
+        name: netstrike-portal.service
+        enabled: true
+        state: started
+      when: controller_portal_unit.status.ActiveState | default('inactive') != 'active'
+
+    - name: Resolve the controller DNS name to its listen address locally
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: '\s{{ controller.readiness_url | urlsplit("hostname") | regex_escape }}(\s|$)'
+        line: "{{ ansible_host }} {{ controller.readiness_url | urlsplit('hostname') }}"
+        state: present
+
+    - name: Verify the local controller readiness endpoint
+      ansible.builtin.uri:
+        url: "{{ controller.readiness_url }}"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ controller_readiness_token }}"
+        return_content: true
+        status_code: 200
+        validate_certs: "{{ controller.tls_ca is defined }}"
+        ca_path: "{{ '/etc/netstrike/tls-ca.pem' if controller.tls_ca is defined else omit }}"
+        timeout: 30
+      register: controller_local_readiness
+      until: controller_local_readiness.status is defined and controller_local_readiness.status == 200
+      retries: 30
+      delay: 5
+      no_log: true
+
+    - name: Require controller application and event ledger readiness
+      ansible.builtin.assert:
+        that:
+          - controller_local_readiness.json.scope == 'local_application_only'
+          - controller_local_readiness.json.run_id == exercise_run_id
+          - controller_local_readiness.json.ready_to_prepare | bool
+          - not (controller_local_readiness.json.external_readiness_verified | bool)
+        fail_msg: "Controller baseline readiness failed; exercise admission remains blocked."
+      no_log: true
+
+    - name: Enable and start the event spool exporter timer
+      ansible.builtin.systemd_service:
+        name: netstrike-event-spool.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+  always:
+    - name: Remove temporary controller bundle staging directory
+      ansible.builtin.file:
+        path: "{{ controller_bundle_staging.path }}"
+        state: absent
